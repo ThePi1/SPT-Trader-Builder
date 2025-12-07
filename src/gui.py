@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QLi
 from gui_about import Ui_AboutMenu
 from gui_main import Ui_MainGUI
 from gui_updates import Ui_UpdateMenu
+from gui_quests import UI_QuestGUI
 
 class Gui_MainWindow(QMainWindow):
   def __init__(self, parent=None):
@@ -34,6 +35,10 @@ class Gui_MainWindow(QMainWindow):
     dlg = Gui_UpdatesDlg()
     dlg.updateVersion(ver_current, ver_latest, url_text, update_text)
     dlg.exec()
+  def onQuestWindow(self):
+     dlg=GUI_QuestDlg()
+     dlg.exec()
+
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -59,3 +64,9 @@ class Gui_UpdatesDlg(QDialog):
       text = re.sub('UPDATE_TEXT', update_text ,text)
       text = re.sub('SRC_URL', url_text, text)
       self.ui.label.setText(QtCore.QCoreApplication.translate("UpdateMenu", text))
+
+class GUI_QuestDlg(QDialog):
+   def __init__(self, parent=None):
+        super().__init__(parent)
+        self.ui = UI_QuestGUI()
+        self.ui.setupUi(self)

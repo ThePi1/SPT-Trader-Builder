@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1080</width>
-    <height>720</height>
+    <width>712</width>
+    <height>469</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -51,6 +51,25 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <widget class="QWidget" name="gridLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>2</x>
+      <y>9</y>
+      <width>701</width>
+      <height>411</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Weclome to the SPT Trader Builder&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;*select file dropdown To begin*&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="sizeGripEnabled">
@@ -62,7 +81,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1080</width>
+     <width>712</width>
      <height>22</height>
     </rect>
    </property>
@@ -89,6 +108,9 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionQuest_Builder"/>
+    <addaction name="actionLocale_Builder"/>
+    <addaction name="actionAssort_Builder"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -116,6 +138,21 @@
   <action name="actionUpdateCheck">
    <property name="text">
     <string>Check for Updates</string>
+   </property>
+  </action>
+  <action name="actionQuest_Builder">
+   <property name="text">
+    <string>Quest Builder</string>
+   </property>
+  </action>
+  <action name="actionAssort_Builder">
+   <property name="text">
+    <string>Assort Builder</string>
+   </property>
+  </action>
+  <action name="actionLocale_Builder">
+   <property name="text">
+    <string>Locale Builder</string>
    </property>
   </action>
  </widget>
