@@ -38,4 +38,4 @@ class Ui_AboutMenu(object):
     def retranslateUi(self, AboutMenu):
         _translate = QtCore.QCoreApplication.translate
         AboutMenu.setWindowTitle(_translate("AboutMenu", "About"))
-        self.label.setText(_translate("AboutMenu", "<html><head/><body><p>Made with ♥ by ThePi</p><p>V_CUR</p><p><a href=\"SRC_URL\"><span style=\" text-decoration: underline; color:#0000ff;\">SRC_URL</span></a></p><p>Please open an issue on GitHub for issues / suggestions!</p></body></html>"))
+        self.label.setText(_translate("AboutMenu", "<html><head/><body><p>Made with ♥ by the SPT Trader Builder Team</p><p>V_CUR</p><p><a href=\"SRC_URL\"><span style=\" text-decoration: underline; color:#0000ff;\">SRC_URL</span></a></p></body></html>"))

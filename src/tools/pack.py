@@ -28,7 +28,7 @@ os.mkdir(temp_dir)
 
 print("Running pyinstaller...")
 PyInstaller.__main__.run([
-    '.\gem-arbitrage.py',
+    '.\\trader_builder.py',
     '--onefile',
     '--icon=data/icon.ico',
     '--hide-console=hide-early'
@@ -49,5 +49,5 @@ shutil.make_archive(out_filename, 'zip', temp_dir)
 
 print("(Attempting to) clean up...")
 clean_folders([dist_dir, build_dir, temp_dir])
-if os.path.exists("gem-arbitrage.spec"):
-    os.remove("gem-arbitrage.spec")
+if os.path.exists("trader_builder.spec"):
+    os.remove("trader_builder.spec")
