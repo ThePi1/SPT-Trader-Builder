@@ -73,5 +73,5 @@ class Gui_QuestDlg(QMainWindow):
     self.on_launch() # Custom code in this one
     self.show()
   
-  def on_launch():
+  def on_launch(self):
      pass
