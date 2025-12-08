@@ -91,7 +91,7 @@ class Ui_MainGUI(object):
     def retranslateUi(self, MainGUI):
         _translate = QtCore.QCoreApplication.translate
         MainGUI.setWindowTitle(_translate("MainGUI", "SPT Trader Builder"))
-        self.label.setText(_translate("MainGUI", "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">Weclome to the SPT Trader Builder</span></p><p align=\"center\"><span style=\" font-size:14pt;\">*select file dropdown To begin*</span></p></body></html>"))
+        self.label.setText(_translate("MainGUI", "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">Weclome to the SPT Trader Builder</span></p><p align=\"center\"><span style=\" font-size:14pt;\">*select file dropdown to begin*</span></p></body></html>"))
         self.menuSettings.setTitle(_translate("MainGUI", "Settings"))
         self.menuHelp.setTitle(_translate("MainGUI", "Help"))
         self.menuFile.setTitle(_translate("MainGUI", "File"))

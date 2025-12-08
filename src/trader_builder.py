@@ -2,7 +2,7 @@ import csv, json, os, sys, traceback, datetime, ctypes, time
 import requests
 from os import path
 from pathlib import Path
-from gui import Gui_MainWindow
+from gui import Gui_MainWindow, Gui_QuestDlg
 from configparser import ConfigParser
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QHeaderView
 
@@ -89,7 +89,7 @@ def main():
   # # Set up triggers that need specific data
   win.ui.actionAbout.triggered.connect(lambda: Gui_MainWindow.onAbout(win, ver_current, project_url))
   win.ui.actionUpdateCheck.triggered.connect(lambda: Gui_MainWindow.onUpdateWindow(win, ver_current, ver_latest, project_url, update_text))
-  win.ui.actionQuest_Builder.triggered.connect(lambda: Gui_QuestDlg.onUpdateWindow(win))
+  win.ui.actionQuest_Builder.triggered.connect(lambda: Gui_MainWindow.onQuestWindow(win))
 
   win.show()
   # Run the application's main loop

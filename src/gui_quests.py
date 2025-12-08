@@ -170,7 +170,7 @@ class Ui_QuestWindow(object):
 
     def retranslateUi(self, QuestWindow):
         _translate = QtCore.QCoreApplication.translate
-        QuestWindow.setWindowTitle(_translate("QuestWindow", "MainWindow"))
+        QuestWindow.setWindowTitle(_translate("QuestWindow", "Quest Builder"))
         self.label_4.setText(_translate("QuestWindow", "Quest Type Label"))
         self.label_5.setText(_translate("QuestWindow", "Trader"))
         self.label_11.setText(_translate("QuestWindow", "Secret Quest"))

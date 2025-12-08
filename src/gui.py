@@ -35,9 +35,9 @@ class Gui_MainWindow(QMainWindow):
     dlg = Gui_UpdatesDlg()
     dlg.updateVersion(ver_current, ver_latest, url_text, update_text)
     dlg.exec()
+
   def onQuestWindow(self):
-     dlg=GUI_QuestDlg()
-     dlg.exec()
+     dlg = Gui_QuestDlg(parent=self)
 
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
@@ -65,13 +65,13 @@ class Gui_UpdatesDlg(QDialog):
       text = re.sub('SRC_URL', url_text, text)
       self.ui.label.setText(QtCore.QCoreApplication.translate("UpdateMenu", text))
 
-class Gui_QuestDlg(QDialog):
+class Gui_QuestDlg(QMainWindow):
   def __init__(self, parent=None):
     super().__init__(parent)
     self.ui = Ui_QuestWindow()
     self.ui.setupUi(self)
-    
-  def onUpdateWindow(self):
-    dlg = Gui_UpdatesDlg()
-    dlg.exec()
+    self.on_launch() # Custom code in this one
+    self.show()
   
+  def on_launch():
+     pass
