@@ -14,6 +14,7 @@ from gui_about import Ui_AboutMenu
 from gui_main import Ui_MainGUI
 from gui_updates import Ui_UpdateMenu
 from gui_quests import Ui_QuestWindow
+from gui_tasks import Ui_TaskWindow
 
 class Gui_MainWindow(QMainWindow):
   def __init__(self, parent=None):
@@ -69,6 +70,18 @@ class Gui_QuestDlg(QMainWindow):
   def __init__(self, parent=None):
     super().__init__(parent)
     self.ui = Ui_QuestWindow()
+    self.ui.setupUi(self)
+    self.on_launch() # Custom code in this one
+    self.show()
+  
+  def on_launch(self):
+     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
+     pass
+  
+class Gui_TaskDlg(QMainWindow):
+  def __init__(self, parent=None):
+    super().__init__(parent)
+    self.ui = Ui_TaskWindow()
     self.ui.setupUi(self)
     self.on_launch() # Custom code in this one
     self.show()
