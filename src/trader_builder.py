@@ -28,6 +28,27 @@ class Controller:
     version_file                          = str(parser.get('filepaths', "version_file"))
     version_url                           = str(parser.get('filepaths', 'version_url'))
     project_url                           = str(parser.get('filepaths', 'project_url'))
+    qb_box_avail_faction                  = str(parser.get('box_fields', 'qb_box_avail_faction')).split(',')
+    qb_box_quest_type_label               = str(parser.get('box_fields', 'qb_box_quest_type_label')).split(',')
+    qb_box_trader                         = str(parser.get('box_fields', 'qb_box_trader')).split(',')
+    qb_box_location                       = str(parser.get('box_fields', 'qb_box_location')).split(',')
+    qb_box_can_show_notif                 = str(parser.get('box_fields', 'qb_box_can_show_notif')).split(',')
+    qb_box_insta_complete                 = str(parser.get('box_fields', 'qb_box_insta_complete')).split(',')
+    qb_box_restartable                    = str(parser.get('box_fields', 'qb_box_restartable')).split(',')
+    qb_box_secret_quest                   = str(parser.get('box_fields', 'qb_box_secret_quest')).split(',')
+    qb_box_reward                         = str(parser.get('box_fields', 'qb_box_reward')).split(',')
+    qb_box_status                         = str(parser.get('box_fields', 'qb_box_status')).split(',')
+    qb_box_traderid                       = str(parser.get('box_fields', 'qb_box_traderid')).split(',')
+    qb_box_fir                            = str(parser.get('box_fields', 'qb_box_fir')).split(',')
+    tb_elim_box_target                    = str(parser.get('box_fields', 'tb_elim_box_target')).split(',')
+    tb_elim_box_targetrole                = str(parser.get('box_fields', 'tb_elim_box_targetrole')).split(',')
+    tb_elim_box_bodypart                  = str(parser.get('box_fields', 'tb_elim_box_bodypart')).split(',')
+    tb_elim_box_dist_compare              = str(parser.get('box_fields', 'tb_elim_box_dist_compare')).split(',')
+    tb_elim_box_weapons                   = str(parser.get('box_fields', 'tb_elim_box_weapons')).split(',')
+    tb_handover_box_cond_type             = str(parser.get('box_fields', 'tb_handover_box_cond_type')).split(',')
+    tb_handover_box_only_fir              = str(parser.get('box_fields', 'tb_handover_box_only_fir')).split(',')
+    tb_visitzone_box_one_session          = str(parser.get('box_fields', 'tb_visitzone_box_one_session')).split(',')
+    tb_leaveitem_box_fir                  = str(parser.get('box_fields', 'tb_leaveitem_box_fir')).split(',')
 
   except Exception as e:
     print(f"Error loading settings.ini file. Please check the exception below and the corresponding entry in the settings file.\nMost likely, the format for your entry is off. Check the top of settings.ini for more info.\n\n{traceback.format_exc()}")
@@ -82,8 +103,10 @@ def main():
     fix_win_taskbar()
 
   # Create the application and main window
+  controller = Controller()
   app = QApplication(sys.argv)
   win = Gui_MainWindow()
+  win.controller = controller
   ver_current, ver_latest, update_text, project_url = Controller.get_update_stats()
 
   # # Set up triggers that need specific data

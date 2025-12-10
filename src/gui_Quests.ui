@@ -27,24 +27,33 @@
      </rect>
     </property>
     <layout class="QGridLayout" name="grd_fields_1">
-     <item row="2" column="0">
-      <widget class="QLabel" name="lb_quest_type_label">
-       <property name="text">
-        <string>Quest Type Label</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="lb_trader">
-       <property name="text">
-        <string>Trader</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="lb_secret_quest">
        <property name="text">
         <string>Secret Quest</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QComboBox" name="box_secret_quest"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="lb_questname">
+       <property name="text">
+        <string>Quest Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="fld_quest_name"/>
+     </item>
+     <item row="8" column="1">
+      <widget class="QComboBox" name="box_insta_complete"/>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="lb_insta_complete">
+       <property name="text">
+        <string>Insta-complete</string>
        </property>
       </widget>
      </item>
@@ -55,17 +64,50 @@
        </property>
       </widget>
      </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="fld_image_name"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="lb_location">
+       <property name="text">
+        <string>Location</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="box_avail_faction"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="lb_trader">
+       <property name="text">
+        <string>Trader</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="lb_quest_type_label">
+       <property name="text">
+        <string>Quest Type Label</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="box_quest_type_label"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="lb_imagename">
+       <property name="text">
+        <string>Image Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="box_location"/>
+     </item>
      <item row="7" column="0">
       <widget class="QLabel" name="lb_can_show_notif">
        <property name="text">
         <string>canShowNotificationsInGame</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="0">
-      <widget class="QLabel" name="lb_insta_complete">
-       <property name="text">
-        <string>Insta-complete</string>
        </property>
       </widget>
      </item>
@@ -76,61 +118,29 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="lb_location">
-       <property name="text">
-        <string>Location</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="lb_imagename">
-       <property name="text">
-        <string>Image Name</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="lb_questname">
-       <property name="text">
-        <string>Quest Name</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="1">
-      <widget class="QComboBox" name="box_secret_quest"/>
-     </item>
-     <item row="8" column="1">
-      <widget class="QComboBox" name="box_insta_complete"/>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="box_trader"/>
      </item>
      <item row="7" column="1">
       <widget class="QComboBox" name="box_can_show_notif"/>
      </item>
-     <item row="1" column="1">
-      <widget class="QComboBox" name="box_avail_faction"/>
+     <item row="9" column="0">
+      <widget class="QLabel" name="lb_restartable">
+       <property name="text">
+        <string>Restartable</string>
+       </property>
+      </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="box_trader"/>
-     </item>
-     <item row="2" column="1">
-      <widget class="QComboBox" name="box_quest_type_label"/>
-     </item>
-     <item row="4" column="1">
-      <widget class="QComboBox" name="box_location"/>
-     </item>
-     <item row="5" column="1">
-      <widget class="QLineEdit" name="fld_image_name"/>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="fld_quest_name"/>
+     <item row="9" column="1">
+      <widget class="QComboBox" name="box_restartable"/>
      </item>
     </layout>
    </widget>
    <widget class="QWidget" name="gridLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>370</y>
+      <x>360</x>
+      <y>10</y>
       <width>321</width>
       <height>271</height>
      </rect>
@@ -211,57 +221,86 @@
    <widget class="QWidget" name="gridLayoutWidget_3">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>539</y>
+      <x>10</x>
+      <y>380</y>
       <width>321</width>
-      <height>101</height>
+      <height>51</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="grd_fields_3">
-     <item row="0" column="0">
-      <widget class="QLabel" name="lb_condition">
+     <item row="0" column="2">
+      <widget class="QPushButton" name="pb_rem_task">
        <property name="text">
-        <string>Condition Type</string>
+        <string>Remove Selected Task</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="box_condition"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="pb_remove_task">
-       <property name="text">
-        <string>Remove Task</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
+     <item row="0" column="3">
       <widget class="QPushButton" name="pb_add_task">
        <property name="text">
-        <string>Add Task</string>
+        <string>Add Task (launch menu)</string>
        </property>
       </widget>
      </item>
     </layout>
    </widget>
-   <widget class="QListWidget" name="list_1">
+   <widget class="QListWidget" name="list_tasks">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>380</y>
+      <y>440</y>
       <width>321</width>
       <height>151</height>
      </rect>
     </property>
    </widget>
-   <widget class="QListWidget" name="list_2">
+   <widget class="QListWidget" name="list_rewards">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>10</y>
+      <x>350</x>
+      <y>440</y>
       <width>321</width>
-      <height>351</height>
+      <height>151</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_4">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>380</y>
+      <width>321</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="grd_fields_4">
+     <item row="0" column="2">
+      <widget class="QPushButton" name="pb_remove_reward">
+       <property name="text">
+        <string>Remove Selected Reward</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="pb_add_reward">
+       <property name="text">
+        <string>Add Reward</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QPushButton" name="pb_finalize_quest">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>610</y>
+      <width>101</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Finalize Quest</string>
     </property>
    </widget>
   </widget>
