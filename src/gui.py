@@ -81,15 +81,6 @@ class Gui_QuestDlg(QMainWindow):
     self.parent = parent
     self.on_launch() # Custom code in this one
     self.show()
-
-class Gui_AssortDlg(QMainWindow):
-  def __init__(self, parent=None,):
-    super().__init__(parent)
-    self.ui = Ui_AssortBuilder()
-    self.ui.setupUi(self)
-    self.parent = parent
-    self.show()
-  
   def on_launch(self):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
     self.setup_box_selections()
@@ -107,6 +98,16 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.box_status.addItems(self.parent.controller.qb_box_status)
     self.ui.box_traderid.addItems(self.parent.controller.qb_box_traderid)
     self.ui.box_fir.addItems(self.parent.controller.qb_box_fir)
+class Gui_AssortDlg(QMainWindow):
+  def __init__(self, parent=None,):
+    super().__init__(parent)
+    self.ui = Ui_AssortBuilder()
+    self.ui.setupUi(self)
+    self.parent = parent
+    self.show()
+  
+  def on_launch(self):
+    pass
   
 class Gui_TaskDlg(QMainWindow):
   def __init__(self, parent=None):
