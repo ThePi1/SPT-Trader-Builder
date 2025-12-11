@@ -15,6 +15,7 @@ from gui_main import Ui_MainGUI
 from gui_updates import Ui_UpdateMenu
 from gui_quests import Ui_QuestWindow
 from gui_tasks import Ui_TaskWindow
+from gui_assort import Ui_AssortBuilder
 
 class Gui_MainWindow(QMainWindow):
   def __init__(self, parent=None):
@@ -40,6 +41,9 @@ class Gui_MainWindow(QMainWindow):
 
   def onQuestWindow(self):
      dlg = Gui_QuestDlg(parent=self)
+  
+  def onAssortWindow(self):
+     dlg = Gui_AssortDlg(parent=self)
 
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
@@ -76,6 +80,14 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.setupUi(self)
     self.parent = parent
     self.on_launch() # Custom code in this one
+    self.show()
+
+class Gui_AssortDlg(QMainWindow):
+  def __init__(self, parent=None,):
+    super().__init__(parent)
+    self.ui = Ui_AssortBuilder()
+    self.ui.setupUi(self)
+    self.parent = parent
     self.show()
   
   def on_launch(self):
