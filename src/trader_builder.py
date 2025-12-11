@@ -49,6 +49,7 @@ class Controller:
     tb_handover_box_only_fir              = str(parser.get('box_fields', 'tb_handover_box_only_fir')).split(',')
     tb_visitzone_box_one_session          = str(parser.get('box_fields', 'tb_visitzone_box_one_session')).split(',')
     tb_leaveitem_box_fir                  = str(parser.get('box_fields', 'tb_leaveitem_box_fir')).split(',')
+    ab_box_loyalty_level                  = str(parser.get('box_fields', 'ab_box_loyalty_level')).split(',')
 
   except Exception as e:
     print(f"Error loading settings.ini file. Please check the exception below and the corresponding entry in the settings file.\nMost likely, the format for your entry is off. Check the top of settings.ini for more info.\n\n{traceback.format_exc()}")

@@ -41,10 +41,10 @@
     </property>
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="2">
-      <widget class="QLineEdit" name="lineEdit_2"/>
+      <widget class="QLineEdit" name="ab_Item_Id"/>
      </item>
      <item row="1" column="2">
-      <widget class="QLineEdit" name="lineEdit_3"/>
+      <widget class="QLineEdit" name="ab_cost_edit"/>
      </item>
      <item row="5" column="1">
       <widget class="QLabel" name="label_3">
@@ -61,27 +61,24 @@
       </widget>
      </item>
      <item row="7" column="1">
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="ab_add_item">
        <property name="text">
         <string>Add Item</string>
        </property>
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QRadioButton" name="radioButton_3">
+      <widget class="QRadioButton" name="ab_usd_button">
        <property name="text">
         <string>USD</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="2">
-      <widget class="QLineEdit" name="lineEdit_4"/>
-     </item>
      <item row="6" column="2">
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="ab_quest_id"/>
      </item>
      <item row="8" column="1">
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="ab_remove_item">
        <property name="text">
         <string>Remove Item</string>
        </property>
@@ -95,25 +92,28 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QRadioButton" name="radioButton_2">
+      <widget class="QRadioButton" name="ab_rouble_button">
        <property name="text">
         <string>Rouble</string>
        </property>
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QRadioButton" name="radioButton_4">
+      <widget class="QRadioButton" name="ab_euro_button">
        <property name="text">
         <string>Euro</string>
        </property>
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="ab_quest_check">
        <property name="text">
         <string>Quest Locked? ID:</string>
        </property>
       </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QComboBox" name="ab_loyalty_combo"/>
      </item>
     </layout>
    </widget>
