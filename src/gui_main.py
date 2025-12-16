@@ -72,7 +72,6 @@ class Ui_MainGUI(object):
         self.menuHelp.addAction(self.actionAbout)
         self.menuHelp.addAction(self.actionUpdateCheck)
         self.menuFile.addAction(self.actionQuest_Builder)
-        self.menuFile.addAction(self.actionLocale_Builder)
         self.menuFile.addAction(self.actionAssort_Builder)
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())

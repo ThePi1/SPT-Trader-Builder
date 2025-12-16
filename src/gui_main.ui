@@ -103,7 +103,6 @@
      <string>File</string>
     </property>
     <addaction name="actionQuest_Builder"/>
-    <addaction name="actionLocale_Builder"/>
     <addaction name="actionAssort_Builder"/>
     <addaction name="actionExit"/>
    </widget>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>708</width>
-    <height>694</height>
+    <width>681</width>
+    <height>690</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -139,7 +139,7 @@
    <widget class="QWidget" name="gridLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>350</x>
       <y>10</y>
       <width>321</width>
       <height>271</height>
@@ -258,7 +258,7 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>440</y>
+      <y>490</y>
       <width>321</width>
       <height>151</height>
      </rect>
@@ -268,7 +268,7 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>380</y>
+      <y>430</y>
       <width>321</width>
       <height>51</height>
      </rect>
@@ -303,13 +303,36 @@
      <string>Finalize Quest</string>
     </property>
    </widget>
+   <widget class="QPlainTextEdit" name="qb_locale_box">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>310</y>
+      <width>321</width>
+      <height>111</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>290</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Enter Quest Locale:</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>708</width>
+     <width>681</width>
      <height>22</height>
     </rect>
    </property>

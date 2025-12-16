@@ -85,6 +85,7 @@ class Gui_QuestDlg(QMainWindow):
   def on_launch(self):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
     self.setup_box_selections()
+    self.setup_text_edit()
 
   def setup_box_selections(self):
     self.ui.box_avail_faction.addItems(self.parent.controller.qb_box_avail_faction)
@@ -99,6 +100,9 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.box_status.addItems(self.parent.controller.qb_box_status)
     self.ui.box_traderid.addItems(self.parent.controller.qb_box_traderid)
     self.ui.box_fir.addItems(self.parent.controller.qb_box_fir)
+  
+  def setup_text_edit(self):
+    self.ui.qb_locale_box.setPlainText(self.parent.controller.qb_locale_box)
 
 class Gui_AssortDlg(QMainWindow):
   def __init__(self, parent=None,):
@@ -126,6 +130,7 @@ class Gui_TaskDlg(QMainWindow):
   
   def on_launch(self):
      self.setup_box_selections()
+     self.setup_text_edit()
 
   def setup_box_selections(self):
     self.ui.box_target.addItems(self.parent.parent.controller.tb_elim_box_target)
@@ -137,3 +142,20 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_only_fir.addItems(self.parent.parent.controller.tb_handover_box_only_fir)
     self.ui.box_one_session.addItems(self.parent.parent.controller.tb_visitzone_box_one_session)
     self.ui.box_fir.addItems(self.parent.parent.controller.tb_leaveitem_box_fir)
+    self.ui.traderloyalty_compare_box.addItems(self.parent.parent.controller.tb_traderloyalty_compare_box)
+    self.ui.traderloyalt_target_box.addItems(self.parent.parent.controller.tb_traderloyalt_target_box)
+    self.ui.traderloyalty_level.addItems(self.parent.parent.controller.tb_traderloyalty_level)
+    self.ui.skillreq_compare_box.addItems(self.parent.parent.controller.tb_skillreq_compare_box)
+    self.ui.skillreq_target_box.addItems(self.parent.parent.controller.tb_skillreq_target_box)
+    self.ui.exitstatus_status_box.addItems(self.parent.parent.controller.tb_exitstatus_status_box)
+    self.ui.exitstatus_name_box.addItems(self.parent.parent.controller.tb_exitstatus_name_box)
+
+  def setup_text_edit(self):
+    self.ui.elim_locale_box.setPlainText(self.parent.parent.controller.tb_elim_locale_box)
+    self.ui.handover_locale_box.setPlainText(self.parent.parent.controller.tb_handover_locale_box)
+    self.ui.visitzone_locale_box.setPlainText(self.parent.parent.controller.tb_visitzone_locale_box)
+    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.tb_leaveitem_locale_box)
+    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.tb_leaveitem_locale_box)
+    self.ui.traderloyalty_locale_box.setPlainText(self.parent.parent.controller.tb_traderloyalty_locale_box)
+    self.ui.skillreq_locale_box.setPlainText(self.parent.parent.controller.tb_exitstatus_locale_box)
+    self.ui.exitstatus_locale_box.setPlainText(self.parent.parent.controller.tb_skillreq_locale_box)
