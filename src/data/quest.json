@@ -1,0 +1,36 @@
+{
+    "694c16e95f60207489617aca": {
+        "QuestName": "asd",
+        "_id": "694c16e95f60207489617aca",
+        "acceptPlayerMessage": "694c16e95f60207489617aca acceptPlayerMessage",
+        "canShowNotificationsInGame": "true",
+        "changeQuestMessageText": "694c16e95f60207489617aca changeQuestMessageText",
+        "completePlayerMessage": "694c16e95f60207489617aca completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "694c16e95f60207489617aca declinePlayerMessage",
+        "description": "694c16e95f60207489617aca description",
+        "failMessageText": "694c16e95f60207489617aca failMessageText",
+        "image": "/files/quest/icon/ddd.png",
+        "instantComplete": "false",
+        "isKey": "false",
+        "location": "any",
+        "name": "694c16e95f60207489617aca name",
+        "note": "694c16e95f60207489617aca note",
+        "restartable": "false",
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": []
+        },
+        "secretQuest": "false",
+        "side": "pmc",
+        "startedMessageText": "694c16e95f60207489617aca startedMessageText",
+        "successMessageText": "694c16e95f60207489617aca successMessageText",
+        "traderId": "54cb50c76803fa8b248b4571",
+        "type": "PickUp"
+    }
+}

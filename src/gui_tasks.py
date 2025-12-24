@@ -394,7 +394,7 @@ class Ui_TaskWindow(object):
         TaskWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(TaskWindow)
-        self.tabWidget.setCurrentIndex(4)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(TaskWindow)
 
     def retranslateUi(self, TaskWindow):

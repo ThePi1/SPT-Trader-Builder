@@ -1,10 +1,8 @@
 import sys
 import re
-import random
-import csv
-import os
-import glob
-from datetime import datetime
+import json
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import Qt, QRunnable
@@ -25,11 +23,39 @@ class Gui_MainWindow(QMainWindow):
     self.controller = None
     self.parent = parent
     self.ui.actionExit.triggered.connect(self.onExit)
+    self.ui.actionView_Queued_Quests.triggered.connect(self.onViewQuests)
+    self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
+    self.ui.actionAdd_queued_to_open_list.triggered.connect(self.addOpenQuestsToList)
+    self.traders = self.importJson("data\\traders.json")
+    self.weapons = self.importJson("data\weapons.json")
+    self.quests = {}
+
+  def importJson(self, path):
+    with open(path, "r") as f:
+      out = json.load(f)
+      return out
+  
+  def addOpenQuestsToList(self):
+    select = self.ui.questList.selectedItems()
+    print(select[0].text())
 
   def onAbout(self, ver_current, url_text):
     dlg = Gui_AboutDlg(self)
     dlg.updateAbout(ver_current, url_text)
     dlg.exec()
+
+  def popup(self, message):
+    dlg = Gui_AboutDlg(self)
+    text = dlg.ui.label.text()
+    text = message
+    dlg.ui.label.setText(QtCore.QCoreApplication.translate("AboutMenu", text))
+    dlg.exec()
+
+  def onViewQuests(self):
+    self.popup(message=f"The following quests are queued for export: {[q['QuestName'] for q in self.quests.values()]}")
+
+  def onExportQuests(self):
+    self.exportAll(self.quests)
 
   def onExit(self):
     sys.exit(0)
@@ -45,6 +71,19 @@ class Gui_MainWindow(QMainWindow):
   def onAssortWindow(self):
      dlg = Gui_AssortDlg(parent=self)
 
+  def exportAll(self, quest):
+    exportFile = 'data\quest.json'
+    with open(exportFile, 'w') as f:
+      try:
+        out = json.dumps(quest, indent=4).strip('[]\n')
+        f.write(out)
+        f.close()
+        self.popup(message=f"The export has completed successfully and can be found at {exportFile}.")
+      except Exception as e:
+        print(f"Error: {e}")
+        self.popup(message=f"An error has occurred while exporting the final JSON file.")
+      finally:
+        f.close()
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -84,13 +123,14 @@ class Gui_QuestDlg(QMainWindow):
   
   def on_launch(self):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
+    self.ui.pb_finalize_quest.released.connect(self.finalize)
     self.setup_box_selections()
     self.setup_text_edit()
 
   def setup_box_selections(self):
     self.ui.box_avail_faction.addItems(self.parent.controller.qb_box_avail_faction)
     self.ui.box_quest_type_label.addItems(self.parent.controller.qb_box_quest_type_label)
-    self.ui.box_trader.addItems(self.parent.controller.qb_box_trader)
+    self.ui.box_trader.addItems(self.parent.traders.keys())
     self.ui.box_location.addItems(self.parent.controller.qb_box_location)
     self.ui.box_can_show_notif.addItems(self.parent.controller.qb_box_can_show_notif)
     self.ui.box_insta_complete.addItems(self.parent.controller.qb_box_insta_complete)
@@ -98,11 +138,55 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.box_secret_quest.addItems(self.parent.controller.qb_box_secret_quest)
     self.ui.box_reward.addItems(self.parent.controller.qb_box_reward)
     self.ui.box_status.addItems(self.parent.controller.qb_box_status)
-    self.ui.box_traderid.addItems(self.parent.controller.qb_box_traderid)
+    self.ui.box_traderid.addItems(self.parent.traders.keys())
     self.ui.box_fir.addItems(self.parent.controller.qb_box_fir)
   
   def setup_text_edit(self):
     self.ui.qb_locale_box.setPlainText(self.parent.controller.qb_locale_box)
+
+  def finalize(self):
+    quest_id = str(ObjectId())
+    quest = {
+      quest_id: {
+      "QuestName": self.ui.fld_quest_name.displayText(),
+      "_id": quest_id,
+      "acceptPlayerMessage": quest_id + " acceptPlayerMessage",
+      "canShowNotificationsInGame": self.ui.box_can_show_notif.currentText(),
+      "changeQuestMessageText": quest_id + " changeQuestMessageText",
+      "completePlayerMessage": quest_id + " completePlayerMessage",
+      "conditions":{
+        "AvailableForFinish":[],#add task lists
+        "AvailableForStart":[],
+        "Fail":[]
+      },
+      "declinePlayerMessage": quest_id + " declinePlayerMessage",
+      "description": quest_id + " description",
+      "failMessageText": quest_id + " failMessageText",
+      "image": "/files/quest/icon/" + self.ui.fld_image_name.displayText(),
+      "instantComplete": self.ui.box_insta_complete.currentText(),
+      "isKey": "false",
+      "location": self.ui.box_location.currentText(),
+      "name": quest_id + " name",
+      "note": quest_id + " note",
+      "restartable": self.ui.box_restartable.currentText(),
+      "rewards": {
+        "Fail": [],#add reward lists
+        "Started": [],
+        "Success": [],
+      },
+      "secretQuest": self.ui.box_secret_quest.currentText(),
+      "side": self.ui.box_avail_faction.currentText(),
+      "startedMessageText": quest_id + " startedMessageText",
+      "successMessageText": quest_id + " successMessageText",
+      "traderId": self.parent.traders[self.ui.box_traderid.currentText()],
+      "type": self.ui.box_quest_type_label.currentText()
+      }
+    }
+    
+    print(f"Added quest: {quest}")
+    self.parent.quests[quest_id] = quest[quest_id]
+    self.parent.ui.questList.addItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
+    self.close()
 
 class Gui_AssortDlg(QMainWindow):
   def __init__(self, parent=None,):
@@ -137,7 +221,7 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_targetrole.addItems(self.parent.parent.controller.tb_elim_box_targetrole)
     self.ui.box_bodypart.addItems(self.parent.parent.controller.tb_elim_box_bodypart)
     self.ui.box_dist_compare.addItems(self.parent.parent.controller.tb_elim_box_dist_compare)
-    self.ui.box_weapons.addItems(self.parent.parent.controller.tb_elim_box_weapons)
+    self.ui.box_weapons.addItems(self.parent.parent.weapons.keys())
     self.ui.box_cond_type.addItems(self.parent.parent.controller.tb_handover_box_cond_type)
     self.ui.box_only_fir.addItems(self.parent.parent.controller.tb_handover_box_only_fir)
     self.ui.box_one_session.addItems(self.parent.parent.controller.tb_visitzone_box_one_session)
