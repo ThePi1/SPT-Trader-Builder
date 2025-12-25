@@ -60,8 +60,7 @@ class Gui_MainWindow(QMainWindow):
     quest_text = select[0].text()
     quest_id = quest_text.split(" ")[-1]
     # remove the quest-to-be-edited from the lists; we will regenerate it later
-    quest = self.quests.pop(quest_id)
-    qlist.takeItem(qlist.currentRow())
+    quest = self.quests[quest_id]
     # create questbuilder window and load fields
     dlg = Gui_QuestDlg(parent=self)
     dlg.load_settings_from_dict(quest)
@@ -252,6 +251,14 @@ class Gui_QuestDlg(QMainWindow):
       }
     }
     print(f"Added quest: {quest}")
+    # may or may not be already in (if it was edited, it is)
+    if quest_id in self.parent.quests:
+      old_quest = self.parent.quests.pop(quest_id)
+    for i in range(self.parent.ui.questList.count()):
+      if str(quest_id) in self.parent.ui.questList.item(i).text():
+        self.parent.ui.questList.takeItem(i)
+        break
+
     self.parent.quests[quest_id] = quest[quest_id]
     self.parent.ui.questList.addItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
     self.close()
