@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import Qt, QRunnable
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QApplication, QDialog, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem
 
 from gui_about import Ui_AboutMenu
 from gui_main import Ui_MainGUI
@@ -23,9 +23,9 @@ class Gui_MainWindow(QMainWindow):
     self.controller = None
     self.parent = parent
     self.ui.actionExit.triggered.connect(self.onExit)
-    self.ui.actionView_Queued_Quests.triggered.connect(self.onViewQuests)
     self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
     self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
+    self.ui.actionImport_Quests.triggered.connect(self.importQuests)
     self.traders = self.importJson("data\\traders.json")
     # used for going back from ID to trader name for loading quest to edit
     self.traders_invert = {v:k for k,v in self.traders.items()}
@@ -37,6 +37,20 @@ class Gui_MainWindow(QMainWindow):
       out = json.load(f)
       return out
   
+  def importQuests(self):
+    filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
+    print(filename)
+    with open(filename, "r") as f:
+      try:
+        quests_import = json.load(f)
+      except Exception as e:
+        print(f"Error loading quest file: {e}")
+      print(quests_import)
+      for quest_id in quests_import.keys():
+        print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
+        self.quests[quest_id] = quests_import[quest_id]
+        self.ui.questList.addItem(f"{quests_import[quest_id]['QuestName']}, {quest_id}")
+
   def editSelectedQuest(self):
     qlist = self.ui.questList
     select = qlist.selectedItems()
@@ -64,9 +78,6 @@ class Gui_MainWindow(QMainWindow):
     dlg.ui.label.setText(QtCore.QCoreApplication.translate("AboutMenu", text))
     dlg.exec()
 
-  def onViewQuests(self):
-    self.popup(message=f"The following quests are queued for export: {[q['QuestName'] for q in self.quests.values()]}")
-
   def onExportQuests(self):
     self.exportAll(self.quests)
 
@@ -85,13 +96,13 @@ class Gui_MainWindow(QMainWindow):
      dlg = Gui_AssortDlg(parent=self)
 
   def exportAll(self, quest):
-    exportFile = 'data\quest.json'
-    with open(exportFile, 'w') as f:
+    filename, ok = QFileDialog.getSaveFileName(self, "Export Quest JSON")
+    with open(filename, 'w') as f:
       try:
         out = json.dumps(quest, indent=4).strip('[]\n')
         f.write(out)
         f.close()
-        self.popup(message=f"The export has completed successfully and can be found at {exportFile}.")
+        self.popup(message=f"The export has completed successfully and can be found at {filename}.")
       except Exception as e:
         print(f"Error: {e}")
         self.popup(message=f"An error has occurred while exporting the final JSON file.")
@@ -192,13 +203,13 @@ class Gui_QuestDlg(QMainWindow):
             pass
           case "fld":
             #print(f"Setting {k} to {v}, type field")
-            set_obj.setText(v)
+            set_obj.setText(str(v))
           case "box":
             #print(f"Setting {k} to {v}, type box")
-            set_obj.setCurrentText(v)
+            set_obj.setCurrentText(str(v))
           case "traderid":
             #print(f"Setting {k} to {v}, type traderid")
-            set_obj.setCurrentText(self.parent.traders_invert[v])
+            set_obj.setCurrentText(self.parent.traders_invert[str(v)])
       else:
         print(f"Skipping {k}")
 

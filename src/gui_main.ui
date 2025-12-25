@@ -153,8 +153,10 @@
     </property>
     <addaction name="actionQuest_Builder"/>
     <addaction name="actionAssort_Builder"/>
-    <addaction name="actionView_Queued_Quests"/>
+    <addaction name="separator"/>
+    <addaction name="actionImport_Quests"/>
     <addaction name="actionExport_Queued_Quests"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -215,7 +217,7 @@
   </action>
   <action name="actionExport_Queued_Quests">
    <property name="text">
-    <string>Export Queued Quests</string>
+    <string>Export Quests</string>
    </property>
   </action>
   <action name="actionView_Queued_Quests">
@@ -231,6 +233,11 @@
   <action name="actionAdd_queued_to_open_list">
    <property name="text">
     <string>Add queued to open list</string>
+   </property>
+  </action>
+  <action name="actionImport_Quests">
+   <property name="text">
+    <string>Import Quests</string>
    </property>
   </action>
  </widget>
