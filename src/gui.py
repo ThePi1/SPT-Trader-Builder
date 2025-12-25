@@ -25,8 +25,10 @@ class Gui_MainWindow(QMainWindow):
     self.ui.actionExit.triggered.connect(self.onExit)
     self.ui.actionView_Queued_Quests.triggered.connect(self.onViewQuests)
     self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
-    self.ui.actionAdd_queued_to_open_list.triggered.connect(self.addOpenQuestsToList)
+    self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
     self.traders = self.importJson("data\\traders.json")
+    # used for going back from ID to trader name for loading quest to edit
+    self.traders_invert = {v:k for k,v in self.traders.items()}
     self.weapons = self.importJson("data\weapons.json")
     self.quests = {}
 
@@ -35,9 +37,20 @@ class Gui_MainWindow(QMainWindow):
       out = json.load(f)
       return out
   
-  def addOpenQuestsToList(self):
-    select = self.ui.questList.selectedItems()
-    print(select[0].text())
+  def editSelectedQuest(self):
+    qlist = self.ui.questList
+    select = qlist.selectedItems()
+    # if no quest selected, just skip
+    if len(select) <= 0:
+      return
+    quest_text = select[0].text()
+    quest_id = quest_text.split(" ")[-1]
+    # remove the quest-to-be-edited from the lists; we will regenerate it later
+    quest = self.quests.pop(quest_id)
+    qlist.takeItem(qlist.currentRow())
+    # create questbuilder window and load fields
+    dlg = Gui_QuestDlg(parent=self)
+    dlg.load_settings_from_dict(quest)
 
   def onAbout(self, ver_current, url_text):
     dlg = Gui_AboutDlg(self)
@@ -126,6 +139,8 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.pb_finalize_quest.released.connect(self.finalize)
     self.setup_box_selections()
     self.setup_text_edit()
+    # can be edited later if needed
+    self.quest_id = str(ObjectId())
 
   def setup_box_selections(self):
     self.ui.box_avail_faction.addItems(self.parent.controller.qb_box_avail_faction)
@@ -144,8 +159,51 @@ class Gui_QuestDlg(QMainWindow):
   def setup_text_edit(self):
     self.ui.qb_locale_box.setPlainText(self.parent.controller.qb_locale_box)
 
+  def load_settings_from_dict(self, settings):
+    print(f"Loading settings from dict: {settings}")
+    quest_id = settings["_id"]
+    self.quest_id = quest_id
+    # first field is the JSON key
+    # tuple is (item reference to set, type of item reference (determines func to set))
+    field_map = {
+      "QuestName": (self.ui.fld_quest_name, "fld"),
+      "_id": (None, "skip"),
+      "canShowNotificationsInGame": (self.ui.box_can_show_notif, "box"),
+      # do conditions later
+      "conditions":(None, "skip"),
+      "image": (self.ui.fld_image_name, "fld"),
+      "instantComplete": (self.ui.box_insta_complete, "box"),
+      "location": (self.ui.box_location, "box"),
+      "restartable": (self.ui.box_restartable, "box"),
+      # do rewards later
+      "rewards": (None, "skip"),
+      "secretQuest": (self.ui.box_secret_quest, "box"),
+      "side": (self.ui.box_avail_faction, "box"),
+      "traderId": (self.ui.box_trader, "traderid"),
+      "type": (self.ui.box_quest_type_label, "box")
+    }
+    for k,v in settings.items():
+      if k in field_map:
+        set_obj = field_map[k][0]
+        set_type = field_map[k][1]
+        match set_type:
+          case "skip":
+            #print(f"Setting {k} to {v}, type skip")
+            pass
+          case "fld":
+            #print(f"Setting {k} to {v}, type field")
+            set_obj.setText(v)
+          case "box":
+            #print(f"Setting {k} to {v}, type box")
+            set_obj.setCurrentText(v)
+          case "traderid":
+            #print(f"Setting {k} to {v}, type traderid")
+            set_obj.setCurrentText(self.parent.traders_invert[v])
+      else:
+        print(f"Skipping {k}")
+
   def finalize(self):
-    quest_id = str(ObjectId())
+    quest_id = self.quest_id
     quest = {
       quest_id: {
       "QuestName": self.ui.fld_quest_name.displayText(),
@@ -162,7 +220,7 @@ class Gui_QuestDlg(QMainWindow):
       "declinePlayerMessage": quest_id + " declinePlayerMessage",
       "description": quest_id + " description",
       "failMessageText": quest_id + " failMessageText",
-      "image": "/files/quest/icon/" + self.ui.fld_image_name.displayText(),
+      "image": self.ui.fld_image_name.displayText(),
       "instantComplete": self.ui.box_insta_complete.currentText(),
       "isKey": "false",
       "location": self.ui.box_location.currentText(),
@@ -178,11 +236,10 @@ class Gui_QuestDlg(QMainWindow):
       "side": self.ui.box_avail_faction.currentText(),
       "startedMessageText": quest_id + " startedMessageText",
       "successMessageText": quest_id + " successMessageText",
-      "traderId": self.parent.traders[self.ui.box_traderid.currentText()],
+      "traderId": self.parent.traders[self.ui.box_trader.currentText()],
       "type": self.ui.box_quest_type_label.currentText()
       }
     }
-    
     print(f"Added quest: {quest}")
     self.parent.quests[quest_id] = quest[quest_id]
     self.parent.ui.questList.addItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")

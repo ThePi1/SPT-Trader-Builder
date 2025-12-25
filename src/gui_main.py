@@ -36,7 +36,7 @@ class Ui_MainGUI(object):
         self.tabWidget = QtWidgets.QTabWidget(parent=self.centralwidget)
         self.tabWidget.setGeometry(QtCore.QRect(0, 0, 681, 271))
         font = QtGui.QFont()
-        font.setFamily("Segoe UI Emoji")
+        font.setFamily("Segoe UI")
         self.tabWidget.setFont(font)
         self.tabWidget.setObjectName("tabWidget")
         self.questTab = QtWidgets.QWidget()

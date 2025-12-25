@@ -62,7 +62,7 @@
     </property>
     <property name="font">
      <font>
-      <family>Segoe UI Emoji</family>
+      <family>Segoe UI</family>
      </font>
     </property>
     <property name="currentIndex">
