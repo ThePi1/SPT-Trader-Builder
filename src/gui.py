@@ -1,14 +1,12 @@
 import sys
 import re
-import random
-import csv
-import os
-import glob
-from datetime import datetime
+import json
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import Qt, QRunnable
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QApplication, QDialog, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem
 
 from gui_about import Ui_AboutMenu
 from gui_main import Ui_MainGUI
@@ -25,11 +23,63 @@ class Gui_MainWindow(QMainWindow):
     self.controller = None
     self.parent = parent
     self.ui.actionExit.triggered.connect(self.onExit)
+    self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
+    self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
+    self.ui.actionImport_Quests.triggered.connect(self.importQuests)
+    self.traders = self.importJson("data\\traders.json")
+    # used for going back from ID to trader name for loading quest to edit
+    self.traders_invert = {v:k for k,v in self.traders.items()}
+    self.weapons = self.importJson("data\weapons.json")
+    self.quests = {}
+
+  def importJson(self, path):
+    with open(path, "r") as f:
+      out = json.load(f)
+      return out
+  
+  def importQuests(self):
+    filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
+    print(filename)
+    with open(filename, "r") as f:
+      try:
+        quests_import = json.load(f)
+      except Exception as e:
+        print(f"Error loading quest file: {e}")
+      print(quests_import)
+      for quest_id in quests_import.keys():
+        print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
+        self.quests[quest_id] = quests_import[quest_id]
+        self.ui.questList.addItem(f"{quests_import[quest_id]['QuestName']}, {quest_id}")
+
+  def editSelectedQuest(self):
+    qlist = self.ui.questList
+    select = qlist.selectedItems()
+    # if no quest selected, just skip
+    if len(select) <= 0:
+      return
+    quest_text = select[0].text()
+    quest_id = quest_text.split(" ")[-1]
+    # remove the quest-to-be-edited from the lists; we will regenerate it later
+    quest = self.quests.pop(quest_id)
+    qlist.takeItem(qlist.currentRow())
+    # create questbuilder window and load fields
+    dlg = Gui_QuestDlg(parent=self)
+    dlg.load_settings_from_dict(quest)
 
   def onAbout(self, ver_current, url_text):
     dlg = Gui_AboutDlg(self)
     dlg.updateAbout(ver_current, url_text)
     dlg.exec()
+
+  def popup(self, message):
+    dlg = Gui_AboutDlg(self)
+    text = dlg.ui.label.text()
+    text = message
+    dlg.ui.label.setText(QtCore.QCoreApplication.translate("AboutMenu", text))
+    dlg.exec()
+
+  def onExportQuests(self):
+    self.exportAll(self.quests)
 
   def onExit(self):
     sys.exit(0)
@@ -45,6 +95,19 @@ class Gui_MainWindow(QMainWindow):
   def onAssortWindow(self):
      dlg = Gui_AssortDlg(parent=self)
 
+  def exportAll(self, quest):
+    filename, ok = QFileDialog.getSaveFileName(self, "Export Quest JSON")
+    with open(filename, 'w') as f:
+      try:
+        out = json.dumps(quest, indent=4).strip('[]\n')
+        f.write(out)
+        f.close()
+        self.popup(message=f"The export has completed successfully and can be found at {filename}.")
+      except Exception as e:
+        print(f"Error: {e}")
+        self.popup(message=f"An error has occurred while exporting the final JSON file.")
+      finally:
+        f.close()
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -84,13 +147,16 @@ class Gui_QuestDlg(QMainWindow):
   
   def on_launch(self):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
+    self.ui.pb_finalize_quest.released.connect(self.finalize)
     self.setup_box_selections()
     self.setup_text_edit()
+    # can be edited later if needed
+    self.quest_id = str(ObjectId())
 
   def setup_box_selections(self):
     self.ui.box_avail_faction.addItems(self.parent.controller.qb_box_avail_faction)
     self.ui.box_quest_type_label.addItems(self.parent.controller.qb_box_quest_type_label)
-    self.ui.box_trader.addItems(self.parent.controller.qb_box_trader)
+    self.ui.box_trader.addItems(self.parent.traders.keys())
     self.ui.box_location.addItems(self.parent.controller.qb_box_location)
     self.ui.box_can_show_notif.addItems(self.parent.controller.qb_box_can_show_notif)
     self.ui.box_insta_complete.addItems(self.parent.controller.qb_box_insta_complete)
@@ -98,11 +164,97 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.box_secret_quest.addItems(self.parent.controller.qb_box_secret_quest)
     self.ui.box_reward.addItems(self.parent.controller.qb_box_reward)
     self.ui.box_status.addItems(self.parent.controller.qb_box_status)
-    self.ui.box_traderid.addItems(self.parent.controller.qb_box_traderid)
+    self.ui.box_traderid.addItems(self.parent.traders.keys())
     self.ui.box_fir.addItems(self.parent.controller.qb_box_fir)
   
   def setup_text_edit(self):
     self.ui.qb_locale_box.setPlainText(self.parent.controller.qb_locale_box)
+
+  def load_settings_from_dict(self, settings):
+    print(f"Loading settings from dict: {settings}")
+    quest_id = settings["_id"]
+    self.quest_id = quest_id
+    # first field is the JSON key
+    # tuple is (item reference to set, type of item reference (determines func to set))
+    field_map = {
+      "QuestName": (self.ui.fld_quest_name, "fld"),
+      "_id": (None, "skip"),
+      "canShowNotificationsInGame": (self.ui.box_can_show_notif, "box"),
+      # do conditions later
+      "conditions":(None, "skip"),
+      "image": (self.ui.fld_image_name, "fld"),
+      "instantComplete": (self.ui.box_insta_complete, "box"),
+      "location": (self.ui.box_location, "box"),
+      "restartable": (self.ui.box_restartable, "box"),
+      # do rewards later
+      "rewards": (None, "skip"),
+      "secretQuest": (self.ui.box_secret_quest, "box"),
+      "side": (self.ui.box_avail_faction, "box"),
+      "traderId": (self.ui.box_trader, "traderid"),
+      "type": (self.ui.box_quest_type_label, "box")
+    }
+    for k,v in settings.items():
+      if k in field_map:
+        set_obj = field_map[k][0]
+        set_type = field_map[k][1]
+        match set_type:
+          case "skip":
+            #print(f"Setting {k} to {v}, type skip")
+            pass
+          case "fld":
+            #print(f"Setting {k} to {v}, type field")
+            set_obj.setText(str(v))
+          case "box":
+            #print(f"Setting {k} to {v}, type box")
+            set_obj.setCurrentText(str(v))
+          case "traderid":
+            #print(f"Setting {k} to {v}, type traderid")
+            set_obj.setCurrentText(self.parent.traders_invert[str(v)])
+      else:
+        print(f"Skipping {k}")
+
+  def finalize(self):
+    quest_id = self.quest_id
+    quest = {
+      quest_id: {
+      "QuestName": self.ui.fld_quest_name.displayText(),
+      "_id": quest_id,
+      "acceptPlayerMessage": quest_id + " acceptPlayerMessage",
+      "canShowNotificationsInGame": self.ui.box_can_show_notif.currentText(),
+      "changeQuestMessageText": quest_id + " changeQuestMessageText",
+      "completePlayerMessage": quest_id + " completePlayerMessage",
+      "conditions":{
+        "AvailableForFinish":[],#add task lists
+        "AvailableForStart":[],
+        "Fail":[]
+      },
+      "declinePlayerMessage": quest_id + " declinePlayerMessage",
+      "description": quest_id + " description",
+      "failMessageText": quest_id + " failMessageText",
+      "image": self.ui.fld_image_name.displayText(),
+      "instantComplete": self.ui.box_insta_complete.currentText(),
+      "isKey": "false",
+      "location": self.ui.box_location.currentText(),
+      "name": quest_id + " name",
+      "note": quest_id + " note",
+      "restartable": self.ui.box_restartable.currentText(),
+      "rewards": {
+        "Fail": [],#add reward lists
+        "Started": [],
+        "Success": [],
+      },
+      "secretQuest": self.ui.box_secret_quest.currentText(),
+      "side": self.ui.box_avail_faction.currentText(),
+      "startedMessageText": quest_id + " startedMessageText",
+      "successMessageText": quest_id + " successMessageText",
+      "traderId": self.parent.traders[self.ui.box_trader.currentText()],
+      "type": self.ui.box_quest_type_label.currentText()
+      }
+    }
+    print(f"Added quest: {quest}")
+    self.parent.quests[quest_id] = quest[quest_id]
+    self.parent.ui.questList.addItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
+    self.close()
 
 class Gui_AssortDlg(QMainWindow):
   def __init__(self, parent=None,):
@@ -137,7 +289,7 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_targetrole.addItems(self.parent.parent.controller.tb_elim_box_targetrole)
     self.ui.box_bodypart.addItems(self.parent.parent.controller.tb_elim_box_bodypart)
     self.ui.box_dist_compare.addItems(self.parent.parent.controller.tb_elim_box_dist_compare)
-    self.ui.box_weapons.addItems(self.parent.parent.controller.tb_elim_box_weapons)
+    self.ui.box_weapons.addItems(self.parent.parent.weapons.keys())
     self.ui.box_cond_type.addItems(self.parent.parent.controller.tb_handover_box_cond_type)
     self.ui.box_only_fir.addItems(self.parent.parent.controller.tb_handover_box_only_fir)
     self.ui.box_one_session.addItems(self.parent.parent.controller.tb_visitzone_box_one_session)

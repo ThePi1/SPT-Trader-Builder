@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>668</width>
-    <height>295</height>
+    <width>686</width>
+    <height>316</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -51,18 +51,67 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <widget class="QLabel" name="label">
+   <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>0</y>
-      <width>521</width>
-      <height>161</height>
+      <width>681</width>
+      <height>271</height>
      </rect>
     </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Welcome to the SPT Trader Builder!&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Use the File menu options to get started.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Please back up any existing JSON files prior to loading or editing them.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;This tool is in beta and may cause corruption or unexpected issues.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <property name="font">
+     <font>
+      <family>Segoe UI</family>
+     </font>
     </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="questTab">
+     <attribute name="title">
+      <string>Quests</string>
+     </attribute>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>111</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Segoe UI</family>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Open Quests:</string>
+      </property>
+     </widget>
+     <widget class="QListWidget" name="questList">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>651</width>
+        <height>201</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Segoe UI</family>
+       </font>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="placeholderTab">
+     <attribute name="title">
+      <string>Placeholder</string>
+     </attribute>
+    </widget>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar">
@@ -75,7 +124,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>668</width>
+     <width>686</width>
      <height>22</height>
     </rect>
    </property>
@@ -104,11 +153,29 @@
     </property>
     <addaction name="actionQuest_Builder"/>
     <addaction name="actionAssort_Builder"/>
+    <addaction name="separator"/>
+    <addaction name="actionImport_Quests"/>
+    <addaction name="actionExport_Queued_Quests"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionEdit_Selected_Quest"/>
+   </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
+    <addaction name="actionAdd_queued_to_open_list"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuDebug"/>
   </widget>
   <action name="actionAbout">
    <property name="text">
@@ -146,6 +213,31 @@
   <action name="actionLocale_Builder">
    <property name="text">
     <string>Locale Builder</string>
+   </property>
+  </action>
+  <action name="actionExport_Queued_Quests">
+   <property name="text">
+    <string>Export Quests</string>
+   </property>
+  </action>
+  <action name="actionView_Queued_Quests">
+   <property name="text">
+    <string>View Queued Quests</string>
+   </property>
+  </action>
+  <action name="actionEdit_Selected_Quest">
+   <property name="text">
+    <string>Edit Selected Quest</string>
+   </property>
+  </action>
+  <action name="actionAdd_queued_to_open_list">
+   <property name="text">
+    <string>Add queued to open list</string>
+   </property>
+  </action>
+  <action name="actionImport_Quests">
+   <property name="text">
+    <string>Import Quests</string>
    </property>
   </action>
  </widget>
