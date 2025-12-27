@@ -170,22 +170,73 @@ class Gui_RewardDlg(QMainWindow):
           "id": reward_id,
           "index": 0,
           "items": [],# todo: add item list logic
-          "loyaltyLevel": self.ui.box_loyalty_asu.currentText(),
+          "loyaltyLevel": self.ui.box_loyalty_asu.cleanText(),
           "target": self.ui.fld_tid_asu.displayText(),
-          "traderId": self.ui.fld_traderid_asu.displayText(),
+          "traderId": self.parent.parent.traders[self.ui.box_trader_asu.currentText()],
           "type": "AssortmentUnlock",
           "unknown": self.ui.box_unknown_asu.currentText()
         }
       case "experience":
         reward_timing = self.ui.box_rewardtiming_exp.currentText()
+        reward = {
+          "availableInGameEditions": [],
+          "id": reward_id,
+          "index": 0,
+          "type": "Experience",
+          "unknown": self.ui.box_unknown_exp.currentText(),
+          "value": self.ui.box_amount_exp.displayText()
+        }
       case "item":
         reward_timing = self.ui.box_rewardtiming_item.currentText()
+        reward = {
+          "availableInGameEditions": [],
+          "findInRaid": self.ui.box_fir_item.currentText(),
+          "id": reward_id,
+          "index": 0,
+          "items": [], # todo: add item list logic
+          "target": self.ui.fld_tid_item.displayText(),
+          "type": "Item",
+          "unknown": self.ui.box_unknown_item.currentText(),
+          "value": self.ui.box_value_item.cleanText()
+        }
       case "skills":
         reward_timing = self.ui.box_rewardtiming_sk.currentText()
-      case "stashrows":
+        reward = {
+          "availableInGameEditions": [],
+          "id": reward_id,
+          "index": 0,
+          "target": self.ui.box_skill_sk.currentText(),
+          "type": "Skill",
+          "unknown": self.ui.box_unknown_sk.currentText(),
+          "value": self.ui.box_points_sk.cleanText()
+        }
+      case "stashrows": #stashrows cleantext
         reward_timing = self.ui.box_rewardtiming_sr.currentText()
+        reward = {
+          "availableInGameEditions": [],
+          "id": reward_id,
+          "index": 0,
+          "type": "StashRows",
+          "unknown": self.ui.box_unknown_sr.currentText(),
+          "value": self.ui.box_rows_sr.cleanText()
+        }
       case "traderstanding":
         reward_timing = self.ui.box_rewardtiming_ts.currentText()
+        reward = {
+          "availableInGameEditions": [],
+          "id": reward_id,
+          "index": 0,
+          "target": self.parent.parent.traders[self.ui.box_trader_ts.currentText()],
+          "type": "TraderStanding",
+          "unknown": self.ui.box_unknown_ts.currentText(),
+          "value": self.ui.box_loyalty_ts.cleanText()
+        }
+      
+    self.parent.rewards[reward_timing].append(reward)
+    self.parent.ui.list_rewards.addItem(f"{reward_type}, {reward_id}")
+    print(self.parent.rewards)
+    self.close()
+
 
   def setup_buttons(self):
     self.ui.pb_finalize_ach.released.connect(lambda: self.finalize("achievement"))
@@ -198,6 +249,8 @@ class Gui_RewardDlg(QMainWindow):
     pass
 
   def setup_box_selections(self):
+    self.ui.box_trader_asu.addItems(self.parent.parent.traders.keys())
+    self.ui.box_trader_ts.addItems(self.parent.parent.traders.keys())
     self.ui.box_unknown_exp.addItems(self.parent.parent.controller.default_tf)
     self.ui.box_rewardtiming_exp.addItems(self.parent.parent.controller.reward_timing)
     self.ui.box_fir_item.addItems(self.parent.parent.controller.default_tf)
@@ -233,6 +286,7 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
     self.ui.pb_finalize_quest.released.connect(self.finalize)
     self.ui.pb_add_reward.released.connect(lambda: Gui_RewardDlg(parent=self))
+    # self.ui.pb_edit_reward
     self.setup_box_selections()
     self.setup_text_edit()
     # can be edited later if needed
