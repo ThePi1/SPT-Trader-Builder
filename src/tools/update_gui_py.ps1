@@ -4,3 +4,4 @@ pyuic6 -o gui_updates.py gui_updates.ui
 pyuic6 -o gui_quests.py gui_quests.ui
 pyuic6 -o gui_tasks.py gui_tasks.ui
 pyuic6 -o gui_assort.py gui_assort.ui
+pyuic6 -o gui_rewards.py gui_rewards.ui

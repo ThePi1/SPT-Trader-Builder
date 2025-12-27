@@ -14,6 +14,7 @@ from gui_updates import Ui_UpdateMenu
 from gui_quests import Ui_QuestWindow
 from gui_tasks import Ui_TaskWindow
 from gui_assort import Ui_AssortBuilder
+from gui_rewards import Ui_rewardBuilder
 
 class Gui_MainWindow(QMainWindow):
   def __init__(self, parent=None):
@@ -45,7 +46,6 @@ class Gui_MainWindow(QMainWindow):
         quests_import = json.load(f)
       except Exception as e:
         print(f"Error loading quest file: {e}")
-      print(quests_import)
       for quest_id in quests_import.keys():
         print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
         self.quests[quest_id] = quests_import[quest_id]
@@ -58,6 +58,8 @@ class Gui_MainWindow(QMainWindow):
     if len(select) <= 0:
       return
     quest_text = select[0].text()
+
+    # hacky but easier than setting up a bunch of tables in qt6
     quest_id = quest_text.split(" ")[-1]
     # remove the quest-to-be-edited from the lists; we will regenerate it later
     quest = self.quests[quest_id]
@@ -135,18 +137,102 @@ class Gui_UpdatesDlg(QDialog):
       text = re.sub('SRC_URL', url_text, text)
       self.ui.label.setText(QtCore.QCoreApplication.translate("UpdateMenu", text))
 
-class Gui_QuestDlg(QMainWindow):
+class Gui_RewardDlg(QMainWindow):
   def __init__(self, parent=None, _controller=None):
     super().__init__(parent)
-    self.ui = Ui_QuestWindow()
+    self.ui = Ui_rewardBuilder()
     self.ui.setupUi(self)
     self.parent = parent
     self.on_launch() # Custom code in this one
     self.show()
   
   def on_launch(self):
+    self.setup_box_selections()
+    self.setup_buttons()
+
+  def finalize(self, reward_type):
+    reward_id = str(ObjectId())
+    match reward_type:
+      case "achievement":
+        reward_timing = self.ui.box_rewardtiming_ach.currentText()
+        reward = {
+          "availableInGameEditions": [],
+          "id": reward_id,
+          "index": 0,
+          "target": self.ui.fld_ach_id_ach.displayText(),
+          "type": "Achievement",
+          "unknown": self.ui.bx_unknown_ach.currentText()
+        }
+      case "assortunlock":
+        reward_timing = self.ui.box_rewardtiming_asu.currentText()
+        reward = {
+          "availableInGameEditions": [],
+          "id": reward_id,
+          "index": 0,
+          "items": [],# todo: add item list logic
+          "loyaltyLevel": self.ui.box_loyalty_asu.currentText(),
+          "target": self.ui.fld_tid_asu.displayText(),
+          "traderId": self.ui.fld_traderid_asu.displayText(),
+          "type": "AssortmentUnlock",
+          "unknown": self.ui.box_unknown_asu.currentText()
+        }
+      case "experience":
+        reward_timing = self.ui.box_rewardtiming_exp.currentText()
+      case "item":
+        reward_timing = self.ui.box_rewardtiming_item.currentText()
+      case "skills":
+        reward_timing = self.ui.box_rewardtiming_sk.currentText()
+      case "stashrows":
+        reward_timing = self.ui.box_rewardtiming_sr.currentText()
+      case "traderstanding":
+        reward_timing = self.ui.box_rewardtiming_ts.currentText()
+
+  def setup_buttons(self):
+    self.ui.pb_finalize_ach.released.connect(lambda: self.finalize("achievement"))
+    self.ui.pb_finalize_asu.released.connect(lambda: self.finalize("assortunlock"))
+    self.ui.pb_finalize_exp.released.connect(lambda: self.finalize("experience"))
+    self.ui.pb_finalize_item.released.connect(lambda: self.finalize("item"))
+    self.ui.pb_finalize_sk.released.connect(lambda: self.finalize("skills"))
+    self.ui.pb_finalize_sr.released.connect(lambda: self.finalize("stashrows"))
+    self.ui.pb_finalize_ts.released.connect(lambda: self.finalize("traderstanding"))
+    pass
+
+  def setup_box_selections(self):
+    self.ui.box_unknown_exp.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_rewardtiming_exp.addItems(self.parent.parent.controller.reward_timing)
+    self.ui.box_fir_item.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_item.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_rewardtiming_item.addItems(self.parent.parent.controller.reward_timing)
+    self.ui.box_unknown_asu.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_rewardtiming_asu.addItems(self.parent.parent.controller.reward_timing)
+    self.ui.box_unknown_ts.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_rewardtiming_ts.addItems(self.parent.parent.controller.reward_timing)
+    self.ui.box_skill_sk.addItems(self.parent.parent.controller.default_skills)
+    self.ui.box_unknown_sk.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_rewardtiming_sk.addItems(self.parent.parent.controller.reward_timing)
+    self.ui.box_rewardtiming_sr.addItems(self.parent.parent.controller.reward_timing)
+    self.ui.box_unknown_sr.addItems(self.parent.parent.controller.default_tf)
+    self.ui.bx_unknown_ach.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_rewardtiming_ach.addItems(self.parent.parent.controller.reward_timing)
+
+class Gui_QuestDlg(QMainWindow):
+  def __init__(self, parent=None, _controller=None):
+    super().__init__(parent)
+    self.ui = Ui_QuestWindow()
+    self.ui.setupUi(self)
+    self.parent = parent
+    self.rewards = {
+      "Fail": [],
+      "Started": [],
+      "Success": []
+    }
+    self.on_launch() # Custom code in this one
+    self.show()
+  
+  def on_launch(self):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
     self.ui.pb_finalize_quest.released.connect(self.finalize)
+    self.ui.pb_add_reward.released.connect(lambda: Gui_RewardDlg(parent=self))
     self.setup_box_selections()
     self.setup_text_edit()
     # can be edited later if needed
@@ -157,17 +243,13 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.box_quest_type_label.addItems(self.parent.controller.qb_box_quest_type_label)
     self.ui.box_trader.addItems(self.parent.traders.keys())
     self.ui.box_location.addItems(self.parent.controller.qb_box_location)
-    self.ui.box_can_show_notif.addItems(self.parent.controller.qb_box_can_show_notif)
-    self.ui.box_insta_complete.addItems(self.parent.controller.qb_box_insta_complete)
-    self.ui.box_restartable.addItems(self.parent.controller.qb_box_restartable)
-    self.ui.box_secret_quest.addItems(self.parent.controller.qb_box_secret_quest)
-    self.ui.box_reward.addItems(self.parent.controller.qb_box_reward)
-    self.ui.box_status.addItems(self.parent.controller.qb_box_status)
-    self.ui.box_traderid.addItems(self.parent.traders.keys())
-    self.ui.box_fir.addItems(self.parent.controller.qb_box_fir)
+    self.ui.box_can_show_notif.addItems(self.parent.controller.default_tf)
+    self.ui.box_insta_complete.addItems(self.parent.controller.default_ft)
+    self.ui.box_restartable.addItems(self.parent.controller.default_ft)
+    self.ui.box_secret_quest.addItems(self.parent.controller.default_ft)
   
   def setup_text_edit(self):
-    self.ui.qb_locale_box.setPlainText(self.parent.controller.qb_locale_box)
+    self.ui.qb_locale_box.setPlainText(self.parent.controller.default_locale)
 
   def load_settings_from_dict(self, settings):
     print(f"Loading settings from dict: {settings}")
@@ -298,23 +380,23 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_dist_compare.addItems(self.parent.parent.controller.tb_elim_box_dist_compare)
     self.ui.box_weapons.addItems(self.parent.parent.weapons.keys())
     self.ui.box_cond_type.addItems(self.parent.parent.controller.tb_handover_box_cond_type)
-    self.ui.box_only_fir.addItems(self.parent.parent.controller.tb_handover_box_only_fir)
-    self.ui.box_one_session.addItems(self.parent.parent.controller.tb_visitzone_box_one_session)
-    self.ui.box_fir.addItems(self.parent.parent.controller.tb_leaveitem_box_fir)
+    self.ui.box_only_fir.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_one_session.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_fir.addItems(self.parent.parent.controller.default_tf)
     self.ui.traderloyalty_compare_box.addItems(self.parent.parent.controller.tb_traderloyalty_compare_box)
     self.ui.traderloyalt_target_box.addItems(self.parent.parent.controller.tb_traderloyalt_target_box)
     self.ui.traderloyalty_level.addItems(self.parent.parent.controller.tb_traderloyalty_level)
     self.ui.skillreq_compare_box.addItems(self.parent.parent.controller.tb_skillreq_compare_box)
-    self.ui.skillreq_target_box.addItems(self.parent.parent.controller.tb_skillreq_target_box)
+    self.ui.skillreq_target_box.addItems(self.parent.parent.controller.default_skills)
     self.ui.exitstatus_status_box.addItems(self.parent.parent.controller.tb_exitstatus_status_box)
     self.ui.exitstatus_name_box.addItems(self.parent.parent.controller.tb_exitstatus_name_box)
 
   def setup_text_edit(self):
-    self.ui.elim_locale_box.setPlainText(self.parent.parent.controller.tb_elim_locale_box)
-    self.ui.handover_locale_box.setPlainText(self.parent.parent.controller.tb_handover_locale_box)
-    self.ui.visitzone_locale_box.setPlainText(self.parent.parent.controller.tb_visitzone_locale_box)
-    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.tb_leaveitem_locale_box)
-    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.tb_leaveitem_locale_box)
-    self.ui.traderloyalty_locale_box.setPlainText(self.parent.parent.controller.tb_traderloyalty_locale_box)
-    self.ui.skillreq_locale_box.setPlainText(self.parent.parent.controller.tb_exitstatus_locale_box)
-    self.ui.exitstatus_locale_box.setPlainText(self.parent.parent.controller.tb_skillreq_locale_box)
+    self.ui.elim_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.handover_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.visitzone_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.traderloyalty_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.skillreq_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.exitstatus_locale_box.setPlainText(self.parent.parent.controller.default_locale)
