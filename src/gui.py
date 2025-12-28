@@ -42,6 +42,7 @@ class Gui_MainWindow(QMainWindow):
     # used for going back from ID to trader name for loading quest to edit
     self.traders_invert = {v:k for k,v in self.traders.items()}
     self.weapons = self.importJson("data\weapons.json")
+    self.locations = self.importJson("data\locations.json")
     self.quests = {}
 
   def importJson(self, path):
@@ -215,7 +216,7 @@ class Gui_RewardDlg(QMainWindow):
         if self.ui.chk_soc_asu.isChecked() or self.ui.chk_fir_asu.isChecked():
           item["upd"] = {}
         if self.ui.chk_soc_asu.isChecked():
-          item["upd"]["StackObjectsCount"] = self.ui.box_soc_asu.cleanText()
+          item["upd"]["StackObjectsCount"] = int(self.ui.box_soc_asu.cleanText())
           has_soc = True
         if self.ui.chk_fir_asu.isChecked():
           item["upd"]["SpawnedInSession"] = self.ui.chk_fir_asu.isChecked()
@@ -285,7 +286,7 @@ class Gui_RewardDlg(QMainWindow):
           "id": self.id,
           "index": 0,
           "items": self.items_asu,
-          "loyaltyLevel": self.ui.box_loyalty_asu.cleanText(),
+          "loyaltyLevel": int(self.ui.box_loyalty_asu.cleanText()),
           "target": self.ui.fld_tid_asu.displayText(),
           "traderId": self.parent.parent.traders[self.ui.box_trader_asu.currentText()],
           "type": "AssortmentUnlock",
@@ -299,7 +300,7 @@ class Gui_RewardDlg(QMainWindow):
           "index": 0,
           "type": "Experience",
           "unknown": is_true(self.ui.box_unknown_exp.currentText()),
-          "value": self.ui.box_amount_exp.displayText()
+          "value": int(self.ui.box_amount_exp.displayText())
         }
       case "Item":
         reward_timing = self.ui.box_rewardtiming_item.currentText()
@@ -312,7 +313,7 @@ class Gui_RewardDlg(QMainWindow):
           "target": self.ui.fld_tid_item.displayText(),
           "type": "Item",
           "unknown": is_true(self.ui.box_unknown_item.currentText()),
-          "value": self.ui.box_value_item.cleanText()
+          "value": int(self.ui.box_value_item.cleanText())
         }
       case "Skill":
         reward_timing = self.ui.box_rewardtiming_sk.currentText()
@@ -323,7 +324,7 @@ class Gui_RewardDlg(QMainWindow):
           "target": self.ui.box_skill_sk.currentText(),
           "type": "Skill",
           "unknown": is_true(self.ui.box_unknown_sk.currentText()),
-          "value": self.ui.box_points_sk.cleanText()
+          "value": int(self.ui.box_points_sk.cleanText())
         }
       case "StashRows":
         reward_timing = self.ui.box_rewardtiming_sr.currentText()
@@ -333,7 +334,7 @@ class Gui_RewardDlg(QMainWindow):
           "index": 0,
           "type": "StashRows",
           "unknown": is_true(self.ui.box_unknown_sr.currentText()),
-          "value": self.ui.box_rows_sr.cleanText()
+          "value": int(self.ui.box_rows_sr.cleanText())
         }
       case "TraderStanding":
         reward_timing = self.ui.box_rewardtiming_ts.currentText()
@@ -344,7 +345,7 @@ class Gui_RewardDlg(QMainWindow):
           "target": self.parent.parent.traders[self.ui.box_trader_ts.currentText()],
           "type": "TraderStanding",
           "unknown": is_true(self.ui.box_unknown_ts.currentText()),
-          "value": self.ui.box_loyalty_ts.cleanText()
+          "value": float(self.ui.box_loyalty_ts.cleanText())
         }
       
       case "TraderUnlock":
@@ -406,16 +407,16 @@ class Gui_RewardDlg(QMainWindow):
           self.ui.box_rewardtiming_asu.setCurrentText(reward_timing)
           self.ui.tabWidget.setCurrentIndex(2)
           self.items_asu = copy.deepcopy(settings["items"])
-          for item in self.items_item:
+          for item in self.items_asu:
             has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
             has_pid = 'parentId' in item
             has_sid = 'slotId' in item
-            self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
+            self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
 
         case "Experience":
           self.ui.tabWidget.setCurrentIndex(0)
           self.ui.box_rewardtiming_exp.setCurrentText(reward_timing)
-          self.ui.box_amount_exp.setText(settings["value"])
+          self.ui.box_amount_exp.setText(str(settings["value"]))
           self.ui.box_unknown_exp.setCurrentText(unknown_or)
 
         case "Item":
@@ -637,13 +638,15 @@ class Gui_QuestDlg(QMainWindow):
       "QuestName": self.ui.fld_quest_name.displayText(),
       "_id": quest_id,
       "acceptPlayerMessage": quest_id + " acceptPlayerMessage",
+      "acceptanceAndFinishingSource": "eft",
+      "arenaLocations": [],
       "canShowNotificationsInGame": is_true(self.ui.box_can_show_notif.currentText()),
       "changeQuestMessageText": quest_id + " changeQuestMessageText",
       "completePlayerMessage": quest_id + " completePlayerMessage",
-      "conditions":{
-        "AvailableForFinish":[],#add task lists
-        "AvailableForStart":[],
-        "Fail":[]
+      "conditions": {
+        "AvailableForFinish": [],#add task lists
+        "AvailableForStart": [],
+        "Fail": []
       },
       "declinePlayerMessage": quest_id + " declinePlayerMessage",
       "description": quest_id + " description",
@@ -651,9 +654,11 @@ class Gui_QuestDlg(QMainWindow):
       "image": self.ui.fld_image_name.displayText(),
       "instantComplete": is_true(self.ui.box_insta_complete.currentText()),
       "isKey": False,
-      "location": self.ui.box_location.currentText(),
+      "location": self.parent.locations[self.ui.box_location.currentText()],
       "name": quest_id + " name",
       "note": quest_id + " note",
+      "progressSource": "eft",
+      "rankingModes": [],
       "restartable": is_true(self.ui.box_restartable.currentText()),
       "rewards": self.rewards,
       "secretQuest": is_true(self.ui.box_secret_quest.currentText()),
