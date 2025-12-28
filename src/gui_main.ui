@@ -164,6 +164,8 @@
      <string>Edit</string>
     </property>
     <addaction name="actionEdit_Selected_Quest"/>
+    <addaction name="separator"/>
+    <addaction name="actionRemove_Selected_Quest"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -238,6 +240,11 @@
   <action name="actionImport_Quests">
    <property name="text">
     <string>Import Quests</string>
+   </property>
+  </action>
+  <action name="actionRemove_Selected_Quest">
+   <property name="text">
+    <string>Remove Selected Quest</string>
    </property>
   </action>
  </widget>

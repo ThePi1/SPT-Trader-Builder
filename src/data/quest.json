@@ -1,35 +1,52 @@
 {
-    "694c16e95f60207489617aca": {
-        "QuestName": "asd",
-        "_id": "694c16e95f60207489617aca",
-        "acceptPlayerMessage": "694c16e95f60207489617aca acceptPlayerMessage",
+    "6950739d0ebe65a81ad6a71d": {
+        "QuestName": "Test 1",
+        "_id": "6950739d0ebe65a81ad6a71d",
+        "acceptPlayerMessage": "6950739d0ebe65a81ad6a71d acceptPlayerMessage",
         "canShowNotificationsInGame": "true",
-        "changeQuestMessageText": "694c16e95f60207489617aca changeQuestMessageText",
-        "completePlayerMessage": "694c16e95f60207489617aca completePlayerMessage",
+        "changeQuestMessageText": "6950739d0ebe65a81ad6a71d changeQuestMessageText",
+        "completePlayerMessage": "6950739d0ebe65a81ad6a71d completePlayerMessage",
         "conditions": {
             "AvailableForFinish": [],
             "AvailableForStart": [],
             "Fail": []
         },
-        "declinePlayerMessage": "694c16e95f60207489617aca declinePlayerMessage",
-        "description": "694c16e95f60207489617aca description",
-        "failMessageText": "694c16e95f60207489617aca failMessageText",
-        "image": "/files/quest/icon/ddd.png",
+        "declinePlayerMessage": "6950739d0ebe65a81ad6a71d declinePlayerMessage",
+        "description": "6950739d0ebe65a81ad6a71d description",
+        "failMessageText": "6950739d0ebe65a81ad6a71d failMessageText",
+        "image": "/files/quest/icon/quest.png",
         "instantComplete": "false",
         "isKey": "false",
         "location": "any",
-        "name": "694c16e95f60207489617aca name",
-        "note": "694c16e95f60207489617aca note",
+        "name": "6950739d0ebe65a81ad6a71d name",
+        "note": "6950739d0ebe65a81ad6a71d note",
         "restartable": "false",
         "rewards": {
             "Fail": [],
             "Started": [],
-            "Success": []
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "695073a20ebe65a81ad6a71e",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": "true",
+                    "value": "1233"
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "695073a90ebe65a81ad6a71f",
+                    "index": 0,
+                    "type": "StashRows",
+                    "unknown": "true",
+                    "value": "1"
+                }
+            ]
         },
         "secretQuest": "false",
         "side": "pmc",
-        "startedMessageText": "694c16e95f60207489617aca startedMessageText",
-        "successMessageText": "694c16e95f60207489617aca successMessageText",
+        "startedMessageText": "6950739d0ebe65a81ad6a71d startedMessageText",
+        "successMessageText": "6950739d0ebe65a81ad6a71d successMessageText",
         "traderId": "54cb50c76803fa8b248b4571",
         "type": "PickUp"
     }
