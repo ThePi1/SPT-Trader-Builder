@@ -50,6 +50,7 @@ class Controller:
     tb_exitstatus_status_box              = str(parser.get('box_fields', 'tb_exitstatus_status_box')).split(',')
     tb_exitstatus_name_box                = str(parser.get('box_fields', 'tb_exitstatus_name_box')).split(',')
     tb_skillreq_compare_box               = str(parser.get('box_fields', 'tb_skillreq_compare_box')).split(',')
+    
 
   except Exception as e:
     print(f"Error loading settings.ini file. Please check the exception below and the corresponding entry in the settings file.\nMost likely, the format for your entry is off. Check the top of settings.ini for more info.\n\n{traceback.format_exc()}")

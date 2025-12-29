@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import Qt, QRunnable
-from PyQt6.QtWidgets import QApplication, QDialog, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QApplication, QDialog, QHeaderView, QAbstractScrollArea, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem, QTableWidgetItem
 
 from gui_about import Ui_AboutMenu
 from gui_main import Ui_MainGUI
@@ -124,6 +124,7 @@ class Gui_MainWindow(QMainWindow):
   
   def onAssortWindow(self):
      dlg = Gui_AssortDlg(parent=self)
+     
 
   def exportAll(self, quest):
     filename, ok = QFileDialog.getSaveFileName(self, "Export Quest JSON")
@@ -688,14 +689,156 @@ class Gui_AssortDlg(QMainWindow):
     self.ui = Ui_AssortBuilder()
     self.ui.setupUi(self)
     self.parent = parent
+    self.ui.ab_add_item.released.connect(self.add_item)
     self.on_launch() #custom Code
     self.show()
+
+    table = self.ui.ab_table
+    header = self.ui.ab_table.horizontalHeader()
+
+    table.setColumnCount(6)
+    table.setHorizontalHeaderLabels(["Name","Quantity","Cost","Loyalty Level","Quest Locked?","Currency"])
+    table.setAlternatingRowColors(True)
+    table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+    table.resizeRowsToContents
+    table.adjustSize
+    header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+    # if self.ui.ab_unlimitedcount.isChecked() : 
+    #   self.ui.ab_quantity.clear()
+    #   self.ui.ab_quantity.setEnabled(False)
+
+    self.itemlist = []
+    self.barterlist = []
+    self.loyaltylist = []
+
 
   def on_launch(self):
      self.setup_box_selections()
 
   def setup_box_selections(self):
     self.ui.ab_loyalty_combo.addItems(self.parent.controller.ab_box_loyalty_level)
+    self.ui.ab_rouble_radiobutton.setChecked(True)
+    self.ui.ab_quest_check.setChecked(False)
+
+  def add_item(self):
+    
+    mongosaved = ObjectId
+    name = self.ui.ab_itemname.text()
+    unlimited = "true" if self.ui.ab_unlimitedcount.isChecked() else "false"
+    quantity = "Unlimited" if self.ui.ab_unlimitedcount.isChecked() else int(self.ui.ab_quantity.text() or 0)
+    loyatlylevel = self.ui.ab_loyalty_combo.currentText()
+    itemID = self.ui.ab_Item_Id
+    cost = self.ui.ab_cost_edit.text() or 0
+    questlocked = "Yes" if self.ui.ab_quest_check.isChecked() else "No"
+    questID = self.ui.ab_quest_id
+
+    #insert questCondition
+
+    cashtype = "Undefined" #set cashtype then check type and apply
+    if self.ui.ab_rouble_radiobutton.isChecked() :
+      cashtype = "Roubles"
+    elif self.ui.ab_usd_button.isChecked():
+      cashtype = "USD"
+    else :
+      cashtype = "Euros"
+
+    if self.ui.ab_unlimitedcount.isChecked():
+      item = {
+        "_id": mongosaved,
+            "_tpl": itemID,
+            "parentId": "hideout",
+            "slotId": "hideout",
+            "upd": {
+                "UnlimitedCount": unlimited,
+                "StackObjectsCount": 1
+            },
+            "unlockedOn": "",
+            "questID": ""
+      }
+    else:
+      item = {
+        "_id": mongosaved,
+            "_tpl": itemID,
+            "parentId": "hideout",
+            "slotId": "hideout",
+            "upd": {
+                "UnlimitedCount": unlimited,
+                "StackObjectsCount": self.ui.ab_quantity
+            },
+            "unlockedOn": "",
+            "questID": ""
+      }
+
+    if self.ui.ab_quest_check.isChecked():
+      item = {
+        "_id": mongosaved,
+            "_tpl": itemID,
+            "parentId": "hideout",
+            "slotId": "hideout",
+            "upd": {
+                "UnlimitedCount": unlimited,
+                "StackObjectsCount": self.ui.ab_quantity
+            },
+            "unlockedOn": "success",
+            "questID": questID
+      }
+    else:
+      item.pop("unlockedOn", None)
+      item.pop("questID", None)
+
+    match cashtype:
+      case "Roubles":
+        barter = {
+          mongosaved: [
+            [
+              {
+                  "_tpl": "5449016a4bdc2d6f028b456f",
+                  "count": cost
+              }
+            ]
+          ]
+        }
+      case "USD":
+        barter = {
+          mongosaved: [
+            [
+              {
+                  "_tpl": "5696686a4bdc2da3298b456a",
+                  "count": cost
+              }
+            ]
+          ]
+        }
+      case "Euros":
+        barter = {
+          mongosaved: [
+            [   
+              {
+                  "_tpl": "569668774bdc2da2298b4568",
+                  "count": cost
+              }
+            ]
+          ]
+        }
+
+    loyalty = {
+          mongosaved:loyatlylevel,
+    }
+
+
+
+    row = table.rowCount()
+    table.insertRow(row)
+    
+    table.setItem(row,0,QTableWidgetItem(name))
+    table.setItem(row,1,QTableWidgetItem(str(quantity)))
+    table.setItem(row,2,QTableWidgetItem(str(cost)))
+    table.setItem(row,3,QTableWidgetItem(loyatlylevel))
+    table.setItem(row,4,QTableWidgetItem(questlocked))
+    table.setItem(row,5,QTableWidgetItem(cashtype))
+
+
 
 class Gui_TaskDlg(QMainWindow):
   def __init__(self, parent=None):

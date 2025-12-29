@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>676</width>
-    <height>498</height>
+    <width>941</width>
+    <height>510</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,12 +20,12 @@
    <enum>QTabWidget::Rounded</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTableWidget" name="tableWidget">
+   <widget class="QTableWidget" name="ab_table">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>391</width>
+      <width>651</width>
       <height>441</height>
      </rect>
     </property>
@@ -33,87 +33,114 @@
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>410</x>
-      <y>0</y>
+      <x>670</x>
+      <y>10</y>
       <width>255</width>
       <height>451</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="2">
-      <widget class="QLineEdit" name="ab_Item_Id"/>
+     <item row="5" column="1">
+      <widget class="QRadioButton" name="ab_rouble_radiobutton">
+       <property name="text">
+        <string>Rouble</string>
+       </property>
+      </widget>
      </item>
-     <item row="1" column="2">
+     <item row="4" column="2">
       <widget class="QLineEdit" name="ab_cost_edit"/>
      </item>
-     <item row="5" column="1">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Loyalty Level:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Cost:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1">
+     <item row="10" column="1">
       <widget class="QPushButton" name="ab_add_item">
        <property name="text">
         <string>Add Item</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="0" column="1">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Name(unrelated to json)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="2">
+      <widget class="QLineEdit" name="ab_quest_id"/>
+     </item>
+     <item row="8" column="1">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Loyalty Level:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
       <widget class="QRadioButton" name="ab_usd_button">
        <property name="text">
         <string>USD</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="2">
-      <widget class="QLineEdit" name="ab_quest_id"/>
+     <item row="0" column="2">
+      <widget class="QLineEdit" name="ab_itemname"/>
      </item>
-     <item row="8" column="1">
+     <item row="3" column="2">
+      <widget class="QLineEdit" name="ab_quantity"/>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLineEdit" name="ab_Item_Id"/>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Cost:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
       <widget class="QPushButton" name="ab_remove_item">
        <property name="text">
         <string>Remove Item</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Item ID:</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QRadioButton" name="ab_rouble_button">
-       <property name="text">
-        <string>Rouble</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QRadioButton" name="ab_euro_button">
-       <property name="text">
-        <string>Euro</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
+     <item row="9" column="1">
       <widget class="QCheckBox" name="ab_quest_check">
        <property name="text">
         <string>Quest Locked? ID:</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="2">
+     <item row="7" column="1">
+      <widget class="QRadioButton" name="ab_euro_button">
+       <property name="text">
+        <string>Euro</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Quantity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="2">
       <widget class="QComboBox" name="ab_loyalty_combo"/>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="ab_unlimitedcount">
+       <property name="text">
+        <string>Unlimited Quantity</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -123,7 +150,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>676</width>
+     <width>941</width>
      <height>22</height>
     </rect>
    </property>
