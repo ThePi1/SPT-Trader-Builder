@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>941</width>
-    <height>510</height>
+    <width>961</width>
+    <height>595</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
       <x>10</x>
       <y>10</y>
       <width>651</width>
-      <height>441</height>
+      <height>531</height>
      </rect>
     </property>
    </widget>
@@ -36,7 +36,7 @@
       <x>670</x>
       <y>10</y>
       <width>255</width>
-      <height>451</height>
+      <height>531</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -50,7 +50,7 @@
      <item row="4" column="2">
       <widget class="QLineEdit" name="ab_cost_edit"/>
      </item>
-     <item row="10" column="1">
+     <item row="11" column="1">
       <widget class="QPushButton" name="ab_add_item">
        <property name="text">
         <string>Add Item</string>
@@ -90,6 +90,13 @@
      <item row="1" column="2">
       <widget class="QLineEdit" name="ab_Item_Id"/>
      </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="ab_unlimitedcount">
+       <property name="text">
+        <string>Unlimited Quantity</string>
+       </property>
+      </widget>
+     </item>
      <item row="4" column="1">
       <widget class="QLabel" name="label_2">
        <property name="text">
@@ -97,7 +104,7 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="12" column="1">
       <widget class="QPushButton" name="ab_remove_item">
        <property name="text">
         <string>Remove Item</string>
@@ -135,12 +142,15 @@
      <item row="8" column="2">
       <widget class="QComboBox" name="ab_loyalty_combo"/>
      </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="ab_unlimitedcount">
+     <item row="10" column="1">
+      <widget class="QLabel" name="label_6">
        <property name="text">
-        <string>Unlimited Quantity</string>
+        <string>Condition</string>
        </property>
       </widget>
+     </item>
+     <item row="10" column="2">
+      <widget class="QComboBox" name="ab_condition_box"/>
      </item>
     </layout>
    </widget>
@@ -150,7 +160,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>941</width>
+     <width>961</width>
      <height>22</height>
     </rect>
    </property>

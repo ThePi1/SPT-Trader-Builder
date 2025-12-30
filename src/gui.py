@@ -693,16 +693,7 @@ class Gui_AssortDlg(QMainWindow):
     self.on_launch() #custom Code
     self.show()
 
-    table = self.ui.ab_table
-    header = self.ui.ab_table.horizontalHeader()
-
-    table.setColumnCount(6)
-    table.setHorizontalHeaderLabels(["Name","Quantity","Cost","Loyalty Level","Quest Locked?","Currency"])
-    table.setAlternatingRowColors(True)
-    table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-    table.resizeRowsToContents
-    table.adjustSize
-    header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    
 
     # if self.ui.ab_unlimitedcount.isChecked() : 
     #   self.ui.ab_quantity.clear()
@@ -722,7 +713,17 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.ab_quest_check.setChecked(False)
 
   def add_item(self):
-    
+    table = self.ui.ab_table
+    header = self.ui.ab_table.horizontalHeader()
+
+    table.setColumnCount(6)
+    table.setHorizontalHeaderLabels(["Name","Quantity","Cost","Loyalty Level","Quest Locked?","Currency"])
+    table.setAlternatingRowColors(True)
+    table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+    table.resizeRowsToContents
+    table.adjustSize
+    header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
     mongosaved = ObjectId
     name = self.ui.ab_itemname.text()
     unlimited = "true" if self.ui.ab_unlimitedcount.isChecked() else "false"
