@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import Qt, QRunnable
-from PyQt6.QtWidgets import QApplication, QDialog, QHeaderView, QAbstractScrollArea, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem, QTableWidgetItem
+from PyQt6.QtWidgets import QApplication,QAbstractItemView, QDialog, QHeaderView, QAbstractScrollArea, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem, QTableWidgetItem
 
 from gui_about import Ui_AboutMenu
 from gui_main import Ui_MainGUI
@@ -690,51 +690,169 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.setupUi(self)
     self.parent = parent
     self.ui.ab_add_item.released.connect(self.add_item)
+    self.ui.ab_remove_item.released.connect(self.remove_Item)
     self.on_launch() #custom Code
     self.show()
-
+    self.ui.actionExport_Assort_json.triggered.connect(self.onExportAssort)
+    self.ui.ab_unlimitedcount.toggled.connect(self.unlimitedIsChecked)
+    self.ui.ab_buyrestriction_checkbox.toggled.connect(self.brestrictionChecked)
+    self.ui.ab_quest_check.toggled.connect(self.questLocked)
+    self.ui.ab_weappart_check.toggled.connect(self.weaponPart)
+    self.ui.ab_table.itemSelectionChanged.connect(self.onWeaponSelected)
+    self.itemlist = []
+    self.barterlist = {}
+    self.loyaltylist = {}
     
 
-    # if self.ui.ab_unlimitedcount.isChecked() : 
-    #   self.ui.ab_quantity.clear()
-    #   self.ui.ab_quantity.setEnabled(False)
-
-    self.itemlist = []
-    self.barterlist = []
-    self.loyaltylist = []
-
-
   def on_launch(self):
-     self.setup_box_selections()
+    self.setup_box_selections()
+    self.weaponPart(self.ui.ab_weappart_check.isChecked())
+    self.questLocked(self.ui.ab_quest_check.isChecked())
+    self.brestrictionChecked(self.ui.ab_buyrestriction_checkbox.isChecked())
+    self.ui.ab_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
   def setup_box_selections(self):
     self.ui.ab_loyalty_combo.addItems(self.parent.controller.ab_box_loyalty_level)
+    self.ui.ab_condition_box.addItems(self.parent.controller.ab_box_condition_req)
+    self.ui.ab_modslot_combo.addItems(self.parent.controller.ab_box_modslot)
     self.ui.ab_rouble_radiobutton.setChecked(True)
     self.ui.ab_quest_check.setChecked(False)
+    self.ui.ab_buyRestriction_edit.setEnabled(False)
+    self.ui.ab_quest_id.setEnabled(False)
+
+  def onWeaponSelected(self):
+    row = self.ui.ab_table.currentRow()
+    
+    if row < 0 : 
+      return
+    
+    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    self.ui.ab_weapmongo_edit.setText(mongosaved)
+
+  def unlimitedIsChecked(self, checked):
+    if checked : 
+      self.ui.ab_quantity.clear()
+      self.ui.ab_quantity.setEnabled(False)
+    else:
+      self.ui.ab_quantity.setEnabled(True)
+
+  def brestrictionChecked(self, checked):
+      if checked : 
+        self.ui.ab_buyRestriction_edit.setEnabled(True)
+      else:
+        self.ui.ab_buyRestriction_edit.setEnabled(False)
+        self.ui.ab_buyRestriction_edit.clear()
+
+  def questLocked(self, checked):
+      if checked : 
+        self.ui.ab_quest_id.setEnabled(True)
+      else:
+        self.ui.ab_quest_id.setEnabled(False)
+        self.ui.ab_quest_id.clear()
+  def weaponPart(self, checked):
+    if checked : 
+      self.ui.ab_quantity.clear()
+      self.ui.ab_quantity.setEnabled(False)
+      self.ui.ab_itemname.clear()
+      self.ui.ab_itemname.setEnabled(False)
+      self.ui.ab_Item_Id.clear()
+      self.ui.ab_Item_Id.setEnabled(False)
+      self.ui.ab_unlimitedcount.setEnabled(False)
+      self.ui.ab_cost_edit.clear()
+      self.ui.ab_cost_edit.setEnabled(False)
+      self.ui.ab_rouble_radiobutton.setEnabled(False)
+      self.ui.ab_usd_button.setEnabled(False)
+      self.ui.ab_euro_button.setEnabled(False)
+      self.ui.ab_loyalty_combo.setEnabled(False)
+      self.ui.ab_quest_check.setEnabled(False)
+      self.ui.ab_quest_id.setEnabled(False)
+      self.ui.ab_quest_id.clear()
+      self.ui.ab_condition_box.setEnabled(False)
+      self.ui.ab_buyrestriction_checkbox.setEnabled(False)
+      self.ui.ab_buyRestriction_edit.setEnabled(False)
+      self.ui.ab_buyRestriction_edit.clear()
+      self.ui.ab_buyrestriction.setStyleSheet("color: gray;")
+      self.ui.ab_name.setStyleSheet("color: gray;")
+      self.ui.ab_itemid.setStyleSheet("color: gray;")
+      self.ui.ab_quantity_2.setStyleSheet("color: gray;")
+      self.ui.ab_loyalty.setStyleSheet("color: gray;")
+      self.ui.ab_condition.setStyleSheet("color: gray;")
+      self.ui.ab_cost.setStyleSheet("color: gray;")
+
+      self.ui.ab_partname_edit.setEnabled(True)
+      self.ui.ab_partid_edit.setEnabled(True)
+      self.ui.ab_weapmongo_edit.setEnabled(False)
+      self.ui.ab_modslot_combo.setEnabled(True)
+      self.ui.ab_partname.setStyleSheet("")
+      self.ui.ab_mongo.setStyleSheet("")
+      self.ui.ab_weapid.setStyleSheet("")
+      self.ui.ab_modslot.setStyleSheet("")
+    else:
+      self.ui.ab_quantity.clear()
+      self.ui.ab_quantity.setEnabled(True)
+      self.ui.ab_itemname.clear()
+      self.ui.ab_itemname.setEnabled(True)
+      self.ui.ab_Item_Id.clear()
+      self.ui.ab_Item_Id.setEnabled(True)
+      self.ui.ab_unlimitedcount.setEnabled(True)
+      self.ui.ab_cost_edit.clear()
+      self.ui.ab_cost_edit.setEnabled(True)
+      self.ui.ab_rouble_radiobutton.setEnabled(True)
+      self.ui.ab_usd_button.setEnabled(True)
+      self.ui.ab_euro_button.setEnabled(True)
+      self.ui.ab_loyalty_combo.setEnabled(True)
+      self.ui.ab_quest_check.setEnabled(True)
+      self.ui.ab_quest_id.setEnabled(True)
+      self.ui.ab_quest_id.clear()
+      self.ui.ab_condition_box.setEnabled(True)
+      self.ui.ab_buyrestriction_checkbox.setEnabled(True)
+      self.ui.ab_buyRestriction_edit.setEnabled(True)
+      self.ui.ab_buyrestriction.setStyleSheet("")
+      self.ui.ab_name.setStyleSheet("")
+      self.ui.ab_itemid.setStyleSheet("")
+      self.ui.ab_quantity_2.setStyleSheet("")
+      self.ui.ab_loyalty.setStyleSheet("")
+      self.ui.ab_condition.setStyleSheet("")
+      self.ui.ab_cost.setStyleSheet("")
+
+      self.ui.ab_partname_edit.setEnabled(False)
+      self.ui.ab_weapmongo_edit.setEnabled(False)
+      self.ui.ab_modslot_combo.setEnabled(False)
+      self.ui.ab_partid_edit.setEnabled(False)
+      self.ui.ab_partname_edit.clear()
+      self.ui.ab_weapmongo_edit.clear()
+      self.ui.ab_partid_edit.clear()
+      self.ui.ab_partname.setStyleSheet("color: gray;")
+      self.ui.ab_mongo.setStyleSheet("color: gray;")
+      self.ui.ab_weapid.setStyleSheet("color: gray;")
+      self.ui.ab_modslot.setStyleSheet("color: gray;")
+
+  def remove_Item():# Placeholder
+    print("Item Removed")
 
   def add_item(self):
     table = self.ui.ab_table
-    header = self.ui.ab_table.horizontalHeader()
-
     table.setColumnCount(6)
     table.setHorizontalHeaderLabels(["Name","Quantity","Cost","Loyalty Level","Quest Locked?","Currency"])
     table.setAlternatingRowColors(True)
     table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-    table.resizeRowsToContents
-    table.adjustSize
+    header = self.ui.ab_table.horizontalHeader()
     header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
-    mongosaved = ObjectId
-    name = self.ui.ab_itemname.text()
-    unlimited = "true" if self.ui.ab_unlimitedcount.isChecked() else "false"
-    quantity = "Unlimited" if self.ui.ab_unlimitedcount.isChecked() else int(self.ui.ab_quantity.text() or 0)
-    loyatlylevel = self.ui.ab_loyalty_combo.currentText()
-    itemID = self.ui.ab_Item_Id
-    cost = self.ui.ab_cost_edit.text() or 0
+    mongosaved = str(ObjectId())
+    itemID = self.ui.ab_Item_Id.text().strip()
+    name = itemID if self.ui.ab_itemname.text() == "" else self.ui.ab_itemname.text()
+    unlimited = True if self.ui.ab_unlimitedcount.isChecked() else False
+    quantity = str(self.ui.ab_quantity.text() or 0)
+    loyaltylevel = str(self.ui.ab_loyalty_combo.currentText())
+    cost = self.ui.ab_cost_edit.text().strip() or 0
     questlocked = "Yes" if self.ui.ab_quest_check.isChecked() else "No"
-    questID = self.ui.ab_quest_id
+    questID = self.ui.ab_quest_id.text().strip()
+    buyrestriction = self.ui.ab_buyRestriction_edit.text() or 0
 
-    #insert questCondition
+    slotID = str(self.ui.ab_modslot_combo.currentText())
+    parentID = self.ui.ab_weapmongo_edit.text().strip()
+    partID = self.ui.ab_partid_edit.text().strip()
 
     cashtype = "Undefined" #set cashtype then check type and apply
     if self.ui.ab_rouble_radiobutton.isChecked() :
@@ -744,100 +862,108 @@ class Gui_AssortDlg(QMainWindow):
     else :
       cashtype = "Euros"
 
-    if self.ui.ab_unlimitedcount.isChecked():
-      item = {
+    #insert questCondition
+    if self.ui.ab_weappart_check.isChecked():
+      itempart = {
         "_id": mongosaved,
-            "_tpl": itemID,
-            "parentId": "hideout",
-            "slotId": "hideout",
-            "upd": {
-                "UnlimitedCount": unlimited,
-                "StackObjectsCount": 1
-            },
-            "unlockedOn": "",
-            "questID": ""
+        "_tpl": partID,
+        "parentId": parentID,
+        "slotId": slotID
       }
+      self.itemlist.append(itempart)
+
     else:
-      item = {
+      item = { #sets initial item key structure for editing in logic.
         "_id": mongosaved,
-            "_tpl": itemID,
-            "parentId": "hideout",
-            "slotId": "hideout",
-            "upd": {
-                "UnlimitedCount": unlimited,
-                "StackObjectsCount": self.ui.ab_quantity
-            },
-            "unlockedOn": "",
-            "questID": ""
+        "_tpl": itemID,
+        "parentId": "hideout",
+        "slotId": "hideout",
+        "upd": {
+
+          }
       }
 
-    if self.ui.ab_quest_check.isChecked():
-      item = {
-        "_id": mongosaved,
-            "_tpl": itemID,
-            "parentId": "hideout",
-            "slotId": "hideout",
-            "upd": {
-                "UnlimitedCount": unlimited,
-                "StackObjectsCount": self.ui.ab_quantity
-            },
-            "unlockedOn": "success",
-            "questID": questID
-      }
-    else:
-      item.pop("unlockedOn", None)
-      item.pop("questID", None)
+      if self.ui.ab_unlimitedcount.isChecked():
+        item["upd"].update({
+          "UnlimitedCount": unlimited,
+          "StackObjectsCount": 9999
+        })
+
+      else:
+        item["upd"].update({
+          "UnlimitedCount": unlimited,
+          "StackObjectsCount": int(quantity)
+        })
+
+      if self.ui.ab_buyrestriction_checkbox.isChecked():
+        item["upd"].update({
+          "BuyRestrictionMax": int(buyrestriction),
+          "BuyRestrictionCurrent": 0
+        })
+
+      if self.ui.ab_quest_check.isChecked():
+        item.update({       
+              "unlockedOn": "success",
+              "questID": questID
+        })
+      self.itemlist.append(item)
+
+    barter = { #sets initial barter_scheme key structure for editing in logic.
+      mongosaved: [
+            [
+              {
+                "count": int(cost),
+                "_tpl": "cash"
+              }
+            ]
+          ]
+    }
+    barterupdate = barter[mongosaved][0][0] #sets path for updating cashtypes cleans up logic readability
 
     match cashtype:
       case "Roubles":
-        barter = {
-          mongosaved: [
-            [
-              {
-                  "_tpl": "5449016a4bdc2d6f028b456f",
-                  "count": cost
-              }
-            ]
-          ]
-        }
+        barterupdate.update({
+          "_tpl": "5449016a4bdc2d6f028b456f"
+        })
       case "USD":
-        barter = {
-          mongosaved: [
-            [
-              {
-                  "_tpl": "5696686a4bdc2da3298b456a",
-                  "count": cost
-              }
-            ]
-          ]
-        }
+        barterupdate.update({
+          "_tpl": "5696686a4bdc2da3298b456a"
+        })
       case "Euros":
-        barter = {
-          mongosaved: [
-            [   
-              {
-                  "_tpl": "569668774bdc2da2298b4568",
-                  "count": cost
-              }
-            ]
-          ]
-        }
-
-    loyalty = {
-          mongosaved:loyatlylevel,
-    }
+        barterupdate.update({
+          "_tpl": "569668774bdc2da2298b4568"
+        })
+    
+    
+    loyalty = {mongosaved: int(loyaltylevel)} 
 
 
+    self.barterlist.update(barter)
+    self.loyaltylist.update(loyalty)
 
     row = table.rowCount()
     table.insertRow(row)
+    mongoId = QTableWidgetItem(name)
+    mongoId.setData(Qt.ItemDataRole.UserRole, mongosaved)
     
-    table.setItem(row,0,QTableWidgetItem(name))
+    table.setItem(row,0,mongoId)
     table.setItem(row,1,QTableWidgetItem(str(quantity)))
     table.setItem(row,2,QTableWidgetItem(str(cost)))
-    table.setItem(row,3,QTableWidgetItem(loyatlylevel))
+    table.setItem(row,3,QTableWidgetItem(loyaltylevel))
     table.setItem(row,4,QTableWidgetItem(questlocked))
     table.setItem(row,5,QTableWidgetItem(cashtype))
+
+    
+
+  def onExportAssort(self) :  
+    assort = {
+      "items": self.itemlist,
+      "barter_scheme": self.barterlist,
+      "loyal_level_items": self.loyaltylist
+    }
+    
+    with open("Exported Files/assort.json", "w") as f:
+      json.dump(assort, f, indent=2)
 
 
 

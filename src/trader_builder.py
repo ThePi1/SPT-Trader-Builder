@@ -44,6 +44,8 @@ class Controller:
     tb_elim_box_dist_compare              = str(parser.get('box_fields', 'tb_elim_box_dist_compare')).split(',')
     tb_handover_box_cond_type             = str(parser.get('box_fields', 'tb_handover_box_cond_type')).split(',')
     ab_box_loyalty_level                  = str(parser.get('box_fields', 'ab_box_loyalty_level')).split(',')
+    ab_box_condition_req                  = str(parser.get('box_fields', 'ab_box_condition_req')).split(',')
+    ab_box_modslot                        = str(parser.get('box_fields', 'ab_box_modslot')).split(',')
     tb_traderloyalty_level                = str(parser.get('box_fields', 'tb_traderloyalty_level')).split(',')
     tb_traderloyalt_target_box            = str(parser.get('box_fields', 'tb_traderloyalt_target_box')).split(',')
     tb_traderloyalty_compare_box          = str(parser.get('box_fields', 'tb_traderloyalty_compare_box')).split(',')

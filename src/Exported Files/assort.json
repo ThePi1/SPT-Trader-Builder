@@ -1,0 +1,104 @@
+{
+  "items": [
+    {
+      "_id": "695752694203fa1149ed09bc",
+      "_tpl": "5447a9cd4bdc2dbd208b4567",
+      "parentId": "hideout",
+      "slotId": "hideout",
+      "upd": {
+        "UnlimitedCount": true,
+        "StackObjectsCount": 9999,
+        "BuyRestrictionMax": 5,
+        "BuyRestrictionCurrent": 0
+      }
+    },
+    {
+      "_id": "695752714203fa1149ed09bd",
+      "_tpl": "615d8faecabb9b7ad90f4d5d",
+      "parentId": "695752694203fa1149ed09bc",
+      "slotId": "mod_pistol_grip"
+    },
+    {
+      "_id": "6957528d4203fa1149ed09be",
+      "_tpl": "55d4887d4bdc2d962f8b4570",
+      "parentId": "695752694203fa1149ed09bc",
+      "slotId": "mod_magazine"
+    },
+    {
+      "_id": "695752a24203fa1149ed09bf",
+      "_tpl": "5c0e2f26d174af02a9625114",
+      "parentId": "695752694203fa1149ed09bc",
+      "slotId": "mod_reciever"
+    },
+    {
+      "_id": "695752c34203fa1149ed09c0",
+      "_tpl": "55d35ee94bdc2d61338b4568",
+      "parentId": "6957528d4203fa1149ed09be",
+      "slotId": "mod_barrel"
+    },
+    {
+      "_id": "695752dd4203fa1149ed09c1",
+      "_tpl": "55d35ee94bdc2d61338b4568",
+      "parentId": "6957528d4203fa1149ed09be",
+      "slotId": "mod_scope"
+    }
+  ],
+  "barter_scheme": {
+    "695752694203fa1149ed09bc": [
+      [
+        {
+          "count": 500,
+          "_tpl": "5696686a4bdc2da3298b456a"
+        }
+      ]
+    ],
+    "695752714203fa1149ed09bd": [
+      [
+        {
+          "count": 0,
+          "_tpl": "5696686a4bdc2da3298b456a"
+        }
+      ]
+    ],
+    "6957528d4203fa1149ed09be": [
+      [
+        {
+          "count": 0,
+          "_tpl": "5696686a4bdc2da3298b456a"
+        }
+      ]
+    ],
+    "695752a24203fa1149ed09bf": [
+      [
+        {
+          "count": 0,
+          "_tpl": "5696686a4bdc2da3298b456a"
+        }
+      ]
+    ],
+    "695752c34203fa1149ed09c0": [
+      [
+        {
+          "count": 0,
+          "_tpl": "5696686a4bdc2da3298b456a"
+        }
+      ]
+    ],
+    "695752dd4203fa1149ed09c1": [
+      [
+        {
+          "count": 0,
+          "_tpl": "5696686a4bdc2da3298b456a"
+        }
+      ]
+    ]
+  },
+  "loyal_level_items": {
+    "695752694203fa1149ed09bc": 1,
+    "695752714203fa1149ed09bd": 1,
+    "6957528d4203fa1149ed09be": 1,
+    "695752a24203fa1149ed09bf": 1,
+    "695752c34203fa1149ed09c0": 1,
+    "695752dd4203fa1149ed09c1": 1
+  }
+}

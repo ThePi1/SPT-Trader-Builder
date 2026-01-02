@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>961</width>
-    <height>595</height>
+    <width>1195</width>
+    <height>598</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -50,15 +50,8 @@
      <item row="4" column="2">
       <widget class="QLineEdit" name="ab_cost_edit"/>
      </item>
-     <item row="11" column="1">
-      <widget class="QPushButton" name="ab_add_item">
-       <property name="text">
-        <string>Add Item</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="1">
-      <widget class="QLabel" name="label_4">
+      <widget class="QLabel" name="ab_name">
        <property name="text">
         <string>Name(unrelated to json)</string>
        </property>
@@ -68,7 +61,7 @@
       <widget class="QLineEdit" name="ab_quest_id"/>
      </item>
      <item row="8" column="1">
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="ab_loyalty">
        <property name="text">
         <string>Loyalty Level:</string>
        </property>
@@ -98,21 +91,14 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="ab_cost">
        <property name="text">
         <string>Cost:</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1">
-      <widget class="QPushButton" name="ab_remove_item">
-       <property name="text">
-        <string>Remove Item</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="1">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="ab_itemid">
        <property name="text">
         <string>Item ID:</string>
        </property>
@@ -133,7 +119,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QLabel" name="label_5">
+      <widget class="QLabel" name="ab_quantity_2">
        <property name="text">
         <string>Quantity</string>
        </property>
@@ -143,7 +129,7 @@
       <widget class="QComboBox" name="ab_loyalty_combo"/>
      </item>
      <item row="10" column="1">
-      <widget class="QLabel" name="label_6">
+      <widget class="QLabel" name="ab_condition">
        <property name="text">
         <string>Condition</string>
        </property>
@@ -151,6 +137,120 @@
      </item>
      <item row="10" column="2">
       <widget class="QComboBox" name="ab_condition_box"/>
+     </item>
+     <item row="11" column="1">
+      <widget class="QCheckBox" name="ab_buyrestriction_checkbox">
+       <property name="text">
+        <string>Buy Restriction?</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="QLabel" name="ab_buyrestriction">
+       <property name="text">
+        <string>Buy Restriction Amount</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="2">
+      <widget class="QLineEdit" name="ab_buyRestriction_edit"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>440</y>
+      <width>255</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="2" column="1">
+      <widget class="QPushButton" name="ab_add_item">
+       <property name="text">
+        <string>Add Item</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QPushButton" name="ab_remove_item">
+       <property name="text">
+        <string>Remove Item</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_3">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>10</y>
+      <width>252</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="ab_weappart_check">
+       <property name="text">
+        <string>Weapon Part for existing weapon in assort?</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_4">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>60</y>
+      <width>251</width>
+      <height>371</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_4">
+     <item row="0" column="2">
+      <widget class="QLineEdit" name="ab_partname_edit"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="ab_partname">
+       <property name="text">
+        <string>Name(unrelated to json)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="ab_weapid">
+       <property name="text">
+        <string>Item ID:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="ab_mongo">
+       <property name="text">
+        <string>Assort Id (Click Weapon)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLineEdit" name="ab_weapmongo_edit"/>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLineEdit" name="ab_partid_edit"/>
+     </item>
+     <item row="3" column="2">
+      <widget class="QComboBox" name="ab_modslot_combo"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="ab_modslot">
+       <property name="text">
+        <string>Mod Slot</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -160,7 +260,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>961</width>
+     <width>1195</width>
      <height>22</height>
     </rect>
    </property>
@@ -170,6 +270,7 @@
     </property>
     <addaction name="actionHome"/>
     <addaction name="actionImport_Assort_json"/>
+    <addaction name="actionExport_Assort_json"/>
    </widget>
    <addaction name="menuHome"/>
   </widget>
@@ -182,6 +283,11 @@
   <action name="actionImport_Assort_json">
    <property name="text">
     <string>Import Assort.json</string>
+   </property>
+  </action>
+  <action name="actionExport_Assort_json">
+   <property name="text">
+    <string>Export Assort.json</string>
    </property>
   </action>
  </widget>
