@@ -30,7 +30,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="ab_assort">
      <attribute name="title">
@@ -295,21 +295,6 @@
      <attribute name="title">
       <string>Weapon Builder</string>
      </attribute>
-     <widget class="QTreeWidget" name="treeWidget">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>491</width>
-        <height>521</height>
-       </rect>
-      </property>
-      <column>
-       <property name="text">
-        <string notr="true">1</string>
-       </property>
-      </column>
-     </widget>
      <widget class="QWidget" name="gridLayoutWidget_5">
       <property name="geometry">
        <rect>
@@ -397,6 +382,16 @@
         <widget class="QLineEdit" name="wb_weaponname_edit"/>
        </item>
       </layout>
+     </widget>
+     <widget class="QTreeView" name="wb_treeview">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>491</width>
+        <height>521</height>
+       </rect>
+      </property>
      </widget>
     </widget>
    </widget>
