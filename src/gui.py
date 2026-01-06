@@ -539,7 +539,7 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.box_secret_quest.addItems(self.parent.controller.default_ft)
   
   def setup_text_edit(self):
-    self.ui.qb_locale_box.setPlainText(self.parent.controller.default_locale)
+    pass
 
   def edit_selected_reward(self):
     rlist = self.ui.list_rewards
@@ -847,37 +847,233 @@ class Gui_TaskDlg(QMainWindow):
     self.ui = Ui_TaskWindow()
     self.ui.setupUi(self)
     self.parent = parent
+    self.id = str(ObjectId())
+    self.gui_lists = {} # used for all places w/ a list
+    self.cc = []
+    self.weapons = [] # used for CC/Kills, add ids in as needed
+    self.status = [] # used for CC/exitstatus
+    self.location = [] # used for cc/location
     self.on_launch() # Custom code in this one
     self.show()
   
   def on_launch(self):
      self.setup_box_selections()
      self.setup_text_edit()
+     self.setup_buttons()
 
   def setup_box_selections(self):
-    self.ui.box_target.addItems(self.parent.parent.controller.tb_elim_box_target)
-    self.ui.box_targetrole.addItems(self.parent.parent.controller.tb_elim_box_targetrole)
-    self.ui.box_bodypart.addItems(self.parent.parent.controller.tb_elim_box_bodypart)
-    self.ui.box_dist_compare.addItems(self.parent.parent.controller.tb_elim_box_dist_compare)
-    self.ui.box_weapons.addItems(self.parent.parent.weapons.keys())
-    self.ui.box_cond_type.addItems(self.parent.parent.controller.tb_handover_box_cond_type)
-    self.ui.box_only_fir.addItems(self.parent.parent.controller.default_tf)
-    self.ui.box_one_session.addItems(self.parent.parent.controller.default_tf)
-    self.ui.box_fir.addItems(self.parent.parent.controller.default_tf)
-    self.ui.traderloyalty_compare_box.addItems(self.parent.parent.controller.tb_traderloyalty_compare_box)
-    self.ui.traderloyalt_target_box.addItems(self.parent.parent.controller.tb_traderloyalt_target_box)
-    self.ui.traderloyalty_level.addItems(self.parent.parent.controller.tb_traderloyalty_level)
-    self.ui.skillreq_compare_box.addItems(self.parent.parent.controller.tb_skillreq_compare_box)
-    self.ui.skillreq_target_box.addItems(self.parent.parent.controller.default_skills)
-    self.ui.exitstatus_status_box.addItems(self.parent.parent.controller.tb_exitstatus_status_box)
-    self.ui.exitstatus_name_box.addItems(self.parent.parent.controller.tb_exitstatus_name_box)
+    ctr = self.parent.parent.controller
+    self.ui.box_target_cck.addItems(ctr.tb_elim_box_target)
+    self.ui.box_targetrole_cck.addItems(ctr.tb_elim_box_targetrole)
+    self.ui.box_bodypart_cck.addItems(ctr.tb_elim_box_bodypart)
+    self.ui.box_dist_compare_cck.addItems(ctr.default_compare)
+    self.ui.box_weapons_cck.addItems(ctr.tb_elim_box_weapons)
+    self.ui.box_status_cces.addItems(ctr.tb_exitstatus)
+    self.ui.box_location_ccl.addItems(ctr.qb_box_location)
+    self.ui.box_hofind_it.addItems(ctr.tb_handover_box_cond_type)
+    self.ui.box_only_fir_it.addItems(ctr.default_ft)
+    self.ui.box_compare_sk.addItems(ctr.default_compare)
+    self.ui.box_target_sk.addItems(ctr.qb_box_quest_type_label)
+    self.ui.box_fir_li.addItems(ctr.default_ft)
+    self.ui.box_compare_tl.addItems(ctr.default_compare)
+    self.ui.box_target_tl.addItems(ctr.tb_traderloyalt_target_box)
+    self.ui.box_compare_lv.addItems(ctr.default_compare)
+    self.ui.box_status_qs.addItems(ctr.tb_queststatus)
+    self.ui.box_comparemethod_ts.addItems(ctr.default_compare)
+    self.ui.box_ff.addItems(ctr.tb_finishfail)
+
+  def setup_buttons(self):
+    # CounterCreator types first:
+    self.ui.pb_finalize_ccvp.released.connect(lambda: self.cc_add("VisitPlace"))
+    self.ui.pb_finalize_cck.released.connect(lambda: self.cc_add("Kills"))
+    self.ui.pb_finalize_cces.released.connect(lambda: self.cc_add("ExitStatus"))
+    self.ui.pb_finalize_ccen.released.connect(lambda: self.cc_add("ExitName"))
+    self.ui.pb_finalize_ccl.released.connect(lambda: self.cc_add("Location"))
+    # Others:
+    self.ui.pb_finalize_it.released.connect(lambda: self.finalize("Item")) # will be switched based on subtype later
+    self.ui.pb_finalize_sk.released.connect(lambda: self.finalize("Skill"))
+    self.ui.pb_finalize_li.released.connect(lambda: self.finalize("LeaveItemAtLocation"))
+    self.ui.pb_finalize_pb.released.connect(lambda: self.finalize("PlaceBeacon"))
+    # TODO: Add WeaponAssembly menu and finalize link here
+    self.ui.pb_finalize_tl.released.connect(lambda: self.finalize("TraderLoyalty"))
+    self.ui.pb_addwep_cck.released.connect(lambda: self.weapon_add(self.ui.box_weapons_cck.currentText()))
+    self.ui.pb_removewep_cck.released.connect(self.weapon_remove)
+    self.ui.pb_remove_cc.released.connect(self.cc_remove)
+    self.ui.pb_status_rem_cces.released.connect(self.status_remove)
+    self.ui.pb_cces_add.released.connect(lambda: self.status_add(self.ui.box_status_cces.currentText()))
+    self.ui.pb_add_ccl.released.connect(lambda: self.location_add(self.ui.box_location_ccl.currentText()))
+    self.ui.pb_rem_ccl.released.connect(self.location_remove)
 
   def setup_text_edit(self):
-    self.ui.elim_locale_box.setPlainText(self.parent.parent.controller.default_locale)
-    self.ui.handover_locale_box.setPlainText(self.parent.parent.controller.default_locale)
-    self.ui.visitzone_locale_box.setPlainText(self.parent.parent.controller.default_locale)
-    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.default_locale)
-    self.ui.leaveitem_locale_box.setPlainText(self.parent.parent.controller.default_locale)
-    self.ui.traderloyalty_locale_box.setPlainText(self.parent.parent.controller.default_locale)
-    self.ui.skillreq_locale_box.setPlainText(self.parent.parent.controller.default_locale)
-    self.ui.exitstatus_locale_box.setPlainText(self.parent.parent.controller.default_locale)
+    self.ui.fld_taskid_gen.setText(self.id)
+
+  def guilist_add(self, qlist, type, id, value, displaytext):
+    pass
+
+  def guilist_remove(self, qlist, type):
+    pass
+
+  def weapon_add(self, name):
+    wep_id = self.parent.parent.weapons[name]
+    self.weapons.append(wep_id)
+    self.ui.tb_weapon_cck.addItem(name)
+
+  def weapon_remove(self): # removes selected weapon
+    select = self.ui.tb_weapon_cck.selectedItems()
+    gui_items = self.ui.tb_weapon_cck
+    # if no reward selected, just skip
+    if len(select) <= 0:
+      return
+    wep_name = select[0].text()
+    rem_wep_id = self.parent.parent.weapons[wep_name]
+
+    for weapon_id in self.weapons:
+      if rem_wep_id == weapon_id:
+        self.weapons.remove(rem_wep_id)
+        break
+    
+    for i in range(gui_items.count()):
+      if str(wep_name) in gui_items.item(i).text():
+        gui_items.takeItem(i)
+        break
+
+  def location_add(self, name):
+    if name == "any":
+      self.location.append(name)
+    else:
+      loc_id = self.parent.parent.locations[name]
+      self.location.append(loc_id)
+    self.ui.list_location_ccl.addItem(name)
+
+  def location_remove(self):
+    select = self.ui.list_location_ccl.selectedItems()
+    gui_items = self.ui.list_location_ccl
+    # if no reward selected, just skip
+    if len(select) <= 0:
+      return
+    loc_name = select[0].text()
+    rem_loc_id = self.parent.parent.weapons[loc_name]
+
+    for location_id in self.weapons:
+      if rem_loc_id == location_id:
+        self.location.remove(rem_loc_id)
+        break
+    
+    for i in range(gui_items.count()):
+      if str(loc_name) in gui_items.item(i).text():
+        gui_items.takeItem(i)
+        break
+
+  def status_add(self, name):
+    self.status.append(name)
+    self.ui.list_status_cces.addItem(name)
+
+  def status_remove(self):
+    select = self.ui.list_status_cces.selectedItems()
+    gui_items = self.ui.list_status_cces
+
+    if len(select) <= 0:
+      return
+    status = select[0].text()
+
+    for status_iter in self.status:
+      if status_iter == status:
+        self.status.remove(status)
+        break
+
+    for i in range(gui_items.count()):
+      if status in gui_items.item(i).text():
+        gui_items.takeItem(i)
+        break
+
+
+  def cc_add(self, cond_type):
+    subtask_id = str(ObjectId())
+    match cond_type:
+      case "VisitPlace":
+        cond = {
+          "conditionType": "VisitPlace",
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": subtask_id,
+          "target": self.ui.fld_zoneid_ccvp.displayText(),
+          "value": 1
+        }
+      case "Kills":
+        # TODO: add support for arbitrary list of fields, not just one, as is the case with:
+        # bodyPart, savageRole, weapon, weaponCaliber, weaponModsExclusive, weaponModsInclusive
+        # TODO: add support for weaponModsInclusive and weaponModsExclusive fields
+        cond = {
+          "bodyPart": [self.ui.box_bodypart_cck.currentText()],
+          "compareMethod": ">=", # hard code for kill quest
+          "conditionType": "Kills",
+          "daytime": {
+            "from": int(self.ui.fld_time_from_cck.displayText()), # TODO: add validator for field types instead of blindly erroring out
+            "to": int(self.ui.fld_time_to_cck.displayText())
+          },
+          "distance": {
+            "compareMethod": self.ui.box_dist_compare_cck.currentText(), 
+            "distance": self.ui.fld_dist_cck.displayText()
+          },
+          "dynamicLocale": False,
+          "enemyEquipmentExclusive": [],
+          "enemyEquipmentInclusive": [],
+          "enemyHealthEffects": [],
+          "id": subtask_id,
+          "resetOnSessionEnd": self.ui.chk_cck_reset_sessionend.isChecked(),
+          "savageRole": self.ui.box_targetrole_cck.currentText(),
+          "target": self.ui.box_target_cck.currentText(),
+          "value": 1,
+          "weapon": self.weapons,
+          "weaponCaliber": [],
+          "weaponModsExclusive": [],
+          "weaponModsInclusive": []
+        }
+      case "ExitStatus":
+        cond = {
+          "conditionType": "ExitStatus",
+          "dynamicLocale": False,
+          "id": subtask_id,
+          "status": self.status,
+        }
+      case "ExitName":
+        cond = {
+          "conditionType": "ExitName",
+          "dynamicLocale": False,
+          "id": subtask_id,
+          "exitName": self.ui.fld_exitname_ccen.displayText(),
+        }
+      case "Location":
+        cond = {
+          "conditionType": "Location",
+          "dynamicLocale": False,
+          "id": subtask_id,
+          "target": self.location,
+        }
+
+    self.cc.append(cond) # not final form
+    self.ui.list_ff_cc_cond.addItem(f"_id: {subtask_id},{cond_type}")
+
+  def cc_remove(self):
+    gui_items = self.ui.list_ff_cc_cond
+    internal_items = self.cc
+    select = gui_items.selectedItems()
+    # if no reward selected, just skip
+    if len(select) <= 0:
+      return
+    item_text = select[0].text()
+
+    # really hacky but easier than setting up a bunch of tables in qt6
+    item_id = item_text.split(',')[0].strip('_id: ')
+    for item in internal_items:
+      if item['id'] == item_id:
+        internal_items.remove(item)
+        break
+    
+    for i in range(gui_items.count()):
+      if str(item_id) in gui_items.item(i).text():
+        gui_items.takeItem(i)
+        break
+
+  def finalize(self, cond_type):
+    pass
