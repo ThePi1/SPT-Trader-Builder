@@ -115,6 +115,12 @@ class Gui_MainWindow(QMainWindow):
     else:
       return []
 
+  def get_multicolumn_values_list(self, key):
+    if key in self.table_fields:
+      return list(self.table_fields[key].values())
+    else:
+      return []
+
   def editSelectedQuest(self):
     qlist = self.ui.questList
     select = qlist.selectedItems()
@@ -228,14 +234,15 @@ class Gui_RewardDlg(QMainWindow):
     self.on_launch() # Custom code in this one
     self.show()
     self.id = str(ObjectId())
-    self.items_item = []
-    self.items_asu = []
+    # self.items_item = []
+    # self.items_asu = []
   
   def on_launch(self):
     self.setup_box_selections()
     self.setup_buttons()
 
   def add_item(self, tab):
+    internal_id = str(ObjectId())
     has_soc = False
     has_pid = False
     has_sid = False
@@ -258,8 +265,9 @@ class Gui_RewardDlg(QMainWindow):
         if self.ui.chk_slotid_item.isChecked():
           item["slotId"] = self.ui.fld_slotid_item.displayText()
           has_sid = True
-        self.items_item.append(item)
-        self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {self.ui.chk_fir_item.isChecked()}")
+        # self.items_item.append(item)
+        # self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {self.ui.chk_fir_item.isChecked()}")
+        self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked(), 6: internal_id}, item)
 
       case "AssortmentUnlock":
         item = {
@@ -280,45 +288,18 @@ class Gui_RewardDlg(QMainWindow):
           item["slotId"] = self.ui.box_slotid_asu.displayText()
           has_sid = True
 
-        self.items_asu.append(item)
-        self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, fir: {self.ui.chk_fir_asu.isChecked()}")
+        # self.items_asu.append(item)
+        # self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, fir: {self.ui.chk_fir_asu.isChecked()}")
+        
+        self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked(), 6: internal_id}, item)
 
 
   def remove_selected_item(self, tab):
     match tab:
       case "AssortmentUnlock":
-        gui_items = self.ui.list_items_asu
-        internal_items = self.items_asu
+        self.parent.parent.remove_selected_table_item(type="RewardAssortmentUnlock", table=self.ui.tb_asu_item)
       case "Item":
-        gui_items = self.ui.list_items_item
-        internal_items = self.items_item
-
-    select = gui_items.selectedItems()
-    # if no reward selected, just skip
-    if len(select) <= 0:
-      return
-    item_text = select[0].text()
-
-    # really hacky but easier than setting up a bunch of tables in qt6
-    item_id = item_text.split(',')[0].strip('_id: ')
-    for item in internal_items:
-      if item['_id'] == item_id:
-        internal_items.remove(item)
-        break
-    
-    for i in range(gui_items.count()):
-      if str(item_id) in gui_items.item(i).text():
-        gui_items.takeItem(i)
-        break
-
-  def load_selected_item_to_fields(self, tab):
-    # TODO: implement
-    print("Skipping, not yet implemented")
-    match tab:
-      case "AssortmentUnlock":
-        pass
-      case "Item":
-        pass
+        self.parent.parent.remove_selected_table_item(type="RewardItem", table=self.ui.tb_item)
 
   def finalize(self, reward_type):
     match reward_type:
@@ -334,11 +315,12 @@ class Gui_RewardDlg(QMainWindow):
         }
       case "AssortmentUnlock":
         reward_timing = self.ui.box_rewardtiming_asu.currentText()
+        local_items = self.parent.parent.get_multicolumn_values_list("RewardAssortmentUnlock")
         reward = {
           "availableInGameEditions": [],
           "id": self.id,
           "index": 0,
-          "items": self.items_asu,
+          "items": local_items,
           "loyaltyLevel": int(self.ui.box_loyalty_asu.cleanText()),
           "target": self.ui.fld_tid_asu.displayText(),
           "traderId": self.parent.parent.traders[self.ui.box_trader_asu.currentText()],
@@ -357,12 +339,13 @@ class Gui_RewardDlg(QMainWindow):
         }
       case "Item":
         reward_timing = self.ui.box_rewardtiming_item.currentText()
+        local_items = self.parent.parent.get_multicolumn_values_list("RewardItem")
         reward = {
           "availableInGameEditions": [],
           "findInRaid": is_true(self.ui.box_fir_item.currentText()),
           "id": self.id,
           "index": 0,
-          "items": self.items_item,
+          "items": local_items,
           "target": self.ui.fld_tid_item.displayText(),
           "type": "Item",
           "unknown": is_true(self.ui.box_unknown_item.currentText()),
@@ -465,7 +448,9 @@ class Gui_RewardDlg(QMainWindow):
             has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
             has_pid = 'parentId' in item
             has_sid = 'slotId' in item
-            self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
+            internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
+            self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked(), 6: internal_id}, item)
+            #self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
 
         case "Experience":
           self.ui.tabWidget.setCurrentIndex(0)
@@ -485,7 +470,9 @@ class Gui_RewardDlg(QMainWindow):
             has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
             has_pid = 'parentId' in item
             has_sid = 'slotId' in item
-            self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
+            internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
+            self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked(), 6: internal_id}, item)
+            # self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
 
 
         case "Skill":
@@ -525,14 +512,13 @@ class Gui_RewardDlg(QMainWindow):
     self.ui.pb_finalize_sr.released.connect(lambda: self.finalize("StashRows"))
     self.ui.pb_finalize_ts.released.connect(lambda: self.finalize("TraderStanding"))
     self.ui.pb_finalize_tul.released.connect(lambda: self.finalize("TraderUnlock"))
+
     self.ui.pb_additem_asu.released.connect(lambda: self.add_item("AssortmentUnlock"))
     self.ui.pb_remitem_asu.released.connect(lambda: self.remove_selected_item("AssortmentUnlock"))
+
     self.ui.pb_additem_item.released.connect(lambda: self.add_item("Item"))
     self.ui.pb_remitem_item.released.connect(lambda: self.remove_selected_item("Item"))
-    self.ui.pb_load_fields_item.released.connect(lambda: self.load_selected_item_to_fields("Item"))
-    self.ui.pb_load_fields_asu.released.connect(lambda: self.load_selected_item_to_fields("AssortmentUnlock"))
-
-
+  
   def setup_box_selections(self):
     self.ui.box_trader_asu.addItems(self.parent.parent.traders.keys())
     self.ui.box_trader_ts.addItems(self.parent.parent.traders.keys())
@@ -951,6 +937,8 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.pb_cces_add.released.connect(lambda: self.parent.parent.add_table_field(f"ExitStatus", self.ui.tb_cces, self.ui.box_status_cces.currentText(), {0: self.ui.box_status_cces.currentText()}, self.ui.box_status_cces.currentText()))
     self.ui.pb_add_ccl.released.connect(lambda: self.parent.parent.add_table_field(f"Location", self.ui.tb_ccl, self.ui.box_location_ccl.currentText(), {0: self.ui.box_location_ccl.currentText()}, self.ui.box_location_ccl.currentText()))
     self.ui.pb_rem_ccl.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="Location", table=self.ui.tb_ccl))
+    self.ui.pb_addvis.released.connect(lambda: self.parent.parent.add_table_field(f"VisibilityCond", self.ui.tb_vis, self.ui.fld_visibility_targetid.displayText(), {0: self.ui.fld_visibility_targetid.displayText()}, self.ui.fld_visibility_targetid.displayText()))
+    self.ui.pb_remvis.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="VisibilityCond", table=self.ui.tb_vis))
 
   def setup_text_edit(self):
     self.ui.fld_taskid_gen.setText(self.id)

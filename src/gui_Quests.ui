@@ -270,6 +270,9 @@
       <verstretch>0</verstretch>
      </sizepolicy>
     </property>
+    <property name="selectionBehavior">
+     <enum>QAbstractItemView::SelectRows</enum>
+    </property>
     <column>
      <property name="text">
       <string>id</string>
@@ -300,7 +303,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionHome"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>

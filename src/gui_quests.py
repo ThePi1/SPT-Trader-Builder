@@ -134,6 +134,7 @@ class Ui_QuestWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tb_rewards.sizePolicy().hasHeightForWidth())
         self.tb_rewards.setSizePolicy(sizePolicy)
+        self.tb_rewards.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.tb_rewards.setObjectName("tb_rewards")
         self.tb_rewards.setColumnCount(3)
         self.tb_rewards.setRowCount(0)
@@ -155,7 +156,6 @@ class Ui_QuestWindow(object):
         QuestWindow.setStatusBar(self.statusbar)
         self.actionHome = QtGui.QAction(parent=QuestWindow)
         self.actionHome.setObjectName("actionHome")
-        self.menuFile.addAction(self.actionHome)
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(QuestWindow)

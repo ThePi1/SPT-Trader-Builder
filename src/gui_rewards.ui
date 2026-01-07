@@ -23,6 +23,9 @@
       <height>351</height>
      </rect>
     </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
     <property name="currentIndex">
      <number>0</number>
     </property>
@@ -182,16 +185,6 @@
        <string>Items:</string>
       </property>
      </widget>
-     <widget class="QListWidget" name="list_items_item">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>30</y>
-        <width>531</width>
-        <height>111</height>
-       </rect>
-      </property>
-     </widget>
      <widget class="QWidget" name="gridLayoutWidget_8">
       <property name="geometry">
        <rect>
@@ -301,13 +294,6 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QPushButton" name="pb_load_fields_item">
-         <property name="text">
-          <string>Load to Fields</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
         <widget class="QPushButton" name="pb_additem_item">
          <property name="text">
           <string>Add Item</string>
@@ -315,6 +301,54 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QTableWidget" name="tb_item">
+      <property name="geometry">
+       <rect>
+        <x>330</x>
+        <y>30</y>
+        <width>521</width>
+        <height>91</height>
+       </rect>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <column>
+       <property name="text">
+        <string>_id</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>_tpl</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>SOC</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>parentId</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>slotId</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>fir</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>id  (internal id)</string>
+       </property>
+      </column>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
@@ -394,16 +428,6 @@
       </property>
       <property name="text">
        <string>Items:</string>
-      </property>
-     </widget>
-     <widget class="QListWidget" name="list_items_asu">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>30</y>
-        <width>531</width>
-        <height>111</height>
-       </rect>
       </property>
      </widget>
      <widget class="QPushButton" name="pb_finalize_asu">
@@ -538,6 +562,54 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QTableWidget" name="tb_asu_item">
+      <property name="geometry">
+       <rect>
+        <x>330</x>
+        <y>30</y>
+        <width>541</width>
+        <height>91</height>
+       </rect>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <column>
+       <property name="text">
+        <string>_id</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>_tpl</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>SOC</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>parentId</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>slotId</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>fir</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>id (internal id)</string>
+       </property>
+      </column>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_5">
