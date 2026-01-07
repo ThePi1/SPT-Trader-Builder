@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1383</width>
-    <height>524</height>
+    <width>1514</width>
+    <height>506</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>991</width>
-      <height>461</height>
+      <width>1031</width>
+      <height>451</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -35,7 +35,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>991</width>
+        <width>1021</width>
         <height>421</height>
        </rect>
       </property>
@@ -59,27 +59,17 @@
          <string>Conditions:</string>
         </property>
        </widget>
-       <widget class="QListWidget" name="list_ff_cc_cond">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>40</y>
-          <width>251</width>
-          <height>211</height>
-         </rect>
-        </property>
-       </widget>
        <widget class="QTabWidget" name="tabWidget_4">
         <property name="geometry">
          <rect>
-          <x>280</x>
+          <x>320</x>
           <y>10</y>
           <width>701</width>
           <height>321</height>
          </rect>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab_11">
          <attribute name="title">
@@ -294,15 +284,23 @@
            </item>
           </layout>
          </widget>
-         <widget class="QListWidget" name="tb_weapon_cck">
+         <widget class="QTableWidget" name="tb_wep">
           <property name="geometry">
            <rect>
             <x>400</x>
             <y>40</y>
             <width>271</width>
-            <height>91</height>
+            <height>101</height>
            </rect>
           </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>name</string>
+           </property>
+          </column>
          </widget>
         </widget>
         <widget class="QWidget" name="tab_20">
@@ -344,16 +342,6 @@
            <string>Add</string>
           </property>
          </widget>
-         <widget class="QListWidget" name="list_status_cces">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>70</y>
-            <width>241</width>
-            <height>101</height>
-           </rect>
-          </property>
-         </widget>
          <widget class="QLabel" name="label_8">
           <property name="geometry">
            <rect>
@@ -392,6 +380,24 @@
           <property name="text">
            <string>Remove Selected Status</string>
           </property>
+         </widget>
+         <widget class="QTableWidget" name="tb_cces">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>80</y>
+            <width>281</width>
+            <height>91</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>status</string>
+           </property>
+          </column>
          </widget>
         </widget>
         <widget class="QWidget" name="tab_21">
@@ -438,16 +444,6 @@
          <attribute name="title">
           <string>Location</string>
          </attribute>
-         <widget class="QListWidget" name="list_location_ccl">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>80</y>
-            <width>231</width>
-            <height>81</height>
-           </rect>
-          </property>
-         </widget>
          <widget class="QLabel" name="label_4">
           <property name="geometry">
            <rect>
@@ -522,6 +518,24 @@
            </item>
           </layout>
          </widget>
+         <widget class="QTableWidget" name="tb_ccl">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>80</y>
+            <width>311</width>
+            <height>71</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>location</string>
+           </property>
+          </column>
+         </widget>
         </widget>
        </widget>
        <widget class="QWidget" name="gridLayoutWidget_20">
@@ -569,6 +583,29 @@
           <widget class="QComboBox" name="box_ff"/>
          </item>
         </layout>
+       </widget>
+       <widget class="QTableWidget" name="tb_cc">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>301</width>
+          <height>192</height>
+         </rect>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <column>
+         <property name="text">
+          <string>id</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>type</string>
+         </property>
+        </column>
        </widget>
       </widget>
       <widget class="QWidget" name="tab_handover_item">
@@ -663,16 +700,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QListWidget" name="list_itemid_it">
-        <property name="geometry">
-         <rect>
-          <x>370</x>
-          <y>30</y>
-          <width>311</width>
-          <height>111</height>
-         </rect>
-        </property>
-       </widget>
        <widget class="QLabel" name="lb_itemid_list">
         <property name="geometry">
          <rect>
@@ -746,6 +773,21 @@
         <property name="text">
          <string>Finalize Task</string>
         </property>
+       </widget>
+       <widget class="QTableWidget" name="tb_items">
+        <property name="geometry">
+         <rect>
+          <x>370</x>
+          <y>40</y>
+          <width>311</width>
+          <height>91</height>
+         </rect>
+        </property>
+        <column>
+         <property name="text">
+          <string>id</string>
+         </property>
+        </column>
        </widget>
       </widget>
       <widget class="QWidget" name="tb_Skill">
@@ -1228,16 +1270,6 @@
          <string>Finalize</string>
         </property>
        </widget>
-       <widget class="QListWidget" name="list_status_qs">
-        <property name="geometry">
-         <rect>
-          <x>330</x>
-          <y>70</y>
-          <width>181</width>
-          <height>61</height>
-         </rect>
-        </property>
-       </widget>
        <widget class="QLabel" name="label_49">
         <property name="geometry">
          <rect>
@@ -1285,6 +1317,24 @@
         <property name="text">
          <string>Add</string>
         </property>
+       </widget>
+       <widget class="QTableWidget" name="tb_status_qs">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>80</y>
+          <width>331</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <column>
+         <property name="text">
+          <string>status</string>
+         </property>
+        </column>
        </widget>
       </widget>
       <widget class="QWidget" name="tab_5">
@@ -1353,7 +1403,7 @@
    <widget class="QTextBrowser" name="textBrowser">
     <property name="geometry">
      <rect>
-      <x>1000</x>
+      <x>1040</x>
       <y>20</y>
       <width>371</width>
       <height>161</height>
@@ -1378,7 +1428,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <widget class="QLineEdit" name="fld_taskid_gen">
     <property name="geometry">
      <rect>
-      <x>1010</x>
+      <x>1050</x>
       <y>360</y>
       <width>321</width>
       <height>22</height>
@@ -1388,20 +1438,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <string/>
     </property>
    </widget>
-   <widget class="QListWidget" name="list_visibilitycond">
-    <property name="geometry">
-     <rect>
-      <x>1010</x>
-      <y>250</y>
-      <width>291</width>
-      <height>71</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_10">
     <property name="geometry">
      <rect>
-      <x>1010</x>
+      <x>1050</x>
       <y>190</y>
       <width>111</width>
       <height>16</height>
@@ -1414,7 +1454,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <widget class="QLabel" name="label_37">
     <property name="geometry">
      <rect>
-      <x>1010</x>
+      <x>1050</x>
       <y>340</y>
       <width>141</width>
       <height>16</height>
@@ -1427,7 +1467,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <widget class="QPushButton" name="pb_addvisibility">
     <property name="geometry">
      <rect>
-      <x>1260</x>
+      <x>1300</x>
       <y>210</y>
       <width>75</width>
       <height>24</height>
@@ -1440,7 +1480,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <widget class="QWidget" name="gridLayoutWidget_15">
     <property name="geometry">
      <rect>
-      <x>1010</x>
+      <x>1050</x>
       <y>210</y>
       <width>241</width>
       <height>31</height>
@@ -1459,13 +1499,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
      </item>
     </layout>
    </widget>
+   <widget class="QTableWidget" name="tb_vis">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>260</y>
+      <width>321</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <column>
+     <property name="text">
+      <string>target</string>
+     </property>
+    </column>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1383</width>
+     <width>1514</width>
      <height>22</height>
     </rect>
    </property>

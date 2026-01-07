@@ -44,6 +44,8 @@ class Gui_MainWindow(QMainWindow):
     self.weapons = self.importJson("data\weapons.json")
     self.locations = self.importJson("data\locations.json")
     self.quests = {}
+    #RewardFail RewardStarted RewardSuccess
+    self.table_fields = {}
 
   def importJson(self, path):
     with open(path, "r") as f:
@@ -62,6 +64,56 @@ class Gui_MainWindow(QMainWindow):
         print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
         self.quests[quest_id] = quests_import[quest_id]
         self.ui.questList.addItem(f"{quests_import[quest_id]['QuestName']}, {quest_id}")
+
+  def add_table_field(self, type, table, _id, values, dataobj):
+    print(f"Debug: adding type: {type}, table: {table}, id: {_id}, values:  {values}, dataobj: {dataobj}")
+    # for single column tables, the only column is the "id"
+    # values looks like this: {1: "col1 field", 2: "col2 field", ...}
+    if type not in self.table_fields:
+      self.table_fields[type] = {}
+
+    # we already have an entry for this, let's remove it first
+    if _id in self.table_fields[type]:
+      self.remove_selected_table_item(type=type, table=table)
+    
+    # add it into the list if it doesn't already exist
+    if not _id in self.table_fields[type]:
+      # set data
+      self.table_fields[type][_id] = dataobj
+      # add it into the table
+      row = table.rowCount()
+      table.insertRow(row)
+      print(values)
+      for col,text in values.items():
+        table.setItem(row,col,QTableWidgetItem(str(text)))
+    print(f"Table fields:\n{self.table_fields}")
+
+  def remove_selected_table_item(self, type, table):
+    print(f"Debug: removing selected item, type: {type}, table: {table}. Table_fields: {self.table_fields}")
+    # if we need to check multiple types (like for rewards), do so
+    if type == "RewardAny":
+      alltypes = ["RewardFail", "RewardStarted", "RewardSuccess"]
+    else:
+      alltypes = [type]
+
+    select = table.selectedItems()
+    # if no reward selected, just skip
+    if len(select) <= 0:
+      return
+    row = select[0].row()
+    row_id = table.item(row, 0).text()
+    for type in alltypes:
+      print(f"Debug remove: type found?{type in self.table_fields}, row_id in typedict?{type in row_id in self.table_fields and row_id in self.table_fields[type]}")
+      if type in self.table_fields and row_id in self.table_fields[type]:
+        self.table_fields[type].pop(row_id)
+    table.removeRow(row)
+    print(f"Table fields:\n{self.table_fields}")
+
+  def get_singlecolumn_field_list(self, key):
+    if key in self.table_fields:
+      return list(self.table_fields[key].keys())
+    else:
+      return []
 
   def editSelectedQuest(self):
     qlist = self.ui.questList
@@ -361,7 +413,8 @@ class Gui_RewardDlg(QMainWindow):
         }
 
     rewards = self.parent.rewards
-    rlist = self.parent.ui.list_rewards
+    table  = self.parent.ui.tb_rewards
+
     # remove rewards with the same id, if they already exist in either the reward lists or the qt list
     for type in ["Fail", "Started", "Success"]:
       for reward_idx in range(len(rewards[type])):
@@ -369,13 +422,13 @@ class Gui_RewardDlg(QMainWindow):
           rewards[type].pop(reward_idx)
           break
 
-    for i in range(rlist.count()):
-      if str(self.id) in rlist.item(i).text():
-        rlist.takeItem(i)
+    for i in range(table.rowCount()):
+      if str(self.id) in table.item(i, 0).text():#row,column
+        table.removeRow(i)
         break
-
-    rewards[reward_timing].append(reward)
-    rlist.addItem(f"{reward_type}, {self.id}")
+    
+    self.parent.parent.add_table_field(f"Reward{reward_timing}", self.parent.ui.tb_rewards, self.id, {0: self.id, 1: reward_timing, 2: reward_type}, reward)
+    print(self.parent.parent.table_fields)
     self.close()
 
   def load_settings_from_dict(self, settings, reward_timing):
@@ -542,46 +595,29 @@ class Gui_QuestDlg(QMainWindow):
     pass
 
   def edit_selected_reward(self):
-    rlist = self.ui.list_rewards
-    select = rlist.selectedItems()
+    tb_reward = self.ui.tb_rewards
+    select = tb_reward.selectedItems()
     # if no reward selected, just skip
     if len(select) <= 0:
       return
-    reward_text = select[0].text()
+    row = select[0].row()
+    reward_id = tb_reward.item(row, 0).text()
 
-    # hacky but easier than setting up a bunch of tables in qt6
-    reward_id = reward_text.split(" ")[-1]
     for type in ["Fail", "Started", "Success"]:
-      for reward in self.rewards[type]:
-        if reward["id"] == reward_id:
-          found_reward = reward
-          break
+      if f"Reward{type}" in self.parent.table_fields:
+        for id in self.parent.table_fields[f"Reward{type}"]:
+          print(id)
+          reward = self.parent.table_fields[f"Reward{type}"][id]
+          if id == reward_id:
+            found_reward = reward
+            break
     # create questbuilder window and load fields
     dlg = Gui_RewardDlg(parent=self)
     dlg.load_settings_from_dict(found_reward, type)
 
   def remove_selected_reward(self):
-    rlist = self.ui.list_rewards
-    select = rlist.selectedItems()
-    # if no reward selected, just skip
-    if len(select) <= 0:
-      return
-    reward_text = select[0].text()
-
-    # hacky but easier than setting up a bunch of tables in qt6
-    reward_id = reward_text.split(" ")[-1]
-
-    # remove the quest-to-be-edited from the lists
-    for type in ["Fail", "Started", "Success"]:
-      for reward in self.rewards[type]:
-        if reward["id"] == reward_id:
-          self.rewards[type].remove(reward)
-          break
-    
-    for i in range(rlist.count()):
-      if str(reward_id) in rlist.item(i).text():
-        rlist.takeItem(i)
-        break
+    self.parent.remove_selected_table_item(type="RewardAny", table=self.ui.tb_rewards)
+    print(self.parent.table_fields)
 
   def load_settings_from_dict(self, settings):
     print(f"Loading settings from dict: {settings}")
@@ -625,15 +661,28 @@ class Gui_QuestDlg(QMainWindow):
             set_obj.setCurrentText(self.parent.traders_invert[str(v)])
           case "rewards":
             print("Setting rewards")
-            self.rewards = copy.deepcopy(v) # copy it b/c pass by reference screws thing up here
+            local_rewards = copy.deepcopy(v) # copy it b/c pass by reference screws thing up here
             for type in ["Fail", "Started", "Success"]:
-              for reward in self.rewards[type]:
-                self.ui.list_rewards.addItem(f"{reward['type']}, {reward['id']}")
+              for reward in local_rewards[type]:
+                if f"Reward{type}" not in self.parent.table_fields:
+                  self.parent.table_fields[f"Reward{type}"] = {}
+                self.parent.add_table_field(f"Reward{type}", self.ui.tb_rewards, reward['id'], {0: reward['id'], 1:type, 2:reward['type']}, reward)
       else:
         print(f"Skipping {k}")
 
   def finalize(self):
     quest_id = self.quest_id
+    rewards_calc = {
+      "Fail": [],
+      "Started": [],
+      "Success": []
+    }
+    for k,v in rewards_calc.items():
+      if f"Reward{k}" in self.parent.table_fields:
+        for _id,reward in self.parent.table_fields[f"Reward{k}"].items():
+          rewards_calc[k].append(reward)
+          # print(_id, reward)
+    location_calc = [] if self.ui.box_location.currentText() == "any" else self.parent.locations[self.ui.box_location.currentText()]
     quest = {
       quest_id: {
       "QuestName": self.ui.fld_quest_name.displayText(),
@@ -655,13 +704,13 @@ class Gui_QuestDlg(QMainWindow):
       "image": self.ui.fld_image_name.displayText(),
       "instantComplete": is_true(self.ui.box_insta_complete.currentText()),
       "isKey": False,
-      "location": self.parent.locations[self.ui.box_location.currentText()],
+      "location": location_calc,
       "name": quest_id + " name",
       "note": quest_id + " note",
       "progressSource": "eft",
       "rankingModes": [],
       "restartable": is_true(self.ui.box_restartable.currentText()),
-      "rewards": self.rewards,
+      "rewards": rewards_calc,
       "secretQuest": is_true(self.ui.box_secret_quest.currentText()),
       "side": self.ui.box_avail_faction.currentText(),
       "startedMessageText": quest_id + " startedMessageText",
@@ -848,11 +897,10 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.setupUi(self)
     self.parent = parent
     self.id = str(ObjectId())
-    self.gui_lists = {} # used for all places w/ a list
     self.cc = []
-    self.weapons = [] # used for CC/Kills, add ids in as needed
-    self.status = [] # used for CC/exitstatus
-    self.location = [] # used for cc/location
+    # self.weapons = [] # used for CC/Kills, add ids in as needed
+    # self.status = [] # used for CC/exitstatus
+    # self.location = [] # used for cc/location
     self.on_launch() # Custom code in this one
     self.show()
   
@@ -896,96 +944,16 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.pb_finalize_pb.released.connect(lambda: self.finalize("PlaceBeacon"))
     # TODO: Add WeaponAssembly menu and finalize link here
     self.ui.pb_finalize_tl.released.connect(lambda: self.finalize("TraderLoyalty"))
-    self.ui.pb_addwep_cck.released.connect(lambda: self.weapon_add(self.ui.box_weapons_cck.currentText()))
-    self.ui.pb_removewep_cck.released.connect(self.weapon_remove)
-    self.ui.pb_remove_cc.released.connect(self.cc_remove)
-    self.ui.pb_status_rem_cces.released.connect(self.status_remove)
-    self.ui.pb_cces_add.released.connect(lambda: self.status_add(self.ui.box_status_cces.currentText()))
-    self.ui.pb_add_ccl.released.connect(lambda: self.location_add(self.ui.box_location_ccl.currentText()))
-    self.ui.pb_rem_ccl.released.connect(self.location_remove)
+    self.ui.pb_addwep_cck.released.connect(lambda: self.parent.parent.add_table_field(f"Kills", self.ui.tb_wep, self.ui.box_weapons_cck.currentText(), {0: self.ui.box_weapons_cck.currentText()}, self.ui.box_weapons_cck.currentText()))
+    self.ui.pb_removewep_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="Kills", table=self.ui.tb_wep))
+    self.ui.pb_remove_cc.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="CounterCreator", table=self.ui.tb_cc))
+    self.ui.pb_status_rem_cces.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ExitStatus", table=self.ui.tb_cces))
+    self.ui.pb_cces_add.released.connect(lambda: self.parent.parent.add_table_field(f"ExitStatus", self.ui.tb_cces, self.ui.box_status_cces.currentText(), {0: self.ui.box_status_cces.currentText()}, self.ui.box_status_cces.currentText()))
+    self.ui.pb_add_ccl.released.connect(lambda: self.parent.parent.add_table_field(f"Location", self.ui.tb_ccl, self.ui.box_location_ccl.currentText(), {0: self.ui.box_location_ccl.currentText()}, self.ui.box_location_ccl.currentText()))
+    self.ui.pb_rem_ccl.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="Location", table=self.ui.tb_ccl))
 
   def setup_text_edit(self):
     self.ui.fld_taskid_gen.setText(self.id)
-
-  def guilist_add(self, qlist, type, id, value, displaytext):
-    pass
-
-  def guilist_remove(self, qlist, type):
-    pass
-
-  def weapon_add(self, name):
-    wep_id = self.parent.parent.weapons[name]
-    self.weapons.append(wep_id)
-    self.ui.tb_weapon_cck.addItem(name)
-
-  def weapon_remove(self): # removes selected weapon
-    select = self.ui.tb_weapon_cck.selectedItems()
-    gui_items = self.ui.tb_weapon_cck
-    # if no reward selected, just skip
-    if len(select) <= 0:
-      return
-    wep_name = select[0].text()
-    rem_wep_id = self.parent.parent.weapons[wep_name]
-
-    for weapon_id in self.weapons:
-      if rem_wep_id == weapon_id:
-        self.weapons.remove(rem_wep_id)
-        break
-    
-    for i in range(gui_items.count()):
-      if str(wep_name) in gui_items.item(i).text():
-        gui_items.takeItem(i)
-        break
-
-  def location_add(self, name):
-    if name == "any":
-      self.location.append(name)
-    else:
-      loc_id = self.parent.parent.locations[name]
-      self.location.append(loc_id)
-    self.ui.list_location_ccl.addItem(name)
-
-  def location_remove(self):
-    select = self.ui.list_location_ccl.selectedItems()
-    gui_items = self.ui.list_location_ccl
-    # if no reward selected, just skip
-    if len(select) <= 0:
-      return
-    loc_name = select[0].text()
-    rem_loc_id = self.parent.parent.weapons[loc_name]
-
-    for location_id in self.weapons:
-      if rem_loc_id == location_id:
-        self.location.remove(rem_loc_id)
-        break
-    
-    for i in range(gui_items.count()):
-      if str(loc_name) in gui_items.item(i).text():
-        gui_items.takeItem(i)
-        break
-
-  def status_add(self, name):
-    self.status.append(name)
-    self.ui.list_status_cces.addItem(name)
-
-  def status_remove(self):
-    select = self.ui.list_status_cces.selectedItems()
-    gui_items = self.ui.list_status_cces
-
-    if len(select) <= 0:
-      return
-    status = select[0].text()
-
-    for status_iter in self.status:
-      if status_iter == status:
-        self.status.remove(status)
-        break
-
-    for i in range(gui_items.count()):
-      if status in gui_items.item(i).text():
-        gui_items.takeItem(i)
-        break
-
 
   def cc_add(self, cond_type):
     subtask_id = str(ObjectId())
@@ -1003,6 +971,7 @@ class Gui_TaskDlg(QMainWindow):
         # TODO: add support for arbitrary list of fields, not just one, as is the case with:
         # bodyPart, savageRole, weapon, weaponCaliber, weaponModsExclusive, weaponModsInclusive
         # TODO: add support for weaponModsInclusive and weaponModsExclusive fields
+        local_weapons = self.parent.parent.get_singlecolumn_field_list("Kills")
         cond = {
           "bodyPart": [self.ui.box_bodypart_cck.currentText()],
           "compareMethod": ">=", # hard code for kill quest
@@ -1024,17 +993,18 @@ class Gui_TaskDlg(QMainWindow):
           "savageRole": self.ui.box_targetrole_cck.currentText(),
           "target": self.ui.box_target_cck.currentText(),
           "value": 1,
-          "weapon": self.weapons,
+          "weapon": local_weapons,
           "weaponCaliber": [],
           "weaponModsExclusive": [],
           "weaponModsInclusive": []
         }
       case "ExitStatus":
+        local_status = self.parent.parent.get_singlecolumn_field_list("ExitStatus")
         cond = {
           "conditionType": "ExitStatus",
           "dynamicLocale": False,
           "id": subtask_id,
-          "status": self.status,
+          "status": local_status,
         }
       case "ExitName":
         cond = {
@@ -1044,36 +1014,15 @@ class Gui_TaskDlg(QMainWindow):
           "exitName": self.ui.fld_exitname_ccen.displayText(),
         }
       case "Location":
+        local_locations = self.parent.parent.get_singlecolumn_field_list("Location")
         cond = {
           "conditionType": "Location",
           "dynamicLocale": False,
           "id": subtask_id,
-          "target": self.location,
+          "target": local_locations,
         }
 
-    self.cc.append(cond) # not final form
-    self.ui.list_ff_cc_cond.addItem(f"_id: {subtask_id},{cond_type}")
-
-  def cc_remove(self):
-    gui_items = self.ui.list_ff_cc_cond
-    internal_items = self.cc
-    select = gui_items.selectedItems()
-    # if no reward selected, just skip
-    if len(select) <= 0:
-      return
-    item_text = select[0].text()
-
-    # really hacky but easier than setting up a bunch of tables in qt6
-    item_id = item_text.split(',')[0].strip('_id: ')
-    for item in internal_items:
-      if item['id'] == item_id:
-        internal_items.remove(item)
-        break
-    
-    for i in range(gui_items.count()):
-      if str(item_id) in gui_items.item(i).text():
-        gui_items.takeItem(i)
-        break
+    self.parent.parent.add_table_field(f"CounterCreator", self.ui.tb_cc, subtask_id, {0: subtask_id, 1: cond_type}, cond)
 
   def finalize(self, cond_type):
     pass
