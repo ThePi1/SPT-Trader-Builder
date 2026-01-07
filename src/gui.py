@@ -88,7 +88,7 @@ class Gui_MainWindow(QMainWindow):
         table.setItem(row,col,QTableWidgetItem(str(text)))
     print(f"Table fields:\n{self.table_fields}")
 
-  def remove_selected_table_item(self, type, table):
+  def remove_selected_table_item(self, type, table, id_row=0):
     print(f"Debug: removing selected item, type: {type}, table: {table}. Table_fields: {self.table_fields}")
     # if we need to check multiple types (like for rewards), do so
     if type == "RewardAny":
@@ -101,7 +101,7 @@ class Gui_MainWindow(QMainWindow):
     if len(select) <= 0:
       return
     row = select[0].row()
-    row_id = table.item(row, 0).text()
+    row_id = table.item(row, id_row).text()
     for type in alltypes:
       print(f"Debug remove: type found?{type in self.table_fields}, row_id in typedict?{type in row_id in self.table_fields and row_id in self.table_fields[type]}")
       if type in self.table_fields and row_id in self.table_fields[type]:
@@ -297,9 +297,9 @@ class Gui_RewardDlg(QMainWindow):
   def remove_selected_item(self, tab):
     match tab:
       case "AssortmentUnlock":
-        self.parent.parent.remove_selected_table_item(type="RewardAssortmentUnlock", table=self.ui.tb_asu_item)
+        self.parent.parent.remove_selected_table_item(type="RewardAssortmentUnlock", table=self.ui.tb_asu_item, id_row=6)
       case "Item":
-        self.parent.parent.remove_selected_table_item(type="RewardItem", table=self.ui.tb_item)
+        self.parent.parent.remove_selected_table_item(type="RewardItem", table=self.ui.tb_item, id_row=6)
 
   def finalize(self, reward_type):
     match reward_type:
@@ -915,6 +915,11 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_status_qs.addItems(ctr.tb_queststatus)
     self.ui.box_comparemethod_ts.addItems(ctr.default_compare)
     self.ui.box_ff.addItems(ctr.tb_finishfail)
+    self.ui.box_ff_it.addItems(ctr.tb_finishfail)
+    self.ui.box_ff_sk.addItems(ctr.tb_finishfail)
+    self.ui.box_ff_li.addItems(ctr.tb_finishfail)
+    self.ui.box_ff_pb.addItems(ctr.tb_finishfail)
+    self.ui.box_ff_tl.addItems(ctr.tb_finishfail)
 
   def setup_buttons(self):
     # CounterCreator types first:
