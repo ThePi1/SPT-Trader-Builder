@@ -121,6 +121,10 @@ class Gui_MainWindow(QMainWindow):
     else:
       return []
 
+  def reset_by_key(self, key):
+    if key in self.table_fields:
+      del self.table_fields[key]
+
   def editSelectedQuest(self):
     qlist = self.ui.questList
     select = qlist.selectedItems()
@@ -558,6 +562,7 @@ class Gui_QuestDlg(QMainWindow):
   
   def on_launch(self):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
+    self.ui.pb_rem_task.released.connect(lambda: self.parent.remove_selected_table_item(type="Condition", table=self.ui.tb_cond))
     self.ui.pb_finalize_quest.released.connect(self.finalize)
     self.ui.pb_add_reward.released.connect(lambda: Gui_RewardDlg(parent=self))
     self.ui.pb_edit_reward.released.connect(self.edit_selected_reward)
@@ -680,9 +685,9 @@ class Gui_QuestDlg(QMainWindow):
       "changeQuestMessageText": quest_id + " changeQuestMessageText",
       "completePlayerMessage": quest_id + " completePlayerMessage",
       "conditions": {
-        "AvailableForFinish": [],#add task lists
-        "AvailableForStart": [],
-        "Fail": []
+        "AvailableForFinish": self.parent.get_multicolumn_values_list("ConditionFinish"), # ConditionFinish
+        "AvailableForStart": self.parent.get_multicolumn_values_list("ConditionStart"), # ConditionStart
+        "Fail": self.parent.get_multicolumn_values_list("ConditionFail") # ConditionFail
       },
       "declinePlayerMessage": quest_id + " declinePlayerMessage",
       "description": quest_id + " description",
@@ -907,19 +912,21 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_hofind_it.addItems(ctr.tb_handover_box_cond_type)
     self.ui.box_only_fir_it.addItems(ctr.default_ft)
     self.ui.box_compare_sk.addItems(ctr.default_compare)
-    self.ui.box_target_sk.addItems(ctr.qb_box_quest_type_label)
+    self.ui.box_target_sk.addItems(ctr.default_skills)
     self.ui.box_fir_li.addItems(ctr.default_ft)
     self.ui.box_compare_tl.addItems(ctr.default_compare)
     self.ui.box_target_tl.addItems(ctr.tb_traderloyalt_target_box)
     self.ui.box_compare_lv.addItems(ctr.default_compare)
     self.ui.box_status_qs.addItems(ctr.tb_queststatus)
     self.ui.box_comparemethod_ts.addItems(ctr.default_compare)
+    self.ui.box_cc_qtlab.addItems(ctr.qb_box_quest_type_label)
     self.ui.box_ff.addItems(ctr.tb_finishfail)
     self.ui.box_ff_it.addItems(ctr.tb_finishfail)
     self.ui.box_ff_sk.addItems(ctr.tb_finishfail)
     self.ui.box_ff_li.addItems(ctr.tb_finishfail)
     self.ui.box_ff_pb.addItems(ctr.tb_finishfail)
     self.ui.box_ff_tl.addItems(ctr.tb_finishfail)
+    self.ui.box_trader_ts.addItems(ctr.tb_traderloyalt_target_box)
 
   def setup_buttons(self):
     # CounterCreator types first:
@@ -933,8 +940,12 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.pb_finalize_sk.released.connect(lambda: self.finalize("Skill"))
     self.ui.pb_finalize_li.released.connect(lambda: self.finalize("LeaveItemAtLocation"))
     self.ui.pb_finalize_pb.released.connect(lambda: self.finalize("PlaceBeacon"))
+    self.ui.pb_finalize_cc.released.connect(lambda: self.finalize("CounterCreator"))
     # TODO: Add WeaponAssembly menu and finalize link here
     self.ui.pb_finalize_tl.released.connect(lambda: self.finalize("TraderLoyalty"))
+    self.ui.pb_finalize_lv.released.connect(lambda: self.finalize("Level"))
+    self.ui.pb_finalize_qs.released.connect(lambda: self.finalize("Quest"))
+    self.ui.pb_finalize_ts.released.connect(lambda: self.finalize("TraderStanding"))
     self.ui.pb_addwep_cck.released.connect(lambda: self.parent.parent.add_table_field(f"Kills", self.ui.tb_wep, self.ui.box_weapons_cck.currentText(), {0: self.ui.box_weapons_cck.currentText()}, self.ui.box_weapons_cck.currentText()))
     self.ui.pb_removewep_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="Kills", table=self.ui.tb_wep))
     self.ui.pb_remove_cc.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="CounterCreator", table=self.ui.tb_cc))
@@ -944,6 +955,10 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.pb_rem_ccl.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="Location", table=self.ui.tb_ccl))
     self.ui.pb_addvis.released.connect(lambda: self.parent.parent.add_table_field(f"VisibilityCond", self.ui.tb_vis, self.ui.fld_visibility_targetid.displayText(), {0: self.ui.fld_visibility_targetid.displayText()}, self.ui.fld_visibility_targetid.displayText()))
     self.ui.pb_remvis.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="VisibilityCond", table=self.ui.tb_vis))
+    self.ui.pb_additem_it.released.connect(lambda: self.parent.parent.add_table_field(f"HFItems", self.ui.tb_items, self.ui.fld_itemid_it.displayText(), {0: self.ui.fld_itemid_it.displayText()}, self.ui.fld_itemid_it.displayText()))
+    self.ui.pb_remitem_it.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="HFItems", table=self.ui.tb_items))
+    self.ui.pb_addstatus_qs.released.connect(lambda: self.parent.parent.add_table_field(f"QStatus", self.ui.tb_status_qs, self.ui.box_status_qs.currentText(), {0: self.ui.box_status_qs.currentText()}, self.ui.box_status_qs.currentText()))
+    self.ui.pb_remstatus_qs.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="QStatus", table=self.ui.tb_status_qs))
 
   def setup_text_edit(self):
     self.ui.fld_taskid_gen.setText(self.id)
@@ -975,7 +990,7 @@ class Gui_TaskDlg(QMainWindow):
           },
           "distance": {
             "compareMethod": self.ui.box_dist_compare_cck.currentText(), 
-            "distance": self.ui.fld_dist_cck.displayText()
+            "distance": int(self.ui.fld_dist_cck.displayText())
           },
           "dynamicLocale": False,
           "enemyEquipmentExclusive": [],
@@ -1018,4 +1033,203 @@ class Gui_TaskDlg(QMainWindow):
     self.parent.parent.add_table_field(f"CounterCreator", self.ui.tb_cc, subtask_id, {0: subtask_id, 1: cond_type}, cond)
 
   def finalize(self, cond_type):
-    pass
+    timing = ""
+    match cond_type:
+      # 3 different types of ids, all unique:
+      # one, each cc list item has its own id
+      # two, the whole cc list itself has an id
+      # three, the top-level CC task/condition has an id
+      # we use number 3 for the id in the internal datastore, and show that id in the task/cond list
+      case "CounterCreator":
+        local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+        local_counter = {
+          "conditions": [],
+          "id": str(ObjectId())
+        }
+        local_counter["conditions"] = self.parent.parent.get_multicolumn_values_list("CounterCreator")
+        timing = self.ui.box_ff.currentText()
+        cond = {
+          "completeInSeconds": 0,
+          "conditionType": "CounterCreator",
+          "counter": local_counter,
+          "doNotResetIfCounterCompleted": False, # TODO: implement gui for this
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "isNecessary": False, # TODO: implement gui for this
+          "isResetOnConditionFailed": False, # TODO: implement gui for this
+          "oneSessionOnly": False,
+          "parentId": self.ui.fld_parentid_cc.displayText(),
+          "type": self.ui.box_cc_qtlab.currentText(),
+          "value": int(self.ui.fld_quantity_cc.displayText()),
+          "visibilityConditions": local_vis_cond
+        }
+      case "Item":
+        sub_cond_type = self.ui.box_hofind_it.currentText()
+        if sub_cond_type == "FindItem":
+          local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+          timing = self.ui.box_ff_it.currentText()
+          local_target = self.parent.parent.get_singlecolumn_field_list("HFItems")
+          cond = {
+            "conditionType": "FindItem",
+            "countInRaid": False,
+            "dogtagLevel": 0,
+            "dynamicLocale": False,
+            "globalQuestCounterId": "",
+            "id": self.id,
+            "index": 0,
+            "inEncoded": False,
+            "maxDurability": int(self.ui.fld_maxdur_it.displayText()),
+            "minDurability": int(self.ui.fld_mindur_it.displayText()),
+            "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
+            "parentId": self.ui.fld_parentid.displayText(),
+            "target": local_target,
+            "value": int(self.ui.fld_quantity_it.displayText()),
+            "visibilityConditions": local_vis_cond
+          }
+        if sub_cond_type == "HandoverItem":
+          local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+          timing = self.ui.box_ff_it.currentText()
+          local_target = self.parent.parent.get_singlecolumn_field_list("HFItems")
+          cond = {
+            "conditionType": "HandoverItem",
+            "dogtagLevel": 0,
+            "dynamicLocale": False,
+            "globalQuestCounterId": "",
+            "id": self.id,
+            "index": 0,
+            "inEncoded": False,
+            "maxDurability": int(self.ui.fld_maxdur_it.displayText()),
+            "minDurability": int(self.ui.fld_mindur_it.displayText()),
+            "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
+            "parentId": self.ui.fld_parentid.displayText(),
+            "target": local_target,
+            "value": int(self.ui.fld_quantity_it.displayText()),
+            "visibilityConditions": local_vis_cond
+          }
+      case "Skill":
+        local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+        timing = self.ui.box_ff_sk.currentText()
+        cond = {
+          "compareMethod": self.ui.box_compare_sk.currentText(),
+          "conditionType": "Skill",
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "parentId": self.ui.fld_parentid_sk_2.displayText(),
+          "target": self.ui.box_target_sk.currentText(),
+          "value": int(self.ui.fld_level_sk.displayText()),
+          "visibilityConditions": local_vis_cond
+        }
+      case "LeaveItemAtLocation":
+        local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+        timing = self.ui.box_ff_li.currentText()
+        cond = {
+          "conditionType": "LeaveItemAtLocation",
+          "dogtagLevel": 0,
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "inEncoded": False,
+          "maxDurability": self.ui.fld_maxdur_li.displayText(),
+          "minDurability": self.ui.fld_mindur_li.displayText(),
+          "onlyFoundInRaid": is_true(self.ui.box_fir_li.currentText()),
+          "parentId": self.ui.fld_parentid_li.displayText(),
+          "plantTime": int(self.ui.fld_plant_time_li.displayText()),
+          "target": [self.ui.fld_targeti_li.displayText()], # TODO: add list here, not just single
+          "value": int(self.ui.fld_quantity_li.displayText()),
+          "visibilityConditions": local_vis_cond,
+          "zoneId": self.ui.fld_zoneid_li.displayText()
+        }
+      case "PlaceBeacon":
+        local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+        timing = self.ui.box_ff_pb.currentText()
+        cond = {
+          "conditionType": "PlaceBeacon",
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "parentId": self.ui.fld_parentid_pb.displayText(),
+          "plantTime": int(self.ui.sb_time_pb.cleanText()),
+          "target": [self.ui.fld_targeti_li.displayText()],
+          "value": "5991b51486f77447b112d44f", # ItemID for the MS2000 marker, can also use Radio Repeater (63a0b2eabea67a6d93009e52) according to docs
+          "visibilityConditions": local_vis_cond,
+          "zoneId": self.ui.fld_zoneid_pb.displayText()
+        }
+      case "WeaponAssembly":
+        # TODO: implement
+        pass
+      case "TraderLoyalty":
+        local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+        timing = self.ui.box_ff_tl.currentText()
+        cond = {
+          "compareMethod": self.ui.box_compare_tl.currentText(),
+          "conditionType": "TraderLoyalty",
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "parentId": self.ui.fld_parentid_tl.displayText(), # TODO: this isn't actually in the docs, does it work?? remove if not
+          "target": self.parent.parent.traders[self.ui.box_target_tl.currentText()],
+          "value": int(self.ui.fld_level_tl.displayText()),
+          "visibilityConditions": local_vis_cond,
+        }
+
+      # These 3 next are start-only
+      case "Level":
+        timing = "Start"
+        cond = {
+          "compareMethod": self.ui.box_compare_lv.currentText(),
+          "conditionType": "Level",
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "parentId": "",
+          "value": int(self.ui.fld_value_lv.displayText()),
+          "visibilityConditions": []
+        }
+      case "Quest":
+        timing = "Start"
+        local_status = self.parent.parent.get_singlecolumn_field_list("QStatus")
+        cond = {
+          "availableAfter": int(self.ui.fld_avail_qs.displayText()),
+          "conditionType": "Quest",
+          "dispersion": 0,
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "parentId": "",
+          "status": local_status,
+          "target": self.ui.fld_tid_qs.displayText(),
+          "visibilityConditions": []
+        }
+      case "TraderStanding":
+        timing = "Start"
+        cond = {
+          "compareMethod": self.ui.box_comparemethod_ts.currentText(),
+          "conditionType": "TraderStanding",
+          "dynamicLocale": False,
+          "globalQuestCounterId": "",
+          "id": self.id,
+          "index": 0,
+          "parentId": "",
+          "target": self.parent.parent.traders[self.ui.box_trader_ts.currentText()],
+          "value": int(self.ui.fld_value_ts.displayText()),
+          "visibilityConditions": []
+        }
+    
+    # Add to task list and close self out
+    # ConditionFinish, ConditionStart, ConditionFail
+    self.parent.parent.add_table_field(f"Condition{timing}", self.parent.ui.tb_cond, self.id, {0: self.id, 1: timing, 2: cond_type}, cond)
+    # clear the list, since we're exported and done with it, if we need to load, we will do it from the JSON object itself
+    self.parent.parent.reset_by_key(cond_type)
+    if cond_type == "CounterCreator": # we also need to clear all the subfields, if they were used, if it's cc
+      for c in ["VisitPlace", "Kills", "ExitStatus", "ExitName", "Location"]:
+        self.parent.parent.reset_by_key(c)
+    self.close()

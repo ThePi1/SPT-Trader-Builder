@@ -173,16 +173,6 @@
      </item>
     </layout>
    </widget>
-   <widget class="QListWidget" name="list_tasks">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>410</y>
-      <width>351</width>
-      <height>151</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QWidget" name="gridLayoutWidget_4">
     <property name="geometry">
      <rect>
@@ -269,6 +259,34 @@
       <horstretch>0</horstretch>
       <verstretch>0</verstretch>
      </sizepolicy>
+    </property>
+    <property name="selectionBehavior">
+     <enum>QAbstractItemView::SelectRows</enum>
+    </property>
+    <column>
+     <property name="text">
+      <string>id</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>timing</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>type</string>
+     </property>
+    </column>
+   </widget>
+   <widget class="QTableWidget" name="tb_cond">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>410</y>
+      <width>341</width>
+      <height>151</height>
+     </rect>
     </property>
     <property name="selectionBehavior">
      <enum>QAbstractItemView::SelectRows</enum>

@@ -476,7 +476,7 @@ class Ui_rewardBuilder(object):
         rewardBuilder.setStatusBar(self.statusbar)
 
         self.retranslateUi(rewardBuilder)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(rewardBuilder)
 
     def retranslateUi(self, rewardBuilder):

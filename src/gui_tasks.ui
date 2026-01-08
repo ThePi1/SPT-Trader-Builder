@@ -542,16 +542,26 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>260</y>
+          <y>180</y>
           <width>251</width>
-          <height>82</height>
+          <height>138</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="grid_quantity_3">
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="fld_quantity_cck"/>
-         </item>
          <item row="2" column="1">
+          <widget class="QComboBox" name="box_ff"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_59">
+           <property name="text">
+            <string>CC QuestType Label</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="fld_quantity_cc"/>
+         </item>
+         <item row="4" column="1">
           <widget class="QPushButton" name="pb_remove_cc">
            <property name="text">
             <string>Remove Selected</string>
@@ -565,22 +575,32 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item row="4" column="0">
           <widget class="QPushButton" name="pb_finalize_cc">
            <property name="text">
             <string>Finalize</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item row="1" column="1">
+          <widget class="QComboBox" name="box_cc_qtlab"/>
+         </item>
+         <item row="2" column="0">
           <widget class="QLabel" name="label_53">
            <property name="text">
             <string>Finish/Fail:</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QComboBox" name="box_ff"/>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="fld_parentid_cc"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_60">
+           <property name="text">
+            <string>Parent ID</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -590,7 +610,7 @@
           <x>10</x>
           <y>40</y>
           <width>301</width>
-          <height>192</height>
+          <height>131</height>
          </rect>
         </property>
         <property name="selectionBehavior">
@@ -618,7 +638,7 @@
           <x>10</x>
           <y>10</y>
           <width>331</width>
-          <height>242</height>
+          <height>270</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="grid_fields2">
@@ -646,6 +666,13 @@
           <widget class="QLabel" name="lb_quantity_2">
            <property name="text">
             <string>Quantity:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0">
+          <widget class="QLabel" name="label_61">
+           <property name="text">
+            <string>Parent ID</string>
            </property>
           </widget>
          </item>
@@ -695,18 +722,21 @@
          <item row="5" column="1">
           <widget class="QComboBox" name="box_only_fir_it"/>
          </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="fld_maxdur_it"/>
-         </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="box_hofind_it"/>
-         </item>
          <item row="8" column="0">
           <widget class="QLabel" name="label_54">
            <property name="text">
             <string>Finish/Fail:</string>
            </property>
           </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="fld_maxdur_it"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_hofind_it"/>
+         </item>
+         <item row="10" column="1">
+          <widget class="QLineEdit" name="fld_parentid_it"/>
          </item>
         </layout>
        </widget>
@@ -775,7 +805,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>270</y>
+          <y>290</y>
           <width>101</width>
           <height>24</height>
          </rect>
@@ -810,28 +840,28 @@
           <x>10</x>
           <y>10</y>
           <width>261</width>
-          <height>158</height>
+          <height>141</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_17">
-           <property name="text">
-            <string>Parent ID:</string>
-           </property>
-          </widget>
+         <item row="3" column="1">
+          <widget class="QComboBox" name="box_ff_sk"/>
          </item>
-         <item row="2" column="0">
+         <item row="1" column="0">
           <widget class="QLabel" name="label_12">
            <property name="text">
             <string>Target:</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="fld_parentid_sk"/>
-         </item>
          <item row="3" column="0">
+          <widget class="QLabel" name="label_55">
+           <property name="text">
+            <string>Finish/Fail:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
           <widget class="QLabel" name="label_13">
            <property name="text">
             <string>Level:</string>
@@ -845,24 +875,24 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_62">
+           <property name="text">
+            <string>Parent ID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
           <widget class="QLineEdit" name="fld_level_sk"/>
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="box_compare_sk"/>
          </item>
-         <item row="2" column="1">
+         <item row="1" column="1">
           <widget class="QComboBox" name="box_target_sk"/>
          </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_55">
-           <property name="text">
-            <string>Finish/Fail:</string>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="1">
-          <widget class="QComboBox" name="box_ff_sk"/>
+          <widget class="QLineEdit" name="fld_parentid_sk_2"/>
          </item>
         </layout>
        </widget>
@@ -870,7 +900,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>180</y>
+          <y>160</y>
           <width>75</width>
           <height>24</height>
          </rect>
@@ -890,7 +920,7 @@
           <x>10</x>
           <y>10</y>
           <width>411</width>
-          <height>292</height>
+          <height>298</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="grid_fields_4">
@@ -971,18 +1001,8 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_41">
-           <property name="text">
-            <string>Parent ID:</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="1">
           <widget class="QLineEdit" name="fld_dogtaglevel_li"/>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="fld_parentid_li"/>
          </item>
          <item row="9" column="0">
           <widget class="QLabel" name="label_56">
@@ -993,6 +1013,16 @@
          </item>
          <item row="9" column="1">
           <widget class="QComboBox" name="box_ff_li"/>
+         </item>
+         <item row="10" column="0">
+          <widget class="QLabel" name="label_41">
+           <property name="text">
+            <string>Parent ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="1">
+          <widget class="QLineEdit" name="fld_parentid_li"/>
          </item>
         </layout>
        </widget>
@@ -1024,20 +1054,10 @@
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_3">
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="fld_parentid_pb"/>
-         </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_44">
            <property name="text">
             <string>Value:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_42">
-           <property name="text">
-            <string>Parent ID:</string>
            </property>
           </widget>
          </item>
@@ -1055,22 +1075,8 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QSpinBox" name="sb_value_pb">
-           <property name="maximum">
-            <number>999999</number>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="lineEdit_6"/>
-         </item>
-         <item row="1" column="1">
-          <widget class="QSpinBox" name="sb_time_pb">
-           <property name="maximum">
-            <number>9999999</number>
-           </property>
-          </widget>
+         <item row="4" column="3">
+          <widget class="QComboBox" name="box_ff_pb"/>
          </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_57">
@@ -1079,8 +1085,32 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
-          <widget class="QComboBox" name="box_ff_pb"/>
+         <item row="2" column="3">
+          <widget class="QSpinBox" name="sb_value_pb">
+           <property name="maximum">
+            <number>999999</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLineEdit" name="fld_zoneid_pb"/>
+         </item>
+         <item row="1" column="3">
+          <widget class="QSpinBox" name="sb_time_pb">
+           <property name="maximum">
+            <number>9999999</number>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_42">
+           <property name="text">
+            <string>Parent ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="3">
+          <widget class="QLineEdit" name="fld_parentid_pb"/>
          </item>
         </layout>
        </widget>
@@ -1126,7 +1156,7 @@
           <x>10</x>
           <y>10</y>
           <width>311</width>
-          <height>130</height>
+          <height>136</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
@@ -1169,6 +1199,16 @@
          </item>
          <item row="3" column="1">
           <widget class="QComboBox" name="box_ff_tl"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_63">
+           <property name="text">
+            <string>Parent ID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="fld_parentid_tl"/>
          </item>
         </layout>
        </widget>
@@ -1254,7 +1294,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QPushButton" name="pushButton_18">
+       <widget class="QPushButton" name="pb_finalize_lv">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -1355,19 +1395,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QPushButton" name="pb_addstatus_qs">
-        <property name="geometry">
-         <rect>
-          <x>620</x>
-          <y>10</y>
-          <width>75</width>
-          <height>24</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Add</string>
-        </property>
-       </widget>
        <widget class="QTableWidget" name="tb_status_qs">
         <property name="geometry">
          <rect>
@@ -1385,6 +1412,32 @@
           <string>status</string>
          </property>
         </column>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_29">
+        <property name="geometry">
+         <rect>
+          <x>620</x>
+          <y>10</y>
+          <width>181</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_17">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="pb_addstatus_qs">
+           <property name="text">
+            <string>Add</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="pb_remstatus_qs">
+           <property name="text">
+            <string>Remove Selected</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
       <widget class="QWidget" name="tab_5">
@@ -1407,9 +1460,6 @@
          <item row="2" column="1">
           <widget class="QLineEdit" name="fld_value_ts"/>
          </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="fld_traderid_ts"/>
-         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_19">
            <property name="text">
@@ -1420,7 +1470,7 @@
          <item row="1" column="0">
           <widget class="QLabel" name="label_51">
            <property name="text">
-            <string>Trader ID</string>
+            <string>Trader</string>
            </property>
           </widget>
          </item>
@@ -1430,6 +1480,9 @@
             <string>Value</string>
            </property>
           </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="box_trader_ts"/>
          </item>
         </layout>
        </widget>
