@@ -45,13 +45,10 @@ class Controller:
     tb_elim_box_bodypart                  = str(parser.get('box_fields', 'tb_elim_box_bodypart')).split(',')
     tb_elim_box_weapons                   = str(parser.get('box_fields', 'tb_elim_box_weapons')).split(',')
     tb_handover_box_cond_type             = str(parser.get('box_fields', 'tb_handover_box_cond_type')).split(',')
-<<<<<<< HEAD
-=======
     ab_box_loyalty_level                  = str(parser.get('box_fields', 'ab_box_loyalty_level')).split(',')
     ab_box_condition_req                  = str(parser.get('box_fields', 'ab_box_condition_req')).split(',')
     ab_box_modslot                        = str(parser.get('box_fields', 'ab_box_modslot')).split(',')
     tb_traderloyalty_level                = str(parser.get('box_fields', 'tb_traderloyalty_level')).split(',')
->>>>>>> 3363d33e4bda118ad4e5382d32c220ec4d23f87d
     tb_traderloyalt_target_box            = str(parser.get('box_fields', 'tb_traderloyalt_target_box')).split(',')
     tb_exitstatus                         = str(parser.get('box_fields', 'tb_exitstatus')).split(',')
     tb_queststatus                        = str(parser.get('box_fields', 'tb_queststatus')).split(',')
