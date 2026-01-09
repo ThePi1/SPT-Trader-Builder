@@ -733,8 +733,6 @@ class Gui_AssortDlg(QMainWindow):
     self.on_launch() #custom Code
     self.show()
 
-    
-
     # if self.ui.ab_unlimitedcount.isChecked() : 
     #   self.ui.ab_quantity.clear()
     #   self.ui.ab_quantity.setEnabled(False)
@@ -867,19 +865,14 @@ class Gui_AssortDlg(QMainWindow):
           mongosaved:loyatlylevel,
     }
 
-
-
     row = table.rowCount()
     table.insertRow(row)
-    
     table.setItem(row,0,QTableWidgetItem(name))
     table.setItem(row,1,QTableWidgetItem(str(quantity)))
     table.setItem(row,2,QTableWidgetItem(str(cost)))
     table.setItem(row,3,QTableWidgetItem(loyatlylevel))
     table.setItem(row,4,QTableWidgetItem(questlocked))
     table.setItem(row,5,QTableWidgetItem(cashtype))
-
-
 
 class Gui_TaskDlg(QMainWindow):
   def __init__(self, parent=None):
