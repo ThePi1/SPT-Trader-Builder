@@ -18,6 +18,24 @@ from gui_tasks import Ui_TaskWindow
 from gui_assort import Ui_AssortBuilder
 from gui_rewards import Ui_rewardBuilder
 
+def val_field(value, emptyval, defaultval, expectclass):
+  if value == emptyval:
+    return defaultval
+  else:
+    try:
+      convert_val = expectclass(value)
+      return value
+    except Exception as e:
+      if expectclass == int:
+        return 0
+      if expectclass == float:
+        return 0.0
+      if expectclass == list:
+        return []
+      if expectclass == dict:
+        return {}
+      return ""
+
 # oops copy paste sue me, should replace boxes w/ checkbox
 def is_true(val):
   val = val.lower()
@@ -1171,7 +1189,7 @@ class Gui_TaskDlg(QMainWindow):
 
   def setup_box_selections(self):
     ctr = self.parent.parent.controller
-    self.ui.box_target_cck.addItems(ctr.tb_elim_box_target)
+    self.ui.box_targets_cck.addItems(ctr.tb_elim_box_target)
     self.ui.box_targetrole_cck.addItems(ctr.tb_elim_box_targetrole)
     self.ui.box_bodypart_cck.addItems(ctr.tb_elim_box_bodypart)
     self.ui.box_dist_compare_cck.addItems(ctr.default_compare)
@@ -1215,8 +1233,23 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.pb_finalize_lv.released.connect(lambda: self.finalize("Level"))
     self.ui.pb_finalize_qs.released.connect(lambda: self.finalize("Quest"))
     self.ui.pb_finalize_ts.released.connect(lambda: self.finalize("TraderStanding"))
-    self.ui.pb_addwep_cck.released.connect(lambda: self.parent.parent.add_table_field(f"Kills", self.ui.tb_wep, self.ui.box_weapons_cck.currentText(), {0: self.ui.box_weapons_cck.currentText()}, self.ui.box_weapons_cck.currentText()))
-    self.ui.pb_removewep_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="Kills", table=self.ui.tb_wep))
+    self.ui.pb_finalize_wa.released.connect(lambda: self.finalize("WeaponAssembly"))
+
+    # Kills table add/remove buttons
+    self.ui.pb_addwep_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsWep", self.ui.tb_wep, self.ui.box_weapons_cck.currentText(), {0: self.ui.box_weapons_cck.currentText()}, self.ui.box_weapons_cck.currentText()))
+    self.ui.pb_removewep_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsWep", table=self.ui.tb_wep))
+    self.ui.pb_addtar_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsTarget", self.ui.tb_targets, self.ui.box_targets_cck.currentText(), {0: self.ui.box_targets_cck.currentText()}, self.ui.box_targets_cck.currentText()))
+    self.ui.pb_removetar_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsTarget", table=self.ui.tb_targets))
+    self.ui.pb_addtr_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsTargetRole", self.ui.tb_targetrole, self.ui.box_targetrole_cck.currentText(), {0: self.ui.box_targetrole_cck.currentText()}, self.ui.box_targetrole_cck.currentText()))
+    self.ui.pb_removetr_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsTargetRole", table=self.ui.tb_targetrole))
+    self.ui.pb_addbp_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsBodyPart", self.ui.tb_bodypart, self.ui.box_bodypart_cck.currentText(), {0: self.ui.box_bodypart_cck.currentText()}, self.ui.box_bodypart_cck.currentText()))
+    self.ui.pb_rembp_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsBodyPart", table=self.ui.tb_bodypart))
+    self.ui.pb_add_imod.released.connect(lambda: self.parent.parent.add_table_field(f"KillsModInc", self.ui.tb_incmods, self.ui.fld_incmod_cck.displayText(), {0: self.ui.fld_incmod_cck.displayText()}, self.ui.fld_incmod_cck.displayText()))
+    self.ui.pb_rem_imod.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsModInc", table=self.ui.tb_incmods))
+    self.ui.pb_add_emod.released.connect(lambda: self.parent.parent.add_table_field(f"KillsModExc", self.ui.tb_excmods, self.ui.fld_excmod_cck.displayText(), {0: self.ui.fld_excmod_cck.displayText()}, self.ui.fld_excmod_cck.displayText()))
+    self.ui.pb_rem_emod.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsExc", table=self.ui.tb_excmods))
+
+    # Other table buttons
     self.ui.pb_remove_cc.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="CounterCreator", table=self.ui.tb_cc))
     self.ui.pb_status_rem_cces.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ExitStatus", table=self.ui.tb_cces))
     self.ui.pb_cces_add.released.connect(lambda: self.parent.parent.add_table_field(f"ExitStatus", self.ui.tb_cces, self.ui.box_status_cces.currentText(), {0: self.ui.box_status_cces.currentText()}, self.ui.box_status_cces.currentText()))
@@ -1228,6 +1261,8 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.pb_remitem_it.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="HFItems", table=self.ui.tb_items))
     self.ui.pb_addstatus_qs.released.connect(lambda: self.parent.parent.add_table_field(f"QStatus", self.ui.tb_status_qs, self.ui.box_status_qs.currentText(), {0: self.ui.box_status_qs.currentText()}, self.ui.box_status_qs.currentText()))
     self.ui.pb_remstatus_qs.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="QStatus", table=self.ui.tb_status_qs))
+    self.ui.pb_add_li_target.released.connect(lambda: self.parent.parent.add_table_field(f"LeaveItemTarget", self.ui.tb_li_target, self.ui.fld_li_target.displayText(), {0: self.ui.fld_li_target.displayText()}, self.ui.fld_li_target.displayText()))
+    self.ui.pb_rem_li_target.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="LeaveItemTarget", table=self.ui.tb_li_target))
 
   def setup_text_edit(self):
     self.ui.fld_taskid_gen.setText(self.id)
@@ -1245,21 +1280,30 @@ class Gui_TaskDlg(QMainWindow):
           "value": 1
         }
       case "Kills":
-        # TODO: add support for arbitrary list of fields, not just one, as is the case with:
-        # bodyPart, savageRole, weapon, weaponCaliber, weaponModsExclusive, weaponModsInclusive
-        # TODO: add support for weaponModsInclusive and weaponModsExclusive fields
-        local_weapons = self.parent.parent.get_singlecolumn_field_list("Kills")
+        local_weapons = self.parent.parent.get_singlecolumn_field_list("KillsWep")
+        local_weapons_id = []
+        for wep in local_weapons:
+          local_weapons_id.append(self.parent.parent.weapons[wep])
+        local_targets = self.parent.parent.get_singlecolumn_field_list("KillsTarget")
+        local_targetrole = self.parent.parent.get_singlecolumn_field_list("KillsTargetRole")
+        local_bodypart = self.parent.parent.get_singlecolumn_field_list("KillsBodyPart")
+        local_incmod = self.parent.parent.get_singlecolumn_field_list("KillsModInc")
+        local_excmod = self.parent.parent.get_singlecolumn_field_list("KillsModExc")
+        local_dist = val_field(self.ui.fld_dist_cck.displayText(), "", 0, int)
+        local_timefrom = val_field(self.ui.fld_time_from_cck.displayText(), "", 0, int)
+        local_timeto = val_field(self.ui.fld_time_to_cck.displayText(), "", 0, int)
+
         cond = {
-          "bodyPart": [self.ui.box_bodypart_cck.currentText()],
+          "bodyPart": local_bodypart,
           "compareMethod": ">=", # hard code for kill quest
           "conditionType": "Kills",
           "daytime": {
-            "from": int(self.ui.fld_time_from_cck.displayText()), # TODO: add validator for field types instead of blindly erroring out
-            "to": int(self.ui.fld_time_to_cck.displayText())
+            "from": local_timefrom,
+            "to": local_timeto
           },
           "distance": {
             "compareMethod": self.ui.box_dist_compare_cck.currentText(), 
-            "distance": int(self.ui.fld_dist_cck.displayText())
+            "distance": local_dist
           },
           "dynamicLocale": False,
           "enemyEquipmentExclusive": [],
@@ -1267,13 +1311,13 @@ class Gui_TaskDlg(QMainWindow):
           "enemyHealthEffects": [],
           "id": subtask_id,
           "resetOnSessionEnd": self.ui.chk_cck_reset_sessionend.isChecked(),
-          "savageRole": self.ui.box_targetrole_cck.currentText(),
-          "target": self.ui.box_target_cck.currentText(),
+          "savageRole": local_targetrole,
+          "target": local_targets,
           "value": 1,
-          "weapon": local_weapons,
+          "weapon": local_weapons_id,
           "weaponCaliber": [],
-          "weaponModsExclusive": [],
-          "weaponModsInclusive": []
+          "weaponModsExclusive": local_excmod,
+          "weaponModsInclusive": local_incmod
         }
       case "ExitStatus":
         local_status = self.parent.parent.get_singlecolumn_field_list("ExitStatus")
@@ -1316,6 +1360,7 @@ class Gui_TaskDlg(QMainWindow):
           "id": str(ObjectId())
         }
         local_counter["conditions"] = self.parent.parent.get_multicolumn_values_list("CounterCreator")
+        local_value = val_field(self.ui.fld_quantity_cc.displayText(), "", 0, int)
         timing = self.ui.box_ff.currentText()
         cond = {
           "completeInSeconds": 0,
@@ -1331,7 +1376,7 @@ class Gui_TaskDlg(QMainWindow):
           "oneSessionOnly": False,
           "parentId": self.ui.fld_parentid_cc.displayText(),
           "type": self.ui.box_cc_qtlab.currentText(),
-          "value": int(self.ui.fld_quantity_cc.displayText()),
+          "value": local_value,
           "visibilityConditions": local_vis_cond
         }
       case "Item":
@@ -1340,6 +1385,8 @@ class Gui_TaskDlg(QMainWindow):
           local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
           timing = self.ui.box_ff_it.currentText()
           local_target = self.parent.parent.get_singlecolumn_field_list("HFItems")
+          local_value = val_field(self.ui.fld_quantity_it.displayText(), "", 0, int)
+
           cond = {
             "conditionType": "FindItem",
             "countInRaid": False,
@@ -1349,18 +1396,24 @@ class Gui_TaskDlg(QMainWindow):
             "id": self.id,
             "index": 0,
             "inEncoded": False,
-            "maxDurability": int(self.ui.fld_maxdur_it.displayText()),
-            "minDurability": int(self.ui.fld_mindur_it.displayText()),
             "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
             "parentId": self.ui.fld_parentid.displayText(),
             "target": local_target,
-            "value": int(self.ui.fld_quantity_it.displayText()),
+            "value": local_value,
             "visibilityConditions": local_vis_cond
           }
+          if self.ui.fld_maxdur_it.displayText() != "":
+            cond["maxDurability"] = val_field(self.ui.fld_maxdur_it.displayText(), "", 0, int)
+
+          if self.ui.fld_maxdur_it.displayText() != "":
+            cond["minDurability"] = val_field(self.ui.fld_mindur_it.displayText(), "", 0, int)
+
+
         if sub_cond_type == "HandoverItem":
           local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
           timing = self.ui.box_ff_it.currentText()
           local_target = self.parent.parent.get_singlecolumn_field_list("HFItems")
+          local_value = val_field(self.ui.fld_quantity_it.displayText(), "", 0, int)
           cond = {
             "conditionType": "HandoverItem",
             "dogtagLevel": 0,
@@ -1369,17 +1422,22 @@ class Gui_TaskDlg(QMainWindow):
             "id": self.id,
             "index": 0,
             "inEncoded": False,
-            "maxDurability": int(self.ui.fld_maxdur_it.displayText()),
-            "minDurability": int(self.ui.fld_mindur_it.displayText()),
             "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
             "parentId": self.ui.fld_parentid.displayText(),
             "target": local_target,
-            "value": int(self.ui.fld_quantity_it.displayText()),
+            "value": local_value,
             "visibilityConditions": local_vis_cond
           }
+          if self.ui.fld_maxdur_it.displayText() != "":
+            cond["maxDurability"] = val_field(self.ui.fld_maxdur_it.displayText(), "", 0, int)
+
+          if self.ui.fld_maxdur_it.displayText() != "":
+            cond["minDurability"] = val_field(self.ui.fld_mindur_it.displayText(), "", 0, int)
+
       case "Skill":
         local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
         timing = self.ui.box_ff_sk.currentText()
+        local_value = val_field(self.ui.fld_level_sk.displayText(), "", 0, int)
         cond = {
           "compareMethod": self.ui.box_compare_sk.currentText(),
           "conditionType": "Skill",
@@ -1389,12 +1447,15 @@ class Gui_TaskDlg(QMainWindow):
           "index": 0,
           "parentId": self.ui.fld_parentid_sk_2.displayText(),
           "target": self.ui.box_target_sk.currentText(),
-          "value": int(self.ui.fld_level_sk.displayText()),
+          "value": local_value,
           "visibilityConditions": local_vis_cond
         }
       case "LeaveItemAtLocation":
         local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+        local_target_ids = self.parent.parent.get_singlecolumn_field_list("LeaveItemTarget")
         timing = self.ui.box_ff_li.currentText()
+        local_ptime = val_field(self.ui.fld_plant_time_li.displayText(), "", 0, int)
+        local_value = val_field(self.ui.fld_quantity_li.displayText(), "", 0, int)
         cond = {
           "conditionType": "LeaveItemAtLocation",
           "dogtagLevel": 0,
@@ -1407,15 +1468,17 @@ class Gui_TaskDlg(QMainWindow):
           "minDurability": self.ui.fld_mindur_li.displayText(),
           "onlyFoundInRaid": is_true(self.ui.box_fir_li.currentText()),
           "parentId": self.ui.fld_parentid_li.displayText(),
-          "plantTime": int(self.ui.fld_plant_time_li.displayText()),
-          "target": [self.ui.fld_targeti_li.displayText()], # TODO: add list here, not just single
-          "value": int(self.ui.fld_quantity_li.displayText()),
+          "plantTime": local_ptime,
+          "target": local_target_ids,
+          "value": local_value,
           "visibilityConditions": local_vis_cond,
           "zoneId": self.ui.fld_zoneid_li.displayText()
         }
       case "PlaceBeacon":
         local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
         timing = self.ui.box_ff_pb.currentText()
+        local_ptime = val_field(self.ui.sb_time_pb.cleanText(), "", 10, int)
+        local_value = val_field(self.ui.sb_value_pb.cleanText(), "", 1, int)
         cond = {
           "conditionType": "PlaceBeacon",
           "dynamicLocale": False,
@@ -1423,18 +1486,24 @@ class Gui_TaskDlg(QMainWindow):
           "id": self.id,
           "index": 0,
           "parentId": self.ui.fld_parentid_pb.displayText(),
-          "plantTime": int(self.ui.sb_time_pb.cleanText()),
-          "target": [self.ui.fld_targeti_li.displayText()],
-          "value": "5991b51486f77447b112d44f", # ItemID for the MS2000 marker, can also use Radio Repeater (63a0b2eabea67a6d93009e52) according to docs
+          "plantTime": local_ptime,
+          "target": ["5991b51486f77447b112d44f"],  # ItemID for the MS2000 marker, can also use Radio Repeater (63a0b2eabea67a6d93009e52) according to docs
+          "value": local_value,
           "visibilityConditions": local_vis_cond,
           "zoneId": self.ui.fld_zoneid_pb.displayText()
         }
       case "WeaponAssembly":
         # TODO: implement
+        local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
+        timing = "Finish"
+        cond = {
+          "weapon_assembly_placeholder": "add_weapon_assembly_object_here"
+        }
         pass
       case "TraderLoyalty":
         local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
         timing = self.ui.box_ff_tl.currentText()
+        local_value = val_field(self.ui.fld_level_tl.displayText(), "", 0, int)
         cond = {
           "compareMethod": self.ui.box_compare_tl.currentText(),
           "conditionType": "TraderLoyalty",
@@ -1444,13 +1513,14 @@ class Gui_TaskDlg(QMainWindow):
           "index": 0,
           "parentId": self.ui.fld_parentid_tl.displayText(), # TODO: this isn't actually in the docs, does it work?? remove if not
           "target": self.parent.parent.traders[self.ui.box_target_tl.currentText()],
-          "value": int(self.ui.fld_level_tl.displayText()),
+          "value": local_value,
           "visibilityConditions": local_vis_cond,
         }
 
       # These 3 next are start-only
       case "Level":
         timing = "Start"
+        local_value = val_field(self.ui.fld_value_lv.displayText(), "", 0, int)
         cond = {
           "compareMethod": self.ui.box_compare_lv.currentText(),
           "conditionType": "Level",
@@ -1459,14 +1529,15 @@ class Gui_TaskDlg(QMainWindow):
           "id": self.id,
           "index": 0,
           "parentId": "",
-          "value": int(self.ui.fld_value_lv.displayText()),
+          "value": local_value,
           "visibilityConditions": []
         }
       case "Quest":
         timing = "Start"
         local_status = self.parent.parent.get_singlecolumn_field_list("QStatus")
+        local_availafter = val_field(self.ui.fld_avail_qs.displayText(), "", 0, int)
         cond = {
-          "availableAfter": int(self.ui.fld_avail_qs.displayText()),
+          "availableAfter": local_availafter,
           "conditionType": "Quest",
           "dispersion": 0,
           "dynamicLocale": False,
@@ -1480,6 +1551,7 @@ class Gui_TaskDlg(QMainWindow):
         }
       case "TraderStanding":
         timing = "Start"
+        local_availafter = val_field(self.ui.fld_value_ts.displayText(), "", 0, int)
         cond = {
           "compareMethod": self.ui.box_comparemethod_ts.currentText(),
           "conditionType": "TraderStanding",
@@ -1489,7 +1561,7 @@ class Gui_TaskDlg(QMainWindow):
           "index": 0,
           "parentId": "",
           "target": self.parent.parent.traders[self.ui.box_trader_ts.currentText()],
-          "value": int(self.ui.fld_value_ts.displayText()),
+          "value": local_value,
           "visibilityConditions": []
         }
     

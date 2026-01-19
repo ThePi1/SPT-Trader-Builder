@@ -209,7 +209,7 @@ class Ui_AssortBuilder(object):
         self.menubar.addAction(self.menuHome.menuAction())
 
         self.retranslateUi(AssortBuilder)
-        self.ab_assort_tab.setCurrentIndex(0)
+        self.ab_assort_tab.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(AssortBuilder)
 
     def retranslateUi(self, AssortBuilder):
