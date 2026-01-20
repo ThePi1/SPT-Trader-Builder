@@ -62,6 +62,8 @@ class Gui_MainWindow(QMainWindow):
     self.traders_invert = {v:k for k,v in self.traders.items()}
     self.weapons = self.importJson("data\weapons.json")
     self.locations = self.importJson("data\locations.json")
+    self.status = self.importJson("data\status.json")
+    self.status_invert = {v:k for k,v in self.status.items()}
     self.quests = {}
     #RewardFail RewardStarted RewardSuccess
     self.table_fields = {}
@@ -112,6 +114,8 @@ class Gui_MainWindow(QMainWindow):
     # if we need to check multiple types (like for rewards), do so
     if type == "RewardAny":
       alltypes = ["RewardFail", "RewardStarted", "RewardSuccess"]
+    elif type == "ConditionAny":
+      alltypes = ["ConditionFinish", "ConditionStart", "ConditionFail"]
     else:
       alltypes = [type]
 
@@ -143,6 +147,12 @@ class Gui_MainWindow(QMainWindow):
   def reset_by_key(self, key):
     if key in self.table_fields:
       del self.table_fields[key]
+
+  def reset_by_id(self, id):
+    for category,cat_dict in self.table_fields.items():
+      if id in cat_dict:
+        del cat_dict[id]
+      # if id is found, remove it similar to reset by key above
 
   def editSelectedQuest(self):
     qlist = self.ui.questList
@@ -581,10 +591,11 @@ class Gui_QuestDlg(QMainWindow):
   
   def on_launch(self):
     self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
-    self.ui.pb_rem_task.released.connect(lambda: self.parent.remove_selected_table_item(type="Condition", table=self.ui.tb_cond))
+    self.ui.pb_rem_task.released.connect(lambda: self.parent.remove_selected_table_item(type="ConditionAny", table=self.ui.tb_cond))
     self.ui.pb_finalize_quest.released.connect(self.finalize)
     self.ui.pb_add_reward.released.connect(lambda: Gui_RewardDlg(parent=self))
     self.ui.pb_edit_reward.released.connect(self.edit_selected_reward)
+    self.ui.pb_edit_task.released.connect(self.edit_selected_task)
     self.ui.pb_remove_reward.released.connect(self.remove_selected_reward)
     self.setup_box_selections()
     self.setup_text_edit()
@@ -639,13 +650,11 @@ class Gui_QuestDlg(QMainWindow):
       "QuestName": (self.ui.fld_quest_name, "fld"),
       "_id": (None, "skip"),
       "canShowNotificationsInGame": (self.ui.box_can_show_notif, "box"),
-      # do conditions later
-      "conditions":(None, "skip"),
+      "conditions":(None, "conditions"),
       "image": (self.ui.fld_image_name, "fld"),
       "instantComplete": (self.ui.box_insta_complete, "box"),
       "location": (self.ui.box_location, "box"),
       "restartable": (self.ui.box_restartable, "box"),
-      # rewards WIP
       "rewards": (None, "rewards"),
       "secretQuest": (self.ui.box_secret_quest, "box"),
       "side": (self.ui.box_avail_faction, "box"),
@@ -670,15 +679,53 @@ class Gui_QuestDlg(QMainWindow):
             #print(f"Setting {k} to {v}, type traderid")
             set_obj.setCurrentText(self.parent.traders_invert[str(v)])
           case "rewards":
-            print("Setting rewards")
+            print("Loading rewards...")
             local_rewards = copy.deepcopy(v) # copy it b/c pass by reference screws thing up here
             for type in ["Fail", "Started", "Success"]:
               for reward in local_rewards[type]:
                 if f"Reward{type}" not in self.parent.table_fields:
                   self.parent.table_fields[f"Reward{type}"] = {}
                 self.parent.add_table_field(f"Reward{type}", self.ui.tb_rewards, reward['id'], {0: reward['id'], 1:type, 2:reward['type']}, reward)
+            print("Done loading rewards!")
+          case "conditions":
+            print("Loading conditions...")
+            local_conditions = copy.deepcopy(v)
+            for type in ["Finish", "Start", "Fail"]:
+              m = {"Finish":"AvailableForFinish", "Start":"AvailableForStart", "Fail":"Fail"}
+              for cond in local_conditions[m[type]]:
+                if f"Condition{type}" not in self.parent.table_fields:
+                  self.parent.table_fields[f"Condition{type}"] = {}
+                self.parent.add_table_field(f"Condition{type}", self.ui.tb_cond, cond['id'], {0: cond['id'], 1:type, 2:cond['conditionType']}, cond)
+            print("Done loading conditions!")
+            pass
       else:
         print(f"Skipping {k}")
+
+  def edit_selected_task(self):
+      breaknext = False
+      tb_cond = self.ui.tb_cond
+      select = tb_cond.selectedItems()
+      # if no cond selected, just skip
+      if len(select) <= 0:
+        return
+      row = select[0].row()
+      cond_id = tb_cond.item(row, 0).text()
+
+      for type in ["Finish", "Start", "Fail"]:
+        if breaknext: break
+        if f"Condition{type}" in self.parent.table_fields:
+          for id in self.parent.table_fields[f"Condition{type}"]:
+            if breaknext: break
+            print(id)
+            cond = self.parent.table_fields[f"Condition{type}"][id]
+            if id == cond_id:
+              print(f"Editing task: found id {id} under type {type}.")
+              found_reward = cond
+              breaknext = True
+            
+      # create questbuilder window and load fields
+      dlg = Gui_TaskDlg(parent=self)
+      dlg.load_settings_from_dict(found_reward, type)
 
   def finalize(self):
     quest_id = self.quest_id
@@ -1397,7 +1444,7 @@ class Gui_TaskDlg(QMainWindow):
             "index": 0,
             "inEncoded": False,
             "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
-            "parentId": self.ui.fld_parentid.displayText(),
+            "parentId": self.ui.fld_parentid_it.displayText(),
             "target": local_target,
             "value": local_value,
             "visibilityConditions": local_vis_cond
@@ -1535,6 +1582,7 @@ class Gui_TaskDlg(QMainWindow):
       case "Quest":
         timing = "Start"
         local_status = self.parent.parent.get_singlecolumn_field_list("QStatus")
+        local_status_int = [self.parent.parent.status[s] for s in local_status]
         local_availafter = val_field(self.ui.fld_avail_qs.displayText(), "", 0, int)
         cond = {
           "availableAfter": local_availafter,
@@ -1545,7 +1593,7 @@ class Gui_TaskDlg(QMainWindow):
           "id": self.id,
           "index": 0,
           "parentId": "",
-          "status": local_status,
+          "status": local_status_int,
           "target": self.ui.fld_tid_qs.displayText(),
           "visibilityConditions": []
         }
@@ -1566,6 +1614,14 @@ class Gui_TaskDlg(QMainWindow):
         }
     
     # Add to task list and close self out
+    # remove conditions with the same id, if they already exist in GUI or internal datastructs
+
+    self.parent.parent.reset_by_id(self.id)
+    table = self.parent.ui.tb_cond
+    for i in range(table.rowCount()):
+      if str(self.id) in table.item(i, 0).text():#row,column
+        table.removeRow(i)
+        break
     # ConditionFinish, ConditionStart, ConditionFail
     self.parent.parent.add_table_field(f"Condition{timing}", self.parent.ui.tb_cond, self.id, {0: self.id, 1: timing, 2: cond_type}, cond)
     # clear the list, since we're exported and done with it, if we need to load, we will do it from the JSON object itself
@@ -1574,3 +1630,169 @@ class Gui_TaskDlg(QMainWindow):
       for c in ["VisitPlace", "Kills", "ExitStatus", "ExitName", "Location"]:
         self.parent.parent.reset_by_key(c)
     self.close()
+
+  def load_settings_from_dict(self, settings, condition_timing):
+        print(f"Loading condition from dict: {settings}")
+        self.id = settings["id"]
+        self.ui.fld_taskid_gen.setText(settings["id"]) # update the Cond ID field to match the import
+        # first field is the JSON key
+        # tuple is (item reference to set, type of item reference (determines func to set))
+        condition_type = settings["conditionType"]
+        # todo - more robust for rewards missing fields; need to build a better validator
+        # doing just the unknown for now since it is missing in Legs' test json
+        print(f"Cond type: {condition_type}, timing: {condition_timing}")
+
+        for viscon in settings["visibilityConditions"]:
+          self.parent.parent.add_table_field(f"VisibilityCond", self.ui.tb_vis, viscon, {0: viscon}, viscon)
+
+        match condition_type:
+          case "CounterCreator":
+            # Editing a CC condition doesn't really do much as implemented because there is no edit CC subtask
+            self.ui.tabWidget.setCurrentIndex(0)
+            for cc_item in settings["counter"]["conditions"]:
+              self.parent.parent.add_table_field(f"CounterCreator", self.ui.tb_cc, cc_item["id"], {0: cc_item["id"], 1: cc_item["conditionType"]}, cc_item)
+          case "FindItem" | "HandoverItem":
+            self.ui.tabWidget.setCurrentIndex(1)
+            self.ui.box_hofind_it.setCurrentText(condition_type)
+            self.ui.box_only_fir_it.setCurrentText(str(settings["onlyFoundInRaid"]).lower())
+            self.ui.box_ff_it.setCurrentText(condition_timing)
+            self.ui.fld_dogtaglev_it.setText(str(settings["dogtagLevel"]))
+            self.ui.fld_parentid_it.setText(settings["parentId"])
+            self.ui.fld_maxdur_it.setText(str(settings["maxDurability"]))
+            self.ui.fld_mindur_it.setText(str(settings["minDurability"]))
+            self.ui.fld_quantity_it.setText(str(settings["value"]))
+            for itemid in settings["target"]:
+              self.parent.parent.add_table_field(f"HFItems", self.ui.tb_items, itemid, {0: itemid}, itemid)
+          case "Skill":
+            self.ui.tabWidget.setCurrentIndex(2)
+            self.ui.box_compare_sk.setCurrentText(settings["compareMethod"])
+            self.ui.box_target_sk.setCurrentText(settings["target"])
+            self.ui.box_ff_sk.setCurrentText(condition_timing)
+            self.ui.fld_level_sk.setText(str(settings["value"]))
+            self.ui.fld_parentid_sk_2.setText(settings["parentId"])
+          case "LeaveItemAtLocation":
+            self.ui.tabWidget.setCurrentIndex(3)
+            self.ui.box_fir_li.setCurrentText(str(settings["onlyFoundInRaid"]).lower())
+            self.ui.box_ff_li.setCurrentText(condition_timing)
+            self.ui.fld_zoneid_li.setText(settings["zoneId"])
+            self.ui.fld_dogtaglevel_li.setText(str(settings["dogtagLevel"]))
+            self.ui.fld_mindur_li.setText(str(settings["minDurability"]))
+            self.ui.fld_maxdur_li.setText(str(settings["maxDurability"]))
+            self.ui.fld_plant_time_li.setText(str(settings["plantTime"]))
+            self.ui.fld_quantity_li.setText(str(settings["value"]))
+            self.ui.fld_parentid_li.setText(settings["parentId"])
+            for tid in settings["target"]:
+              self.parent.parent.add_table_field(f"LeaveItemTarget", self.ui.tb_li_target, tid, {0: tid}, tid)
+          case "WeaponAssembly":
+            self.ui.tabWidget.setCurrentIndex(5)
+            # TODO: Implement WeaponAssembly
+          case "PlaceBeacon":
+            self.ui.tabWidget.setCurrentIndex(4)
+            self.ui.sb_time_pb.setValue(int(settings["plantTime"]))
+            self.ui.sb_value_pb.setValue(int(settings["value"]))
+            self.ui.fld_zoneid_pb.setText(settings["zoneId"])
+            self.ui.fld_parentid_pb.setText(settings["parentId"])
+            self.ui.box_ff_pb.setCurrentText(settings[condition_timing])
+          case "TraderLoyalty":
+            target_str = self.parent.parent.traders_invert[settings["target"]]
+            self.ui.tabWidget.setCurrentIndex(6)
+            self.ui.box_compare_tl.setCurrentText(settings["compareMethod"])
+            self.ui.box_target_tl.setCurrentText(target_str)
+            self.ui.box_ff_tl.setCurrentText(condition_timing)
+            self.ui.fld_level_tl.setText(str(settings["value"]))
+            self.ui.fld_parentid_tl.setText(settings["parentId"])
+          case "Level":
+            self.ui.tabWidget_2.setCurrentIndex(1)
+            self.ui.tabWidget_3.setCurrentIndex(0)
+            self.ui.box_compare_lv.setCurrentText(settings["compareMethod"])
+            self.ui.fld_value_lv.setText(str(settings["value"]))
+          case "Quest":
+            self.ui.tabWidget_2.setCurrentIndex(1)
+            self.ui.tabWidget_3.setCurrentIndex(1)
+            self.ui.fld_avail_qs.setText(str(settings["availableAfter"]))
+            self.ui.fld_tid_qs.setText(str(settings["target"]))
+            for status in settings["status"]:
+              str_status = self.parent.parent.status_invert[status]
+              self.parent.parent.add_table_field(f"QStatus", self.ui.tb_status_qs, str_status, {0: str_status}, str_status)
+          case "TraderStanding":
+            trader = self.parent.parent.traders_invert[settings["target"]]
+            self.ui.tabWidget_2.setCurrentIndex(1)
+            self.ui.tabWidget_3.setCurrentIndex(2)
+            self.ui.box_comparemethod_ts.setCurrentText(settings["compareMethod"])
+            self.ui.box_trader_ts.setCurrentText(trader)
+            self.ui.fld_value_ts.setText(settings["value"])
+
+          # case "Achievement":
+          #   self.ui.fld_ach_id_ach.setText(settings["target"])
+          #   self.ui.bx_unknown_ach.setCurrentText(unknown_or)
+          #   self.ui.box_rewardtiming_ach.setCurrentText(reward_timing)
+          #   # set the current selected tab accordingly
+          #   self.ui.tabWidget.setCurrentIndex(6)
+
+          # case "AssortmentUnlock":
+          #   trader = self.parent.parent.traders_invert[settings["traderId"]]
+          #   self.ui.fld_tid_asu.setText(settings["target"])
+          #   self.ui.box_trader_asu.setCurrentText(trader)
+          #   self.ui.box_loyalty_asu.setValue(int(settings["loyaltyLevel"]))
+          #   self.ui.box_unknown_asu.setCurrentText(unknown_or)
+          #   self.ui.box_rewardtiming_asu.setCurrentText(reward_timing)
+          #   self.ui.tabWidget.setCurrentIndex(2)
+          #   self.items_asu = copy.deepcopy(settings["items"])
+          #   for item in self.items_asu:
+          #     has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
+          #     has_pid = 'parentId' in item
+          #     has_sid = 'slotId' in item
+          #     internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
+          #     self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked(), 6: internal_id}, item)
+          #     #self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
+
+          # case "Experience":
+          #   self.ui.tabWidget.setCurrentIndex(0)
+          #   self.ui.box_rewardtiming_exp.setCurrentText(reward_timing)
+          #   self.ui.box_amount_exp.setText(str(settings["value"]))
+          #   self.ui.box_unknown_exp.setCurrentText(unknown_or)
+
+          # case "Item":
+          #   self.ui.tabWidget.setCurrentIndex(1)
+          #   self.ui.box_rewardtiming_item.setCurrentText(reward_timing)
+          #   self.ui.fld_tid_item.setText(settings["target"])
+          #   self.ui.box_value_item.setValue(int(settings["value"]))
+          #   self.ui.box_fir_item.setCurrentText(str(settings["findInRaid"]))
+          #   self.ui.box_unknown_item.setCurrentText(unknown_or)
+          #   self.items_item = copy.deepcopy(settings["items"])
+          #   for item in self.items_item:
+          #     has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
+          #     has_pid = 'parentId' in item
+          #     has_sid = 'slotId' in item
+          #     internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
+          #     self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked(), 6: internal_id}, item)
+          #     # self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
+
+
+          # case "Skill":
+          #   self.ui.tabWidget.setCurrentIndex(4)
+          #   self.ui.box_rewardtiming_sk.setCurrentText(reward_timing)
+          #   self.ui.box_skill_sk.setCurrentText(settings["target"])
+          #   self.ui.box_points_sk.setValue(int(settings["value"]))
+          #   self.ui.box_unknown_sk.setCurrentText(unknown_or)
+
+          # case "StashRows":
+          #   self.ui.tabWidget.setCurrentIndex(5)
+          #   self.ui.box_rewardtiming_sr.setCurrentText(reward_timing)
+          #   self.ui.box_rows_sr.setValue(int(settings["value"]))
+          #   self.ui.box_unknown_sr.setCurrentText(unknown_or)
+
+          # case "TraderStanding":
+          #   trader = self.parent.parent.traders_invert[settings["target"]]
+          #   self.ui.tabWidget.setCurrentIndex(3)
+          #   self.ui.box_rewardtiming_ts.setCurrentText(reward_timing)
+          #   self.ui.box_loyalty_ts.setValue(float(settings["value"]))
+          #   self.ui.box_trader_ts.setCurrentText(trader)
+          #   self.ui.box_unknown_ts.setCurrentText(unknown_or)
+
+          # case "TraderUnlock":
+          #   trader = self.parent.parent.traders_invert[settings["target"]]
+          #   self.ui.tabWidget.setCurrentIndex(7)
+          #   self.ui.box_rewardtiming_tul.setCurrentText(reward_timing)
+          #   self.ui.box_unknown_tul.setCurrentText(unknown_or)
+          #   self.ui.box_trader_tul.setCurrentText(trader)
