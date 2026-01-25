@@ -82,7 +82,8 @@ class Gui_MainWindow(QMainWindow):
       except Exception as e:
         print(f"Error loading quest file: {e}")
       for quest_id in quests_import.keys():
-        print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
+        #print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
+        print(f"{quests_import[quest_id]['QuestName']}")
         self.quests[quest_id] = quests_import[quest_id]
         self.ui.questList.addItem(f"{quests_import[quest_id]['QuestName']}, {quest_id}")
 
