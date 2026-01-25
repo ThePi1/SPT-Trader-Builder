@@ -45,18 +45,25 @@ def is_true(val):
     return False
   else:
     raise ValueError("invalid truth value %r" % (val,))
+  
 class Gui_MainWindow(QMainWindow):
-  def __init__(self, parent=None):
+  def __init__(self, controller, parent=None):
     super().__init__(parent)
     self.ui = Ui_MainGUI()
     self.ui.setupUi(self)
-    self.controller = None
+    self.on_launch()
+    self.setupTreeView()
+    self.controller = controller
     self.parent = parent
+    self.setup_box_selections()
     self.ui.actionExit.triggered.connect(self.onExit)
     self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
     self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
     self.ui.actionImport_Quests.triggered.connect(self.importQuests)
+    self.ui.wb_addpart_button.released.connect(self.addpart)
+    self.ui.wb_base_check.toggled.connect(self.baseWeaponChecked)
     self.ui.actionRemove_Selected_Quest.triggered.connect(self.remove_selected_quest)
+    #self.ui.wb_treeview.itemSelectionChanged.connect(self.onWeaponSelected)
     self.traders = self.importJson("data\\traders.json")
     # used for going back from ID to trader name for loading quest to edit
     self.traders_invert = {v:k for k,v in self.traders.items()}
@@ -67,6 +74,125 @@ class Gui_MainWindow(QMainWindow):
     self.quests = {}
     #RewardFail RewardStarted RewardSuccess
     self.table_fields = {}
+    self.weaponlist = []
+
+  def on_launch(self):
+    self.ui.main_tab.setCurrentIndex(0)
+    self.ui.wb_base_check.setChecked(True)
+    self.baseWeaponChecked(self.ui.wb_base_check.isChecked())
+  
+  def setup_box_selections(self):
+    self.ui.wb_modslot_combo.addItems(self.controller.ab_box_modslot)
+
+
+  def baseWeaponChecked(self,checked): #UI Behavior
+    if checked:
+      self.ui.wb_parentId_edit.setEnabled(False)
+      self.ui.wb_parentid.setStyleSheet("color: gray;")
+      self.ui.wb_modslot_combo.setEnabled(False)
+      self.ui.wb_modslot.setStyleSheet("color: gray;")
+      self.ui.wb_weaponname_edit.setEnabled(True)
+      self.ui.wb_weaponname.setStyleSheet("")
+    else:
+      self.ui.wb_parentId_edit.setEnabled(True)
+      self.ui.wb_parentid.setStyleSheet("")
+      self.ui.wb_modslot_combo.setEnabled(True)
+      self.ui.wb_modslot.setStyleSheet("")
+      self.ui.wb_weaponname_edit.setEnabled(False)
+      self.ui.wb_weaponname.setStyleSheet("color: gray;")
+
+  def setupTreeView(self):
+    self.model = QStandardItemModel()
+    self.model.setHorizontalHeaderLabels(["Name","ItemID","DatabaseID","ParentID"])
+    self.ui.wb_treeview.setModel(self.model)
+    self.ui.wb_treeview.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+  
+  def addpart(self): #add part to treeview and weaponlist
+    savedmongo = str(ObjectId())
+    item_name = QStandardItem(self.ui.wb_weaponname_edit.text())
+    parent_ID = QStandardItem(self.ui.wb_itemid_edit.text())
+
+    child_name = QStandardItem(str(self.ui.wb_modslot_combo.currentText()))
+    child_ID = QStandardItem(self.ui.wb_itemid_edit.text())
+    print("Button Started")
+    
+    slotID = self.ui.wb_modslot_combo.currentText() if not self.ui.wb_base_check else ""
+
+    if self.ui.wb_base_check.isChecked(): # check if the base weapon box is checked.
+      database_ID = QStandardItem(savedmongo)
+      item_name.setData(savedmongo,Qt.ItemDataRole.UserRole)
+      self.model.appendRow([item_name,parent_ID,database_ID, QStandardItem("")])
+      self.addPartToLists(parent_ID.text(),database_ID.text(), "",slotID)
+      print("checkbox is checked")
+      return
+    
+    tree_index = self.ui.wb_treeview.currentIndex()
+    if not tree_index.isValid(): # checks if new index is valid
+      print("Tree index is not valid")
+      return
+    
+    clicked_item = self.model.itemFromIndex(tree_index) # gets data from tree_index
+
+    
+    parent_item = clicked_item.parent() # checks what is the parent and returns none if has no parent
+    if parent_item is None: # if item has no parent then set the parent back to index 0 basically catches if the user selected the value collumn and the key then sets it to the key collumn
+      clicked_item = self.model.item(clicked_item.row(),0)
+    else:#same as above but if user clicks the childs value not the key
+      clicked_item = parent_item.child(clicked_item.row(),0)
+
+    parent_data = clicked_item.data(Qt.ItemDataRole.UserRole)
+
+
+
+    if parent_data is None:
+      print("No Parent Data")
+
+    child_savedmongo = str(ObjectId())
+    child_name.setData(child_savedmongo,Qt.ItemDataRole.UserRole)
+
+    print("Append Child")
+    #add item to treeview
+    clicked_item.appendRow([child_name,child_ID,QStandardItem(child_savedmongo),QStandardItem(str(parent_data))])
+    self.addPartToLists(child_ID.text(),child_savedmongo, parent_data,slotID)
+    #expands tree of newly added items parent
+    self.ui.wb_treeview.expand(tree_index)
+    print("Button Completed")
+
+  def addPartToLists(self,ItemID,databaseID, parentID,slotID):
+    print("Item ID: " + ItemID)
+    print("Database ID: " + databaseID)
+    print("Parent ID: " + parentID)
+    
+    if not self.ui.wb_base_check.isChecked():
+      item = {
+        "_id": databaseID,
+        "_tpl": ItemID,
+        "parentId": parentID,
+        "slotId": slotID
+      }
+
+    else:
+      item = { #sets initial item key structure for editing in logic.
+        "_id": databaseID,
+        "_tpl": ItemID,
+        "parentId": "hideout",
+        "slotId": "hideout",
+        "upd": {
+
+          }
+      }
+    finalized_item = {
+      databaseID: item
+    }
+
+    self.weaponlist.append(finalized_item)
+
+    self.exportWeaponPresets(self.weaponlist)
+
+  def exportWeaponPresets(self,weaponlist):
+
+    with open("Exported Files/weaponpresets.json", "w") as f:
+      json.dump(weaponlist, f, indent=2)
 
   def importJson(self, path):
     with open(path, "r") as f:
@@ -798,45 +924,33 @@ class Gui_AssortDlg(QMainWindow):
     self.parent = parent
     self.on_launch() #custom Code
     self.show()
-    self.setupTreeView()
     self.ui.ab_add_item.released.connect(self.add_item)
     self.ui.ab_remove_item.released.connect(self.remove_Item)
-    self.ui.wb_addpart_button.released.connect(self.addpart)
     self.ui.actionExport_Assort_json.triggered.connect(self.onExportAssort)
     self.ui.ab_unlimitedcount.toggled.connect(self.unlimitedIsChecked)
     self.ui.ab_buyrestriction_checkbox.toggled.connect(self.brestrictionChecked)
     self.ui.ab_quest_check.toggled.connect(self.questLockedChecked)
     self.ui.ab_weappart_check.toggled.connect(self.weaponPartChecked)
-    self.ui.wb_base_check.toggled.connect(self.baseWeaponChecked)
     self.ui.ab_table.itemSelectionChanged.connect(self.onWeaponSelected)
     self.itemlist = []
     self.barterlist = {}
     self.loyaltylist = {}
-    self.weaponlist = []
 
   def on_launch(self):
     self.setup_box_selections()
-
-    self.ui.ab_assort_tab.setCurrentIndex(0)
     self.ui.ab_rouble_radiobutton.setChecked(True)
     self.ui.ab_quest_check.setChecked(False)
     self.ui.ab_buyRestriction_edit.setEnabled(False)
     self.ui.ab_quest_id.setEnabled(False)
-    self.ui.wb_base_check.setChecked(True)
-
     self.weaponPartChecked(self.ui.ab_weappart_check.isChecked())
     self.questLockedChecked(self.ui.ab_quest_check.isChecked())
     self.brestrictionChecked(self.ui.ab_buyrestriction_checkbox.isChecked())
-    self.baseWeaponChecked(self.ui.wb_base_check.isChecked())
-
     self.ui.ab_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-
 
   def setup_box_selections(self):
     self.ui.ab_loyalty_combo.addItems(self.parent.controller.ab_box_loyalty_level)
     self.ui.ab_condition_box.addItems(self.parent.controller.ab_box_condition_req)
     self.ui.ab_modslot_combo.addItems(self.parent.controller.ab_box_modslot)
-    self.ui.wb_modslot_combo.addItems(self.parent.controller.ab_box_modslot)
 
   def onWeaponSelected(self): #gets the user role from the table and fills the assortID line edit.
     row = self.ui.ab_table.currentRow()
@@ -940,22 +1054,6 @@ class Gui_AssortDlg(QMainWindow):
       self.ui.ab_mongo.setStyleSheet("color: gray;")
       self.ui.ab_weapid.setStyleSheet("color: gray;")
       self.ui.ab_modslot.setStyleSheet("color: gray;")
-
-  def baseWeaponChecked(self,checked): #UI Behavior
-    if checked:
-      self.ui.wb_parentId_edit.setEnabled(False)
-      self.ui.wb_parentid.setStyleSheet("color: gray;")
-      self.ui.wb_modslot_combo.setEnabled(False)
-      self.ui.wb_modslot.setStyleSheet("color: gray;")
-      self.ui.wb_weaponname_edit.setEnabled(True)
-      self.ui.wb_weaponname.setStyleSheet("")
-    else:
-      self.ui.wb_parentId_edit.setEnabled(True)
-      self.ui.wb_parentid.setStyleSheet("")
-      self.ui.wb_modslot_combo.setEnabled(True)
-      self.ui.wb_modslot.setStyleSheet("")
-      self.ui.wb_weaponname_edit.setEnabled(False)
-      self.ui.wb_weaponname.setStyleSheet("color: gray;")
 
   def remove_Item(self): # remove selected item from lists/dicts and remove from table.
     row = self.ui.ab_table.currentRow()
@@ -1121,98 +1219,6 @@ class Gui_AssortDlg(QMainWindow):
     
     with open("Exported Files/assort.json", "w") as f:
       json.dump(assort, f, indent=2)
-
-  def setupTreeView(self):
-    self.model = QStandardItemModel()
-    self.model.setHorizontalHeaderLabels(["Name","ItemID","DatabaseID","ParentID"])
-    self.ui.wb_treeview.setModel(self.model)
-
-    self.ui.wb_treeview.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-
-  def addpart(self): #add part to treeview and weaponlist
-    savedmongo = str(ObjectId())
-    item_name = QStandardItem(self.ui.wb_weaponname_edit.text())
-    parent_ID = QStandardItem(self.ui.wb_itemid_edit.text())
-
-    child_name = QStandardItem(str(self.ui.wb_modslot_combo.currentText()))
-    child_ID = QStandardItem(self.ui.wb_itemid_edit.text())
-    print("Button Started")
-    
-    slotID = self.ui.wb_modslot_combo.currentText() if not self.ui.wb_base_check else ""
-
-    if self.ui.wb_base_check.isChecked(): # check if the base weapon box is checked.
-      database_ID = QStandardItem(savedmongo)
-      item_name.setData(savedmongo,Qt.ItemDataRole.UserRole)
-      self.model.appendRow([item_name,parent_ID,database_ID, QStandardItem("")])
-      self.addPartToLists(parent_ID.text(),database_ID.text(), "",slotID)
-      print("checkbox is checked")
-      return
-    
-    tree_index = self.ui.wb_treeview.currentIndex()
-    if not tree_index.isValid(): # checks if new index is valid
-      print("Tree index is not valid")
-      return
-    
-    clicked_item = self.model.itemFromIndex(tree_index) # gets data from tree_index
-
-    
-    parent_item = clicked_item.parent() # checks what is the parent and returns none if has no parent
-    if parent_item is None: # if item has no parent then set the parent back to index 0 basically catches if the user selected the value collumn and the key then sets it to the key collumn
-      clicked_item = self.model.item(clicked_item.row(),0)
-    else:#same as above but if user clicks the childs value not the key
-      clicked_item = parent_item.child(clicked_item.row(),0)
-
-    parent_data = clicked_item.data(Qt.ItemDataRole.UserRole)
-
-
-
-    if parent_data is None:
-      print("No Parent Data")
-
-    child_savedmongo = str(ObjectId())
-    child_name.setData(child_savedmongo,Qt.ItemDataRole.UserRole)
-
-    print("Append Child")
-    #add item to treeview
-    clicked_item.appendRow([child_name,child_ID,QStandardItem(child_savedmongo),QStandardItem(str(parent_data))])
-    self.addPartToLists(child_ID.text(),child_savedmongo, parent_data,slotID)
-    #expands tree of newly added items parent
-    self.ui.wb_treeview.expand(tree_index)
-    print("Button Completed")
-
-  def addPartToLists(self,ItemID,databaseID, parentID,slotID):
-    print("Item ID: " + ItemID)
-    print("Database ID: " + databaseID)
-    print("Parent ID: " + parentID)
-    
-    if not self.ui.wb_base_check.isChecked():
-      item = {
-        "_id": databaseID,
-        "_tpl": ItemID,
-        "parentId": parentID,
-        "slotId": slotID
-      }
-
-    else:
-      item = { #sets initial item key structure for editing in logic.
-        "_id": databaseID,
-        "_tpl": ItemID,
-        "parentId": "hideout",
-        "slotId": "hideout",
-        "upd": {
-
-          }
-      }
-    finalized_item = {
-      databaseID: item
-    }
-
-    self.weaponlist.append(finalized_item)
-
-  def exportWeaponPresets(self,weaponlist):
-
-    with open("Exported Files/weaponpresets.json", "w") as f:
-      json.dump(self.weaponlist, f, indent=2)
 
 
 

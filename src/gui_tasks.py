@@ -959,7 +959,7 @@ class Ui_TaskWindow(object):
         TaskWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(TaskWindow)
-        self.tabWidget_2.setCurrentIndex(0)
+        self.tabWidget_2.setCurrentIndex(1)
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget_4.setCurrentIndex(0)
         self.tabWidget_5.setCurrentIndex(0)
