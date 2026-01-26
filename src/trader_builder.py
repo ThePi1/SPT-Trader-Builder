@@ -53,6 +53,8 @@ class Controller:
     tb_exitstatus                         = str(parser.get('box_fields', 'tb_exitstatus')).split(',')
     tb_queststatus                        = str(parser.get('box_fields', 'tb_queststatus')).split(',')
     tb_finishfail                         = str(parser.get('box_fields', 'tb_finishfail')).split(',')
+    tb_effect                             = str(parser.get('box_fields', 'tb_effect')).split(',')
+    tb_buff                               = str(parser.get('box_fields', 'tb_buff')).split(',')
 
   except Exception as e:
     print(f"Error loading settings.ini file. Please check the exception below and the corresponding entry in the settings file.\nMost likely, the format for your entry is off. Check the top of settings.ini for more info.\n\n{traceback.format_exc()}")

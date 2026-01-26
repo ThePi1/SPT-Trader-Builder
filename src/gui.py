@@ -56,6 +56,7 @@ class Gui_MainWindow(QMainWindow):
     self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
     self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
     self.ui.actionImport_Quests.triggered.connect(self.importQuests)
+    self.ui.actionAnalyze_CC_subtypes.triggered.connect(self.analyze_cc)
     self.ui.actionRemove_Selected_Quest.triggered.connect(self.remove_selected_quest)
     self.traders = self.importJson("data\\traders.json")
     # used for going back from ID to trader name for loading quest to edit
@@ -73,6 +74,31 @@ class Gui_MainWindow(QMainWindow):
       out = json.load(f)
       return out
   
+  def analyze_cc(self):
+    print(f"Analyzing CC subtypes, opening dialogue...")
+    filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
+    print(filename)
+    cc_keeptrack = {}
+    with open(filename, "r") as f:
+      try:
+        quests_import = json.load(f)
+      except Exception as e:
+        print(f"Error loading quest file: {e}")
+      for quest_id in quests_import.keys():
+        #print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
+        print(f"{quests_import[quest_id]['QuestName']}")
+        if "conditions" in quests_import[quest_id] and "AvailableForFinish" in quests_import[quest_id]['conditions'] and len(quests_import[quest_id]['conditions']['AvailableForFinish']) > 0:
+          for avf_c in quests_import[quest_id]['conditions']['AvailableForFinish']:
+            if avf_c['conditionType'] == "CounterCreator":
+              for cond in avf_c['counter']['conditions']:
+                print(f"Inner conditionType: {cond['conditionType']}")
+                if cond['conditionType'] not in cc_keeptrack:
+                  cc_keeptrack[cond['conditionType']] = 1
+                else:
+                  cc_keeptrack[cond['conditionType']] += 1
+    
+    print(cc_keeptrack)
+
   def importQuests(self):
     filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
     print(filename)
@@ -1262,6 +1288,17 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_ff_pb.addItems(ctr.tb_finishfail)
     self.ui.box_ff_tl.addItems(ctr.tb_finishfail)
     self.ui.box_trader_ts.addItems(ctr.tb_traderloyalt_target_box)
+    self.ui.box_distcomp_sh.addItems(ctr.default_compare)
+    self.ui.box_target_sh.addItems(ctr.tb_elim_box_target)
+    self.ui.box_shbp.addItems(ctr.tb_elim_box_bodypart)
+    self.ui.box_shtr.addItems(ctr.tb_elim_box_targetrole)
+    self.ui.box_encomp_he.addItems(ctr.default_compare)
+    self.ui.box_hydcomp_he.addItems(ctr.default_compare)
+    self.ui.box_timecomp_he.addItems(ctr.default_compare)
+    self.ui.box_hebp.addItems(ctr.tb_elim_box_bodypart)
+    self.ui.box_heef.addItems(ctr.tb_effect)
+    self.ui.box_hb.addItems(ctr.tb_buff)
+
 
   def setup_buttons(self):
     # CounterCreator types first:
@@ -1270,6 +1307,13 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.pb_finalize_cces.released.connect(lambda: self.cc_add("ExitStatus"))
     self.ui.pb_finalize_ccen.released.connect(lambda: self.cc_add("ExitName"))
     self.ui.pb_finalize_ccl.released.connect(lambda: self.cc_add("Location"))
+    self.ui.pb_finalize_cc_eq.released.connect(lambda: self.cc_add("Equipment"))
+    self.ui.pb_finalize_shtr.released.connect(lambda: self.cc_add("Shots"))
+    self.ui.pb_finalize_he.released.connect(lambda: self.cc_add("HealthEffect"))
+    self.ui.pb_finalize_hb.released.connect(lambda: self.cc_add("HealthBuff"))
+    self.ui.pb_finalize_fl.released.connect(lambda: self.cc_add("LaunchFlare"))
+    self.ui.pb_finalize_iz.released.connect(lambda: self.cc_add("InZone"))
+
     # Others:
     self.ui.pb_finalize_it.released.connect(lambda: self.finalize("Item")) # will be switched based on subtype later
     self.ui.pb_finalize_sk.released.connect(lambda: self.finalize("Skill"))
@@ -1299,18 +1343,59 @@ class Gui_TaskDlg(QMainWindow):
 
     # Other table buttons
     self.ui.pb_remove_cc.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="CounterCreator", table=self.ui.tb_cc))
+    
     self.ui.pb_status_rem_cces.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ExitStatus", table=self.ui.tb_cces))
     self.ui.pb_cces_add.released.connect(lambda: self.parent.parent.add_table_field(f"ExitStatus", self.ui.tb_cces, self.ui.box_status_cces.currentText(), {0: self.ui.box_status_cces.currentText()}, self.ui.box_status_cces.currentText()))
+    
     self.ui.pb_add_ccl.released.connect(lambda: self.parent.parent.add_table_field(f"Location", self.ui.tb_ccl, self.ui.box_location_ccl.currentText(), {0: self.ui.box_location_ccl.currentText()}, self.ui.box_location_ccl.currentText()))
     self.ui.pb_rem_ccl.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="Location", table=self.ui.tb_ccl))
+    
     self.ui.pb_addvis.released.connect(lambda: self.parent.parent.add_table_field(f"VisibilityCond", self.ui.tb_vis, self.ui.fld_visibility_targetid.displayText(), {0: self.ui.fld_visibility_targetid.displayText()}, self.ui.fld_visibility_targetid.displayText()))
     self.ui.pb_remvis.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="VisibilityCond", table=self.ui.tb_vis))
+    
     self.ui.pb_additem_it.released.connect(lambda: self.parent.parent.add_table_field(f"HFItems", self.ui.tb_items, self.ui.fld_itemid_it.displayText(), {0: self.ui.fld_itemid_it.displayText()}, self.ui.fld_itemid_it.displayText()))
     self.ui.pb_remitem_it.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="HFItems", table=self.ui.tb_items))
+    
     self.ui.pb_addstatus_qs.released.connect(lambda: self.parent.parent.add_table_field(f"QStatus", self.ui.tb_status_qs, self.ui.box_status_qs.currentText(), {0: self.ui.box_status_qs.currentText()}, self.ui.box_status_qs.currentText()))
     self.ui.pb_remstatus_qs.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="QStatus", table=self.ui.tb_status_qs))
+    
     self.ui.pb_add_li_target.released.connect(lambda: self.parent.parent.add_table_field(f"LeaveItemTarget", self.ui.tb_li_target, self.ui.fld_li_target.displayText(), {0: self.ui.fld_li_target.displayText()}, self.ui.fld_li_target.displayText()))
     self.ui.pb_rem_li_target.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="LeaveItemTarget", table=self.ui.tb_li_target))
+    
+    self.ui.pb_add_eqi.released.connect(lambda: self.parent.parent.add_table_field(f"EquipmentInclusive", self.ui.tb_eq_inc, self.ui.fld_eqi.displayText(), {0: self.ui.fld_eqi.displayText(), 1:self.ui.fld_equi_org.displayText()}, {'id': self.ui.fld_eqi.displayText(), 'org':self.ui.fld_equi_org.displayText()}))
+    self.ui.pb_rem_eqi.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="EquipmentInclusive", table=self.ui.tb_eq_inc))
+    
+    self.ui.pb_add_eqe.released.connect(lambda: self.parent.parent.add_table_field(f"EquipmentExclusive", self.ui.tb_eq_exc, self.ui.fld_eqi_2.displayText(), {0: self.ui.fld_eqi_2.displayText(), 1:self.ui.fld_eqe_org.displayText()}, {'id': self.ui.fld_eqi_2.displayText(), 'org':self.ui.fld_eqe_org.displayText()}))
+    self.ui.pb_rem_eqe.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="EquipmentExclusive", table=self.ui.tb_eq_exc))
+    
+    self.ui.pb_add_shbp.released.connect(lambda: self.parent.parent.add_table_field(f"ShotsBodyPart", self.ui.tb_sh_bp, self.ui.box_shbp.currentText(), {0: self.ui.box_shbp.currentText()}, self.ui.box_shbp.currentText()))
+    self.ui.pb_rem_shbp.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ShotsBodyPart", table=self.ui.tb_sh_bp))
+    
+    self.ui.pb_add_shtr.released.connect(lambda: self.parent.parent.add_table_field(f"ShotsTargetRole", self.ui.tb_sh_tr, self.ui.box_shtr.currentText(), {0: self.ui.box_shtr.currentText()}, self.ui.box_shtr.currentText()))
+    self.ui.pb_rem_shtr.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ShotsTargetRole", table=self.ui.tb_sh_tr))
+    
+    self.ui.pb_add_shw.released.connect(lambda: self.parent.parent.add_table_field(f"ShotsWeapon", self.ui.tb_sh_wep, self.ui.fld_shw.displayText(), {0: self.ui.fld_shw.displayText()}, self.ui.fld_shw.displayText()))
+    self.ui.pb_rem_shw.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ShotsWeapon", table=self.ui.tb_sh_wep))
+    
+    self.ui.pb_add_shmi.released.connect(lambda: self.parent.parent.add_table_field(f"ShotsModsInclusive", self.ui.tb_incmod_sh, self.ui.fld_shmi.displayText(), {0: self.ui.fld_shmi.displayText()}, self.ui.fld_shmi.displayText()))
+    self.ui.pb_rem_shmi.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ShotsModsInclusive", table=self.ui.tb_incmod_sh))
+    
+    self.ui.pb_add_shme.released.connect(lambda: self.parent.parent.add_table_field(f"ShotsModsExclusive", self.ui.tb_excmod_sh, self.ui.fld_shme.displayText(), {0: self.ui.fld_shme.displayText()}, self.ui.fld_shme.displayText()))
+    self.ui.pb_rem_shme.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="ShotsModsExclusive", table=self.ui.tb_excmod_sh))
+    
+    self.ui.pb_add_hebp.released.connect(lambda: self.parent.parent.add_table_field(f"HealthEffectBodyPart", self.ui.tb_hebp, self.ui.box_hebp.currentText(), {0: self.ui.box_hebp.currentText()}, self.ui.box_hebp.currentText()))
+    self.ui.pb_rem_hebp.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="HealthEffectBodyPart", table=self.ui.tb_hebp))
+    
+    self.ui.pb_add_heef.released.connect(lambda: self.parent.parent.add_table_field(f"HealthEffectEffects", self.ui.tb_heef, self.ui.box_heef.currentText(), {0: self.ui.box_heef.currentText()}, self.ui.box_heef.currentText()))
+    self.ui.pb_rem_heef.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="HealthEffectEffects", table=self.ui.tb_heef))
+    
+    self.ui.pb_add_hb.released.connect(lambda: self.parent.parent.add_table_field(f"HealthBuff", self.ui.tb_hb, self.ui.box_hb.currentText(), {0: self.ui.box_hb.currentText()}, self.ui.box_hb.currentText()))
+    self.ui.pb_rem_hb.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="HealthBuff", table=self.ui.tb_hb))
+
+    self.ui.pb_add_iz.released.connect(lambda: self.parent.parent.add_table_field(f"InZone", self.ui.tb_iz, self.ui.fld_iz.displayText(), {0: self.ui.fld_iz.displayText()}, self.ui.fld_iz.displayText()))
+    self.ui.pb_rem_iz.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="InZone", table=self.ui.tb_iz))
+    
+
 
   def setup_text_edit(self):
     self.ui.fld_taskid_gen.setText(self.id)
@@ -1389,6 +1474,121 @@ class Gui_TaskDlg(QMainWindow):
           "dynamicLocale": False,
           "id": subtask_id,
           "target": local_locations,
+        }
+      case "Equipment":
+        # This is all kind of a lot of work, but basically it's grouping the lists by org(or_group) for a list of multiple lists.
+        # So, you can have (this set of 3 equip items) OR  (this other set of 2), etc.
+        local_eqi = self.parent.parent.get_multicolumn_values_list("EquipmentInclusive")
+        local_eqe = self.parent.parent.get_multicolumn_values_list("EquipmentExclusive")
+        local_eqi_dict = {}
+        local_eqe_dict = {}
+        for e in local_eqi:
+          if e['org'] not in local_eqi_dict:
+            local_eqi_dict[e['org']] = [e['id']]
+          else:
+            local_eqi_dict[e['org']].append(e['id'])
+
+        for e in local_eqe:
+          if e['org'] not in local_eqe_dict:
+            local_eqe_dict[e['org']] = [e['id']]
+          else:
+            local_eqe_dict[e['org']].append(e['id'])
+
+        cond = {
+          "IncludeNotEquippedItems": self.ui.cb_eq_uneq.isChecked(),
+          "conditionType": "Equipment",
+          "dynamicLocale": False,
+          "equipmentExclusive": list(local_eqe_dict.values()),
+          "equipmentInclusive": list(local_eqi_dict.values()),
+          "id": subtask_id
+        }
+      case "Shots":
+        local_bodypart = self.parent.parent.get_singlecolumn_field_list("ShotsBodyPart")
+        local_targetrole  = self.parent.parent.get_singlecolumn_field_list("ShotsTargetRole")
+        local_weapons  = self.parent.parent.get_singlecolumn_field_list("ShotsWeapon")
+        local_modinc  = self.parent.parent.get_singlecolumn_field_list("ShotsModsInclusive")
+        local_modexc  = self.parent.parent.get_singlecolumn_field_list("ShotsModsExclusive")
+        local_dist = val_field(self.ui.fld_dist_sh.displayText(), "", 0, int)
+        local_timefrom = val_field(self.ui.fld_timefrom_sh.displayText(), "", 0, int)
+        local_timeto = val_field(self.ui.fld_timeto_sh.displayText(), "", 0, int)
+        local_value = val_field(self.ui.fld_value_sh.displayText(), "", 0, int)
+        cond = {
+          "bodyPart": local_bodypart,
+          "compareMethod": ">=",
+          "conditionType": "Shots",
+          "daytime": {
+            "from": local_timefrom,
+            "to": local_timeto
+          },
+          "distance": {
+            "compareMethod": self.ui.box_distcomp_sh.currentText(),
+            "value": local_dist
+          },
+          "dynamicLocale": False,
+          "enemyEquipmentExclusive": [],
+          "enemyEquipmentInclusive": [],
+          "enemyHealthEffects": [],
+          "id": subtask_id,
+          "resetOnSessionEnd": self.ui.chk_cck_reset_sessionend_2.isChecked(),
+          "savageRole": local_targetrole,
+          "target": self.ui.box_target_sh.currentText(),
+          "value": local_value,
+          "weapon": [],
+          "weaponCaliber": [],
+          "weaponModsExclusive": local_modexc,
+          "weaponModsInclusive": local_modinc
+        }
+      case "HealthEffect":
+        local_enval = val_field(self.ui.fld_enval_he.displayText(), "", 0, int)
+        local_timeval = val_field(self.ui.fld_timeval_he.displayText(), "", 0, int)
+        local_hydval = val_field(self.ui.fld_hydval_he.displayText(), "", 0, int)
+        local_bodypart = self.parent.parent.get_singlecolumn_field_list("HealthEffectBodyPart")
+        local_effect = self.parent.parent.get_singlecolumn_field_list("HealthEffectEffects")
+        cond = {
+          "bodyPartsWithEffects": [
+            {
+              "bodyParts": local_bodypart,
+              "effects": local_effect
+            }
+          ],
+          "conditionType": "HealthEffect",
+          "dynamicLocale": False,
+          "energy": {
+            "compareMethod": self.ui.box_encomp_he.currentText(),
+            "value": local_enval
+          },
+          "hydration": {
+            "compareMethod": self.ui.box_hydcomp_he.currentText(),
+            "value": local_hydval
+          },
+          "id": subtask_id,
+          "time": {
+            "compareMethod": self.ui.box_timecomp_he.currentText(),
+            "value": local_timeval
+          }
+        }
+      case "HealthBuff":
+        local_buff = self.parent.parent.get_singlecolumn_field_list("HealthBuff")
+        cond = {
+          "conditionType": "HealthBuff",
+          "dynamicLocale": False,
+          "id": subtask_id,
+          "target": local_buff
+        }
+      case "LaunchFlare":
+        cond = {
+          "conditionType": "LaunchFlare",
+          "dynamicLocale": False,
+          "id": subtask_id,
+          "target": self.ui.fld_fl_zone.displayText()
+        }
+      case "InZone":
+        local_zone = self.parent.parent.get_singlecolumn_field_list("InZone")
+        cond = {
+          "conditionType": "InZone",
+          "dynamicLocale": False,
+          "id": subtask_id,
+          "zoneIds": local_zone
         }
 
     self.parent.parent.add_table_field(f"CounterCreator", self.ui.tb_cc, subtask_id, {0: subtask_id, 1: cond_type}, cond)
@@ -1648,7 +1848,8 @@ class Gui_TaskDlg(QMainWindow):
 
         match condition_type:
           case "CounterCreator":
-            # Editing a CC condition doesn't really do much as implemented because there is no edit CC subtask
+            # Editing a CC condition doesn't really do much as implemented because there is no edit CC subtask yet
+            # TODO: Add edit subtask for CC
             self.ui.tabWidget.setCurrentIndex(0)
             for cc_item in settings["counter"]["conditions"]:
               self.parent.parent.add_table_field(f"CounterCreator", self.ui.tb_cc, cc_item["id"], {0: cc_item["id"], 1: cc_item["conditionType"]}, cc_item)
@@ -1723,77 +1924,3 @@ class Gui_TaskDlg(QMainWindow):
             self.ui.box_trader_ts.setCurrentText(trader)
             self.ui.fld_value_ts.setText(settings["value"])
 
-          # case "Achievement":
-          #   self.ui.fld_ach_id_ach.setText(settings["target"])
-          #   self.ui.bx_unknown_ach.setCurrentText(unknown_or)
-          #   self.ui.box_rewardtiming_ach.setCurrentText(reward_timing)
-          #   # set the current selected tab accordingly
-          #   self.ui.tabWidget.setCurrentIndex(6)
-
-          # case "AssortmentUnlock":
-          #   trader = self.parent.parent.traders_invert[settings["traderId"]]
-          #   self.ui.fld_tid_asu.setText(settings["target"])
-          #   self.ui.box_trader_asu.setCurrentText(trader)
-          #   self.ui.box_loyalty_asu.setValue(int(settings["loyaltyLevel"]))
-          #   self.ui.box_unknown_asu.setCurrentText(unknown_or)
-          #   self.ui.box_rewardtiming_asu.setCurrentText(reward_timing)
-          #   self.ui.tabWidget.setCurrentIndex(2)
-          #   self.items_asu = copy.deepcopy(settings["items"])
-          #   for item in self.items_asu:
-          #     has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
-          #     has_pid = 'parentId' in item
-          #     has_sid = 'slotId' in item
-          #     internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
-          #     self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked(), 6: internal_id}, item)
-          #     #self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
-
-          # case "Experience":
-          #   self.ui.tabWidget.setCurrentIndex(0)
-          #   self.ui.box_rewardtiming_exp.setCurrentText(reward_timing)
-          #   self.ui.box_amount_exp.setText(str(settings["value"]))
-          #   self.ui.box_unknown_exp.setCurrentText(unknown_or)
-
-          # case "Item":
-          #   self.ui.tabWidget.setCurrentIndex(1)
-          #   self.ui.box_rewardtiming_item.setCurrentText(reward_timing)
-          #   self.ui.fld_tid_item.setText(settings["target"])
-          #   self.ui.box_value_item.setValue(int(settings["value"]))
-          #   self.ui.box_fir_item.setCurrentText(str(settings["findInRaid"]))
-          #   self.ui.box_unknown_item.setCurrentText(unknown_or)
-          #   self.items_item = copy.deepcopy(settings["items"])
-          #   for item in self.items_item:
-          #     has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
-          #     has_pid = 'parentId' in item
-          #     has_sid = 'slotId' in item
-          #     internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
-          #     self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked(), 6: internal_id}, item)
-          #     # self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
-
-
-          # case "Skill":
-          #   self.ui.tabWidget.setCurrentIndex(4)
-          #   self.ui.box_rewardtiming_sk.setCurrentText(reward_timing)
-          #   self.ui.box_skill_sk.setCurrentText(settings["target"])
-          #   self.ui.box_points_sk.setValue(int(settings["value"]))
-          #   self.ui.box_unknown_sk.setCurrentText(unknown_or)
-
-          # case "StashRows":
-          #   self.ui.tabWidget.setCurrentIndex(5)
-          #   self.ui.box_rewardtiming_sr.setCurrentText(reward_timing)
-          #   self.ui.box_rows_sr.setValue(int(settings["value"]))
-          #   self.ui.box_unknown_sr.setCurrentText(unknown_or)
-
-          # case "TraderStanding":
-          #   trader = self.parent.parent.traders_invert[settings["target"]]
-          #   self.ui.tabWidget.setCurrentIndex(3)
-          #   self.ui.box_rewardtiming_ts.setCurrentText(reward_timing)
-          #   self.ui.box_loyalty_ts.setValue(float(settings["value"]))
-          #   self.ui.box_trader_ts.setCurrentText(trader)
-          #   self.ui.box_unknown_ts.setCurrentText(unknown_or)
-
-          # case "TraderUnlock":
-          #   trader = self.parent.parent.traders_invert[settings["target"]]
-          #   self.ui.tabWidget.setCurrentIndex(7)
-          #   self.ui.box_rewardtiming_tul.setCurrentText(reward_timing)
-          #   self.ui.box_unknown_tul.setCurrentText(unknown_or)
-          #   self.ui.box_trader_tul.setCurrentText(trader)

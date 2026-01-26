@@ -172,6 +172,7 @@
      <string>Debug</string>
     </property>
     <addaction name="actionAdd_queued_to_open_list"/>
+    <addaction name="actionAnalyze_CC_subtypes"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -245,6 +246,11 @@
   <action name="actionRemove_Selected_Quest">
    <property name="text">
     <string>Remove Selected Quest</string>
+   </property>
+  </action>
+  <action name="actionAnalyze_CC_subtypes">
+   <property name="text">
+    <string>Analyze CC subtypes</string>
    </property>
   </action>
  </widget>
