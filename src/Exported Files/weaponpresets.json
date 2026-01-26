@@ -1,42 +1,35 @@
 [
   {
-    "69587f5771b212bc85338e23": {
-      "_id": "69587f5771b212bc85338e23",
-      "_tpl": "5447a9cd4bdc2dbd208b4567",
+    "69767bb62e99af31963a3fa7": {
+      "_id": "69767bb62e99af31963a3fa7",
+      "_tpl": "",
       "parentId": "hideout",
       "slotId": "hideout",
       "upd": {}
     }
   },
   {
-    "69587f5f71b212bc85338e26": {
-      "_id": "69587f5f71b212bc85338e26",
-      "_tpl": "5447a9cd4bdc2dbd208b4567",
-      "parentId": "69587f5771b212bc85338e23",
+    "69767bb82e99af31963a3fa8": {
+      "_id": "69767bb82e99af31963a3fa8",
+      "_tpl": "",
+      "parentId": "hideout",
+      "slotId": "hideout",
+      "upd": {}
+    }
+  },
+  {
+    "69767bbb2e99af31963a3faa": {
+      "_id": "69767bbb2e99af31963a3faa",
+      "_tpl": "",
+      "parentId": "69767bb62e99af31963a3fa7",
       "slotId": ""
     }
   },
   {
-    "69587f6471b212bc85338e28": {
-      "_id": "69587f6471b212bc85338e28",
-      "_tpl": "5447a9cd4bdc2dbd208b4567",
-      "parentId": "69587f5f71b212bc85338e26",
-      "slotId": ""
-    }
-  },
-  {
-    "69587f6771b212bc85338e2a": {
-      "_id": "69587f6771b212bc85338e2a",
-      "_tpl": "5447a9cd4bdc2dbd208b4567",
-      "parentId": "69587f6471b212bc85338e28",
-      "slotId": ""
-    }
-  },
-  {
-    "69587f6971b212bc85338e2c": {
-      "_id": "69587f6971b212bc85338e2c",
-      "_tpl": "5447a9cd4bdc2dbd208b4567",
-      "parentId": "69587f6471b212bc85338e28",
+    "69767bbd2e99af31963a3fac": {
+      "_id": "69767bbd2e99af31963a3fac",
+      "_tpl": "",
+      "parentId": "69767bb82e99af31963a3fa8",
       "slotId": ""
     }
   }

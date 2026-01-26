@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>686</width>
-    <height>316</height>
+    <width>859</width>
+    <height>602</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -51,13 +51,13 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <widget class="QTabWidget" name="tabWidget">
+   <widget class="QTabWidget" name="main_tab">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>681</width>
-      <height>271</height>
+      <width>861</width>
+      <height>561</height>
      </rect>
     </property>
     <property name="font">
@@ -66,7 +66,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="questTab">
      <attribute name="title">
@@ -96,8 +96,8 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>651</width>
-        <height>201</height>
+        <width>831</width>
+        <height>491</height>
        </rect>
       </property>
       <property name="font">
@@ -109,8 +109,125 @@
     </widget>
     <widget class="QWidget" name="placeholderTab">
      <attribute name="title">
-      <string>Placeholder</string>
+      <string>Weapon Builder</string>
      </attribute>
+     <widget class="QTreeView" name="wb_treeview">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>491</width>
+        <height>501</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget_5">
+      <property name="geometry">
+       <rect>
+        <x>510</x>
+        <y>0</y>
+        <width>341</width>
+        <height>521</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_5">
+       <item row="6" column="0">
+        <widget class="QPushButton" name="wb_removepart_button">
+         <property name="text">
+          <string>Remove Part</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="wb_itemid_edit"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Mongo ID associated with the weapon part.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Item ID</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="wb_modslot">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What slot will the part fill.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Mod Slot</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="wb_parentId_edit"/>
+       </item>
+       <item row="5" column="0">
+        <widget class="QPushButton" name="wb_addpart_button">
+         <property name="text">
+          <string>Add Part</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QComboBox" name="wb_modslot_combo"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="wb_base_check">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Is this the first part of an entire weapon? Use the lower reciever to begin.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Base Weapon?</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="wb_parentid">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The base weapon mongo ID. Click weapon or weapon part. in tree view to fill. eg. the lower reciever for an upper reciever (m4) or the handgaurd for a foregrip/rail.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Parent ID</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="wb_weaponname">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The name for the weapon as a whole for organization purposes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Weapon Name</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="wb_weaponname_edit"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QLabel" name="label_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>111</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Segoe UI</family>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Weapons:</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -124,7 +241,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>686</width>
+     <width>859</width>
      <height>22</height>
     </rect>
    </property>

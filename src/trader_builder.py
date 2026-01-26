@@ -55,7 +55,8 @@ class Controller:
     tb_finishfail                         = str(parser.get('box_fields', 'tb_finishfail')).split(',')
     tb_effect                             = str(parser.get('box_fields', 'tb_effect')).split(',')
     tb_buff                               = str(parser.get('box_fields', 'tb_buff')).split(',')
-
+    wb_box_modslot                        = str(parser.get('box_fields', 'ab_box_modslot')).split(',')
+  
   except Exception as e:
     print(f"Error loading settings.ini file. Please check the exception below and the corresponding entry in the settings file.\nMost likely, the format for your entry is off. Check the top of settings.ini for more info.\n\n{traceback.format_exc()}")
     exit()
@@ -111,8 +112,7 @@ def main():
   # Create the application and main window
   controller = Controller()
   app = QApplication(sys.argv)
-  win = Gui_MainWindow()
-  win.controller = controller
+  win = Gui_MainWindow(controller)
   ver_current, ver_latest, update_text, project_url = Controller.get_update_stats()
 
   # # Set up triggers that need specific data
