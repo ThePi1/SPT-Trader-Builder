@@ -174,7 +174,7 @@ class Ui_AssortBuilder(object):
         self.ab_weappart_check.setText(_translate("AssortBuilder", "Weapon Part for existing weapon in assort?"))
         self.ab_weapid.setText(_translate("AssortBuilder", "Item ID:"))
         self.ab_modslot.setText(_translate("AssortBuilder", "Mod Slot"))
-        self.ab_mongo.setText(_translate("AssortBuilder", "Assort Id (Click Weapon)"))
+        self.ab_mongo.setText(_translate("AssortBuilder", "Parent (Click Item)"))
         self.ab_unlimitedcount.setToolTip(_translate("AssortBuilder", "<html><head/><body><p>Typically true unless you want it to run out of stock in fika across server. Use buy restriction to set a limit.</p></body></html>"))
         self.ab_unlimitedcount.setText(_translate("AssortBuilder", "Unlimited Quantity"))
         self.ab_quest_check.setToolTip(_translate("AssortBuilder", "<html><head/><body><p>Quest Locked?</p></body></html>"))
