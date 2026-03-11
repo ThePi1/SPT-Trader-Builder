@@ -75,6 +75,8 @@ class Gui_MainWindow(QMainWindow):
     self.quests = {}
     #RewardFail RewardStarted RewardSuccess
     self.table_fields = {}
+    # When clearing table fields, keep any k/v pair with these strings in the key
+    self.table_fields_keep_str = ["Reward", "Condition"]
     self.weaponlist = []
 
   def on_launch(self):
@@ -85,6 +87,17 @@ class Gui_MainWindow(QMainWindow):
   def setup_box_selections(self):
     self.ui.wb_modslot_combo.addItems(self.controller.ab_box_modslot)
 
+  def safe_clear_table_fields(self):
+    pre_fields = copy.deepcopy(self.table_fields)
+    for k,v in pre_fields.items():
+      found_safe = False
+      for keepstr in self.table_fields_keep_str:
+        if keepstr in k:
+          found_safe = True
+      if not found_safe:
+        print(f"Debug: removing {k}:{v}, not a safe field")
+        self.table_fields.pop(k)
+          
 
   def baseWeaponChecked(self,checked): #UI Behavior
     if checked:
@@ -601,7 +614,8 @@ class Gui_RewardDlg(QMainWindow):
       if str(self.id) in table.item(i, 0).text():#row,column
         table.removeRow(i)
         break
-    
+
+    self.parent.parent.safe_clear_table_fields()
     self.parent.parent.add_table_field(f"Reward{reward_timing}", self.parent.ui.tb_rewards, self.id, {0: self.id, 1: reward_timing, 2: reward_type}, reward)
     print(self.parent.parent.table_fields)
     self.close()
@@ -943,8 +957,9 @@ class Gui_QuestDlg(QMainWindow):
       if str(quest_id) in self.parent.ui.questList.item(i).text():
         self.parent.ui.questList.takeItem(i)
         break
-
+      
     self.parent.quests[quest_id] = quest[quest_id]
+    self.parent.safe_clear_table_fields()
     self.parent.ui.questList.addItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
     self.close()
 
@@ -1982,12 +1997,16 @@ class Gui_TaskDlg(QMainWindow):
         table.removeRow(i)
         break
     # ConditionFinish, ConditionStart, ConditionFail
+
+    self.parent.parent.safe_clear_table_fields()
     self.parent.parent.add_table_field(f"Condition{timing}", self.parent.ui.tb_cond, self.id, {0: self.id, 1: timing, 2: cond_type}, cond)
     # clear the list, since we're exported and done with it, if we need to load, we will do it from the JSON object itself
-    self.parent.parent.reset_by_key(cond_type)
-    if cond_type == "CounterCreator": # we also need to clear all the subfields, if they were used, if it's cc
-      for c in ["VisitPlace", "Kills", "ExitStatus", "ExitName", "Location"]:
-        self.parent.parent.reset_by_key(c)
+
+    # self.parent.parent.reset_by_key(cond_type)
+    # if cond_type == "CounterCreator": # we also need to clear all the subfields, if they were used, if it's cc
+    #   for c in ["VisitPlace", "Kills", "ExitStatus", "ExitName", "Location"]:
+    #     self.parent.parent.reset_by_key(c)
+
     self.close()
 
   def load_settings_from_dict(self, settings, condition_timing):
