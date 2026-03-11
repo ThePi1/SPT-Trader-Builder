@@ -205,6 +205,7 @@ class Gui_MainWindow(QMainWindow):
     filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
     print(filename)
     cc_keeptrack = {}
+    non_cc_keeptrack = {}
     with open(filename, "r") as f:
       try:
         quests_import = json.load(f)
@@ -215,6 +216,10 @@ class Gui_MainWindow(QMainWindow):
         print(f"{quests_import[quest_id]['QuestName']}")
         if "conditions" in quests_import[quest_id] and "AvailableForFinish" in quests_import[quest_id]['conditions'] and len(quests_import[quest_id]['conditions']['AvailableForFinish']) > 0:
           for avf_c in quests_import[quest_id]['conditions']['AvailableForFinish']:
+            if avf_c['conditionType'] not in non_cc_keeptrack:
+              non_cc_keeptrack[avf_c['conditionType']] = 1
+            else:
+              non_cc_keeptrack[avf_c['conditionType']] += 1
             if avf_c['conditionType'] == "CounterCreator":
               for cond in avf_c['counter']['conditions']:
                 print(f"Inner conditionType: {cond['conditionType']}")
@@ -224,6 +229,7 @@ class Gui_MainWindow(QMainWindow):
                   cc_keeptrack[cond['conditionType']] += 1
     
     print(cc_keeptrack)
+    print(non_cc_keeptrack)
 
   def importQuests(self):
     filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
