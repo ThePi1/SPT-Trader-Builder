@@ -59,6 +59,7 @@ class Gui_MainWindow(QMainWindow):
     self.ui.actionExit.triggered.connect(self.onExit)
     self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
     self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
+    self.ui.actionCreate_locale_from_Quest_JSON.triggered.connect(self.createLocaleFromJSON)
     self.ui.actionImport_Quests.triggered.connect(self.importQuests)
     self.ui.wb_addpart_button.released.connect(self.addpart)
     self.ui.wb_base_check.toggled.connect(self.baseWeaponChecked)
@@ -325,6 +326,50 @@ class Gui_MainWindow(QMainWindow):
       if id in cat_dict:
         del cat_dict[id]
       # if id is found, remove it similar to reset by key above
+
+  def createLocaleFromJSON(self):
+    filename, ok = QFileDialog.getOpenFileName(self, "Open Quest JSON")
+    with open(filename, "r") as f:
+      try:
+        locales = []
+        q_locstr = ["name", "note", "acceptPlayerMessage","changeQuestMessageText","completePlayerMessage","declinePlayerMessage","description","failMessageText","startedMessageText","successMessageText"]
+        cond_subtype = ["AvailableForFinish", "AvailableForStart", "Fail"]
+        quests_import = json.load(f)
+        final_locale = {}
+        print(f"{quests_import}")
+        for quest_id,quest in quests_import.items():
+          print(f"Found quest: {quest["QuestName"]} ({quest_id})")
+          # do top-level quest fields
+          for s in q_locstr:
+            if s in quest:
+              locales.append(f"{quest_id} {s}")
+          # do condition ids
+          for c in cond_subtype:
+            # if not empty
+            if len(quest["conditions"][c]) > 0:
+              for condition in quest["conditions"][c]:
+                locales.append(condition["id"])
+                # if "counter" in condition:
+                #   for cc in condition["counter"]["conditions"]:
+                #     locales.append(cc["id"])
+        print(locales)
+        filename, ok = QFileDialog.getOpenFileName(self, "Open Base Locale JSON")
+        with open(filename, "r") as baselocale_f:
+          base_locale = json.load(baselocale_f)
+          base_locale_existing = list(base_locale.items())
+          print(base_locale_existing)
+          for bl_key,bl_val in base_locale_existing:
+            final_locale[bl_key] = bl_val
+          for bl_key in locales:
+            if bl_key not in final_locale:
+              final_locale[bl_key] = ""
+          print(final_locale)
+          filename, ok = QFileDialog.getSaveFileName(self, "Save new Locale JSON")
+          with open(filename, "w") as savelocale_f:
+            json.dump(final_locale, savelocale_f, indent=4)
+
+      except Exception as e:
+        print(f"Error generating locale for quest file: {e}")
 
   def editSelectedQuest(self):
     qlist = self.ui.questList
@@ -912,7 +957,7 @@ class Gui_QuestDlg(QMainWindow):
         for _id,reward in self.parent.table_fields[f"Reward{k}"].items():
           rewards_calc[k].append(reward)
           # print(_id, reward)
-    location_calc = [] if self.ui.box_location.currentText() == "any" else self.parent.locations[self.ui.box_location.currentText()]
+    location_calc = "any" if self.ui.box_location.currentText() == "any" else self.parent.locations[self.ui.box_location.currentText()]
     quest = {
       quest_id: {
       "QuestName": self.ui.fld_quest_name.displayText(),

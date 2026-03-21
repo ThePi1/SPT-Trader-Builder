@@ -66,9 +66,9 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
-    <widget class="QWidget" name="questTab">
+    <widget class="QWidget" name="quest_tab">
      <attribute name="title">
       <string>Quests</string>
      </attribute>
@@ -107,7 +107,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="placeholderTab">
+    <widget class="QWidget" name="wb_tab">
      <attribute name="title">
       <string>Weapon Builder</string>
      </attribute>
@@ -229,6 +229,11 @@
       </property>
      </widget>
     </widget>
+    <widget class="QWidget" name="locale_tab">
+     <attribute name="title">
+      <string>Locale</string>
+     </attribute>
+    </widget>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar">
@@ -283,6 +288,7 @@
     <addaction name="actionEdit_Selected_Quest"/>
     <addaction name="separator"/>
     <addaction name="actionRemove_Selected_Quest"/>
+    <addaction name="actionCreate_locale_from_Quest_JSON"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -368,6 +374,11 @@
   <action name="actionAnalyze_CC_subtypes">
    <property name="text">
     <string>Analyze CC subtypes</string>
+   </property>
+  </action>
+  <action name="actionCreate_locale_from_Quest_JSON">
+   <property name="text">
+    <string>Create locale from Quest JSON</string>
    </property>
   </action>
  </widget>
