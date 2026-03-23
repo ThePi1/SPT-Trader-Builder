@@ -338,7 +338,7 @@ class Gui_MainWindow(QMainWindow):
         final_locale = {}
         print(f"{quests_import}")
         for quest_id,quest in quests_import.items():
-          print(f"Found quest: {quest["QuestName"]} ({quest_id})")
+          print(f"Found quest: {quest['QuestName']} ({quest_id})")
           # do top-level quest fields
           for s in q_locstr:
             if s in quest:
@@ -1039,6 +1039,7 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.ab_buyRestriction_edit.setEnabled(False)
     self.ui.ab_quest_id.setEnabled(False)
     self.ui.ab_itembarter_edit.setEnabled(False)
+    self.ui.ab_tab.setCurrentIndex(0)
     self.weaponPartChecked(self.ui.ab_weappart_check.isChecked())
     self.questLockedChecked(self.ui.ab_quest_check.isChecked())
     self.brestrictionChecked(self.ui.ab_buyrestriction_checkbox.isChecked())
@@ -1303,6 +1304,7 @@ class Gui_AssortDlg(QMainWindow):
     self.itemlist = [ #goes through list and keeps all items that do not have specific mongoID
       item for item in self.itemlist
       if item.get("_id") != mongosaved
+      if item.get("parentId") != mongosaved
     ]
     if mongosaved not in self.barterlist: #checks if weapon part and skips barterlist and loyaltylist
       self.ui.ab_table.removeRow(row)
@@ -1310,6 +1312,14 @@ class Gui_AssortDlg(QMainWindow):
       self.barterlist.pop(mongosaved)
       self.loyaltylist.pop(mongosaved)
       self.ui.ab_table.removeRow(row)
+
+      #remove row based on userrole as weapon part user role is the parents mongoID
+    for row in range(self.ui.ab_table.model().rowCount()):
+      if self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole) == mongosaved:
+        self.ui.ab_table.removeRow(row)
+      #print(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole))
+        
+
 
   def add_item(self): #The basic assort add function
 
@@ -1339,6 +1349,7 @@ class Gui_AssortDlg(QMainWindow):
     #checks whether its a weapon part. if it is creates a name for table that mixes the original weapon its built off of and the slot name
     if self.ui.ab_weappart_check.isChecked() and self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) == self.ui.ab_weapmongo_edit.text():
       itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
+      self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) = #FILL IN
 
     cashtype = "Undefined" #set cashtype then check type and apply
     if self.ui.ab_rouble_radiobutton.isChecked() :
