@@ -1341,6 +1341,8 @@ class Gui_AssortDlg(QMainWindow):
     questID = self.ui.ab_quest_id.text().strip()
     buyrestriction = self.ui.ab_buyRestriction_edit.text() or 0
 
+    item_Id = QTableWidgetItem(str(itemID))
+
     #Weapon Part Variables
     slotID = str(self.ui.ab_modslot_combo.currentText())
     parentID = self.ui.ab_weapmongo_edit.text().strip()
@@ -1349,7 +1351,8 @@ class Gui_AssortDlg(QMainWindow):
     #checks whether its a weapon part. if it is creates a name for table that mixes the original weapon its built off of and the slot name
     if self.ui.ab_weappart_check.isChecked() and self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) == self.ui.ab_weapmongo_edit.text():
       itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
-      self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) = #FILL IN
+      item_Id.setData(Qt.ItemDataRole.UserRole, self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole)
+
 
     cashtype = "Undefined" #set cashtype then check type and apply
     if self.ui.ab_rouble_radiobutton.isChecked() :
@@ -1446,8 +1449,9 @@ class Gui_AssortDlg(QMainWindow):
 
     row = table.rowCount()
     table.insertRow(row)
-    item_Id = QTableWidgetItem(str(itemID))
-    item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved)
+
+    if not self.ui.ab_weappart_check.isChecked():
+      item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved)
     tablequantity = "∞" if self.ui.ab_unlimitedcount.isChecked() else quantity
     
     table.setItem(row,0,item_Id)
