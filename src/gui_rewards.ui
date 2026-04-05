@@ -46,7 +46,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>
@@ -106,7 +106,7 @@
        <item row="5" column="0">
         <widget class="QLabel" name="label_10">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>
@@ -391,7 +391,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_13">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>
@@ -643,7 +643,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_15">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>
@@ -730,7 +730,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_21">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>
@@ -787,7 +787,7 @@
        <item row="2" column="0">
         <widget class="QLabel" name="label_23">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>
@@ -854,7 +854,7 @@
        <item row="2" column="0">
         <widget class="QLabel" name="label_6">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>
@@ -901,7 +901,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_34">
          <property name="text">
-          <string>Show Reward?</string>
+          <string>Hide reward?</string>
          </property>
         </widget>
        </item>

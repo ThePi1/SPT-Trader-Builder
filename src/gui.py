@@ -24,7 +24,7 @@ def val_field(value, emptyval, defaultval, expectclass):
   else:
     try:
       convert_val = expectclass(value)
-      return value
+      return convert_val
     except Exception as e:
       if expectclass == int:
         return 0
@@ -59,6 +59,8 @@ class Gui_MainWindow(QMainWindow):
     self.ui.actionExit.triggered.connect(self.onExit)
     self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
     self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
+    self.ui.actionLoad_items_json_for_below.triggered.connect(self.loadItemsJSON)
+    self.ui.actionGet_all_children_of_parent_ID.triggered.connect(self.getAllChildrenCalc)
     self.ui.actionCreate_locale_from_Quest_JSON.triggered.connect(self.createLocaleFromJSON)
     self.ui.actionImport_Quests.triggered.connect(self.importQuests)
     self.ui.wb_addpart_button.released.connect(self.addpart)
@@ -79,6 +81,7 @@ class Gui_MainWindow(QMainWindow):
     # When clearing table fields, keep any k/v pair with these strings in the key
     self.table_fields_keep_str = ["Reward", "Condition"]
     self.weaponlist = []
+    self.itemsJSON = None
 
   def on_launch(self):
     self.ui.main_tab.setCurrentIndex(0)
@@ -326,6 +329,34 @@ class Gui_MainWindow(QMainWindow):
       if id in cat_dict:
         del cat_dict[id]
       # if id is found, remove it similar to reset by key above
+
+  def loadItemsJSON(self):
+    if self.itemsJSON is not None:
+      self.itemsJSON = None
+      print(f"Items.json detected, wiping and re-importing.")
+    filename, ok = QFileDialog.getOpenFileName(self, "Import items.json")
+    with open(filename, "r", encoding="cp866") as f:
+      self.itemsJSON = json.load(f)
+
+  def getAllChildrenCalc(self):
+    print(f"Enter via console the parent ID that you wish to use:")
+    parent_id = input()
+    found_ids = []
+    for item_id in self.itemsJSON.keys():
+      chain_top = False
+      current_id = item_id
+      while not chain_top:
+        current_parent = self.itemsJSON[current_id]["_parent"]
+        if current_parent == parent_id:
+          chain_top = True
+          found_ids.append(item_id)
+        if current_id == "54009119af1c881c07000029":
+          chain_top = True
+        current_id = current_parent
+    print(f"[")
+    for _id in found_ids:
+      print(f'"{_id}",')
+    print(f"]")
 
   def createLocaleFromJSON(self):
     filename, ok = QFileDialog.getOpenFileName(self, "Open Quest JSON")
@@ -774,24 +805,24 @@ class Gui_RewardDlg(QMainWindow):
     self.ui.box_trader_asu.addItems(self.parent.parent.traders.keys())
     self.ui.box_trader_ts.addItems(self.parent.parent.traders.keys())
     self.ui.box_trader_tul.addItems(self.parent.parent.traders.keys())
-    self.ui.box_unknown_exp.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_exp.addItems(self.parent.parent.controller.default_ft)
     self.ui.box_rewardtiming_exp.addItems(self.parent.parent.controller.reward_timing)
     self.ui.box_fir_item.addItems(self.parent.parent.controller.default_tf)
-    self.ui.box_unknown_item.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_item.addItems(self.parent.parent.controller.default_ft)
     self.ui.box_rewardtiming_item.addItems(self.parent.parent.controller.reward_timing)
-    self.ui.box_unknown_asu.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_asu.addItems(self.parent.parent.controller.default_ft)
     self.ui.box_rewardtiming_asu.addItems(self.parent.parent.controller.reward_timing)
-    self.ui.box_unknown_ts.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_ts.addItems(self.parent.parent.controller.default_ft)
     self.ui.box_rewardtiming_ts.addItems(self.parent.parent.controller.reward_timing)
     self.ui.box_skill_sk.addItems(self.parent.parent.controller.default_skills)
-    self.ui.box_unknown_sk.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_sk.addItems(self.parent.parent.controller.default_ft)
     self.ui.box_rewardtiming_sk.addItems(self.parent.parent.controller.reward_timing)
     self.ui.box_rewardtiming_sr.addItems(self.parent.parent.controller.reward_timing)
-    self.ui.box_unknown_sr.addItems(self.parent.parent.controller.default_tf)
-    self.ui.bx_unknown_ach.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_sr.addItems(self.parent.parent.controller.default_ft)
+    self.ui.bx_unknown_ach.addItems(self.parent.parent.controller.default_ft)
     self.ui.box_rewardtiming_ach.addItems(self.parent.parent.controller.reward_timing)
     self.ui.box_rewardtiming_tul.addItems(self.parent.parent.controller.reward_timing)
-    self.ui.box_unknown_tul.addItems(self.parent.parent.controller.default_tf)
+    self.ui.box_unknown_tul.addItems(self.parent.parent.controller.default_ft)
 
 class Gui_QuestDlg(QMainWindow):
   def __init__(self, parent=None, _controller=None):
@@ -825,6 +856,7 @@ class Gui_QuestDlg(QMainWindow):
     self.ui.box_quest_type_label.addItems(self.parent.controller.qb_box_quest_type_label)
     self.ui.box_trader.addItems(self.parent.traders.keys())
     self.ui.box_location.addItems(self.parent.controller.qb_box_location)
+    self.ui.fld_image_name.setText(self.parent.controller.default_questicon)
     self.ui.box_can_show_notif.addItems(self.parent.controller.default_tf)
     self.ui.box_insta_complete.addItems(self.parent.controller.default_ft)
     self.ui.box_restartable.addItems(self.parent.controller.default_ft)
@@ -1889,7 +1921,7 @@ class Gui_TaskDlg(QMainWindow):
             "index": 0,
             "inEncoded": False,
             "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
-            "parentId": self.ui.fld_parentid.displayText(),
+            "parentId": self.ui.fld_parentid_it.displayText(),
             "target": local_target,
             "value": local_value,
             "visibilityConditions": local_vis_cond

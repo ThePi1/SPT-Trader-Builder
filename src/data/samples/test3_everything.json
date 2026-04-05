@@ -1,0 +1,132 @@
+{
+    "69519c6e09071def119ebd57": {
+        "QuestName": "Everything",
+        "_id": "69519c6e09071def119ebd57",
+        "acceptPlayerMessage": "69519c6e09071def119ebd57 acceptPlayerMessage",
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69519c6e09071def119ebd57 changeQuestMessageText",
+        "completePlayerMessage": "69519c6e09071def119ebd57 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69519c6e09071def119ebd57 declinePlayerMessage",
+        "description": "69519c6e09071def119ebd57 description",
+        "failMessageText": "69519c6e09071def119ebd57 failMessageText",
+        "image": "/files/quest/icon/quest123.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "factory4_night",
+        "name": "69519c6e09071def119ebd57 name",
+        "note": "69519c6e09071def119ebd57 note",
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69519c8e09071def119ebd5a",
+                    "index": 0,
+                    "items": [
+                        {
+                            "_id": "867",
+                            "_tpl": "5342",
+                            "upd": {
+                                "StackObjectsCount": "0",
+                                "SpawnedInSession": true
+                            },
+                            "parentId": "234",
+                            "slotId": "456"
+                        }
+                    ],
+                    "loyaltyLevel": "2",
+                    "target": "1235",
+                    "traderId": "5935c25fb3acc3127c3d8cd9",
+                    "type": "AssortmentUnlock",
+                    "unknown": false
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69519d5a09071def119ebd5e",
+                    "index": 0,
+                    "type": "StashRows",
+                    "unknown": true,
+                    "value": "45"
+                }
+            ],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69519c7e09071def119ebd58",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": true,
+                    "value": "123"
+                },
+                {
+                    "availableInGameEditions": [],
+                    "findInRaid": true,
+                    "id": "69519c8009071def119ebd59",
+                    "index": 0,
+                    "items": [
+                        {
+                            "_id": "456",
+                            "_tpl": "567",
+                            "upd": {
+                                "StackObjectsCount": "2",
+                                "SpawnedInSession": true
+                            },
+                            "parentId": "234",
+                            "slotId": "345"
+                        }
+                    ],
+                    "target": "123",
+                    "type": "Item",
+                    "unknown": true,
+                    "value": "1"
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69519c9d09071def119ebd5b",
+                    "index": 0,
+                    "target": "54cb57776803fa99248b456e",
+                    "type": "TraderStanding",
+                    "unknown": true,
+                    "value": "0.50"
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69519d5209071def119ebd5d",
+                    "index": 0,
+                    "target": "Strength",
+                    "type": "Skill",
+                    "unknown": true,
+                    "value": "12"
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69519d6009071def119ebd5f",
+                    "index": 0,
+                    "target": "231445bbbbbbb",
+                    "type": "Achievement",
+                    "unknown": true
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69519d6509071def119ebd60",
+                    "index": 0,
+                    "target": "6748edbcb936f1098d4303e4",
+                    "type": "TraderUnlock",
+                    "unknown": true
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "bear",
+        "startedMessageText": "69519c6e09071def119ebd57 startedMessageText",
+        "successMessageText": "69519c6e09071def119ebd57 successMessageText",
+        "traderId": "5935c25fb3acc3127c3d8cd9",
+        "type": "Skill"
+    }
+}

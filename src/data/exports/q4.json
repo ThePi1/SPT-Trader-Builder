@@ -1,0 +1,207 @@
+{
+    "69cd62bf473d11f1646c2269": {
+        "QuestName": "Welcome Back",
+        "_id": "69cd62bf473d11f1646c2269",
+        "acceptPlayerMessage": "69cd62bf473d11f1646c2269 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69cd62bf473d11f1646c2269 changeQuestMessageText",
+        "completePlayerMessage": "69cd62bf473d11f1646c2269 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "completeInSeconds": 0,
+                    "conditionType": "CounterCreator",
+                    "counter": {
+                        "conditions": [
+                            {
+                                "conditionType": "Location",
+                                "dynamicLocale": false,
+                                "id": "69cd6338473d11f1646c226d",
+                                "target": [
+                                    "bigmap"
+                                ]
+                            },
+                            {
+                                "conditionType": "ExitStatus",
+                                "dynamicLocale": false,
+                                "id": "69cd633b473d11f1646c226e",
+                                "status": [
+                                    "Survived"
+                                ]
+                            }
+                        ],
+                        "id": "69cd6360473d11f1646c226f"
+                    },
+                    "doNotResetIfCounterCompleted": false,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cd6330473d11f1646c226c",
+                    "index": 0,
+                    "isNecessary": false,
+                    "isResetOnConditionFailed": false,
+                    "oneSessionOnly": false,
+                    "parentId": "",
+                    "type": "Exploration",
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cd6372473d11f1646c2271",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69cc9aaa1c5ce40c22fa3a8a",
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69cd62bf473d11f1646c2269 declinePlayerMessage",
+        "description": "69cd62bf473d11f1646c2269 description",
+        "failMessageText": "69cd62bf473d11f1646c2269 failMessageText",
+        "image": "/files/quest/mod_icon/welcome.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69cd62bf473d11f1646c2269 name",
+        "note": "69cd62bf473d11f1646c2269 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cd6363473d11f1646c2270",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 2000
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69cd62bf473d11f1646c2269 startedMessageText",
+        "successMessageText": "69cd62bf473d11f1646c2269 successMessageText",
+        "traderId": "69744632183b55cf9702c982",
+        "type": "Discover"
+    }
+}
+
+--
+
+"69cd62bf473d11f1646c2269": {
+        "QuestName": "Welcome Back",
+        "_id": "69cd62bf473d11f1646c2269",
+        "acceptPlayerMessage": "69cd62bf473d11f1646c2269 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69cd62bf473d11f1646c2269 changeQuestMessageText",
+        "completePlayerMessage": "69cd62bf473d11f1646c2269 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "completeInSeconds": 0,
+                    "conditionType": "CounterCreator",
+                    "counter": {
+                        "conditions": [
+                            {
+                                "conditionType": "Location",
+                                "dynamicLocale": false,
+                                "id": "69cd6338473d11f1646c226d",
+                                "target": [
+                                    "bigmap"
+                                ]
+                            },
+                            {
+                                "conditionType": "ExitStatus",
+                                "dynamicLocale": false,
+                                "id": "69cd633b473d11f1646c226e",
+                                "status": [
+                                    "Survived"
+                                ]
+                            }
+                        ],
+                        "id": "69cd6360473d11f1646c226f"
+                    },
+                    "doNotResetIfCounterCompleted": false,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cd6330473d11f1646c226c",
+                    "index": 0,
+                    "isNecessary": false,
+                    "isResetOnConditionFailed": false,
+                    "oneSessionOnly": false,
+                    "parentId": "",
+                    "type": "Exploration",
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cd6372473d11f1646c2271",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69cc9aaa1c5ce40c22fa3a8a",
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69cd62bf473d11f1646c2269 declinePlayerMessage",
+        "description": "69cd62bf473d11f1646c2269 description",
+        "failMessageText": "69cd62bf473d11f1646c2269 failMessageText",
+        "image": "/files/quest/mod_icon/welcome.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69cd62bf473d11f1646c2269 name",
+        "note": "69cd62bf473d11f1646c2269 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cd6363473d11f1646c2270",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 2000
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69cd62bf473d11f1646c2269 startedMessageText",
+        "successMessageText": "69cd62bf473d11f1646c2269 successMessageText",
+        "traderId": "69744632183b55cf9702c982",
+        "type": "Discover"
+    }

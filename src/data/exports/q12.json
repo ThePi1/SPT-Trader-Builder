@@ -1,0 +1,91 @@
+{
+    "69cee1057c3c785e39999475": {
+        "QuestName": "Hao Jiu Bu Jian",
+        "_id": "69cee1057c3c785e39999475",
+        "acceptPlayerMessage": "69cee1057c3c785e39999475 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69cee1057c3c785e39999475 changeQuestMessageText",
+        "completePlayerMessage": "69cee1057c3c785e39999475 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "FindItem",
+                    "countInRaid": false,
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cee2b87c3c785e39999478",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c12613b86f7743bbe2c3f76"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cee2f77c3c785e39999479",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c12613b86f7743bbe2c3f76"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69cee1057c3c785e39999475 declinePlayerMessage",
+        "description": "69cee1057c3c785e39999475 description",
+        "failMessageText": "69cee1057c3c785e39999475 failMessageText",
+        "image": "/files/quest/mod_icon/q12.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69cee1057c3c785e39999475 name",
+        "note": "69cee1057c3c785e39999475 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cee1ec7c3c785e39999476",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 10000
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cee1f17c3c785e39999477",
+                    "index": 0,
+                    "target": "69744632183b55cf9702c984",
+                    "type": "TraderUnlock",
+                    "unknown": false
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69cee1057c3c785e39999475 startedMessageText",
+        "successMessageText": "69cee1057c3c785e39999475 successMessageText",
+        "traderId": "69744632183b55cf9702c982",
+        "type": "PickUp"
+    }
+}

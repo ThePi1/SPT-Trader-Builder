@@ -1,0 +1,56 @@
+{
+    "69cc9d0a0c329f79de23a506": {
+        "QuestName": "123",
+        "_id": "69cc9d0a0c329f79de23a506",
+        "acceptPlayerMessage": "69cc9d0a0c329f79de23a506 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69cc9d0a0c329f79de23a506 changeQuestMessageText",
+        "completePlayerMessage": "69cc9d0a0c329f79de23a506 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "PlaceBeacon",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cc9d0d0c329f79de23a507",
+                    "index": 0,
+                    "parentId": "",
+                    "plantTime": 4,
+                    "target": [
+                        "5991b51486f77447b112d44f"
+                    ],
+                    "value": 4,
+                    "visibilityConditions": [],
+                    "zoneId": "1235aaaa"
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69cc9d0a0c329f79de23a506 declinePlayerMessage",
+        "description": "69cc9d0a0c329f79de23a506 description",
+        "failMessageText": "69cc9d0a0c329f79de23a506 failMessageText",
+        "image": "/files/quest/mod_icon/welcome.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69cc9d0a0c329f79de23a506 name",
+        "note": "69cc9d0a0c329f79de23a506 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": []
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69cc9d0a0c329f79de23a506 startedMessageText",
+        "successMessageText": "69cc9d0a0c329f79de23a506 successMessageText",
+        "traderId": "54cb50c76803fa8b248b4571",
+        "type": "PickUp"
+    }
+}

@@ -1,0 +1,59 @@
+{
+    "6951966e597958b414f97f85": {
+        "QuestName": "Aaaa",
+        "_id": "6951966e597958b414f97f85",
+        "acceptPlayerMessage": "6951966e597958b414f97f85 acceptPlayerMessage",
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "6951966e597958b414f97f85 changeQuestMessageText",
+        "completePlayerMessage": "6951966e597958b414f97f85 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "6951966e597958b414f97f85 declinePlayerMessage",
+        "description": "6951966e597958b414f97f85 description",
+        "failMessageText": "6951966e597958b414f97f85 failMessageText",
+        "image": "/files/quest/icon/quest.png",
+        "instantComplete": false,
+        "isKey": "false",
+        "location": "any",
+        "name": "6951966e597958b414f97f85 name",
+        "note": "6951966e597958b414f97f85 note",
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "findInRaid": true,
+                    "id": "69519672597958b414f97f86",
+                    "index": 0,
+                    "items": [
+                        {
+                            "_id": "123",
+                            "_tpl": "123",
+                            "upd": {
+                                "StackObjectsCount": "0",
+                                "SpawnedInSession": true
+                            },
+                            "parentId": "3123",
+                            "slotId": "123"
+                        }
+                    ],
+                    "target": "123",
+                    "type": "Item",
+                    "unknown": false,
+                    "value": "0"
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "6951966e597958b414f97f85 startedMessageText",
+        "successMessageText": "6951966e597958b414f97f85 successMessageText",
+        "traderId": "54cb50c76803fa8b248b4571",
+        "type": "PickUp"
+    }
+}

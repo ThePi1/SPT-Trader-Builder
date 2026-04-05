@@ -1,0 +1,84 @@
+{
+    "695f0c3a93627f978df33544": {
+        "QuestName": "Test",
+        "_id": "695f0c3a93627f978df33544",
+        "acceptPlayerMessage": "695f0c3a93627f978df33544 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "695f0c3a93627f978df33544 changeQuestMessageText",
+        "completePlayerMessage": "695f0c3a93627f978df33544 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "695f0c3b93627f978df33545",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "58330581ace78e27b8b10cee",
+                    "value": 12,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderStanding",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "695f0c4093627f978df33546",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "54cb57776803fa99248b456e",
+                    "value": 4,
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "695f0c3a93627f978df33544 declinePlayerMessage",
+        "description": "695f0c3a93627f978df33544 description",
+        "failMessageText": "695f0c3a93627f978df33544 failMessageText",
+        "image": "/files/quest/icon/quest.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": [],
+        "name": "695f0c3a93627f978df33544 name",
+        "note": "695f0c3a93627f978df33544 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "695f0c4593627f978df33547",
+                    "index": 0,
+                    "target": "5a7c2eca46aef81a7ca2145d",
+                    "type": "TraderUnlock",
+                    "unknown": true
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "695f0c4993627f978df33548",
+                    "index": 0,
+                    "target": "579dc571d53a0658a154fbec",
+                    "type": "TraderStanding",
+                    "unknown": true,
+                    "value": 0.5
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "695f0c3a93627f978df33544 startedMessageText",
+        "successMessageText": "695f0c3a93627f978df33544 successMessageText",
+        "traderId": "5c0647fdd443bc2504c2d371",
+        "type": "PickUp"
+    }
+}

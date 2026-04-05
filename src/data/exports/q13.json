@@ -1,0 +1,107 @@
+{
+    "69cee334142467411393bf91": {
+        "QuestName": "Timmy or Stimmy?",
+        "_id": "69cee334142467411393bf91",
+        "acceptPlayerMessage": "69cee334142467411393bf91 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69cee334142467411393bf91 changeQuestMessageText",
+        "completePlayerMessage": "69cee334142467411393bf91 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "FindItem",
+                    "countInRaid": false,
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cee380142467411393bf95",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "544fb3f34bdc2d03748b456a"
+                    ],
+                    "value": 3,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cee396142467411393bf96",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "544fb3f34bdc2d03748b456a"
+                    ],
+                    "value": 3,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cee374142467411393bf94",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69cd7b7345b0c8b5f47878ae",
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69cee334142467411393bf91 declinePlayerMessage",
+        "description": "69cee334142467411393bf91 description",
+        "failMessageText": "69cee334142467411393bf91 failMessageText",
+        "image": "/files/quest/icon/5969f96786f7741dde183a4f.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69cee334142467411393bf91 name",
+        "note": "69cee334142467411393bf91 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cee367142467411393bf92",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 4800
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cee36b142467411393bf93",
+                    "index": 0,
+                    "target": "69744632183b55cf9702c985",
+                    "type": "TraderUnlock",
+                    "unknown": false
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69cee334142467411393bf91 startedMessageText",
+        "successMessageText": "69cee334142467411393bf91 successMessageText",
+        "traderId": "69744632183b55cf9702c982",
+        "type": "PickUp"
+    }
+}

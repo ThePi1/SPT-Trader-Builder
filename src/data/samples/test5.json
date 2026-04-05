@@ -1,0 +1,60 @@
+{
+    "695efad1ffce66c349a5e72b": {
+        "QuestName": "",
+        "_id": "695efad1ffce66c349a5e72b",
+        "acceptPlayerMessage": "695efad1ffce66c349a5e72b acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "695efad1ffce66c349a5e72b changeQuestMessageText",
+        "completePlayerMessage": "695efad1ffce66c349a5e72b completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "FindItem",
+                    "countInRaid": false,
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "695efaf9ffce66c349a5e72c",
+                    "index": 0,
+                    "inEncoded": false,
+                    "maxDurability": "2",
+                    "minDurability": "3",
+                    "onlyFoundInRaid": false,
+                    "parentId": "1",
+                    "target": [
+                        "1235"
+                    ],
+                    "value": 4,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "695efad1ffce66c349a5e72b declinePlayerMessage",
+        "description": "695efad1ffce66c349a5e72b description",
+        "failMessageText": "695efad1ffce66c349a5e72b failMessageText",
+        "image": "/files/quest/icon/quest.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": [],
+        "name": "695efad1ffce66c349a5e72b name",
+        "note": "695efad1ffce66c349a5e72b note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": []
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "695efad1ffce66c349a5e72b startedMessageText",
+        "successMessageText": "695efad1ffce66c349a5e72b successMessageText",
+        "traderId": "54cb50c76803fa8b248b4571",
+        "type": "PickUp"
+    }
+}

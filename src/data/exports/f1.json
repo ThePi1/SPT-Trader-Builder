@@ -1,0 +1,132 @@
+{
+    "69cf0b9dd7d2715797a83dac": {
+        "QuestName": "Return to the City",
+        "_id": "69cf0b9dd7d2715797a83dac",
+        "acceptPlayerMessage": "69cf0b9dd7d2715797a83dac acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69cf0b9dd7d2715797a83dac changeQuestMessageText",
+        "completePlayerMessage": "69cf0b9dd7d2715797a83dac completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "completeInSeconds": 0,
+                    "conditionType": "CounterCreator",
+                    "counter": {
+                        "conditions": [
+                            {
+                                "conditionType": "Location",
+                                "dynamicLocale": false,
+                                "id": "69cf0c07d7d2715797a83db0",
+                                "target": [
+                                    "TarkovStreets"
+                                ]
+                            },
+                            {
+                                "bodyPart": [],
+                                "compareMethod": ">=",
+                                "conditionType": "Kills",
+                                "daytime": {
+                                    "from": 0,
+                                    "to": 0
+                                },
+                                "distance": {
+                                    "compareMethod": ">=",
+                                    "distance": 0
+                                },
+                                "dynamicLocale": false,
+                                "enemyEquipmentExclusive": [],
+                                "enemyEquipmentInclusive": [],
+                                "enemyHealthEffects": [],
+                                "id": "69cf0c15d7d2715797a83db1",
+                                "resetOnSessionEnd": false,
+                                "savageRole": [],
+                                "target": [
+                                    "AnyPmc"
+                                ],
+                                "value": 1,
+                                "weapon": [],
+                                "weaponCaliber": [],
+                                "weaponModsExclusive": [],
+                                "weaponModsInclusive": []
+                            }
+                        ],
+                        "id": "69cf0c1ad7d2715797a83db2"
+                    },
+                    "doNotResetIfCounterCompleted": false,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cf0bfad7d2715797a83daf",
+                    "index": 0,
+                    "isNecessary": false,
+                    "isResetOnConditionFailed": false,
+                    "oneSessionOnly": false,
+                    "parentId": "",
+                    "type": "Elimination",
+                    "value": 4,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69cf0c1cd7d2715797a83db3",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69cd7bf545b0c8b5f47878b3",
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69cf0b9dd7d2715797a83dac declinePlayerMessage",
+        "description": "69cf0b9dd7d2715797a83dac description",
+        "failMessageText": "69cf0b9dd7d2715797a83dac failMessageText",
+        "image": "/files/quest/icon/63aaec53e842787ad21356a3.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69cf0b9dd7d2715797a83dac name",
+        "note": "69cf0b9dd7d2715797a83dac note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cf0ba4d7d2715797a83dad",
+                    "index": 0,
+                    "target": "579dc571d53a0658a154fbec",
+                    "type": "TraderStanding",
+                    "unknown": false,
+                    "value": 0.1
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69cf0bf4d7d2715797a83dae",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 3200
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69cf0b9dd7d2715797a83dac startedMessageText",
+        "successMessageText": "69cf0b9dd7d2715797a83dac successMessageText",
+        "traderId": "579dc571d53a0658a154fbec",
+        "type": "Elimination"
+    }
+}

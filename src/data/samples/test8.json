@@ -1,0 +1,55 @@
+{
+    "696eae389144e92133c62817": {
+        "QuestName": "123",
+        "_id": "696eae389144e92133c62817",
+        "acceptPlayerMessage": "696eae389144e92133c62817 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "696eae389144e92133c62817 changeQuestMessageText",
+        "completePlayerMessage": "696eae389144e92133c62817 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "Skill",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "696eae3a9144e92133c62818",
+                    "index": 0,
+                    "parentId": "111",
+                    "target": "HideoutManagement",
+                    "value": "213",
+                    "visibilityConditions": [
+                        "1233"
+                    ]
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "696eae389144e92133c62817 declinePlayerMessage",
+        "description": "696eae389144e92133c62817 description",
+        "failMessageText": "696eae389144e92133c62817 failMessageText",
+        "image": "/files/quest/icon/quest.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": [],
+        "name": "696eae389144e92133c62817 name",
+        "note": "696eae389144e92133c62817 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": []
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "696eae389144e92133c62817 startedMessageText",
+        "successMessageText": "696eae389144e92133c62817 successMessageText",
+        "traderId": "54cb50c76803fa8b248b4571",
+        "type": "PickUp"
+    }
+}

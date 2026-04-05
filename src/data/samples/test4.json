@@ -1,0 +1,57 @@
+{
+    "6951a518b9c3cbc02249e88c": {
+        "QuestName": "asd",
+        "_id": "6951a518b9c3cbc02249e88c",
+        "acceptPlayerMessage": "6951a518b9c3cbc02249e88c acceptPlayerMessage",
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "6951a518b9c3cbc02249e88c changeQuestMessageText",
+        "completePlayerMessage": "6951a518b9c3cbc02249e88c completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "6951a518b9c3cbc02249e88c declinePlayerMessage",
+        "description": "6951a518b9c3cbc02249e88c description",
+        "failMessageText": "6951a518b9c3cbc02249e88c failMessageText",
+        "image": "/files/quest/icon/quest.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "6951a518b9c3cbc02249e88c name",
+        "note": "6951a518b9c3cbc02249e88c note",
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "findInRaid": true,
+                    "id": "6951a51ab9c3cbc02249e88d",
+                    "index": 0,
+                    "items": [
+                        {
+                            "_id": "dddddd",
+                            "_tpl": "222222222",
+                            "upd": {
+                                "StackObjectsCount": "1",
+                                "SpawnedInSession": true
+                            }
+                        }
+                    ],
+                    "target": "",
+                    "type": "Item",
+                    "unknown": true,
+                    "value": "0"
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "6951a518b9c3cbc02249e88c startedMessageText",
+        "successMessageText": "6951a518b9c3cbc02249e88c successMessageText",
+        "traderId": "54cb50c76803fa8b248b4571",
+        "type": "PickUp"
+    }
+}

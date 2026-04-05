@@ -296,6 +296,9 @@
     </property>
     <addaction name="actionAdd_queued_to_open_list"/>
     <addaction name="actionAnalyze_CC_subtypes"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_items_json_for_below"/>
+    <addaction name="actionGet_all_children_of_parent_ID"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -379,6 +382,16 @@
   <action name="actionCreate_locale_from_Quest_JSON">
    <property name="text">
     <string>Create locale from Quest JSON</string>
+   </property>
+  </action>
+  <action name="actionLoad_items_json_for_below">
+   <property name="text">
+    <string>Load items.json for below</string>
+   </property>
+  </action>
+  <action name="actionGet_all_children_of_parent_ID">
+   <property name="text">
+    <string>Get all children of parent ID</string>
    </property>
   </action>
  </widget>
