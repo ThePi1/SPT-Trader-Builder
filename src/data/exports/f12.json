@@ -1,0 +1,124 @@
+{
+    "69d2ba09925d6e3592c00dd2": {
+        "QuestName": "White Whale",
+        "_id": "69d2ba09925d6e3592c00dd2",
+        "acceptPlayerMessage": "69d2ba09925d6e3592c00dd2 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69d2ba09925d6e3592c00dd2 changeQuestMessageText",
+        "completePlayerMessage": "69d2ba09925d6e3592c00dd2 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "completeInSeconds": 0,
+                    "conditionType": "CounterCreator",
+                    "counter": {
+                        "conditions": [
+                            {
+                                "bodyPart": [],
+                                "compareMethod": ">=",
+                                "conditionType": "Kills",
+                                "daytime": {
+                                    "from": 0,
+                                    "to": 0
+                                },
+                                "distance": {
+                                    "compareMethod": ">=",
+                                    "distance": 0
+                                },
+                                "dynamicLocale": false,
+                                "enemyEquipmentExclusive": [],
+                                "enemyEquipmentInclusive": [],
+                                "enemyHealthEffects": [],
+                                "id": "69d2bb14925d6e3592c00dd7",
+                                "resetOnSessionEnd": false,
+                                "savageRole": [
+                                    "bossKolontay"
+                                ],
+                                "target": [],
+                                "value": 1,
+                                "weapon": [],
+                                "weaponCaliber": [],
+                                "weaponModsExclusive": [],
+                                "weaponModsInclusive": []
+                            }
+                        ],
+                        "id": "69d2bb15925d6e3592c00dd8"
+                    },
+                    "doNotResetIfCounterCompleted": false,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69d2ba94925d6e3592c00dd6",
+                    "index": 0,
+                    "isNecessary": false,
+                    "isResetOnConditionFailed": false,
+                    "oneSessionOnly": false,
+                    "parentId": "",
+                    "type": "Elimination",
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69d2ba2a925d6e3592c00dd5",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69d2b9049e4d407d16211b15",
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69d2ba09925d6e3592c00dd2 declinePlayerMessage",
+        "description": "69d2ba09925d6e3592c00dd2 description",
+        "failMessageText": "69d2ba09925d6e3592c00dd2 failMessageText",
+        "image": "/files/quest/icon/64a5b5190724bc4b981f5105.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69d2ba09925d6e3592c00dd2 name",
+        "note": "69d2ba09925d6e3592c00dd2 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69d2ba12925d6e3592c00dd3",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 12000
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69d2ba24925d6e3592c00dd4",
+                    "index": 0,
+                    "target": "579dc571d53a0658a154fbec",
+                    "type": "TraderStanding",
+                    "unknown": false,
+                    "value": 0.65
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69d2ba09925d6e3592c00dd2 startedMessageText",
+        "successMessageText": "69d2ba09925d6e3592c00dd2 successMessageText",
+        "traderId": "579dc571d53a0658a154fbec",
+        "type": "Elimination"
+    }
+}

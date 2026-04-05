@@ -1,0 +1,115 @@
+{
+    "69d2ae36dcdcf1b2b24fefaf": {
+        "QuestName": "Arrest Order",
+        "_id": "69d2ae36dcdcf1b2b24fefaf",
+        "acceptPlayerMessage": "69d2ae36dcdcf1b2b24fefaf acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69d2ae36dcdcf1b2b24fefaf changeQuestMessageText",
+        "completePlayerMessage": "69d2ae36dcdcf1b2b24fefaf completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "LeaveItemAtLocation",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69d2ae5fdcdcf1b2b24fefb3",
+                    "index": 0,
+                    "inEncoded": false,
+                    "maxDurability": "",
+                    "minDurability": "",
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "plantTime": 8,
+                    "target": [
+                        "5696686a4bdc2da3298b456a"
+                    ],
+                    "value": 100,
+                    "visibilityConditions": [],
+                    "zoneId": "F4"
+                },
+                {
+                    "conditionType": "LeaveItemAtLocation",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69d2af86dcdcf1b2b24fefb4",
+                    "index": 0,
+                    "inEncoded": false,
+                    "maxDurability": "",
+                    "minDurability": "",
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "plantTime": 8,
+                    "target": [
+                        "5449016a4bdc2d6f028b456f"
+                    ],
+                    "value": 50000,
+                    "visibilityConditions": [],
+                    "zoneId": ""
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69d2ae52dcdcf1b2b24fefb2",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69d1ebe31e775b89a6e4b034",
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69d2ae36dcdcf1b2b24fefaf declinePlayerMessage",
+        "description": "69d2ae36dcdcf1b2b24fefaf description",
+        "failMessageText": "69d2ae36dcdcf1b2b24fefaf failMessageText",
+        "image": "/files/quest/icon/66562bc0dadbac1a541f6391.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69d2ae36dcdcf1b2b24fefaf name",
+        "note": "69d2ae36dcdcf1b2b24fefaf note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69d2ae46dcdcf1b2b24fefb0",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 2500
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69d2ae4bdcdcf1b2b24fefb1",
+                    "index": 0,
+                    "target": "579dc571d53a0658a154fbec",
+                    "type": "TraderStanding",
+                    "unknown": false,
+                    "value": 0.2
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69d2ae36dcdcf1b2b24fefaf startedMessageText",
+        "successMessageText": "69d2ae36dcdcf1b2b24fefaf successMessageText",
+        "traderId": "579dc571d53a0658a154fbec",
+        "type": "Completion"
+    }
+}

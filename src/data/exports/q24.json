@@ -1,0 +1,83 @@
+{
+    "69d1f4f476968163f17e5dce": {
+        "QuestName": "My Prayers Are Answered",
+        "_id": "69d1f4f476968163f17e5dce",
+        "acceptPlayerMessage": "69d1f4f476968163f17e5dce acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69d1f4f476968163f17e5dce changeQuestMessageText",
+        "completePlayerMessage": "69d1f4f476968163f17e5dce completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "FindItem",
+                    "countInRaid": false,
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69d1f51376968163f17e5dd1",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "target": [
+                        "5938878586f7741b797c562f"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69d1f53d76968163f17e5dd2",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "target": [
+                        "5938878586f7741b797c562f"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69d1f4f476968163f17e5dce declinePlayerMessage",
+        "description": "69d1f4f476968163f17e5dce description",
+        "failMessageText": "69d1f4f476968163f17e5dce failMessageText",
+        "image": "/files/quest/mod_icon/welcome.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69d1f4f476968163f17e5dce name",
+        "note": "69d1f4f476968163f17e5dce note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69d1f50c76968163f17e5dd0",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 15000
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69d1f4f476968163f17e5dce startedMessageText",
+        "successMessageText": "69d1f4f476968163f17e5dce successMessageText",
+        "traderId": "69744632183b55cf9702c981",
+        "type": "Exploration"
+    }
+}
