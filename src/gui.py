@@ -1333,7 +1333,7 @@ class Gui_AssortDlg(QMainWindow):
     if row < 0 : 
       return
     
-    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
     self.itemlist = [ #goes through list and keeps all items that do not have specific mongoID
       item for item in self.itemlist
       if item.get("_id") != mongosaved
@@ -1485,11 +1485,11 @@ class Gui_AssortDlg(QMainWindow):
     table.insertRow(row)
 
     if not self.ui.ab_weappart_check.isChecked(): #if root item give it new userrole
-      item_Id.setData(Qt.ItemDataRole.UserRole, str(ObjectId())) #This is what I need to fix
+      item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved) #This is what I need to fix
     else:
       item_Id.setData(Qt.ItemDataRole.UserRole, self.itemClicked) #if its not give it clicked user role
 
-    item_Id.setData(Qt.ItemDataRole.EditRole, str(ObjectId()))
+    item_Id.setData(Qt.ItemDataRole.EditRole, mongosaved)
 
     tablequantity = "∞" if self.ui.ab_unlimitedcount.isChecked() else quantity
     
