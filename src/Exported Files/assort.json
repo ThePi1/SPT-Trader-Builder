@@ -1,5 +1,52 @@
 {
-  "items": [],
-  "barter_scheme": {},
-  "loyal_level_items": {}
+  "items": [
+    {
+      "_id": "69dd7a34b8e7df2610285a14",
+      "_tpl": "125454",
+      "parentId": "hideout",
+      "slotId": "hideout",
+      "upd": {
+        "UnlimitedCount": false,
+        "StackObjectsCount": 0
+      }
+    },
+    {
+      "_id": "69dd7a41b8e7df2610285a17",
+      "_tpl": "1245324",
+      "parentId": "69dd7a34b8e7df2610285a16",
+      "slotId": "mod_pistol_grip"
+    },
+    {
+      "_id": "69dd7a4ab8e7df2610285a19",
+      "_tpl": "124123412",
+      "parentId": "hideout",
+      "slotId": "hideout",
+      "upd": {
+        "UnlimitedCount": false,
+        "StackObjectsCount": 0
+      }
+    }
+  ],
+  "barter_scheme": {
+    "69dd7a34b8e7df2610285a14": [
+      [
+        {
+          "count": 0,
+          "_tpl": "5449016a4bdc2d6f028b456f"
+        }
+      ]
+    ],
+    "69dd7a4ab8e7df2610285a19": [
+      [
+        {
+          "count": 0,
+          "_tpl": "5449016a4bdc2d6f028b456f"
+        }
+      ]
+    ]
+  },
+  "loyal_level_items": {
+    "69dd7a34b8e7df2610285a14": 1,
+    "69dd7a4ab8e7df2610285a19": 1
+  }
 }

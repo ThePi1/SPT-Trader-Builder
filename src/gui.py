@@ -1204,9 +1204,10 @@ class Gui_AssortDlg(QMainWindow):
     if row < 0 : 
       return
     
-    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    self.itemClicked = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    self.parentid = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
     print("* " + str(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)))
-    self.ui.ab_weapmongo_edit.setText(mongosaved)
+    self.ui.ab_weapmongo_edit.setText(self.parentid)
 
   def filterTable(self,query:str):
     table = self.ui.ab_table
@@ -1384,8 +1385,8 @@ class Gui_AssortDlg(QMainWindow):
     partID = self.ui.ab_partid_edit.text().strip()
 
     #checks whether its a weapon part. if it is creates a name for table that mixes the original weapon its built off of and the slot name
-    if self.ui.ab_weappart_check.isChecked() and self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) == self.ui.ab_weapmongo_edit.text():
-      itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
+    #if self.ui.ab_weappart_check.isChecked() and self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) == self.ui.ab_weapmongo_edit.text():
+     # itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
 
     cashtype = "Undefined" #set cashtype then check type and apply
     if self.ui.ab_rouble_radiobutton.isChecked() :
@@ -1483,8 +1484,13 @@ class Gui_AssortDlg(QMainWindow):
     row = table.rowCount()
     table.insertRow(row)
 
-    if not self.ui.ab_weappart_check.isChecked():
-      item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved)
+    if not self.ui.ab_weappart_check.isChecked(): #if root item give it new userrole
+      item_Id.setData(Qt.ItemDataRole.UserRole, str(ObjectId())) #This is what I need to fix
+    else:
+      item_Id.setData(Qt.ItemDataRole.UserRole, self.itemClicked) #if its not give it clicked user role
+
+    item_Id.setData(Qt.ItemDataRole.EditRole, str(ObjectId()))
+
     tablequantity = "∞" if self.ui.ab_unlimitedcount.isChecked() else quantity
     
     table.setItem(row,0,item_Id)
