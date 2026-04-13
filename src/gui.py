@@ -1345,13 +1345,16 @@ class Gui_AssortDlg(QMainWindow):
       self.loyaltylist.pop(mongosaved)
       self.ui.ab_table.removeRow(row)
 
+    rowList = []
       #remove row based on userrole as weapon part user role is the parents mongoID
     for row in range(self.ui.ab_table.model().rowCount()):
       if self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole) == mongosaved:
-        self.ui.ab_table.removeRow(row)
-      #print(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole))
+        rowList.append(row)
+      print(rowList)
         
-
+    for row in rowList:
+      self.ui.ab_table.removeRow(row)
+    
 
   def add_item(self): #The basic assort add function
 
@@ -1383,8 +1386,6 @@ class Gui_AssortDlg(QMainWindow):
     #checks whether its a weapon part. if it is creates a name for table that mixes the original weapon its built off of and the slot name
     if self.ui.ab_weappart_check.isChecked() and self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) == self.ui.ab_weapmongo_edit.text():
       itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
-      item_Id.setData(Qt.ItemDataRole.UserRole, self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole)
-
 
     cashtype = "Undefined" #set cashtype then check type and apply
     if self.ui.ab_rouble_radiobutton.isChecked() :
