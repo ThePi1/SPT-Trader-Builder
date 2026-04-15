@@ -1076,13 +1076,14 @@ class Gui_AssortDlg(QMainWindow):
     self.questLockedChecked(self.ui.ab_quest_check.isChecked())
     self.brestrictionChecked(self.ui.ab_buyrestriction_checkbox.isChecked())
     table = self.ui.ab_table
-    table.setColumnCount(6)
-    table.setHorizontalHeaderLabels(["ItemTPL","Quantity","Cost","Loyalty Level","Quest Locked?","Currency"])
+    table.setColumnCount(7)
+    table.setHorizontalHeaderLabels(["ItemTPL","Parent","Quantity","Cost","LL","Quest Lock?","Currency"])
     table.setAlternatingRowColors(True)
     table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
     header = self.ui.ab_table.horizontalHeader()
     header.setSectionResizeMode(0,QHeaderView.ResizeMode.ResizeToContents)
-    for col in range (1,6):
+    header.setSectionResizeMode(1,QHeaderView.ResizeMode.ResizeToContents)
+    for col in range (2,7):
       header.setSectionResizeMode(col,QHeaderView.ResizeMode.Stretch)
     self.ui.ab_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
@@ -1204,8 +1205,8 @@ class Gui_AssortDlg(QMainWindow):
     if row < 0 : 
       return
     
-    self.itemClicked = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
-    self.parentid = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
+    
+    self.parentid = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
     print("* " + str(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)))
     self.ui.ab_weapmongo_edit.setText(self.parentid)
 
@@ -1333,12 +1334,12 @@ class Gui_AssortDlg(QMainWindow):
     if row < 0 : 
       return
     
-    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
+    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
     self.itemlist = [ #goes through list and keeps all items that do not have specific mongoID
       item for item in self.itemlist
       if item.get("_id") != mongosaved
-      if item.get("parentId") != mongosaved
     ]
+
     if mongosaved not in self.barterlist: #checks if weapon part and skips barterlist and loyaltylist
       self.ui.ab_table.removeRow(row)
     else: #If not part removes from remaining Dicts and table.
@@ -1484,21 +1485,23 @@ class Gui_AssortDlg(QMainWindow):
     row = table.rowCount()
     table.insertRow(row)
 
-    if not self.ui.ab_weappart_check.isChecked(): #if root item give it new userrole
-      item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved) #This is what I need to fix
-    else:
-      item_Id.setData(Qt.ItemDataRole.UserRole, self.itemClicked) #if its not give it clicked user role
-
-    item_Id.setData(Qt.ItemDataRole.EditRole, mongosaved)
+     #if root item give it new userrole
+    item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved) #This is what I need to fix
+    item_Id.setData(Qt.ItemDataRole.DisplayRole,itemID)
 
     tablequantity = "∞" if self.ui.ab_unlimitedcount.isChecked() else quantity
-    
+     
+
     table.setItem(row,0,item_Id)
-    table.setItem(row,1,QTableWidgetItem(str(tablequantity)))
-    table.setItem(row,2,QTableWidgetItem(str(cost)))
-    table.setItem(row,3,QTableWidgetItem(loyaltylevel))
-    table.setItem(row,4,QTableWidgetItem(questLockedChecked))
-    table.setItem(row,5,QTableWidgetItem(cashtype))
+    if self.ui.ab_weappart_check.isChecked():
+      table.setItem(row,1,QTableWidgetItem(str(parentID)))
+    else:
+      table.setItem(row,1,QTableWidgetItem("hideout"))
+    table.setItem(row,2,QTableWidgetItem(str(tablequantity)))
+    table.setItem(row,3,QTableWidgetItem(str(cost)))
+    table.setItem(row,4,QTableWidgetItem(loyaltylevel))
+    table.setItem(row,5,QTableWidgetItem(questLockedChecked))
+    table.setItem(row,6,QTableWidgetItem(cashtype))
 
     self.ui.ab_weapmongo_edit.setStyleSheet("")
 
