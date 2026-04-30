@@ -1204,9 +1204,10 @@ class Gui_AssortDlg(QMainWindow):
     if row < 0 : 
       return
     
-    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    self.itemClicked = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    self.parentid = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
     print("* " + str(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)))
-    self.ui.ab_weapmongo_edit.setText(mongosaved)
+    self.ui.ab_weapmongo_edit.setText(self.parentid)
 
   def filterTable(self,query:str):
     table = self.ui.ab_table
@@ -1327,31 +1328,38 @@ class Gui_AssortDlg(QMainWindow):
       self.questLockedChecked(self.ui.ab_quest_check.isChecked())
       self.itemBarterChecked(self.ui.ab_itembarter_check.isChecked())
 
+  def remove_children(self, mongosaved):
+    children = [item for item in self.itemlist if item.get("parentId") == mongosaved]
+    self.itemlist = [item for item in self.itemlist if item.get("_id") != mongosaved]
+    for child in children:
+        self.remove_children(child.get("_id"))
+
+  def removeTableChildren(self, parent_id):
+    rows_to_remove = []
+    for row in range(self.ui.ab_table.rowCount()):
+        item = self.ui.ab_table.item(row, 0)
+        if item and item.data(Qt.ItemDataRole.UserRole) == parent_id:
+            rows_to_remove.append(row)
+
+    for row in reversed(rows_to_remove):
+        child_id = self.ui.ab_table.item(row, 0).data(Qt.ItemDataRole.EditRole)
+        self.removeTableChildren(child_id)  # recurse before removing
+        self.ui.ab_table.removeRow(row)
+
   def remove_Item(self): # remove selected item from lists/dicts and remove from table.
     row = self.ui.ab_table.currentRow()
     if row < 0 : 
       return
     
-    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
-    self.itemlist = [ #goes through list and keeps all items that do not have specific mongoID
-      item for item in self.itemlist
-      if item.get("_id") != mongosaved
-      if item.get("parentId") != mongosaved
-    ]
-    if mongosaved not in self.barterlist: #checks if weapon part and skips barterlist and loyaltylist
-      self.ui.ab_table.removeRow(row)
-    else: #If not part removes from remaining Dicts and table.
+    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
+    self.remove_children(mongosaved)
+    if mongosaved in self.barterlist: #checks if weapon part and skips barterlist and loyaltylist
       self.barterlist.pop(mongosaved)
       self.loyaltylist.pop(mongosaved)
-      self.ui.ab_table.removeRow(row)
 
-      #remove row based on userrole as weapon part user role is the parents mongoID
-    for row in range(self.ui.ab_table.model().rowCount()):
-      if self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole) == mongosaved:
-        self.ui.ab_table.removeRow(row)
-      #print(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole))
-        
-
+    self.removeTableChildren(mongosaved)
+    self.ui.ab_table.removeRow(row)
+    
 
   def add_item(self): #The basic assort add function
 
@@ -1381,10 +1389,8 @@ class Gui_AssortDlg(QMainWindow):
     partID = self.ui.ab_partid_edit.text().strip()
 
     #checks whether its a weapon part. if it is creates a name for table that mixes the original weapon its built off of and the slot name
-    if self.ui.ab_weappart_check.isChecked() and self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) == self.ui.ab_weapmongo_edit.text():
-      itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
-      item_Id.setData(Qt.ItemDataRole.UserRole, self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole)
-
+    #if self.ui.ab_weappart_check.isChecked() and self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).data(Qt.ItemDataRole.UserRole) == self.ui.ab_weapmongo_edit.text():
+     # itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
 
     cashtype = "Undefined" #set cashtype then check type and apply
     if self.ui.ab_rouble_radiobutton.isChecked() :
@@ -1482,8 +1488,13 @@ class Gui_AssortDlg(QMainWindow):
     row = table.rowCount()
     table.insertRow(row)
 
-    if not self.ui.ab_weappart_check.isChecked():
-      item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved)
+    if not self.ui.ab_weappart_check.isChecked(): #if root item give it no Parent
+      item_Id.setData(Qt.ItemDataRole.UserRole, None) 
+    else:
+      item_Id.setData(Qt.ItemDataRole.UserRole, parentID) #if its not give it clicked user role
+
+    item_Id.setData(Qt.ItemDataRole.EditRole, mongosaved)
+
     tablequantity = "∞" if self.ui.ab_unlimitedcount.isChecked() else quantity
     
     table.setItem(row,0,item_Id)
