@@ -1076,14 +1076,13 @@ class Gui_AssortDlg(QMainWindow):
     self.questLockedChecked(self.ui.ab_quest_check.isChecked())
     self.brestrictionChecked(self.ui.ab_buyrestriction_checkbox.isChecked())
     table = self.ui.ab_table
-    table.setColumnCount(7)
-    table.setHorizontalHeaderLabels(["ItemTPL","Parent","Quantity","Cost","LL","Quest Lock?","Currency"])
+    table.setColumnCount(6)
+    table.setHorizontalHeaderLabels(["ItemTPL","Quantity","Cost","Loyalty Level","Quest Locked?","Currency"])
     table.setAlternatingRowColors(True)
     table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
     header = self.ui.ab_table.horizontalHeader()
     header.setSectionResizeMode(0,QHeaderView.ResizeMode.ResizeToContents)
-    header.setSectionResizeMode(1,QHeaderView.ResizeMode.ResizeToContents)
-    for col in range (2,7):
+    for col in range (1,6):
       header.setSectionResizeMode(col,QHeaderView.ResizeMode.Stretch)
     self.ui.ab_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
@@ -1205,8 +1204,8 @@ class Gui_AssortDlg(QMainWindow):
     if row < 0 : 
       return
     
-    
-    self.parentid = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    self.itemClicked = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
+    self.parentid = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
     print("* " + str(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)))
     self.ui.ab_weapmongo_edit.setText(self.parentid)
 
@@ -1329,33 +1328,37 @@ class Gui_AssortDlg(QMainWindow):
       self.questLockedChecked(self.ui.ab_quest_check.isChecked())
       self.itemBarterChecked(self.ui.ab_itembarter_check.isChecked())
 
+  def remove_children(self, mongosaved):
+    children = [item for item in self.itemlist if item.get("parentId") == mongosaved]
+    self.itemlist = [item for item in self.itemlist if item.get("_id") != mongosaved]
+    for child in children:
+        self.remove_children(child.get("_id"))
+
+  def removeTableChildren(self, parent_id):
+    rows_to_remove = []
+    for row in range(self.ui.ab_table.rowCount()):
+        item = self.ui.ab_table.item(row, 0)
+        if item and item.data(Qt.ItemDataRole.UserRole) == parent_id:
+            rows_to_remove.append(row)
+
+    for row in reversed(rows_to_remove):
+        child_id = self.ui.ab_table.item(row, 0).data(Qt.ItemDataRole.EditRole)
+        self.removeTableChildren(child_id)  # recurse before removing
+        self.ui.ab_table.removeRow(row)
+
   def remove_Item(self): # remove selected item from lists/dicts and remove from table.
     row = self.ui.ab_table.currentRow()
     if row < 0 : 
       return
     
-    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
-    self.itemlist = [ #goes through list and keeps all items that do not have specific mongoID
-      item for item in self.itemlist
-      if item.get("_id") != mongosaved
-    ]
-
-    if mongosaved not in self.barterlist: #checks if weapon part and skips barterlist and loyaltylist
-      self.ui.ab_table.removeRow(row)
-    else: #If not part removes from remaining Dicts and table.
+    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
+    self.remove_children(mongosaved)
+    if mongosaved in self.barterlist: #checks if weapon part and skips barterlist and loyaltylist
       self.barterlist.pop(mongosaved)
       self.loyaltylist.pop(mongosaved)
-      self.ui.ab_table.removeRow(row)
 
-    rowList = []
-      #remove row based on userrole as weapon part user role is the parents mongoID
-    for row in range(self.ui.ab_table.model().rowCount()):
-      if self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole) == mongosaved:
-        rowList.append(row)
-      print(rowList)
-        
-    for row in rowList:
-      self.ui.ab_table.removeRow(row)
+    self.removeTableChildren(mongosaved)
+    self.ui.ab_table.removeRow(row)
     
 
   def add_item(self): #The basic assort add function
@@ -1485,23 +1488,21 @@ class Gui_AssortDlg(QMainWindow):
     row = table.rowCount()
     table.insertRow(row)
 
-     #if root item give it new userrole
-    item_Id.setData(Qt.ItemDataRole.UserRole, mongosaved) #This is what I need to fix
-    item_Id.setData(Qt.ItemDataRole.DisplayRole,itemID)
+    if not self.ui.ab_weappart_check.isChecked(): #if root item give it no Parent
+      item_Id.setData(Qt.ItemDataRole.UserRole, None) 
+    else:
+      item_Id.setData(Qt.ItemDataRole.UserRole, parentID) #if its not give it clicked user role
+
+    item_Id.setData(Qt.ItemDataRole.EditRole, mongosaved)
 
     tablequantity = "∞" if self.ui.ab_unlimitedcount.isChecked() else quantity
-     
-
+    
     table.setItem(row,0,item_Id)
-    if self.ui.ab_weappart_check.isChecked():
-      table.setItem(row,1,QTableWidgetItem(str(parentID)))
-    else:
-      table.setItem(row,1,QTableWidgetItem("hideout"))
-    table.setItem(row,2,QTableWidgetItem(str(tablequantity)))
-    table.setItem(row,3,QTableWidgetItem(str(cost)))
-    table.setItem(row,4,QTableWidgetItem(loyaltylevel))
-    table.setItem(row,5,QTableWidgetItem(questLockedChecked))
-    table.setItem(row,6,QTableWidgetItem(cashtype))
+    table.setItem(row,1,QTableWidgetItem(str(tablequantity)))
+    table.setItem(row,2,QTableWidgetItem(str(cost)))
+    table.setItem(row,3,QTableWidgetItem(loyaltylevel))
+    table.setItem(row,4,QTableWidgetItem(questLockedChecked))
+    table.setItem(row,5,QTableWidgetItem(cashtype))
 
     self.ui.ab_weapmongo_edit.setStyleSheet("")
 
