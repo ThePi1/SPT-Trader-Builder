@@ -1,0 +1,98 @@
+{
+    "69f2c9c8baa27486f24e1267": {
+        "QuestName": "My Paradise",
+        "_id": "69f2c9c8baa27486f24e1267",
+        "acceptPlayerMessage": "69f2c9c8baa27486f24e1267 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69f2c9c8baa27486f24e1267 changeQuestMessageText",
+        "completePlayerMessage": "69f2c9c8baa27486f24e1267 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "completeInSeconds": 0,
+                    "conditionType": "CounterCreator",
+                    "counter": {
+                        "conditions": [
+                            {
+                                "conditionType": "HealthBuff",
+                                "dynamicLocale": false,
+                                "id": "69f2cb3bbaa27486f24e126c",
+                                "target": [
+                                    "Buffs_Obdolbos"
+                                ]
+                            }
+                        ],
+                        "id": "69f2cb3cbaa27486f24e126d"
+                    },
+                    "doNotResetIfCounterCompleted": false,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f2cb14baa27486f24e126b",
+                    "index": 0,
+                    "isNecessary": false,
+                    "isResetOnConditionFailed": false,
+                    "oneSessionOnly": false,
+                    "parentId": "",
+                    "type": "Completion",
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69f2c9c8baa27486f24e1267 declinePlayerMessage",
+        "description": "69f2c9c8baa27486f24e1267 description",
+        "failMessageText": "69f2c9c8baa27486f24e1267 failMessageText",
+        "image": "/files/quest/icon/6589937422379436cd78472f.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69f2c9c8baa27486f24e1267 name",
+        "note": "69f2c9c8baa27486f24e1267 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f2c9e2baa27486f24e1268",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 4000
+                },
+                {
+                    "availableInGameEditions": [],
+                    "findInRaid": true,
+                    "id": "69f2ca0dbaa27486f24e1269",
+                    "index": 0,
+                    "items": [
+                        {
+                            "_id": "637b620db7afa97bfc3d7009",
+                            "_tpl": "637b620db7afa97bfc3d7009",
+                            "upd": {
+                                "SpawnedInSession": true
+                            }
+                        }
+                    ],
+                    "target": "637b620db7afa97bfc3d7009",
+                    "type": "Item",
+                    "unknown": false,
+                    "value": 1
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69f2c9c8baa27486f24e1267 startedMessageText",
+        "successMessageText": "69f2c9c8baa27486f24e1267 successMessageText",
+        "traderId": "69744632183b55cf9702c987",
+        "type": "Completion"
+    }
+}

@@ -1,0 +1,102 @@
+{
+    "69f2c4dc5154f1f35e108593": {
+        "QuestName": "Big Brained",
+        "_id": "69f2c4dc5154f1f35e108593",
+        "acceptPlayerMessage": "69f2c4dc5154f1f35e108593 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69f2c4dc5154f1f35e108593 changeQuestMessageText",
+        "completePlayerMessage": "69f2c4dc5154f1f35e108593 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "FindItem",
+                    "countInRaid": false,
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f2c5425154f1f35e108597",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "target": [
+                        "5449016a4bdc2d6f028b456f"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f2c59a5154f1f35e108598",
+                    "index": 0,
+                    "inEncoded": false,
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "target": [
+                        "5449016a4bdc2d6f028b456f"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69f2c4dc5154f1f35e108593 declinePlayerMessage",
+        "description": "69f2c4dc5154f1f35e108593 description",
+        "failMessageText": "69f2c4dc5154f1f35e108593 failMessageText",
+        "image": "/files/quest/icon/5967611386f7741dfe4f46fb.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69f2c4dc5154f1f35e108593 name",
+        "note": "69f2c4dc5154f1f35e108593 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f2c5065154f1f35e108594",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 6500
+                },
+                {
+                    "availableInGameEditions": [],
+                    "findInRaid": false,
+                    "id": "69f2c50a5154f1f35e108595",
+                    "index": 0,
+                    "items": [
+                        {
+                            "_id": "5449016a4bdc2d6f028b456f",
+                            "_tpl": "5449016a4bdc2d6f028b456f",
+                            "upd": {
+                                "StackObjectsCount": "100000"
+                            }
+                        }
+                    ],
+                    "target": "5449016a4bdc2d6f028b456f",
+                    "type": "Item",
+                    "unknown": false,
+                    "value": 100000
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69f2c4dc5154f1f35e108593 startedMessageText",
+        "successMessageText": "69f2c4dc5154f1f35e108593 successMessageText",
+        "traderId": "69744632183b55cf9702c982",
+        "type": "PickUp"
+    }
+}

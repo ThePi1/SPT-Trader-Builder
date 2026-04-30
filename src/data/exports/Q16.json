@@ -1,0 +1,78 @@
+{
+    "69f2c5c43a52d68c927c3264": {
+        "QuestName": "Routed",
+        "_id": "69f2c5c43a52d68c927c3264",
+        "acceptPlayerMessage": "69f2c5c43a52d68c927c3264 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69f2c5c43a52d68c927c3264 changeQuestMessageText",
+        "completePlayerMessage": "69f2c5c43a52d68c927c3264 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "LeaveItemAtLocation",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f2c6033a52d68c927c3267",
+                    "index": 0,
+                    "inEncoded": false,
+                    "maxDurability": "",
+                    "minDurability": "",
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "plantTime": 10,
+                    "target": [
+                        "69b4d88a6b6e47c7c6093cc1"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": [],
+                    "zoneId": "Q16"
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69f2c5c43a52d68c927c3264 declinePlayerMessage",
+        "description": "69f2c5c43a52d68c927c3264 description",
+        "failMessageText": "69f2c5c43a52d68c927c3264 failMessageText",
+        "image": "/files/quest/icon/6882259b4d3fc2e4c00b1d7f.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69f2c5c43a52d68c927c3264 name",
+        "note": "69f2c5c43a52d68c927c3264 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f2c5da3a52d68c927c3265",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 7500
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f2c5e63a52d68c927c3266",
+                    "index": 0,
+                    "target": "69744632183b55cf9702c987",
+                    "type": "TraderUnlock",
+                    "unknown": false
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69f2c5c43a52d68c927c3264 startedMessageText",
+        "successMessageText": "69f2c5c43a52d68c927c3264 successMessageText",
+        "traderId": "69744632183b55cf9702c982",
+        "type": "PickUp"
+    }
+}
