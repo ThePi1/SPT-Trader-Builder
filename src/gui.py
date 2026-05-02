@@ -71,9 +71,9 @@ class Gui_MainWindow(QMainWindow):
     self.traders = self.importJson("data\\traders.json")
     # used for going back from ID to trader name for loading quest to edit
     self.traders_invert = {v:k for k,v in self.traders.items()}
-    self.weapons = self.importJson("data\weapons.json")
-    self.locations = self.importJson("data\locations.json")
-    self.status = self.importJson("data\status.json")
+    self.weapons = self.importJson("data\\weapons.json")
+    self.locations = self.importJson("data\\locations.json")
+    self.status = self.importJson("data\\status.json")
     self.status_invert = {v:k for k,v in self.status.items()}
     self.quests = {}
     #RewardFail RewardStarted RewardSuccess
@@ -101,8 +101,10 @@ class Gui_MainWindow(QMainWindow):
       if not found_safe:
         print(f"Debug: removing {k}:{v}, not a safe field")
         self.table_fields.pop(k)
+  
+  def clear_table_fields(self):
+    self.table_fields = {}
           
-
   def baseWeaponChecked(self,checked): #UI Behavior
     if checked:
       self.ui.wb_parentId_edit.setEnabled(False)
@@ -1036,7 +1038,7 @@ class Gui_QuestDlg(QMainWindow):
         break
       
     self.parent.quests[quest_id] = quest[quest_id]
-    self.parent.safe_clear_table_fields()
+    self.parent.clear_table_fields()
     self.parent.ui.questList.addItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
     self.close()
 
@@ -1696,8 +1698,10 @@ class Gui_TaskDlg(QMainWindow):
         local_targets = self.parent.parent.get_singlecolumn_field_list("KillsTarget")
         local_targetrole = self.parent.parent.get_singlecolumn_field_list("KillsTargetRole")
         local_bodypart = self.parent.parent.get_singlecolumn_field_list("KillsBodyPart")
-        local_incmod = self.parent.parent.get_singlecolumn_field_list("KillsModInc")
-        local_excmod = self.parent.parent.get_singlecolumn_field_list("KillsModExc")
+        pre_local_incmod = self.parent.parent.get_singlecolumn_field_list("KillsModInc")
+        local_incmod = [[item] for item in pre_local_incmod]
+        pre_local_excmod = self.parent.parent.get_singlecolumn_field_list("KillsModExc")
+        local_excmod = [[item] for item in pre_local_excmod]
         local_dist = val_field(self.ui.fld_dist_cck.displayText(), "", 0, int)
         local_timefrom = val_field(self.ui.fld_time_from_cck.displayText(), "", 0, int)
         local_timeto = val_field(self.ui.fld_time_to_cck.displayText(), "", 0, int)
