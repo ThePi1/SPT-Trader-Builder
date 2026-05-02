@@ -1924,17 +1924,16 @@ class Gui_TaskDlg(QMainWindow):
             "id": self.id,
             "index": 0,
             "inEncoded": False,
+            "maxDurability": val_field(self.ui.fld_maxdur_it.displayText(), "", 100, int),
+            "minDurability": val_field(self.ui.fld_mindur_it.displayText(), "", 0, int),
             "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
             "parentId": self.ui.fld_parentid_it.displayText(),
             "target": local_target,
             "value": local_value,
             "visibilityConditions": local_vis_cond
           }
-          if self.ui.fld_maxdur_it.displayText() != "":
-            cond["maxDurability"] = val_field(self.ui.fld_maxdur_it.displayText(), "", 0, int)
 
-          if self.ui.fld_maxdur_it.displayText() != "":
-            cond["minDurability"] = val_field(self.ui.fld_mindur_it.displayText(), "", 0, int)
+
 
 
         if sub_cond_type == "HandoverItem":
@@ -1950,17 +1949,14 @@ class Gui_TaskDlg(QMainWindow):
             "id": self.id,
             "index": 0,
             "inEncoded": False,
+            "minDurability": val_field(self.ui.fld_mindur_it.displayText(), "", 0, int),
+            "maxDurability": val_field(self.ui.fld_maxdur_it.displayText(), "", 100, int),
             "onlyFoundInRaid": is_true(self.ui.box_only_fir_it.currentText()),
             "parentId": self.ui.fld_parentid_it.displayText(),
             "target": local_target,
             "value": local_value,
             "visibilityConditions": local_vis_cond
           }
-          if self.ui.fld_maxdur_it.displayText() != "":
-            cond["maxDurability"] = val_field(self.ui.fld_maxdur_it.displayText(), "", 0, int)
-
-          if self.ui.fld_maxdur_it.displayText() != "":
-            cond["minDurability"] = val_field(self.ui.fld_mindur_it.displayText(), "", 0, int)
 
       case "Skill":
         local_vis_cond = self.parent.parent.get_singlecolumn_field_list("VisibilityCond")
@@ -1992,8 +1988,8 @@ class Gui_TaskDlg(QMainWindow):
           "id": self.id,
           "index": 0,
           "inEncoded": False,
-          "maxDurability": self.ui.fld_maxdur_li.displayText(),
-          "minDurability": self.ui.fld_mindur_li.displayText(),
+          "minDurability": val_field(self.ui.fld_mindur_li.displayText(), "", 0, int),
+          "maxDurability": val_field(self.ui.fld_mindur_li.displayText(), "", 100, int),
           "onlyFoundInRaid": is_true(self.ui.box_fir_li.currentText()),
           "parentId": self.ui.fld_parentid_li.displayText(),
           "plantTime": local_ptime,
