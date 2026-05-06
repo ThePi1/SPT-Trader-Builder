@@ -372,6 +372,8 @@ class Gui_MainWindow(QMainWindow):
         print(f"{quests_import}")
         for quest_id,quest in quests_import.items():
           print(f"Found quest: {quest['QuestName']} ({quest_id})")
+          if quest['QuestName'] in ["Collector"]:
+            continue # we want to manually skip these
           # do top-level quest fields
           for s in q_locstr:
             if s in quest:
@@ -1554,7 +1556,7 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_target_sk.addItems(ctr.default_skills)
     self.ui.box_fir_li.addItems(ctr.default_ft)
     self.ui.box_compare_tl.addItems(ctr.default_compare)
-    self.ui.box_target_tl.addItems(ctr.tb_traderloyalt_target_box)
+    self.ui.box_target_tl.addItems(self.parent.parent.traders.keys())
     self.ui.box_compare_lv.addItems(ctr.default_compare)
     self.ui.box_status_qs.addItems(ctr.tb_queststatus)
     self.ui.box_comparemethod_ts.addItems(ctr.default_compare)
@@ -1565,7 +1567,7 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_ff_li.addItems(ctr.tb_finishfail)
     self.ui.box_ff_pb.addItems(ctr.tb_finishfail)
     self.ui.box_ff_tl.addItems(ctr.tb_finishfail)
-    self.ui.box_trader_ts.addItems(ctr.tb_traderloyalt_target_box)
+    self.ui.box_trader_ts.addItems(self.parent.parent.traders.keys())
     self.ui.box_distcomp_sh.addItems(ctr.default_compare)
     self.ui.box_target_sh.addItems(ctr.tb_elim_box_target)
     self.ui.box_shbp.addItems(ctr.tb_elim_box_bodypart)
@@ -1608,8 +1610,8 @@ class Gui_TaskDlg(QMainWindow):
     # Kills table add/remove buttons
     self.ui.pb_addwep_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsWep", self.ui.tb_wep, self.ui.box_weapons_cck.currentText(), {0: self.ui.box_weapons_cck.currentText()}, self.ui.box_weapons_cck.currentText()))
     self.ui.pb_removewep_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsWep", table=self.ui.tb_wep))
-    self.ui.pb_addtar_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsTarget", self.ui.tb_targets, self.ui.box_targets_cck.currentText(), {0: self.ui.box_targets_cck.currentText()}, self.ui.box_targets_cck.currentText()))
-    self.ui.pb_removetar_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsTarget", table=self.ui.tb_targets))
+    # self.ui.pb_addtar_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsTarget", self.ui.tb_targets, self.ui.box_targets_cck.currentText(), {0: self.ui.box_targets_cck.currentText()}, self.ui.box_targets_cck.currentText()))
+    # self.ui.pb_removetar_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsTarget", table=self.ui.tb_targets))
     self.ui.pb_addtr_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsTargetRole", self.ui.tb_targetrole, self.ui.box_targetrole_cck.currentText(), {0: self.ui.box_targetrole_cck.currentText()}, self.ui.box_targetrole_cck.currentText()))
     self.ui.pb_removetr_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsTargetRole", table=self.ui.tb_targetrole))
     self.ui.pb_addbp_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsBodyPart", self.ui.tb_bodypart, self.ui.box_bodypart_cck.currentText(), {0: self.ui.box_bodypart_cck.currentText()}, self.ui.box_bodypart_cck.currentText()))
@@ -1695,7 +1697,11 @@ class Gui_TaskDlg(QMainWindow):
         local_weapons_id = []
         for wep in local_weapons:
           local_weapons_id.append(self.parent.parent.weapons[wep])
-        local_targets = self.parent.parent.get_singlecolumn_field_list("KillsTarget")
+        # local_targets = self.parent.parent.get_singlecolumn_field_list("KillsTarget")
+        if self.ui.chk_cck_usetarget.isChecked():
+          local_targets = self.ui.box_targets_cck.currentText()
+        else:
+          local_targets = ""
         local_targetrole = self.parent.parent.get_singlecolumn_field_list("KillsTargetRole")
         local_bodypart = self.parent.parent.get_singlecolumn_field_list("KillsBodyPart")
         pre_local_incmod = self.parent.parent.get_singlecolumn_field_list("KillsModInc")

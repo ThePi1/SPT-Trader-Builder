@@ -1,42 +1,58 @@
 {
-    "696eae389144e92133c62817": {
-        "QuestName": "123",
-        "_id": "696eae389144e92133c62817",
-        "acceptPlayerMessage": "696eae389144e92133c62817 acceptPlayerMessage",
+    "69f7f680caef6e87bafd8768": {
+        "QuestName": "123 ",
+        "_id": "69f7f680caef6e87bafd8768",
+        "acceptPlayerMessage": "69f7f680caef6e87bafd8768 acceptPlayerMessage",
         "acceptanceAndFinishingSource": "eft",
         "arenaLocations": [],
         "canShowNotificationsInGame": true,
-        "changeQuestMessageText": "696eae389144e92133c62817 changeQuestMessageText",
-        "completePlayerMessage": "696eae389144e92133c62817 completePlayerMessage",
+        "changeQuestMessageText": "69f7f680caef6e87bafd8768 changeQuestMessageText",
+        "completePlayerMessage": "69f7f680caef6e87bafd8768 completePlayerMessage",
         "conditions": {
-            "AvailableForFinish": [
+            "AvailableForFinish": [],
+            "AvailableForStart": [
                 {
-                    "compareMethod": ">=",
-                    "conditionType": "Skill",
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
                     "dynamicLocale": false,
                     "globalQuestCounterId": "",
-                    "id": "696eae3a9144e92133c62818",
+                    "id": "69f7f683caef6e87bafd8769",
                     "index": 0,
-                    "parentId": "111",
-                    "target": "HideoutManagement",
-                    "value": "213",
-                    "visibilityConditions": [
-                        "1233"
-                    ]
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69f2c9c8baa27486f24e1267",
+                    "visibilityConditions": []
+                },
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f7f68bcaef6e87bafd876a",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69f2cb5f01fd39ae97fc0277",
+                    "visibilityConditions": []
                 }
             ],
-            "AvailableForStart": [],
             "Fail": []
         },
-        "declinePlayerMessage": "696eae389144e92133c62817 declinePlayerMessage",
-        "description": "696eae389144e92133c62817 description",
-        "failMessageText": "696eae389144e92133c62817 failMessageText",
-        "image": "/files/quest/icon/quest.png",
+        "declinePlayerMessage": "69f7f680caef6e87bafd8768 declinePlayerMessage",
+        "description": "69f7f680caef6e87bafd8768 description",
+        "failMessageText": "69f7f680caef6e87bafd8768 failMessageText",
+        "image": "/files/quest/mod_icon/welcome.png",
         "instantComplete": false,
         "isKey": false,
-        "location": [],
-        "name": "696eae389144e92133c62817 name",
-        "note": "696eae389144e92133c62817 note",
+        "location": "any",
+        "name": "69f7f680caef6e87bafd8768 name",
+        "note": "69f7f680caef6e87bafd8768 note",
         "progressSource": "eft",
         "rankingModes": [],
         "restartable": false,
@@ -47,8 +63,8 @@
         },
         "secretQuest": false,
         "side": "pmc",
-        "startedMessageText": "696eae389144e92133c62817 startedMessageText",
-        "successMessageText": "696eae389144e92133c62817 successMessageText",
+        "startedMessageText": "69f7f680caef6e87bafd8768 startedMessageText",
+        "successMessageText": "69f7f680caef6e87bafd8768 successMessageText",
         "traderId": "54cb50c76803fa8b248b4571",
         "type": "PickUp"
     }

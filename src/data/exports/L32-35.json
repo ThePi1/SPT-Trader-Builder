@@ -1,0 +1,550 @@
+{
+    "69f94677a49a5754e709dbae": {
+        "QuestName": "Domain Expansion",
+        "_id": "69f94677a49a5754e709dbae",
+        "acceptPlayerMessage": "69f94677a49a5754e709dbae acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69f94677a49a5754e709dbae changeQuestMessageText",
+        "completePlayerMessage": "69f94677a49a5754e709dbae completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f946a7a49a5754e709dbb1",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "69744632183b55cf9702c986",
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f946aea49a5754e709dbb2",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "69744632183b55cf9702c982",
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f946b4a49a5754e709dbb3",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "69744632183b55cf9702c985",
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f946b9a49a5754e709dbb4",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "69744632183b55cf9702c983",
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f946bea49a5754e709dbb5",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "69744632183b55cf9702c988",
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f946cea49a5754e709dbb6",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "69744632183b55cf9702c987",
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "compareMethod": ">=",
+                    "conditionType": "TraderLoyalty",
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f946d5a49a5754e709dbb7",
+                    "index": 0,
+                    "parentId": "",
+                    "target": "69744632183b55cf9702c984",
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [
+                {
+                    "availableAfter": 0,
+                    "conditionType": "Quest",
+                    "dispersion": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94697a49a5754e709dbb0",
+                    "index": 0,
+                    "parentId": "",
+                    "status": [
+                        4
+                    ],
+                    "target": "69f27eed7d8e3164fcee106a",
+                    "visibilityConditions": []
+                }
+            ],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69f94677a49a5754e709dbae declinePlayerMessage",
+        "description": "69f94677a49a5754e709dbae description",
+        "failMessageText": "69f94677a49a5754e709dbae failMessageText",
+        "image": "/files/quest/icon/6137505384aedf00fa17b651.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69f94677a49a5754e709dbae name",
+        "note": "69f94677a49a5754e709dbae note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f94686a49a5754e709dbaf",
+                    "index": 0,
+                    "type": "Experience",
+                    "unknown": false,
+                    "value": 10000
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69f94677a49a5754e709dbae startedMessageText",
+        "successMessageText": "69f94677a49a5754e709dbae successMessageText",
+        "traderId": "69744632183b55cf9702c981",
+        "type": "Completion"
+    },
+    "69f94739a49a5754e709dbb8": {
+        "QuestName": "Live, Laugh, Love - Part 1",
+        "_id": "69f94739a49a5754e709dbb8",
+        "acceptPlayerMessage": "69f94739a49a5754e709dbb8 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69f94739a49a5754e709dbb8 changeQuestMessageText",
+        "completePlayerMessage": "69f94739a49a5754e709dbb8 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94977a49a5754e709dbba",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5d1b2f3f86f774252167a52c"
+                    ],
+                    "value": 2,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f949d8a49a5754e709dbbb",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "57347ca924597744596b4e71"
+                    ],
+                    "value": 3,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f949f4a49a5754e709dbbc",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "59e35cbb86f7741778269d83"
+                    ],
+                    "value": 5,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94ac0a49a5754e709dbbd",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "590a3cd386f77436f20848cb"
+                    ],
+                    "value": 5,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69f94739a49a5754e709dbb8 declinePlayerMessage",
+        "description": "69f94739a49a5754e709dbb8 description",
+        "failMessageText": "69f94739a49a5754e709dbb8 failMessageText",
+        "image": "/files/quest/icon/6762fe26d4bdaabb7a02b683.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69f94739a49a5754e709dbb8 name",
+        "note": "69f94739a49a5754e709dbb8 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f94797a49a5754e709dbb9",
+                    "index": 0,
+                    "target": "HideoutManagement",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 1000
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69f94739a49a5754e709dbb8 startedMessageText",
+        "successMessageText": "69f94739a49a5754e709dbb8 successMessageText",
+        "traderId": "69744632183b55cf9702c981",
+        "type": "PickUp"
+    },
+    "69f94af1a49a5754e709dbbe": {
+        "QuestName": "Live, Laugh, Love - Part 2",
+        "_id": "69f94af1a49a5754e709dbbe",
+        "acceptPlayerMessage": "69f94af1a49a5754e709dbbe acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69f94af1a49a5754e709dbbe changeQuestMessageText",
+        "completePlayerMessage": "69f94af1a49a5754e709dbbe completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "HandoverItem",
+                    "countInRaid": false,
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94b42a49a5754e709dbc0",
+                    "index": 0,
+                    "inEncoded": false,
+                    "maxDurability": 100,
+                    "minDurability": 0,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5d03775b86f774203e7e0c4b"
+                    ],
+                    "value": 2,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94b81a49a5754e709dbc1",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "59e35ef086f7741777737012"
+                    ],
+                    "value": 7,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94baba49a5754e709dbc2",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "57347c5b245977448d35f6e1"
+                    ],
+                    "value": 7,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94bc2a49a5754e709dbc3",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c12613b86f7743bbe2c3f76"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94be5a49a5754e709dbc4",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "590c5d4b86f774784e1b9c45"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69f94af1a49a5754e709dbbe declinePlayerMessage",
+        "description": "69f94af1a49a5754e709dbbe description",
+        "failMessageText": "69f94af1a49a5754e709dbbe failMessageText",
+        "image": "/files/quest/icon/6762fe26d4bdaabb7a02b683.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69f94af1a49a5754e709dbbe name",
+        "note": "69f94af1a49a5754e709dbbe note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f94b37a49a5754e709dbbf",
+                    "index": 0,
+                    "target": "HideoutManagement",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 1500
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69f94af1a49a5754e709dbbe startedMessageText",
+        "successMessageText": "69f94af1a49a5754e709dbbe successMessageText",
+        "traderId": "54cb50c76803fa8b248b4571",
+        "type": "PickUp"
+    },
+    "69f94bf2a49a5754e709dbc5": {
+        "QuestName": "Live, Laugh, Love - Part 3",
+        "_id": "69f94bf2a49a5754e709dbc5",
+        "acceptPlayerMessage": "69f94bf2a49a5754e709dbc5 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69f94bf2a49a5754e709dbc5 changeQuestMessageText",
+        "completePlayerMessage": "69f94bf2a49a5754e709dbc5 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94c1ba49a5754e709dbc7",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c05308086f7746b2101e90b"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94c47a49a5754e709dbc8",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "6389c8c5dbfd5e4b95197e6b"
+                    ],
+                    "value": 2,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94c70a49a5754e709dbc9",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "6389c85357baa773a825b356"
+                    ],
+                    "value": 1,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94c88a49a5754e709dbca",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "590c2e1186f77425357b6124"
+                    ],
+                    "value": 4,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69f94c93a49a5754e709dbcb",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c0530ee86f774697952d952"
+                    ],
+                    "value": 2,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69f94bf2a49a5754e709dbc5 declinePlayerMessage",
+        "description": "69f94bf2a49a5754e709dbc5 description",
+        "failMessageText": "69f94bf2a49a5754e709dbc5 failMessageText",
+        "image": "/files/quest/icon/6762fe26d4bdaabb7a02b683.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69f94bf2a49a5754e709dbc5 name",
+        "note": "69f94bf2a49a5754e709dbc5 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69f94c14a49a5754e709dbc6",
+                    "index": 0,
+                    "target": "HideoutManagement",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 2500
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69f94bf2a49a5754e709dbc5 startedMessageText",
+        "successMessageText": "69f94bf2a49a5754e709dbc5 successMessageText",
+        "traderId": "69744632183b55cf9702c981",
+        "type": "PickUp"
+    }
+}

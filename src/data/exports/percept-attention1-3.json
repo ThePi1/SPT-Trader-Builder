@@ -1,0 +1,321 @@
+{
+    "69fa0ce3c23dface5a239261": {
+        "QuestName": "Vipassana - Part 1",
+        "_id": "69fa0ce3c23dface5a239261",
+        "acceptPlayerMessage": "69fa0ce3c23dface5a239261 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69fa0ce3c23dface5a239261 changeQuestMessageText",
+        "completePlayerMessage": "69fa0ce3c23dface5a239261 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "FindItem",
+                    "countInRaid": false,
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa289cc23dface5a239264",
+                    "index": 0,
+                    "inEncoded": false,
+                    "maxDurability": 100,
+                    "minDurability": 0,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c3df7d588a4501f290594e5"
+                    ],
+                    "value": 300,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa28ccc23dface5a239265",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c3df7d588a4501f290594e5"
+                    ],
+                    "value": 300,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69fa0ce3c23dface5a239261 declinePlayerMessage",
+        "description": "69fa0ce3c23dface5a239261 description",
+        "failMessageText": "69fa0ce3c23dface5a239261 failMessageText",
+        "image": "/files/quest/icon/67e3d483d1eb1b2e6b01cf5c.jpg",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69fa0ce3c23dface5a239261 name",
+        "note": "69fa0ce3c23dface5a239261 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69fa2880c23dface5a239262",
+                    "index": 0,
+                    "target": "Perception",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 1000
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69fa288cc23dface5a239263",
+                    "index": 0,
+                    "target": "Attention",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 1000
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69fa0ce3c23dface5a239261 startedMessageText",
+        "successMessageText": "69fa0ce3c23dface5a239261 successMessageText",
+        "traderId": "69744632183b55cf9702c981",
+        "type": "Completion"
+    },
+    "69fa298dc23dface5a239266": {
+        "QuestName": "Vipassana - Part 2",
+        "_id": "69fa298dc23dface5a239266",
+        "acceptPlayerMessage": "69fa298dc23dface5a239266 acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69fa298dc23dface5a239266 changeQuestMessageText",
+        "completePlayerMessage": "69fa298dc23dface5a239266 completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa29eac23dface5a239269",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": false,
+                    "parentId": "",
+                    "target": [
+                        "5449016a4bdc2d6f028b456f"
+                    ],
+                    "value": 20000000,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69fa298dc23dface5a239266 declinePlayerMessage",
+        "description": "69fa298dc23dface5a239266 description",
+        "failMessageText": "69fa298dc23dface5a239266 failMessageText",
+        "image": "/files/quest/icon/67dabea55bf56070b60b133f.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69fa298dc23dface5a239266 name",
+        "note": "69fa298dc23dface5a239266 note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69fa29a1c23dface5a239267",
+                    "index": 0,
+                    "target": "Perception",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 1500
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69fa29bcc23dface5a239268",
+                    "index": 0,
+                    "target": "Attention",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 1500
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69fa298dc23dface5a239266 startedMessageText",
+        "successMessageText": "69fa298dc23dface5a239266 successMessageText",
+        "traderId": "69744632183b55cf9702c981",
+        "type": "Completion"
+    },
+    "69fa2a1fc23dface5a23926a": {
+        "QuestName": "Vipassana - Part 3",
+        "_id": "69fa2a1fc23dface5a23926a",
+        "acceptPlayerMessage": "69fa2a1fc23dface5a23926a acceptPlayerMessage",
+        "acceptanceAndFinishingSource": "eft",
+        "arenaLocations": [],
+        "canShowNotificationsInGame": true,
+        "changeQuestMessageText": "69fa2a1fc23dface5a23926a changeQuestMessageText",
+        "completePlayerMessage": "69fa2a1fc23dface5a23926a completePlayerMessage",
+        "conditions": {
+            "AvailableForFinish": [
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa2a53c23dface5a23926d",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "59faff1d86f7746c51718c9c"
+                    ],
+                    "value": 10,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa2a76c23dface5a23926e",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "5c0530ee86f774697952d952"
+                    ],
+                    "value": 5,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa2a8fc23dface5a23926f",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "6389c8c5dbfd5e4b95197e6b"
+                    ],
+                    "value": 5,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa2aa7c23dface5a239270",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "6389c85357baa773a825b356"
+                    ],
+                    "value": 5,
+                    "visibilityConditions": []
+                },
+                {
+                    "conditionType": "HandoverItem",
+                    "dogtagLevel": 0,
+                    "dynamicLocale": false,
+                    "globalQuestCounterId": "",
+                    "id": "69fa2abec23dface5a239271",
+                    "index": 0,
+                    "inEncoded": false,
+                    "minDurability": 0,
+                    "maxDurability": 100,
+                    "onlyFoundInRaid": true,
+                    "parentId": "",
+                    "target": [
+                        "657025961419851aef03e721"
+                    ],
+                    "value": 10,
+                    "visibilityConditions": []
+                }
+            ],
+            "AvailableForStart": [],
+            "Fail": []
+        },
+        "declinePlayerMessage": "69fa2a1fc23dface5a23926a declinePlayerMessage",
+        "description": "69fa2a1fc23dface5a23926a description",
+        "failMessageText": "69fa2a1fc23dface5a23926a failMessageText",
+        "image": "/files/quest/icon/67dabea55bf56070b60b133f.png",
+        "instantComplete": false,
+        "isKey": false,
+        "location": "any",
+        "name": "69fa2a1fc23dface5a23926a name",
+        "note": "69fa2a1fc23dface5a23926a note",
+        "progressSource": "eft",
+        "rankingModes": [],
+        "restartable": false,
+        "rewards": {
+            "Fail": [],
+            "Started": [],
+            "Success": [
+                {
+                    "availableInGameEditions": [],
+                    "id": "69fa2a3ac23dface5a23926b",
+                    "index": 0,
+                    "target": "Perception",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 2150
+                },
+                {
+                    "availableInGameEditions": [],
+                    "id": "69fa2a4cc23dface5a23926c",
+                    "index": 0,
+                    "target": "Attention",
+                    "type": "Skill",
+                    "unknown": false,
+                    "value": 2150
+                }
+            ]
+        },
+        "secretQuest": false,
+        "side": "pmc",
+        "startedMessageText": "69fa2a1fc23dface5a23926a startedMessageText",
+        "successMessageText": "69fa2a1fc23dface5a23926a successMessageText",
+        "traderId": "69744632183b55cf9702c981",
+        "type": "PickUp"
+    }
+}

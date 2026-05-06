@@ -50,7 +50,7 @@ class Controller:
     ab_box_modslot                        = str(parser.get('box_fields', 'ab_box_modslot')).split(',')
     default_questicon                     = str(parser.get('box_fields', 'default_questicon'))
     # tb_traderloyalty_level                = str(parser.get('box_fields', 'tb_traderloyalty_level')).split(',')
-    tb_traderloyalt_target_box            = str(parser.get('box_fields', 'tb_traderloyalt_target_box')).split(',')
+    # tb_traderloyalt_target_box            = str(parser.get('box_fields', 'tb_traderloyalt_target_box')).split(',')
     tb_exitstatus                         = str(parser.get('box_fields', 'tb_exitstatus')).split(',')
     tb_queststatus                        = str(parser.get('box_fields', 'tb_queststatus')).split(',')
     tb_finishfail                         = str(parser.get('box_fields', 'tb_finishfail')).split(',')

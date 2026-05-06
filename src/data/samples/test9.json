@@ -1,43 +1,77 @@
 {
-    "69cc9d0a0c329f79de23a506": {
+    "69faa9a3d896ec5e9d096b62": {
         "QuestName": "123",
-        "_id": "69cc9d0a0c329f79de23a506",
-        "acceptPlayerMessage": "69cc9d0a0c329f79de23a506 acceptPlayerMessage",
+        "_id": "69faa9a3d896ec5e9d096b62",
+        "acceptPlayerMessage": "69faa9a3d896ec5e9d096b62 acceptPlayerMessage",
         "acceptanceAndFinishingSource": "eft",
         "arenaLocations": [],
         "canShowNotificationsInGame": true,
-        "changeQuestMessageText": "69cc9d0a0c329f79de23a506 changeQuestMessageText",
-        "completePlayerMessage": "69cc9d0a0c329f79de23a506 completePlayerMessage",
+        "changeQuestMessageText": "69faa9a3d896ec5e9d096b62 changeQuestMessageText",
+        "completePlayerMessage": "69faa9a3d896ec5e9d096b62 completePlayerMessage",
         "conditions": {
             "AvailableForFinish": [
                 {
-                    "conditionType": "PlaceBeacon",
+                    "completeInSeconds": 0,
+                    "conditionType": "CounterCreator",
+                    "counter": {
+                        "conditions": [
+                            {
+                                "bodyPart": [],
+                                "compareMethod": ">=",
+                                "conditionType": "Kills",
+                                "daytime": {
+                                    "from": 0,
+                                    "to": 0
+                                },
+                                "distance": {
+                                    "compareMethod": ">=",
+                                    "distance": 0
+                                },
+                                "dynamicLocale": false,
+                                "enemyEquipmentExclusive": [],
+                                "enemyEquipmentInclusive": [],
+                                "enemyHealthEffects": [],
+                                "id": "69faa9aed896ec5e9d096b64",
+                                "resetOnSessionEnd": false,
+                                "savageRole": [],
+                                "target": "Bear",
+                                "value": 1,
+                                "weapon": [
+                                    "5447b5fc4bdc2d87278b4567"
+                                ],
+                                "weaponCaliber": [],
+                                "weaponModsExclusive": [],
+                                "weaponModsInclusive": []
+                            }
+                        ],
+                        "id": "69faa9b0d896ec5e9d096b65"
+                    },
+                    "doNotResetIfCounterCompleted": false,
                     "dynamicLocale": false,
                     "globalQuestCounterId": "",
-                    "id": "69cc9d0d0c329f79de23a507",
+                    "id": "69faa9a5d896ec5e9d096b63",
                     "index": 0,
+                    "isNecessary": false,
+                    "isResetOnConditionFailed": false,
+                    "oneSessionOnly": false,
                     "parentId": "",
-                    "plantTime": 4,
-                    "target": [
-                        "5991b51486f77447b112d44f"
-                    ],
-                    "value": 4,
-                    "visibilityConditions": [],
-                    "zoneId": "1235aaaa"
+                    "type": "Elimination",
+                    "value": 1,
+                    "visibilityConditions": []
                 }
             ],
             "AvailableForStart": [],
             "Fail": []
         },
-        "declinePlayerMessage": "69cc9d0a0c329f79de23a506 declinePlayerMessage",
-        "description": "69cc9d0a0c329f79de23a506 description",
-        "failMessageText": "69cc9d0a0c329f79de23a506 failMessageText",
+        "declinePlayerMessage": "69faa9a3d896ec5e9d096b62 declinePlayerMessage",
+        "description": "69faa9a3d896ec5e9d096b62 description",
+        "failMessageText": "69faa9a3d896ec5e9d096b62 failMessageText",
         "image": "/files/quest/mod_icon/welcome.png",
         "instantComplete": false,
         "isKey": false,
         "location": "any",
-        "name": "69cc9d0a0c329f79de23a506 name",
-        "note": "69cc9d0a0c329f79de23a506 note",
+        "name": "69faa9a3d896ec5e9d096b62 name",
+        "note": "69faa9a3d896ec5e9d096b62 note",
         "progressSource": "eft",
         "rankingModes": [],
         "restartable": false,
@@ -48,8 +82,8 @@
         },
         "secretQuest": false,
         "side": "pmc",
-        "startedMessageText": "69cc9d0a0c329f79de23a506 startedMessageText",
-        "successMessageText": "69cc9d0a0c329f79de23a506 successMessageText",
+        "startedMessageText": "69faa9a3d896ec5e9d096b62 startedMessageText",
+        "successMessageText": "69faa9a3d896ec5e9d096b62 successMessageText",
         "traderId": "54cb50c76803fa8b248b4571",
         "type": "PickUp"
     }

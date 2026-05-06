@@ -121,22 +121,36 @@
             <x>10</x>
             <y>10</y>
             <width>371</width>
-            <height>111</height>
+            <height>136</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="grid_fields1_3">
+           <item row="1" column="0">
+            <widget class="QLabel" name="lb_time_to_cck">
+             <property name="text">
+              <string>Time To:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_time_from_cck"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="lb_time_from_cck">
+             <property name="text">
+              <string>Time From:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QComboBox" name="box_dist_compare_cck"/>
+           </item>
            <item row="2" column="0">
             <widget class="QLabel" name="lb_dist_cck">
              <property name="text">
               <string>Distance:</string>
              </property>
             </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="fld_dist_cck"/>
-           </item>
-           <item row="3" column="1">
-            <widget class="QComboBox" name="box_dist_compare_cck"/>
            </item>
            <item row="1" column="1">
             <widget class="QLineEdit" name="fld_time_to_cck"/>
@@ -148,22 +162,18 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="fld_time_from_cck"/>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="fld_dist_cck"/>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="lb_time_to_cck">
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="chk_cck_usetarget">
              <property name="text">
-              <string>Time To:</string>
+              <string>Use Target</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="lb_time_from_cck">
-             <property name="text">
-              <string>Time From:</string>
-             </property>
-            </widget>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="box_targets_cck"/>
            </item>
           </layout>
          </widget>
@@ -171,7 +181,7 @@
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>150</y>
+            <y>190</y>
             <width>121</width>
             <height>24</height>
            </rect>
@@ -184,7 +194,7 @@
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>130</y>
+            <y>160</y>
             <width>151</width>
             <height>16</height>
            </rect>
@@ -286,83 +296,6 @@
             <property name="text">
              <string>Added Weapons:</string>
             </property>
-           </widget>
-          </widget>
-          <widget class="QWidget" name="tab_17">
-           <attribute name="title">
-            <string>Targets</string>
-           </attribute>
-           <widget class="QLabel" name="lb_addedweps_5">
-            <property name="geometry">
-             <rect>
-              <x>10</x>
-              <y>10</y>
-              <width>161</width>
-              <height>16</height>
-             </rect>
-            </property>
-            <property name="text">
-             <string>Targets:</string>
-            </property>
-           </widget>
-           <widget class="QTableWidget" name="tb_targets">
-            <property name="geometry">
-             <rect>
-              <x>10</x>
-              <y>40</y>
-              <width>271</width>
-              <height>101</height>
-             </rect>
-            </property>
-            <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectRows</enum>
-            </property>
-            <column>
-             <property name="text">
-              <string>name</string>
-             </property>
-            </column>
-           </widget>
-           <widget class="QWidget" name="horizontalLayoutWidget_7">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>200</y>
-              <width>301</width>
-              <height>31</height>
-             </rect>
-            </property>
-            <layout class="QHBoxLayout" name="grid_addremove_7">
-             <item>
-              <widget class="QPushButton" name="pb_removetar_cck">
-               <property name="text">
-                <string>Remove Selected</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="pb_addtar_cck">
-               <property name="text">
-                <string>Add</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="gridLayoutWidget_34">
-            <property name="geometry">
-             <rect>
-              <x>10</x>
-              <y>160</y>
-              <width>271</width>
-              <height>31</height>
-             </rect>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_24">
-             <item row="0" column="0">
-              <widget class="QComboBox" name="box_targets_cck"/>
-             </item>
-            </layout>
            </widget>
           </widget>
           <widget class="QWidget" name="tab_18">
