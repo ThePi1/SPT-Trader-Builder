@@ -505,6 +505,7 @@ class Gui_MainWindow(QMainWindow):
         self.popup(message=f"An error has occurred while exporting the final JSON file.")
       finally:
         f.close()
+
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1066,7 +1067,7 @@ class Gui_QuestDlg(QMainWindow):
     self.parent.clear_table_fields()
     quest = QListWidgetItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
     quest.setData(Qt.ItemDataRole.UserRole, quest_id)
-    self.ui.questList.addItem(quest)
+    self.parent.ui.questList.addItem(quest)
     self.close()
 
 class Gui_AssortDlg(QMainWindow):
@@ -1544,8 +1545,6 @@ class Gui_AssortDlg(QMainWindow):
     
     with open("Exported Files/assort.json", "w") as f:
       json.dump(assort, f, indent=2)
-
-
 
 class Gui_TaskDlg(QMainWindow):
   def __init__(self, parent=None):
@@ -2234,4 +2233,3 @@ class Gui_TaskDlg(QMainWindow):
             self.ui.box_comparemethod_ts.setCurrentText(settings["compareMethod"])
             self.ui.box_trader_ts.setCurrentText(trader)
             self.ui.fld_value_ts.setText(settings["value"])
-
