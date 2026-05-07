@@ -64,6 +64,8 @@ class Gui_MainWindow(QMainWindow):
     self.ui.actionCreate_locale_from_Quest_JSON.triggered.connect(self.createLocaleFromJSON)
     self.ui.actionImport_Quests.triggered.connect(self.importQuests)
     self.ui.wb_addpart_button.released.connect(self.addpart)
+    self.ui.questList.itemClicked.connect(self.copy_clicked_cell)
+    self.ui.questsearch.textChanged.connect(self.filterList)
     self.ui.wb_base_check.toggled.connect(self.baseWeaponChecked)
     self.ui.actionAnalyze_CC_subtypes.triggered.connect(self.analyze_cc)
     self.ui.actionRemove_Selected_Quest.triggered.connect(self.remove_selected_quest)
@@ -104,6 +106,17 @@ class Gui_MainWindow(QMainWindow):
   
   def clear_table_fields(self):
     self.table_fields = {}
+
+  def filterList(self,query:str):
+    lst = self.ui.questList
+    q = query.strip().lower()
+    for row in range(lst.count()):
+      item = lst.item(row)  # display name col
+      text = item.text().lower() if item else ""
+      quest_id = item.data(Qt.ItemDataRole.UserRole)
+      quest_id = str(quest_id).lower() if quest_id else ""
+      match = (q in text) or (q in quest_id)  # contains search; use == for exact match
+      item.setHidden(not match)
           
   def baseWeaponChecked(self,checked): #UI Behavior
     if checked:
@@ -214,6 +227,13 @@ class Gui_MainWindow(QMainWindow):
     with open("Exported Files/weaponpresets.json", "w") as f:
       json.dump(weaponlist, f, indent=2)
 
+  def copy_clicked_cell(self, item):
+    
+    #if self.ui.ab_weappart_check.isChecked():
+      #return
+    text = item.data(Qt.ItemDataRole.UserRole)
+    QApplication.clipboard().setText(text)
+
   def importJson(self, path):
     with open(path, "r") as f:
       out = json.load(f)
@@ -262,7 +282,10 @@ class Gui_MainWindow(QMainWindow):
         #print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
         print(f"{quests_import[quest_id]['QuestName']}")
         self.quests[quest_id] = quests_import[quest_id]
-        self.ui.questList.addItem(f"{quests_import[quest_id]['QuestName']}, {quest_id}")
+        quest = QListWidgetItem(f"{quests_import[quest_id]['QuestName']}, {quest_id}")
+        quest.setData(Qt.ItemDataRole.UserRole, quest_id)
+        self.ui.questList.addItem(quest)
+        print(quest.data(Qt.ItemDataRole.UserRole))
 
   def add_table_field(self, type, table, _id, values, dataobj):
     print(f"Debug: adding type: {type}, table: {table}, id: {_id}, values:  {values}, dataobj: {dataobj}")
@@ -1041,7 +1064,9 @@ class Gui_QuestDlg(QMainWindow):
       
     self.parent.quests[quest_id] = quest[quest_id]
     self.parent.clear_table_fields()
-    self.parent.ui.questList.addItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
+    quest = QListWidgetItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
+    quest.setData(Qt.ItemDataRole.UserRole, quest_id)
+    self.ui.questList.addItem(quest)
     self.close()
 
 class Gui_AssortDlg(QMainWindow):

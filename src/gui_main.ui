@@ -76,7 +76,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
+        <y>20</y>
         <width>111</width>
         <height>16</height>
        </rect>
@@ -95,15 +95,51 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>30</y>
+        <y>50</y>
         <width>831</width>
-        <height>491</height>
+        <height>471</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Segoe UI</family>
        </font>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>20</y>
+        <width>49</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Search:</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="questsearch">
+      <property name="geometry">
+       <rect>
+        <x>220</x>
+        <y>20</y>
+        <width>171</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>400</x>
+        <y>20</y>
+        <width>231</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Note: On click will copy quest's Mongo ID</string>
       </property>
      </widget>
     </widget>
