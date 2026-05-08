@@ -4,6 +4,7 @@ import json
 import copy
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from pathlib import Path
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtGui import  QStandardItemModel, QStandardItem
@@ -17,6 +18,7 @@ from gui_quests import Ui_QuestWindow
 from gui_tasks import Ui_TaskWindow
 from gui_assort import Ui_AssortBuilder
 from gui_rewards import Ui_rewardBuilder
+from gui_datafiles import Ui_DataEditor
 
 def val_field(value, emptyval, defaultval, expectclass):
   if value == emptyval:
@@ -78,6 +80,7 @@ class Gui_MainWindow(QMainWindow):
     self.status = self.importJson("data\\status.json")
     self.status_invert = {v:k for k,v in self.status.items()}
     self.quests = {}
+    self.datafiles = self.importJson("data\\datafiles.json")
     #RewardFail RewardStarted RewardSuccess
     self.table_fields = {}
     # When clearing table fields, keep any k/v pair with these strings in the key
@@ -467,6 +470,9 @@ class Gui_MainWindow(QMainWindow):
     dlg.updateAbout(ver_current, url_text)
     dlg.exec()
 
+  def editDataFiles(self):
+    dlg = Gui_DataEditor(parent=self)
+
   def popup(self, message):
     dlg = Gui_AboutDlg(self)
     text = dlg.ui.label.text()
@@ -518,6 +524,35 @@ class Gui_AboutDlg(QDialog):
       text = re.sub('V_CUR', ver_current, text)
       text = re.sub('SRC_URL', url_text ,text)
       self.ui.label.setText(QtCore.QCoreApplication.translate("AboutMenu", text))
+
+class Gui_DataEditor(QMainWindow):
+  def __init__(self, parent=None):
+      super().__init__(parent)
+      self.ui = Ui_DataEditor()
+      self.ui.setupUi(self)
+      self.on_launch()
+      self.parent = parent
+      self.show()
+      self.ui.pb_wtt_import.released.connect(self.import_wtt)
+
+  def on_launch(self):
+    pass
+
+  def import_wtt(self):
+    root_folder = QFileDialog.getExistingDirectory(self, "Select WTT root data folder")
+    print(f"Finding JSON files in root folder: {root_folder}")
+    datafiles = {}
+    datatypes = ["CustomItems", "CustomLocales", "CustomQuestZones", "CustomQuests", "CustomLootspawns"]
+    for path in Path(root_folder).rglob('*.json'):
+      for datatype in datatypes:
+        if datatype in str(path):
+          if datatype not in datafiles: datafiles[datatype] = []
+          loaded_json = self.parent.importJson(str(path))
+          datafiles[datatype].append(loaded_json)
+
+      
+    self.parent.datafiles = datafiles
+    self.ui.statusbar.showMessage(f"Loaded {sum(len(sublist) for sublist in datafiles)} data files.")
 
 class Gui_UpdatesDlg(QDialog):
     def __init__(self, parent=None):

@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>859</width>
-    <height>602</height>
+    <width>874</width>
+    <height>612</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -72,25 +72,6 @@
      <attribute name="title">
       <string>Quests</string>
      </attribute>
-     <widget class="QLabel" name="label">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>111</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Segoe UI</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Open Quests:</string>
-      </property>
-     </widget>
      <widget class="QListWidget" name="questList">
       <property name="geometry">
        <rect>
@@ -105,42 +86,66 @@
         <family>Segoe UI</family>
        </font>
       </property>
-     </widget>
-     <widget class="QLabel" name="label_4">
-      <property name="geometry">
-       <rect>
-        <x>180</x>
-        <y>20</y>
-        <width>49</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Search:</string>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
       </property>
      </widget>
-     <widget class="QLineEdit" name="questsearch">
+     <widget class="QWidget" name="gridLayoutWidget">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>20</y>
-        <width>171</width>
-        <height>22</height>
+        <x>10</x>
+        <y>10</y>
+        <width>831</width>
+        <height>31</height>
        </rect>
       </property>
-     </widget>
-     <widget class="QLabel" name="label_5">
-      <property name="geometry">
-       <rect>
-        <x>400</x>
-        <y>20</y>
-        <width>231</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Note: On click will copy quest's Mongo ID</string>
-      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <property name="horizontalSpacing">
+        <number>27</number>
+       </property>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Search:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>9</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Open Quests:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>(Click quest to copy MongoID)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QLineEdit" name="questsearch"/>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="wb_tab">
@@ -282,7 +287,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>859</width>
+     <width>874</width>
      <height>22</height>
     </rect>
    </property>
@@ -315,6 +320,7 @@
     <addaction name="actionImport_Quests"/>
     <addaction name="actionExport_Queued_Quests"/>
     <addaction name="separator"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -322,6 +328,7 @@
      <string>Edit</string>
     </property>
     <addaction name="actionEdit_Selected_Quest"/>
+    <addaction name="actionEdit_Tracked_Data_Files_locale_quest"/>
     <addaction name="separator"/>
     <addaction name="actionRemove_Selected_Quest"/>
     <addaction name="actionCreate_locale_from_Quest_JSON"/>
@@ -428,6 +435,11 @@
   <action name="actionGet_all_children_of_parent_ID">
    <property name="text">
     <string>Get all children of parent ID</string>
+   </property>
+  </action>
+  <action name="actionEdit_Tracked_Data_Files_locale_quest">
+   <property name="text">
+    <string>Edit Tracked Data Files (locale/quest)</string>
    </property>
   </action>
  </widget>

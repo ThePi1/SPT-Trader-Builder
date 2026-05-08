@@ -121,6 +121,7 @@ def main():
   win.ui.actionUpdateCheck.triggered.connect(lambda: Gui_MainWindow.onUpdateWindow(win, ver_current, ver_latest, project_url, update_text))
   win.ui.actionQuest_Builder.triggered.connect(lambda: Gui_MainWindow.onQuestWindow(win))
   win.ui.actionAssort_Builder.triggered.connect(lambda: Gui_MainWindow.onAssortWindow(win))
+  win.ui.actionEdit_Tracked_Data_Files_locale_quest.triggered.connect(lambda: Gui_MainWindow.editDataFiles(win))
 
   win.show()
   # Run the application's main loop
