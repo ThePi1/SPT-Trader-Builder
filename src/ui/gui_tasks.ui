@@ -1,0 +1,3197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TaskWindow</class>
+ <widget class="QMainWindow" name="TaskWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1469</width>
+    <height>730</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Task Builder</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>1251</width>
+      <height>381</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>Finish/Fail</string>
+     </attribute>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1241</width>
+        <height>351</height>
+       </rect>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_6">
+       <attribute name="title">
+        <string>CounterCreator</string>
+       </attribute>
+       <widget class="QLabel" name="lb_cond">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>71</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Conditions:</string>
+        </property>
+       </widget>
+       <widget class="QTabWidget" name="tabWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>320</x>
+          <y>10</y>
+          <width>911</width>
+          <height>321</height>
+         </rect>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="tab_11">
+         <attribute name="title">
+          <string>VisitPlace</string>
+         </attribute>
+         <widget class="QWidget" name="gridLayoutWidget_19">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>331</width>
+            <height>61</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="grid_fields_10">
+           <item row="0" column="0">
+            <widget class="QLabel" name="lb_zoneid_7">
+             <property name="text">
+              <string>Zone ID:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_zoneid_ccvp"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_ccvp">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>80</y>
+            <width>121</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize Condition</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_12">
+         <attribute name="title">
+          <string>Kills</string>
+         </attribute>
+         <widget class="QWidget" name="gridLayoutWidget_5">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>371</width>
+            <height>136</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="grid_fields1_3">
+           <item row="1" column="0">
+            <widget class="QLabel" name="lb_time_to_cck">
+             <property name="text">
+              <string>Time To:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_time_from_cck"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="lb_time_from_cck">
+             <property name="text">
+              <string>Time From:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QComboBox" name="box_dist_compare_cck"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="lb_dist_cck">
+             <property name="text">
+              <string>Distance:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="fld_time_to_cck"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="lb_dist_compare_cck">
+             <property name="text">
+              <string>Distance Compare:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="fld_dist_cck"/>
+           </item>
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="chk_cck_usetarget">
+             <property name="text">
+              <string>Use Target</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="box_targets_cck"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_cck">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>190</y>
+            <width>121</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize Condition</string>
+          </property>
+         </widget>
+         <widget class="QCheckBox" name="chk_cck_reset_sessionend">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>160</y>
+            <width>151</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Reset on Session End</string>
+          </property>
+         </widget>
+         <widget class="QTabWidget" name="tabWidget_5">
+          <property name="geometry">
+           <rect>
+            <x>390</x>
+            <y>10</y>
+            <width>511</width>
+            <height>281</height>
+           </rect>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Ignored" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab_15">
+           <attribute name="title">
+            <string>Weapons</string>
+           </attribute>
+           <widget class="QWidget" name="horizontalLayoutWidget_5">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>200</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_3">
+             <item>
+              <widget class="QPushButton" name="pb_removewep_cck">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_addwep_cck">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="gridLayoutWidget_26">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>160</y>
+              <width>271</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_14">
+             <item row="0" column="0">
+              <widget class="QComboBox" name="box_weapons_cck"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QTableWidget" name="tb_wep">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>271</width>
+              <height>101</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>name</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QLabel" name="lb_addedweps_3">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>161</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Added Weapons:</string>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_18">
+           <attribute name="title">
+            <string>Target Roles</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget_35">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>160</y>
+              <width>271</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_25">
+             <item row="0" column="0">
+              <widget class="QComboBox" name="box_targetrole_cck"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QTableWidget" name="tb_targetrole">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>271</width>
+              <height>101</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>name</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_8">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>200</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_8">
+             <item>
+              <widget class="QPushButton" name="pb_removetr_cck">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_addtr_cck">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QLabel" name="lb_addedweps_6">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>161</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Added Target Roles:</string>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_16">
+           <attribute name="title">
+            <string>Body Parts</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget_36">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>160</y>
+              <width>271</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_26">
+             <item row="0" column="0">
+              <widget class="QComboBox" name="box_bodypart_cck"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QTableWidget" name="tb_bodypart">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>271</width>
+              <height>101</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>name</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_9">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>200</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_9">
+             <item>
+              <widget class="QPushButton" name="pb_rembp_cck">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_addbp_cck">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QLabel" name="lb_addedweps_7">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>161</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Added Body Parts:</string>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_19">
+           <attribute name="title">
+            <string>Mods (Include)</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget_37">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>160</y>
+              <width>271</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_27">
+             <item row="0" column="0">
+              <widget class="QLineEdit" name="fld_incmod_cck"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QTableWidget" name="tb_incmods">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>271</width>
+              <height>101</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>name</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_10">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>200</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_10">
+             <item>
+              <widget class="QPushButton" name="pb_rem_imod">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_add_imod">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QLabel" name="lb_addedweps_8">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>161</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Added Inclusive Mods:</string>
+            </property>
+           </widget>
+           <widget class="QTextBrowser" name="textBrowser_3">
+            <property name="geometry">
+             <rect>
+              <x>300</x>
+              <y>40</y>
+              <width>181</width>
+              <height>61</height>
+             </rect>
+            </property>
+            <property name="html">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The killing weapon must have all attachments to count.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_26">
+           <attribute name="title">
+            <string>Mods (Exclude)</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget_38">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>160</y>
+              <width>271</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_28">
+             <item row="0" column="0">
+              <widget class="QLineEdit" name="fld_excmod_cck"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QTableWidget" name="tb_excmods">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>271</width>
+              <height>101</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>name</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_11">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>200</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_11">
+             <item>
+              <widget class="QPushButton" name="pb_rem_emod">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_add_emod">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QLabel" name="lb_addedweps_9">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>161</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Added Exclusive Mods:</string>
+            </property>
+           </widget>
+           <widget class="QTextBrowser" name="textBrowser_2">
+            <property name="geometry">
+             <rect>
+              <x>300</x>
+              <y>40</y>
+              <width>181</width>
+              <height>61</height>
+             </rect>
+            </property>
+            <property name="html">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;If the killing weapon has any of these attachments, the kill will not count.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </widget>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_20">
+         <attribute name="title">
+          <string>ExitStatus</string>
+         </attribute>
+         <widget class="QWidget" name="gridLayoutWidget_21">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>321</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_39">
+             <property name="text">
+              <string>Status</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="box_status_cces"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_cces_add">
+          <property name="geometry">
+           <rect>
+            <x>340</x>
+            <y>10</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_8">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>50</y>
+            <width>49</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Statuses:</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_cces">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>190</y>
+            <width>111</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize Condition</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pb_status_rem_cces">
+          <property name="geometry">
+           <rect>
+            <x>130</x>
+            <y>190</y>
+            <width>151</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Remove Selected Status</string>
+          </property>
+         </widget>
+         <widget class="QTableWidget" name="tb_cces">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>80</y>
+            <width>281</width>
+            <height>91</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>status</string>
+           </property>
+          </column>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_21">
+         <attribute name="title">
+          <string>ExitName</string>
+         </attribute>
+         <widget class="QWidget" name="gridLayoutWidget_2">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>241</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_8">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Exit Name</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_exitname_ccen"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_ccen">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>60</y>
+            <width>111</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize Condition</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_22">
+         <attribute name="title">
+          <string>Location</string>
+         </attribute>
+         <widget class="QLabel" name="label_4">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>71</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Locations:</string>
+          </property>
+         </widget>
+         <widget class="QWidget" name="horizontalLayoutWidget">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>40</y>
+            <width>231</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QLabel" name="label_7">
+             <property name="text">
+              <string>Location</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="box_location_ccl"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_add_ccl">
+          <property name="geometry">
+           <rect>
+            <x>250</x>
+            <y>40</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+         <widget class="QWidget" name="gridLayoutWidget_27">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>170</y>
+            <width>311</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_15">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="pb_finalize_ccl">
+             <property name="text">
+              <string>Finalize Condition</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pb_rem_ccl">
+             <property name="text">
+              <string>Remove Selected Location</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QTableWidget" name="tb_ccl">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>80</y>
+            <width>311</width>
+            <height>71</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>location</string>
+           </property>
+          </column>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_9">
+         <attribute name="title">
+          <string>Equipment</string>
+         </attribute>
+         <widget class="QTableWidget" name="tb_eq_inc">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>50</y>
+            <width>311</width>
+            <height>111</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>id</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>orGroup</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QTableWidget" name="tb_eq_exc">
+          <property name="geometry">
+           <rect>
+            <x>350</x>
+            <y>50</y>
+            <width>311</width>
+            <height>111</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>id</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>orGroup</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QLabel" name="label_9">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>111</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Equipment Inclusive:</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_17">
+          <property name="geometry">
+           <rect>
+            <x>350</x>
+            <y>10</y>
+            <width>131</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Equipment Exclusive:</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_20">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>30</y>
+            <width>111</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>(Must have all)</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_21">
+          <property name="geometry">
+           <rect>
+            <x>350</x>
+            <y>30</y>
+            <width>101</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>(Can't have any)</string>
+          </property>
+         </widget>
+         <widget class="QWidget" name="gridLayoutWidget_7">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>260</y>
+            <width>421</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <item row="0" column="2">
+            <widget class="QCheckBox" name="cb_eq_uneq">
+             <property name="text">
+              <string>Include Unequipped Items?</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pb_finalize_cc_eq">
+             <property name="text">
+              <string>Finalize Condition</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="horizontalLayoutWidget_23">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>230</y>
+            <width>301</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="grid_addremove_25">
+           <item>
+            <widget class="QPushButton" name="pb_rem_eqi">
+             <property name="text">
+              <string>Remove Selected</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pb_add_eqi">
+             <property name="text">
+              <string>Add</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="horizontalLayoutWidget_24">
+          <property name="geometry">
+           <rect>
+            <x>350</x>
+            <y>230</y>
+            <width>301</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="grid_addremove_26">
+           <item>
+            <widget class="QPushButton" name="pb_rem_eqe">
+             <property name="text">
+              <string>Remove Selected</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pb_add_eqe">
+             <property name="text">
+              <string>Add</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="gridLayoutWidget_11">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>170</y>
+            <width>261</width>
+            <height>52</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_19">
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_eqi"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="fld_equi_org"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_22">
+             <property name="text">
+              <string>id</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>orGroup id (int)</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="gridLayoutWidget_12">
+          <property name="geometry">
+           <rect>
+            <x>350</x>
+            <y>170</y>
+            <width>261</width>
+            <height>52</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_20">
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_eqi_2"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="fld_eqe_org"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_73">
+             <property name="text">
+              <string>id</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_74">
+             <property name="text">
+              <string>orGroup id (int)</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_10">
+         <attribute name="title">
+          <string>Shots</string>
+         </attribute>
+         <widget class="QTabWidget" name="tabWidget_6">
+          <property name="geometry">
+           <rect>
+            <x>410</x>
+            <y>0</y>
+            <width>491</width>
+            <height>281</height>
+           </rect>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab_25">
+           <attribute name="title">
+            <string>Body Parts</string>
+           </attribute>
+           <widget class="QTableWidget" name="tb_sh_bp">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>40</y>
+              <width>311</width>
+              <height>91</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>BodyPart</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QLabel" name="label_24">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>10</y>
+              <width>81</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Body Parts:</string>
+            </property>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_14">
+            <property name="geometry">
+             <rect>
+              <x>19</x>
+              <y>176</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_15">
+             <item>
+              <widget class="QPushButton" name="pb_rem_shbp">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_add_shbp">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QComboBox" name="box_shbp">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>150</y>
+              <width>269</width>
+              <height>22</height>
+             </rect>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_30">
+           <attribute name="title">
+            <string>Target Roles</string>
+           </attribute>
+           <widget class="QWidget" name="horizontalLayoutWidget_18">
+            <property name="geometry">
+             <rect>
+              <x>9</x>
+              <y>176</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_19">
+             <item>
+              <widget class="QPushButton" name="pb_rem_shtr">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_add_shtr">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QComboBox" name="box_shtr">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>150</y>
+              <width>269</width>
+              <height>22</height>
+             </rect>
+            </property>
+           </widget>
+           <widget class="QTableWidget" name="tb_sh_tr">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>311</width>
+              <height>91</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>role</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QLabel" name="label_28">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>20</y>
+              <width>151</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Target Roles:</string>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_27">
+           <attribute name="title">
+            <string>Weapons</string>
+           </attribute>
+           <widget class="QTableWidget" name="tb_sh_wep">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>30</y>
+              <width>311</width>
+              <height>91</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>id</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QLabel" name="label_25">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>51</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Weapons:</string>
+            </property>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_15">
+            <property name="geometry">
+             <rect>
+              <x>9</x>
+              <y>166</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_16">
+             <item>
+              <widget class="QPushButton" name="pb_rem_shw">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_add_shw">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QLineEdit" name="fld_shw">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>130</y>
+              <width>221</width>
+              <height>22</height>
+             </rect>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_28">
+           <attribute name="title">
+            <string>Mods (include)</string>
+           </attribute>
+           <widget class="QTableWidget" name="tb_incmod_sh">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>311</width>
+              <height>91</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>id</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QLabel" name="label_26">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>151</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Inclusive Weapon Mods:</string>
+            </property>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_16">
+            <property name="geometry">
+             <rect>
+              <x>9</x>
+              <y>176</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_17">
+             <item>
+              <widget class="QPushButton" name="pb_rem_shmi">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_add_shmi">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QLineEdit" name="fld_shmi">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>140</y>
+              <width>251</width>
+              <height>22</height>
+             </rect>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_29">
+           <attribute name="title">
+            <string>Mods (exclude)</string>
+           </attribute>
+           <widget class="QTableWidget" name="tb_excmod_sh">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>30</y>
+              <width>311</width>
+              <height>91</height>
+             </rect>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>id</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="QLabel" name="label_27">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>151</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Exclusive Weapon Mods:</string>
+            </property>
+           </widget>
+           <widget class="QWidget" name="horizontalLayoutWidget_17">
+            <property name="geometry">
+             <rect>
+              <x>9</x>
+              <y>166</y>
+              <width>301</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="grid_addremove_18">
+             <item>
+              <widget class="QPushButton" name="pb_rem_shme">
+               <property name="text">
+                <string>Remove Selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pb_add_shme">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QLineEdit" name="fld_shme">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>130</y>
+              <width>261</width>
+              <height>22</height>
+             </rect>
+            </property>
+           </widget>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="gridLayoutWidget_8">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>20</y>
+            <width>371</width>
+            <height>190</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_5">
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_31">
+             <property name="text">
+              <string>Distance Compare:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_30">
+             <property name="text">
+              <string>Time To:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_29">
+             <property name="text">
+              <string>Time From:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="fld_timeto_sh"/>
+           </item>
+           <item row="2" column="1">
+            <widget class="QComboBox" name="box_distcomp_sh"/>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_timefrom_sh"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_32">
+             <property name="text">
+              <string>Distance:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QLineEdit" name="fld_value_sh"/>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="fld_dist_sh"/>
+           </item>
+           <item row="6" column="1">
+            <widget class="QComboBox" name="box_target_sh"/>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_33">
+             <property name="text">
+              <string>Value:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <widget class="QCheckBox" name="chk_cck_reset_sessionend_2">
+             <property name="text">
+              <string>Reset on Session End</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="label_34">
+             <property name="text">
+              <string>Target:</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_shtr">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>220</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_13">
+         <attribute name="title">
+          <string>HealthEffect</string>
+         </attribute>
+         <widget class="QTableWidget" name="tb_hebp">
+          <property name="geometry">
+           <rect>
+            <x>370</x>
+            <y>30</y>
+            <width>261</width>
+            <height>91</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>name</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QLabel" name="label_35">
+          <property name="geometry">
+           <rect>
+            <x>370</x>
+            <y>10</y>
+            <width>101</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Body Parts:</string>
+          </property>
+         </widget>
+         <widget class="QTableWidget" name="tb_heef">
+          <property name="geometry">
+           <rect>
+            <x>370</x>
+            <y>160</y>
+            <width>261</width>
+            <height>91</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>name</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QLabel" name="label_36">
+          <property name="geometry">
+           <rect>
+            <x>370</x>
+            <y>140</y>
+            <width>101</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Effects:</string>
+          </property>
+         </widget>
+         <widget class="QWidget" name="horizontalLayoutWidget_19">
+          <property name="geometry">
+           <rect>
+            <x>639</x>
+            <y>56</y>
+            <width>201</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="grid_addremove_20">
+           <item>
+            <widget class="QPushButton" name="pb_rem_hebp">
+             <property name="text">
+              <string>Remove Selected</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pb_add_hebp">
+             <property name="text">
+              <string>Add</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QComboBox" name="box_hebp">
+          <property name="geometry">
+           <rect>
+            <x>640</x>
+            <y>30</y>
+            <width>201</width>
+            <height>22</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QComboBox" name="box_heef">
+          <property name="geometry">
+           <rect>
+            <x>641</x>
+            <y>164</y>
+            <width>201</width>
+            <height>22</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QWidget" name="horizontalLayoutWidget_20">
+          <property name="geometry">
+           <rect>
+            <x>640</x>
+            <y>190</y>
+            <width>201</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="grid_addremove_22">
+           <item>
+            <widget class="QPushButton" name="pb_rem_heef">
+             <property name="text">
+              <string>Remove Selected</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pb_add_heef">
+             <property name="text">
+              <string>Add</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="gridLayoutWidget_9">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>351</width>
+            <height>181</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="box_encomp_he"/>
+           </item>
+           <item row="7" column="1">
+            <widget class="QLineEdit" name="fld_timeval_he"/>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="fld_hydval_he"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="fld_enval_he"/>
+           </item>
+           <item row="2" column="1">
+            <widget class="QComboBox" name="box_hydcomp_he"/>
+           </item>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="box_timecomp_he"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_64">
+             <property name="text">
+              <string>Energy Compare:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_65">
+             <property name="text">
+              <string>Energy Value:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_66">
+             <property name="text">
+              <string>Hydration Compare:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_67">
+             <property name="text">
+              <string>Hydration Value:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_68">
+             <property name="text">
+              <string>Time Compare:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <widget class="QLabel" name="label_69">
+             <property name="text">
+              <string>Time Value:</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_he">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>200</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_14">
+         <attribute name="title">
+          <string>HealthBuff</string>
+         </attribute>
+         <widget class="QComboBox" name="box_hb">
+          <property name="geometry">
+           <rect>
+            <x>281</x>
+            <y>24</y>
+            <width>201</width>
+            <height>22</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QTableWidget" name="tb_hb">
+          <property name="geometry">
+           <rect>
+            <x>11</x>
+            <y>24</y>
+            <width>261</width>
+            <height>91</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>name</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QLabel" name="label_70">
+          <property name="geometry">
+           <rect>
+            <x>11</x>
+            <y>4</y>
+            <width>101</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Health Buffs:</string>
+          </property>
+         </widget>
+         <widget class="QWidget" name="horizontalLayoutWidget_21">
+          <property name="geometry">
+           <rect>
+            <x>280</x>
+            <y>50</y>
+            <width>201</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="grid_addremove_23">
+           <item>
+            <widget class="QPushButton" name="pb_rem_hb">
+             <property name="text">
+              <string>Remove Selected</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pb_add_hb">
+             <property name="text">
+              <string>Add</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_hb">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>130</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_23">
+         <attribute name="title">
+          <string>LaunchFlare</string>
+         </attribute>
+         <widget class="QWidget" name="gridLayoutWidget_10">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>20</y>
+            <width>301</width>
+            <height>54</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_18">
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="fld_fl_zone"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_71">
+             <property name="text">
+              <string>Zone/Target Name:</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_fl">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>80</y>
+            <width>102</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_24">
+         <attribute name="title">
+          <string>InZone</string>
+         </attribute>
+         <widget class="QTableWidget" name="tb_iz">
+          <property name="geometry">
+           <rect>
+            <x>11</x>
+            <y>34</y>
+            <width>261</width>
+            <height>91</height>
+           </rect>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>name</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QLabel" name="label_72">
+          <property name="geometry">
+           <rect>
+            <x>11</x>
+            <y>14</y>
+            <width>101</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Zones:</string>
+          </property>
+         </widget>
+         <widget class="QWidget" name="horizontalLayoutWidget_22">
+          <property name="geometry">
+           <rect>
+            <x>280</x>
+            <y>60</y>
+            <width>201</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="grid_addremove_24">
+           <item>
+            <widget class="QPushButton" name="pb_rem_iz">
+             <property name="text">
+              <string>Remove Selected</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pb_add_iz">
+             <property name="text">
+              <string>Add</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="pb_finalize_iz">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>140</y>
+            <width>102</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Finalize</string>
+          </property>
+         </widget>
+         <widget class="QLineEdit" name="fld_iz">
+          <property name="geometry">
+           <rect>
+            <x>280</x>
+            <y>30</y>
+            <width>201</width>
+            <height>22</height>
+           </rect>
+          </property>
+         </widget>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_20">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>180</y>
+          <width>251</width>
+          <height>138</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="grid_quantity_3">
+         <item row="2" column="1">
+          <widget class="QComboBox" name="box_ff"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_59">
+           <property name="text">
+            <string>CC QuestType Label</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="fld_quantity_cc"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QPushButton" name="pb_remove_cc">
+           <property name="text">
+            <string>Remove Selected</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lb_quantity_cck">
+           <property name="text">
+            <string>Quantity:  </string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QPushButton" name="pb_finalize_cc">
+           <property name="text">
+            <string>Finalize</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="box_cc_qtlab"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_53">
+           <property name="text">
+            <string>Finish/Fail:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="fld_parentid_cc"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_60">
+           <property name="text">
+            <string>Parent ID</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QTableWidget" name="tb_cc">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>301</width>
+          <height>131</height>
+         </rect>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <column>
+         <property name="text">
+          <string>id</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>type</string>
+         </property>
+        </column>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_handover_item">
+       <attribute name="title">
+        <string>HandoverItem / FindItem</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>331</width>
+          <height>270</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="grid_fields2">
+         <item row="5" column="0">
+          <widget class="QLabel" name="lb_quantity_2">
+           <property name="text">
+            <string>Quantity:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="fld_mindur_it"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_hofind_it"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>HandOver or Find:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lb_maxdur">
+           <property name="text">
+            <string>Max Durability:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="fld_maxdur_it"/>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_54">
+           <property name="text">
+            <string>Finish/Fail:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="fld_dogtaglev_it"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="box_only_fir_2">
+           <property name="text">
+            <string>Only Found In Raid:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="1">
+          <widget class="QLineEdit" name="fld_parentid_it"/>
+         </item>
+         <item row="7" column="1">
+          <widget class="QComboBox" name="box_ff_it"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="box_only_fir_it"/>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="fld_quantity_it"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Required if handing over DogTag&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Dogtag Level:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lb_mindur">
+           <property name="text">
+            <string>Min Durability:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_61">
+           <property name="text">
+            <string>Parent ID</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QLabel" name="lb_itemid_list">
+        <property name="geometry">
+         <rect>
+          <x>370</x>
+          <y>10</y>
+          <width>231</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Items (by MongoID):</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>370</x>
+          <y>150</y>
+          <width>311</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="grid_itemid">
+         <item row="0" column="0">
+          <widget class="QLabel" name="lb_itemid">
+           <property name="text">
+            <string>Item: (MongoID):          </string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="fld_itemid_it"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>370</x>
+          <y>180</y>
+          <width>311</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="grid_add_remitem">
+         <item>
+          <widget class="QPushButton" name="pb_additem_it">
+           <property name="text">
+            <string>Add Item</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pb_remitem_it">
+           <property name="text">
+            <string>Remove Item</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_it">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>290</y>
+          <width>101</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize Task</string>
+        </property>
+       </widget>
+       <widget class="QTableWidget" name="tb_items">
+        <property name="geometry">
+         <rect>
+          <x>370</x>
+          <y>40</y>
+          <width>311</width>
+          <height>91</height>
+         </rect>
+        </property>
+        <column>
+         <property name="text">
+          <string>id</string>
+         </property>
+        </column>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tb_Skill">
+       <attribute name="title">
+        <string>Skill</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_13">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>261</width>
+          <height>141</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="3" column="1">
+          <widget class="QComboBox" name="box_ff_sk"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Target:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_55">
+           <property name="text">
+            <string>Finish/Fail:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>Level:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Compare Method:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_62">
+           <property name="text">
+            <string>Parent ID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="fld_level_sk"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_compare_sk"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="box_target_sk"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="fld_parentid_sk_2"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_sk">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>160</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize Task</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_leave_item">
+       <attribute name="title">
+        <string>LeaveItemAtLocation</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_6">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>411</width>
+          <height>298</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="grid_fields_4">
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="fld_mindur_li"/>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="lb_quantity_3">
+           <property name="text">
+            <string>Quantity:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QLineEdit" name="fld_plant_time_li"/>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="lb_plant_time">
+           <property name="text">
+            <string>Plant Time:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="lb_maxdur_2">
+           <property name="text">
+            <string>Max Durability:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lb_mindur_2">
+           <property name="text">
+            <string>Min Durability:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QComboBox" name="box_ff_li"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="fld_dogtaglevel_li"/>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_41">
+           <property name="text">
+            <string>Parent ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_18">
+           <property name="text">
+            <string>Dogtag Level:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lb_zoneid">
+           <property name="text">
+            <string>Zone ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QComboBox" name="box_fir_li"/>
+         </item>
+         <item row="7" column="1">
+          <widget class="QLineEdit" name="fld_quantity_li"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="fld_maxdur_li"/>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="lb_fir">
+           <property name="text">
+            <string>Found In Raid:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="fld_zoneid_li"/>
+         </item>
+         <item row="8" column="0">
+          <widget class="QLabel" name="label_56">
+           <property name="text">
+            <string>Finish/Fail:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="1">
+          <widget class="QLineEdit" name="fld_parentid_li"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_li">
+        <property name="geometry">
+         <rect>
+          <x>440</x>
+          <y>240</y>
+          <width>91</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize Task</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_12">
+        <property name="geometry">
+         <rect>
+          <x>440</x>
+          <y>200</y>
+          <width>301</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="grid_addremove_12">
+         <item>
+          <widget class="QPushButton" name="pb_rem_li_target">
+           <property name="text">
+            <string>Remove Selected</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pb_add_li_target">
+           <property name="text">
+            <string>Add</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QLabel" name="lb_addedweps_10">
+        <property name="geometry">
+         <rect>
+          <x>450</x>
+          <y>10</y>
+          <width>161</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Target IDs:</string>
+        </property>
+       </widget>
+       <widget class="QTableWidget" name="tb_li_target">
+        <property name="geometry">
+         <rect>
+          <x>450</x>
+          <y>40</y>
+          <width>271</width>
+          <height>101</height>
+         </rect>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <column>
+         <property name="text">
+          <string>name</string>
+         </property>
+        </column>
+       </widget>
+       <widget class="QLineEdit" name="fld_li_target">
+        <property name="geometry">
+         <rect>
+          <x>450</x>
+          <y>160</y>
+          <width>269</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_7">
+       <attribute name="title">
+        <string>PlaceBeacon</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>341</width>
+          <height>136</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_44">
+           <property name="text">
+            <string>Value:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_43">
+           <property name="text">
+            <string>Plant Time:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_45">
+           <property name="text">
+            <string>Zone ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="3">
+          <widget class="QComboBox" name="box_ff_pb"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_57">
+           <property name="text">
+            <string>Finish/Fail:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QSpinBox" name="sb_value_pb">
+           <property name="maximum">
+            <number>999999</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLineEdit" name="fld_zoneid_pb"/>
+         </item>
+         <item row="1" column="3">
+          <widget class="QSpinBox" name="sb_time_pb">
+           <property name="maximum">
+            <number>9999999</number>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_42">
+           <property name="text">
+            <string>Parent ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="3">
+          <widget class="QLineEdit" name="fld_parentid_pb"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_pb">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>160</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_8">
+       <attribute name="title">
+        <string>WeaponAssembly</string>
+       </attribute>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>201</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>To be implemented at a later date :)</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_wa">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>191</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize (generate placeholder)</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_trader_loyalty">
+       <attribute name="title">
+        <string>TraderLoyalty</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_14">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>311</width>
+          <height>136</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_14">
+           <property name="text">
+            <string>Target:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="box_target_tl"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_compare_tl"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_16">
+           <property name="text">
+            <string>Level:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Compare Method:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="fld_level_tl"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_58">
+           <property name="text">
+            <string>Finish/Fail:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QComboBox" name="box_ff_tl"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_63">
+           <property name="text">
+            <string>Parent ID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="fld_parentid_tl"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_tl">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>150</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize Task</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Start</string>
+     </attribute>
+     <widget class="QTabWidget" name="tabWidget_3">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>991</width>
+        <height>371</height>
+       </rect>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Level</string>
+       </attribute>
+       <widget class="QLabel" name="label_5">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>530</y>
+          <width>221</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Fail: ANY condition causes quest to fail
+</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_22">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>231</width>
+          <height>71</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_10">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_40">
+           <property name="text">
+            <string>Compare Method:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_46">
+           <property name="text">
+            <string>Value:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_compare_lv"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="fld_value_lv"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_lv">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>90</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>Quest</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_23">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>301</width>
+          <height>80</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_11">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_47">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Minutes that must have passed since completing the quest target for this quest to become available&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Available after:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_48">
+           <property name="text">
+            <string>Target ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="fld_avail_qs"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="fld_tid_qs"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_qs">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>110</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_49">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>50</y>
+          <width>49</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Statuses:</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_24">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>10</y>
+          <width>281</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_12">
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_status_qs"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_50">
+           <property name="text">
+            <string>Status</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QTableWidget" name="tb_status_qs">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>80</y>
+          <width>331</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <column>
+         <property name="text">
+          <string>status</string>
+         </property>
+        </column>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_29">
+        <property name="geometry">
+         <rect>
+          <x>620</x>
+          <y>10</y>
+          <width>181</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_17">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="pb_addstatus_qs">
+           <property name="text">
+            <string>Add</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="pb_remstatus_qs">
+           <property name="text">
+            <string>Remove Selected</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+       <attribute name="title">
+        <string>TraderStanding</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_25">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>301</width>
+          <height>91</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_13">
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_comparemethod_ts"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="fld_value_ts"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_19">
+           <property name="text">
+            <string>Compare Method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_51">
+           <property name="text">
+            <string>Trader</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_52">
+           <property name="text">
+            <string>Value</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="box_trader_ts"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_ts">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>110</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QTextBrowser" name="textBrowser">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>490</y>
+      <width>371</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="html">
+     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Note:&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;AvailableForStart: ALL conditions satisfied, causes quest to become available&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;AvailableForFinish: ALL conditions satisfied, causes quest to be complete (be able to turn in)&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Visibility Conditions are only valid for Finish/Fail conditions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="fld_taskid_gen">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>590</y>
+      <width>321</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_37">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>570</y>
+      <width>141</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Condition ID:</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_15">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>410</y>
+      <width>241</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_9">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_38">
+       <property name="text">
+        <string>Target</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="fld_visibility_targetid"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QTableWidget" name="tb_vis">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>490</y>
+      <width>321</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <column>
+     <property name="text">
+      <string>target</string>
+     </property>
+    </column>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_28">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>450</y>
+      <width>241</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_16">
+     <item row="0" column="0">
+      <widget class="QPushButton" name="pb_addvis">
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="pb_remvis">
+       <property name="text">
+        <string>Remove Selected</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QLabel" name="label_10">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>380</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Visibility Conditions:</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1469</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
