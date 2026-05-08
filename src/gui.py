@@ -71,6 +71,7 @@ class Gui_MainWindow(QMainWindow):
     self.ui.wb_base_check.toggled.connect(self.baseWeaponChecked)
     self.ui.actionAnalyze_CC_subtypes.triggered.connect(self.analyze_cc)
     self.ui.actionRemove_Selected_Quest.triggered.connect(self.remove_selected_quest)
+    self.ui.fld_idlookup.textChanged.connect(self.update_idlookup)
     #self.ui.wb_treeview.itemSelectionChanged.connect(self.onWeaponSelected)
     self.traders = self.importJson("data\\traders.json")
     # used for going back from ID to trader name for loading quest to edit
@@ -78,6 +79,9 @@ class Gui_MainWindow(QMainWindow):
     self.weapons = self.importJson("data\\weapons.json")
     self.locations = self.importJson("data\\locations.json")
     self.status = self.importJson("data\\status.json")
+    self.items = self.importJson("data\\items.json")
+    self.item_id_name = { _data['_name']:_id for _id,_data in self.items.items() }
+    print(f"Imported {len(self.items)} items.")
     self.status_invert = {v:k for k,v in self.status.items()}
     self.quests = {}
     self.datafiles = self.importJson("data\\datafiles.json")
@@ -88,6 +92,45 @@ class Gui_MainWindow(QMainWindow):
     self.weaponlist = []
     self.windows = []
     self.itemsJSON = None
+    self.id_search = {}
+
+  def add_items_to_idsearch(self):
+    for _id, _data in self.items.items():
+      self.id_search[_data['_name']] = _id
+
+  def update_idlookup(self):
+    self.ui.id_table.setRowCount(0)
+    search_str = self.ui.fld_idlookup.displayText()
+    try:
+      search_re = re.compile(search_str, re.IGNORECASE)
+    except Exception as e:
+      search_re = re.compile("")
+    keys_to_search = list(self.id_search.keys())
+    local_quest_ids = {}
+    # add newly created quests
+    for _id,_data in self.quests.items():
+      keys_to_search.append(_data['QuestName'])
+      local_quest_ids[_data['QuestName']] = _id
+    # add item keys
+    for _id, _data in self.items.items():
+      keys_to_search.append(_data['_name'])
+    # do the filtered search and inserts
+    filtered_keys = [item for item in keys_to_search if re.search(search_re, item)]
+    for key in filtered_keys:
+      row_position = self.ui.id_table.rowCount()
+      self.ui.id_table.insertRow(row_position)
+      if key in self.id_search:
+        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.id_search[key]))
+        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("wtt_custom"))
+      elif key in local_quest_ids:
+        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(local_quest_ids[key]))
+        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("new_quest"))
+      elif key in self.item_id_name:
+        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.item_id_name[key]))
+        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("eft_item"))
+
+      self.ui.id_table.setItem(row_position, 1, QTableWidgetItem(key))
+    
 
   def spawnWindow(self, window_type):
     match window_type:
@@ -254,8 +297,8 @@ class Gui_MainWindow(QMainWindow):
     text = item.data(Qt.ItemDataRole.UserRole)
     QApplication.clipboard().setText(text)
 
-  def importJson(self, path):
-    with open(path, "r") as f:
+  def importJson(self, path, _encoding="utf-8"):
+    with open(path, "r", encoding=_encoding) as f:
       out = json.load(f)
       return out
   
@@ -559,17 +602,32 @@ class Gui_DataEditor(QMainWindow):
     root_folder = QFileDialog.getExistingDirectory(self, "Select WTT root data folder")
     print(f"Finding JSON files in root folder: {root_folder}")
     datafiles = {}
-    datatypes = ["CustomItems", "CustomLocales", "CustomQuestZones", "CustomQuests", "CustomLootspawns"]
+    datatypes = ["CustomItems", "CustomLocales", "CustomQuestZones", "CustomQuests", "CustomLootspawns", "RootWTTFolder"]
     for path in Path(root_folder).rglob('*.json'):
       for datatype in datatypes:
         if datatype in str(path):
-          if datatype not in datafiles: datafiles[datatype] = []
           loaded_json = self.parent.importJson(str(path))
+          if datatype not in datafiles: datafiles[datatype] = []
+          # category-specific logic
+          if "CustomItems" in str(path):
+            for _id,_data in loaded_json.items():
+              self.parent.id_search[_data['locales']['en']['name']] = _id
+              self.parent.id_search[_data['locales']['en']['shortName']] = _id
+              self.parent.id_search[_data['locales']['en']['description']] = _id
+          elif "CustomQuests" in str(path):
+            if "en.json" in str(path):
+              for _id,_data in loaded_json.items():
+                self.parent.id_search[_data] = _id
+            elif "quest_definitions.json" in str(path):
+              for _id,_data in loaded_json.items():
+                quest = loaded_json[_id]
+                self.parent.id_search[quest['QuestName']] = _id
+          
           datafiles[datatype].append(loaded_json)
-
-      
+    datafiles["RootWTTFolder"] = [str(root_folder)]
     self.parent.datafiles = datafiles
     self.ui.statusbar.showMessage(f"Loaded {sum(len(sublist) for sublist in datafiles)} data files.")
+    
 
 class Gui_UpdatesDlg(QDialog):
     def __init__(self, parent=None):
