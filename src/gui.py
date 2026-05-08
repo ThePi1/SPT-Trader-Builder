@@ -85,6 +85,9 @@ class Gui_MainWindow(QMainWindow):
     self.status_invert = {v:k for k,v in self.status.items()}
     self.quests = {}
     self.datafiles = self.importJson("data\\datafiles.json")
+    self.customdata = {}
+    self.id_search = {}
+    self.import_datafiles()
     #RewardFail RewardStarted RewardSuccess
     self.table_fields = {}
     # When clearing table fields, keep any k/v pair with these strings in the key
@@ -92,7 +95,11 @@ class Gui_MainWindow(QMainWindow):
     self.weaponlist = []
     self.windows = []
     self.itemsJSON = None
-    self.id_search = {}
+
+  def import_datafiles(self):
+    allfiles = [item for sublist in self.datafiles.values() for item in sublist]
+    datafiles,datafiles_to_disk = Gui_DataEditor.import_customdata(self, allfiles, root_folder=None)
+    self.customdata = datafiles
 
   def add_items_to_idsearch(self):
     for _id, _data in self.items.items():
@@ -107,13 +114,24 @@ class Gui_MainWindow(QMainWindow):
       search_re = re.compile("")
     keys_to_search = list(self.id_search.keys())
     local_quest_ids = {}
+
     # add newly created quests
     for _id,_data in self.quests.items():
       keys_to_search.append(_data['QuestName'])
       local_quest_ids[_data['QuestName']] = _id
+
     # add item keys
     for _id, _data in self.items.items():
       keys_to_search.append(_data['_name'])
+
+    # add locations
+    for _location, _id in self.locations.items():
+      keys_to_search.append(_location)
+
+    # add traders
+    for _trader, _id in self.traders.items():
+      keys_to_search.append(_trader)
+
     # do the filtered search and inserts
     filtered_keys = [item for item in keys_to_search if re.search(search_re, item)]
     for key in filtered_keys:
@@ -128,6 +146,12 @@ class Gui_MainWindow(QMainWindow):
       elif key in self.item_id_name:
         self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.item_id_name[key]))
         self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("eft_item"))
+      elif key in self.locations.keys():
+        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.locations[key]))
+        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("location"))
+      elif key in self.traders.keys():
+        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.traders[key]))
+        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("trader"))
 
       self.ui.id_table.setItem(row_position, 1, QTableWidgetItem(key))
     
@@ -213,7 +237,6 @@ class Gui_MainWindow(QMainWindow):
     print("Button Started")
     
     slotID = self.ui.wb_modslot_combo.currentText() if not self.ui.wb_base_check else ""
-
     if self.ui.wb_base_check.isChecked(): # check if the base weapon box is checked.
       database_ID = QStandardItem(savedmongo)
       item_name.setData(savedmongo,Qt.ItemDataRole.UserRole)
@@ -228,24 +251,18 @@ class Gui_MainWindow(QMainWindow):
       return
     
     clicked_item = self.model.itemFromIndex(tree_index) # gets data from tree_index
-
-    
     parent_item = clicked_item.parent() # checks what is the parent and returns none if has no parent
     if parent_item is None: # if item has no parent then set the parent back to index 0 basically catches if the user selected the value collumn and the key then sets it to the key collumn
       clicked_item = self.model.item(clicked_item.row(),0)
     else:#same as above but if user clicks the childs value not the key
       clicked_item = parent_item.child(clicked_item.row(),0)
-
     parent_data = clicked_item.data(Qt.ItemDataRole.UserRole)
-
-
 
     if parent_data is None:
       print("No Parent Data")
 
     child_savedmongo = str(ObjectId())
     child_name.setData(child_savedmongo,Qt.ItemDataRole.UserRole)
-
     print("Append Child")
     #add item to treeview
     clicked_item.appendRow([child_name,child_ID,QStandardItem(child_savedmongo),QStandardItem(str(parent_data))])
@@ -280,18 +297,14 @@ class Gui_MainWindow(QMainWindow):
     finalized_item = {
       databaseID: item
     }
-
     self.weaponlist.append(finalized_item)
-
     self.exportWeaponPresets(self.weaponlist)
 
   def exportWeaponPresets(self,weaponlist):
-
     with open("Exported Files/weaponpresets.json", "w") as f:
       json.dump(weaponlist, f, indent=2)
 
   def copy_clicked_cell(self, item):
-    
     #if self.ui.ab_weappart_check.isChecked():
       #return
     text = item.data(Qt.ItemDataRole.UserRole)
@@ -601,33 +614,46 @@ class Gui_DataEditor(QMainWindow):
   def import_wtt(self):
     root_folder = QFileDialog.getExistingDirectory(self, "Select WTT root data folder")
     print(f"Finding JSON files in root folder: {root_folder}")
+    allfiles = Path(root_folder).rglob('*.json')
+    datafiles,datafiles_to_disk = Gui_DataEditor.import_customdata(self.parent, list(allfiles), root_folder=root_folder)
+    
+
+    with open("data\\datafiles.json", "w") as f:
+      json.dump(datafiles_to_disk, f)
+    self.ui.statusbar.showMessage(f"Loaded {sum(len(sublist) for sublist in datafiles)} data files.")
+  
+  @staticmethod
+  def import_customdata(qb_window, pathlist, root_folder=None):
+    datafiles_to_disk = {}
     datafiles = {}
     datatypes = ["CustomItems", "CustomLocales", "CustomQuestZones", "CustomQuests", "CustomLootspawns", "RootWTTFolder"]
-    for path in Path(root_folder).rglob('*.json'):
+    for path in pathlist:
       for datatype in datatypes:
         if datatype in str(path):
-          loaded_json = self.parent.importJson(str(path))
+          loaded_json = qb_window.importJson(str(path))
           if datatype not in datafiles: datafiles[datatype] = []
+          if datatype not in datafiles_to_disk: datafiles_to_disk[datatype] = []
+          # insert path in disk dict
+          datafiles_to_disk[datatype].append(str(path))
           # category-specific logic
           if "CustomItems" in str(path):
             for _id,_data in loaded_json.items():
-              self.parent.id_search[_data['locales']['en']['name']] = _id
-              self.parent.id_search[_data['locales']['en']['shortName']] = _id
-              self.parent.id_search[_data['locales']['en']['description']] = _id
+              qb_window.id_search[_data['locales']['en']['name']] = _id
+              qb_window.id_search[_data['locales']['en']['shortName']] = _id
+              qb_window.id_search[_data['locales']['en']['description']] = _id
           elif "CustomQuests" in str(path):
             if "en.json" in str(path):
               for _id,_data in loaded_json.items():
-                self.parent.id_search[_data] = _id
+                qb_window.id_search[_data] = _id
             elif "quest_definitions.json" in str(path):
               for _id,_data in loaded_json.items():
                 quest = loaded_json[_id]
-                self.parent.id_search[quest['QuestName']] = _id
+                qb_window.id_search[quest['QuestName']] = _id
           
           datafiles[datatype].append(loaded_json)
-    datafiles["RootWTTFolder"] = [str(root_folder)]
-    self.parent.datafiles = datafiles
-    self.ui.statusbar.showMessage(f"Loaded {sum(len(sublist) for sublist in datafiles)} data files.")
-    
+    if root_folder: datafiles["RootWTTFolder"] = [str(root_folder)]
+    qb_window.customdata = datafiles
+    return datafiles,datafiles_to_disk
 
 class Gui_UpdatesDlg(QDialog):
     def __init__(self, parent=None):
