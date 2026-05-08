@@ -58,6 +58,21 @@ class Gui_MainWindow(QMainWindow):
     self.controller = controller
     self.parent = parent
     self.setup_box_selections()
+    self.connect_actions()
+    self.import_datafiles()
+    self.setup_vars()
+
+  def setup_vars(self):
+    #RewardFail RewardStarted RewardSuccess
+    self.table_fields = {}
+    # When clearing table fields, keep any k/v pair with these strings in the key
+    self.table_fields_keep_str = ["Reward", "Condition"]
+    self.weaponlist = []
+    self.windows = []
+    self.itemsJSON = None
+    self.weapon_preset_filename = None
+
+  def connect_actions(self):
     self.ui.actionExit.triggered.connect(self.onExit)
     self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
     self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
@@ -73,6 +88,8 @@ class Gui_MainWindow(QMainWindow):
     self.ui.actionRemove_Selected_Quest.triggered.connect(self.remove_selected_quest)
     self.ui.fld_idlookup.textChanged.connect(self.update_idlookup)
     #self.ui.wb_treeview.itemSelectionChanged.connect(self.onWeaponSelected)
+
+  def import_datafiles(self):
     self.traders = self.importJson("data\\traders.json")
     # used for going back from ID to trader name for loading quest to edit
     self.traders_invert = {v:k for k,v in self.traders.items()}
@@ -87,16 +104,8 @@ class Gui_MainWindow(QMainWindow):
     self.datafiles = self.importJson("data\\datafiles.json")
     self.customdata = {}
     self.id_search = {}
-    self.import_datafiles()
-    #RewardFail RewardStarted RewardSuccess
-    self.table_fields = {}
-    # When clearing table fields, keep any k/v pair with these strings in the key
-    self.table_fields_keep_str = ["Reward", "Condition"]
-    self.weaponlist = []
-    self.windows = []
-    self.itemsJSON = None
 
-  def import_datafiles(self):
+    # import custom data from WTT file list
     allfiles = [item for sublist in self.datafiles.values() for item in sublist]
     datafiles,datafiles_to_disk = Gui_DataEditor.import_customdata(self, allfiles, root_folder=None)
     self.customdata = datafiles
@@ -138,23 +147,28 @@ class Gui_MainWindow(QMainWindow):
       row_position = self.ui.id_table.rowCount()
       self.ui.id_table.insertRow(row_position)
       if key in self.id_search:
-        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.id_search[key]))
-        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("wtt_custom"))
+        self.ui.id_table.setItem(row_position, 0, Gui_MainWindow.table_widget(self.id_search[key]))
+        self.ui.id_table.setItem(row_position, 2, Gui_MainWindow.table_widget("wtt_custom"))
       elif key in local_quest_ids:
-        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(local_quest_ids[key]))
-        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("new_quest"))
+        self.ui.id_table.setItem(row_position, 0, Gui_MainWindow.table_widget(local_quest_ids[key]))
+        self.ui.id_table.setItem(row_position, 2, Gui_MainWindow.table_widget("new_quest"))
       elif key in self.item_id_name:
-        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.item_id_name[key]))
-        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("eft_item"))
+        self.ui.id_table.setItem(row_position, 0, Gui_MainWindow.table_widget(self.item_id_name[key]))
+        self.ui.id_table.setItem(row_position, 2, Gui_MainWindow.table_widget("eft_item"))
       elif key in self.locations.keys():
-        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.locations[key]))
-        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("location"))
+        self.ui.id_table.setItem(row_position, 0, Gui_MainWindow.table_widget(self.locations[key]))
+        self.ui.id_table.setItem(row_position, 2, Gui_MainWindow.table_widget("location"))
       elif key in self.traders.keys():
-        self.ui.id_table.setItem(row_position, 0, QTableWidgetItem(self.traders[key]))
-        self.ui.id_table.setItem(row_position, 2, QTableWidgetItem("trader"))
+        self.ui.id_table.setItem(row_position, 0, Gui_MainWindow.table_widget(self.traders[key]))
+        self.ui.id_table.setItem(row_position, 2, Gui_MainWindow.table_widget("trader"))
 
-      self.ui.id_table.setItem(row_position, 1, QTableWidgetItem(key))
+      self.ui.id_table.setItem(row_position, 1, Gui_MainWindow.table_widget(key, hover=True))
     
+  @staticmethod
+  def table_widget(text, hover=False):
+    item = QTableWidgetItem(text)
+    if hover: item.setToolTip(text)
+    return item
 
   def spawnWindow(self, window_type):
     match window_type:
@@ -234,7 +248,7 @@ class Gui_MainWindow(QMainWindow):
 
     child_name = QStandardItem(str(self.ui.wb_modslot_combo.currentText()))
     child_ID = QStandardItem(self.ui.wb_itemid_edit.text())
-    print("Button Started")
+    # print("Button Started")
     
     slotID = self.ui.wb_modslot_combo.currentText() if not self.ui.wb_base_check else ""
     if self.ui.wb_base_check.isChecked(): # check if the base weapon box is checked.
@@ -242,7 +256,7 @@ class Gui_MainWindow(QMainWindow):
       item_name.setData(savedmongo,Qt.ItemDataRole.UserRole)
       self.model.appendRow([item_name,parent_ID,database_ID, QStandardItem("")])
       self.addPartToLists(parent_ID.text(),database_ID.text(), "",slotID)
-      print("checkbox is checked")
+      # print("checkbox is checked")
       return
     
     tree_index = self.ui.wb_treeview.currentIndex()
@@ -263,18 +277,18 @@ class Gui_MainWindow(QMainWindow):
 
     child_savedmongo = str(ObjectId())
     child_name.setData(child_savedmongo,Qt.ItemDataRole.UserRole)
-    print("Append Child")
+    # print("Append Child")
     #add item to treeview
     clicked_item.appendRow([child_name,child_ID,QStandardItem(child_savedmongo),QStandardItem(str(parent_data))])
     self.addPartToLists(child_ID.text(),child_savedmongo, parent_data,slotID)
     #expands tree of newly added items parent
     self.ui.wb_treeview.expand(tree_index)
-    print("Button Completed")
+    # print("Button Completed")
 
   def addPartToLists(self,ItemID,databaseID, parentID,slotID):
-    print("Item ID: " + ItemID)
-    print("Database ID: " + databaseID)
-    print("Parent ID: " + parentID)
+    # print("Item ID: " + ItemID)
+    # print("Database ID: " + databaseID)
+    # print("Parent ID: " + parentID)
     
     if not self.ui.wb_base_check.isChecked():
       item = {
@@ -301,7 +315,9 @@ class Gui_MainWindow(QMainWindow):
     self.exportWeaponPresets(self.weaponlist)
 
   def exportWeaponPresets(self,weaponlist):
-    with open("Exported Files/weaponpresets.json", "w") as f:
+    if self.weapon_preset_filename is None:
+      self.weapon_preset_filename, ok = QFileDialog.getSaveFileName(self, "Export Weapon Preset")
+    with open(self.weapon_preset_filename, "w") as f:
       json.dump(weaponlist, f, indent=2)
 
   def copy_clicked_cell(self, item):
