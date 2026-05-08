@@ -86,8 +86,25 @@ class Gui_MainWindow(QMainWindow):
     # When clearing table fields, keep any k/v pair with these strings in the key
     self.table_fields_keep_str = ["Reward", "Condition"]
     self.weaponlist = []
+    self.windows = []
     self.itemsJSON = None
 
+  def spawnWindow(self, window_type):
+    match window_type:
+      case "QuestBuilder":
+        dlg = Gui_QuestDlg(parent=self)
+      case "DataWindow":
+        dlg = Gui_DataEditor(parent=self)
+      case "AboutWindow":
+        dlg = Gui_AboutDlg(self)
+      case "UpdateWindow":
+        dlg = Gui_UpdatesDlg()
+      case "AssortBuilder":
+        dlg = Gui_AssortDlg(parent=self)
+
+    self.windows.append(dlg)
+    return dlg
+  
   def on_launch(self):
     self.ui.main_tab.setCurrentIndex(0)
     self.ui.wb_base_check.setChecked(True)
@@ -444,7 +461,7 @@ class Gui_MainWindow(QMainWindow):
     quest_id = quest_text.split(" ")[-1]
     quest = self.quests[quest_id]
     # create questbuilder window and load fields
-    dlg = Gui_QuestDlg(parent=self)
+    dlg = self.spawnWindow("QuestBuilder")
     dlg.load_settings_from_dict(quest)
 
   def remove_selected_quest(self):
@@ -466,15 +483,15 @@ class Gui_MainWindow(QMainWindow):
         break
 
   def onAbout(self, ver_current, url_text):
-    dlg = Gui_AboutDlg(self)
+    dlg = self.spawnWindow("AboutWindow")
     dlg.updateAbout(ver_current, url_text)
     dlg.exec()
 
   def editDataFiles(self):
-    dlg = Gui_DataEditor(parent=self)
+    dlg = self.spawnWindow("DataWindow")
 
   def popup(self, message):
-    dlg = Gui_AboutDlg(self)
+    dlg = self.spawnWindow("AboutWindow")
     text = dlg.ui.label.text()
     text = message
     dlg.ui.label.setText(QtCore.QCoreApplication.translate("AboutMenu", text))
@@ -487,15 +504,15 @@ class Gui_MainWindow(QMainWindow):
     sys.exit(0)
 
   def onUpdateWindow(self, ver_current, ver_latest, url_text, update_text):
-    dlg = Gui_UpdatesDlg()
+    dlg = self.spawnWindow("UpdateWindow")
     dlg.updateVersion(ver_current, ver_latest, url_text, update_text)
     dlg.exec()
 
   def onQuestWindow(self):
-     dlg = Gui_QuestDlg(parent=self)
+     dlg = self.spawnWindow("QuestBuilder")
   
   def onAssortWindow(self):
-     dlg = Gui_AssortDlg(parent=self)
+     dlg = self.spawnWindow("AssortBuilder")
      
 
   def exportAll(self, quest):
@@ -514,7 +531,7 @@ class Gui_MainWindow(QMainWindow):
 
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__()
         self.ui = Ui_AboutMenu()
         self.ui.setupUi(self)
         self.parent = parent
@@ -527,7 +544,7 @@ class Gui_AboutDlg(QDialog):
 
 class Gui_DataEditor(QMainWindow):
   def __init__(self, parent=None):
-      super().__init__(parent)
+      super().__init__()
       self.ui = Ui_DataEditor()
       self.ui.setupUi(self)
       self.on_launch()
@@ -556,7 +573,7 @@ class Gui_DataEditor(QMainWindow):
 
 class Gui_UpdatesDlg(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__()
         self.ui = Ui_UpdateMenu()
         self.ui.setupUi(self)
         self.parent = parent
@@ -889,7 +906,7 @@ class Gui_RewardDlg(QMainWindow):
 
 class Gui_QuestDlg(QMainWindow):
   def __init__(self, parent=None, _controller=None):
-    super().__init__(parent)
+    super().__init__()
     self.ui = Ui_QuestWindow()
     self.ui.setupUi(self)
     self.parent = parent
@@ -1107,7 +1124,7 @@ class Gui_QuestDlg(QMainWindow):
 
 class Gui_AssortDlg(QMainWindow):
   def __init__(self, parent=None,):
-    super().__init__(parent)
+    super().__init__()
     self.ui = Ui_AssortBuilder()
     self.ui.setupUi(self)
     self.parent = parent
