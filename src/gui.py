@@ -11,7 +11,9 @@ from PyQt6.QtGui import  QStandardItemModel, QStandardItem
 from PyQt6.QtCore import Qt, QRunnable
 from PyQt6.QtWidgets import QApplication, QAbstractItemView, QDialog, QHeaderView, QAbstractScrollArea, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem, QTableWidgetItem
 
-from gui_about import Ui_AboutMenu
+import tb_ui
+
+from gui_aboutwindow import Ui_AboutMenu
 from gui_main import Ui_MainGUI
 from gui_updates import Ui_UpdateMenu
 from gui_quests import Ui_QuestWindow
