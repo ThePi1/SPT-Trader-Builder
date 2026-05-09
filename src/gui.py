@@ -2,6 +2,7 @@ import sys
 import re
 import json
 import copy
+import traceback
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from pathlib import Path
@@ -11,16 +12,15 @@ from PyQt6.QtGui import  QStandardItemModel, QStandardItem
 from PyQt6.QtCore import Qt, QRunnable
 from PyQt6.QtWidgets import QApplication, QAbstractItemView, QDialog, QHeaderView, QAbstractScrollArea, QFileDialog, QMainWindow, QPushButton, QListView, QListWidget, QListWidgetItem, QTableWidgetItem
 
-import tb_ui
 
-from gui_aboutwindow import Ui_AboutMenu
-from gui_main import Ui_MainGUI
-from gui_updates import Ui_UpdateMenu
-from gui_quests import Ui_QuestWindow
-from gui_tasks import Ui_TaskWindow
-from gui_assort import Ui_AssortBuilder
-from gui_rewards import Ui_rewardBuilder
-from gui_datafiles import Ui_DataEditor
+from tb_ui.gui_about import Ui_AboutMenu
+from tb_ui.gui_main import Ui_MainGUI
+from tb_ui.gui_updates import Ui_UpdateMenu
+from tb_ui.gui_quests import Ui_QuestWindow
+from tb_ui.gui_tasks import Ui_TaskWindow
+from tb_ui.gui_assort import Ui_AssortBuilder
+from tb_ui.gui_rewards import Ui_rewardBuilder
+from tb_ui.gui_datafiles import Ui_DataEditor
 
 def val_field(value, emptyval, defaultval, expectclass):
   if value == emptyval:
@@ -339,7 +339,7 @@ class Gui_MainWindow(QMainWindow):
     print(filename)
     cc_keeptrack = {}
     non_cc_keeptrack = {}
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
       try:
         quests_import = json.load(f)
       except Exception as e:
@@ -477,13 +477,30 @@ class Gui_MainWindow(QMainWindow):
       print(f'"{_id}",')
     print(f"]")
 
-  def createLocaleFromJSON(self):
-    filename, ok = QFileDialog.getOpenFileName(self, "Open Quest JSON")
-    with open(filename, "r") as f:
+  def createLocaleFromJSON(self, l_file=None, q_file=None):
+    if l_file:
+      lfilename = l_file
+    else:
+      try:
+        lfilename, ok = QFileDialog.getOpenFileName(self, "Open Locale JSON")
+      except:
+        return
+      
+    if q_file:
+      qfilename = q_file
+    else:
+      try:
+        qfilename, ok = QFileDialog.getOpenFileName(self, "Open Quest JSON")
+      except:
+        return
+    print(qfilename)
+    
+    with open(qfilename, "r", encoding="utf-8") as f:
       try:
         locales = []
         q_locstr = ["name", "note", "acceptPlayerMessage","changeQuestMessageText","completePlayerMessage","declinePlayerMessage","description","failMessageText","startedMessageText","successMessageText"]
         cond_subtype = ["AvailableForFinish", "AvailableForStart", "Fail"]
+        print(f.read())
         quests_import = json.load(f)
         final_locale = {}
         print(f"{quests_import}")
@@ -505,8 +522,8 @@ class Gui_MainWindow(QMainWindow):
                 #   for cc in condition["counter"]["conditions"]:
                 #     locales.append(cc["id"])
         print(locales)
-        filename, ok = QFileDialog.getOpenFileName(self, "Open Base Locale JSON")
-        with open(filename, "r") as baselocale_f:
+
+        with open(lfilename, "r") as baselocale_f:
           base_locale = json.load(baselocale_f)
           base_locale_existing = list(base_locale.items())
           print(base_locale_existing)
@@ -516,12 +533,11 @@ class Gui_MainWindow(QMainWindow):
             if bl_key not in final_locale:
               final_locale[bl_key] = ""
           print(final_locale)
-          filename, ok = QFileDialog.getSaveFileName(self, "Save new Locale JSON")
-          with open(filename, "w") as savelocale_f:
-            json.dump(final_locale, savelocale_f, indent=4)
+        with open(lfilename, "w") as savelocale_f:
+          json.dump(final_locale, savelocale_f, indent=4)
 
       except Exception as e:
-        print(f"Error generating locale for quest file: {e}")
+        print(f"Error generating locale for quest file: {traceback.format_exc()}")
 
   def editSelectedQuest(self):
     qlist = self.ui.questList
@@ -590,18 +606,27 @@ class Gui_MainWindow(QMainWindow):
      
 
   def exportAll(self, quest):
-    filename, ok = QFileDialog.getSaveFileName(self, "Export Quest JSON")
-    with open(filename, 'w') as f:
+    qfilename, ok = QFileDialog.getSaveFileName(self, "Export Quest JSON")
+    with open(qfilename, 'w') as f:
       try:
         out = json.dumps(quest, indent=4).strip('[]\n')
         f.write(out)
         f.close()
-        self.popup(message=f"The export has completed successfully and can be found at {filename}.")
+        self.popup(message=f"The quest export has completed successfully and can be found at {qfilename}.")
       except Exception as e:
         print(f"Error: {e}")
-        self.popup(message=f"An error has occurred while exporting the final JSON file.")
+        self.popup(message=f"An error has occurred while exporting the final quest JSON file.")
       finally:
         f.close()
+
+    try:
+      self.createLocaleFromJSON(q_file=qfilename)
+      self.popup(message=f"The locale has been successfully updated.")
+    except Exception as e:
+      print(f"Error: {e}")
+      self.popup(message=f"An error has occurred while updating the locale JSON file.")
+    finally:
+      f.close()
 
 class Gui_AboutDlg(QDialog):
     def __init__(self, parent=None):
