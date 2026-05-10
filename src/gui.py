@@ -477,15 +477,8 @@ class Gui_MainWindow(QMainWindow):
       print(f'"{_id}",')
     print(f"]")
 
-  def createLocaleFromJSON(self, l_file=None, q_file=None):
-    if l_file:
-      lfilename = l_file
-    else:
-      try:
-        lfilename, ok = QFileDialog.getOpenFileName(self, "Open Locale JSON")
-      except:
-        return
-      
+  def createLocaleFromJSON(self, q_file=None, l_file=None):
+
     if q_file:
       qfilename = q_file
     else:
@@ -494,16 +487,23 @@ class Gui_MainWindow(QMainWindow):
       except:
         return
     print(qfilename)
+
+    if l_file:
+      lfilename = l_file
+    else:
+      try:
+        lfilename, ok = QFileDialog.getOpenFileName(self, "Open Locale JSON")
+      except:
+        return
+    print(lfilename)
     
     with open(qfilename, "r", encoding="utf-8") as f:
       try:
         locales = []
         q_locstr = ["name", "note", "acceptPlayerMessage","changeQuestMessageText","completePlayerMessage","declinePlayerMessage","description","failMessageText","startedMessageText","successMessageText"]
         cond_subtype = ["AvailableForFinish", "AvailableForStart", "Fail"]
-        print(f.read())
         quests_import = json.load(f)
         final_locale = {}
-        print(f"{quests_import}")
         for quest_id,quest in quests_import.items():
           print(f"Found quest: {quest['QuestName']} ({quest_id})")
           if quest['QuestName'] in ["Collector"]:
@@ -673,7 +673,11 @@ class Gui_DataEditor(QMainWindow):
     for path in pathlist:
       for datatype in datatypes:
         if datatype in str(path):
-          loaded_json = qb_window.importJson(str(path))
+          try:
+            loaded_json = qb_window.importJson(str(path))
+          except Exception as e:
+            print(f"Cannot load {str(path)}, skipping")
+            continue
           if datatype not in datafiles: datafiles[datatype] = []
           if datatype not in datafiles_to_disk: datafiles_to_disk[datatype] = []
           # insert path in disk dict
