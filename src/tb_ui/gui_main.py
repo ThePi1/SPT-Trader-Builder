@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'gui_main.ui'
+# Form implementation generated from reading ui file 'tb_ui\gui_main.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.2
 #
@@ -23,7 +23,7 @@ class Ui_MainGUI(object):
         MainGUI.setMinimumSize(QtCore.QSize(0, 0))
         MainGUI.setMaximumSize(QtCore.QSize(1080, 720))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("data/icon.ico"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon.addPixmap(QtGui.QPixmap("tb_ui\\data/icon.ico"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         MainGUI.setWindowIcon(icon)
         MainGUI.setTabShape(QtWidgets.QTabWidget.TabShape.Rounded)
         self.centralwidget = QtWidgets.QWidget(parent=MainGUI)

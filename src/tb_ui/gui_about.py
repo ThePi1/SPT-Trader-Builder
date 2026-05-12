@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'gui_about.ui'
+# Form implementation generated from reading ui file 'tb_ui\gui_about.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.2
 #
@@ -16,7 +16,7 @@ class Ui_AboutMenu(object):
         AboutMenu.setMinimumSize(QtCore.QSize(0, 0))
         AboutMenu.setMaximumSize(QtCore.QSize(400, 135))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("data/icon.ico"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon.addPixmap(QtGui.QPixmap("tb_ui\\data/icon.ico"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         AboutMenu.setWindowIcon(icon)
         self.label = QtWidgets.QLabel(parent=AboutMenu)
         self.label.setGeometry(QtCore.QRect(10, 10, 381, 131))

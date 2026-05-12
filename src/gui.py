@@ -734,14 +734,13 @@ class Gui_RewardDlg(QMainWindow):
     self.setup_buttons()
 
   def add_item(self, tab):
-    internal_id = str(ObjectId())
     has_soc = False
     has_pid = False
     has_sid = False
     match tab:
       case "Item":
         item = {
-          "_id": self.ui.fld_uid_item.displayText(),
+          "_id": str(ObjectId()),
           "_tpl": self.ui.fld_utpl_item.displayText(),
         }
         if self.ui.chk_soc_item.isChecked() or self.ui.chk_fir_item.isChecked():
@@ -759,11 +758,11 @@ class Gui_RewardDlg(QMainWindow):
           has_sid = True
         # self.items_item.append(item)
         # self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {self.ui.chk_fir_item.isChecked()}")
-        self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked(), 6: internal_id}, item)
+        self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, item['_id'], {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked()}, item)
 
       case "AssortmentUnlock":
         item = {
-          "_id": self.ui.fld_uid_asu.displayText(),
+          "_id": str(ObjectId()),
           "_tpl": self.ui.fld_utpl_asu.displayText(),
         }
         if self.ui.chk_soc_asu.isChecked() or self.ui.chk_fir_asu.isChecked():
@@ -783,7 +782,7 @@ class Gui_RewardDlg(QMainWindow):
         # self.items_asu.append(item)
         # self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, fir: {self.ui.chk_fir_asu.isChecked()}")
         
-        self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked(), 6: internal_id}, item)
+        self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, item['_id'], {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked()}, item)
 
 
   def remove_selected_item(self, tab):
@@ -941,8 +940,7 @@ class Gui_RewardDlg(QMainWindow):
             has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
             has_pid = 'parentId' in item
             has_sid = 'slotId' in item
-            internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
-            self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked(), 6: internal_id}, item)
+            self.parent.parent.add_table_field(f"RewardAssortmentUnlock", self.ui.tb_asu_item, item['_id'], {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_asu.isChecked()}, item)
             #self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
 
         case "Experience":
@@ -963,8 +961,7 @@ class Gui_RewardDlg(QMainWindow):
             has_soc = 'upd' in item and 'StackObjectsCount' in item['upd']
             has_pid = 'parentId' in item
             has_sid = 'slotId' in item
-            internal_id = str(ObjectId()) # this is only used for table purposes, so we don't need to actually match it to anything
-            self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, internal_id, {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked(), 6: internal_id}, item)
+            self.parent.parent.add_table_field(f"RewardItem", self.ui.tb_item, item['_id'], {0: item['_id'], 1: item['_tpl'], 2: item['upd']['StackObjectsCount'] if has_soc else 'n/a', 3: item['parentId'] if has_pid else 'n/a', 4: item['slotId'] if has_sid else 'n/a', 5: self.ui.chk_fir_item.isChecked()}, item)
             # self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {1}")
 
 

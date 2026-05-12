@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'gui_assort.ui'
+# Form implementation generated from reading ui file 'tb_ui\gui_assort.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.2
 #
