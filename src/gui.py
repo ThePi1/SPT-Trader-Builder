@@ -103,7 +103,10 @@ class Gui_MainWindow(QMainWindow):
     print(f"Imported {len(self.items)} items.")
     self.status_invert = {v:k for k,v in self.status.items()}
     self.quests = {}
-    self.datafiles = self.importJson("data/datafiles.json")
+    try:
+      self.datafiles = self.importJson("data/datafiles.json")
+    except Exception as e:
+      self.datafiles = {}
     self.customdata = {}
     self.id_search = {}
 
@@ -792,6 +795,19 @@ class Gui_RewardDlg(QMainWindow):
       case "Item":
         self.parent.parent.remove_selected_table_item(type="RewardItem", table=self.ui.tb_item, id_row=6)
 
+  def select_target_id(self, item_obj, manual = False, manual_id = None):
+    if manual:
+      return manual_id
+    else:
+      if len(item_obj[0]) >= 1:
+        try:
+          return item_obj[0]["_id"]
+        except Exception as e:
+          return ""
+      else: # Should never happen, but if there is no ID (empty item list might happen)
+        return ""
+
+
   def finalize(self, reward_type):
     match reward_type:
       case "Achievement":
@@ -813,7 +829,7 @@ class Gui_RewardDlg(QMainWindow):
           "index": 0,
           "items": local_items,
           "loyaltyLevel": int(self.ui.box_loyalty_asu.cleanText()),
-          "target": self.ui.fld_tid_asu.displayText(),
+          "target": self.select_target_id(item_obj=local_items, manual=self.ui.chk_target_specify_asu.isChecked(), manual_id=self.ui.fld_man_target_asu.displayText()),
           "traderId": self.parent.parent.traders[self.ui.box_trader_asu.currentText()],
           "type": "AssortmentUnlock",
           "unknown": is_true(self.ui.box_unknown_asu.currentText())
@@ -837,7 +853,7 @@ class Gui_RewardDlg(QMainWindow):
           "id": self.id,
           "index": 0,
           "items": local_items,
-          "target": self.ui.fld_tid_item.displayText(),
+          "target": self.select_target_id(item_obj=local_items, manual=self.ui.chk_target_specify_it.isChecked(), manual_id=self.ui.fld_man_target_it.displayText()),
           "type": "Item",
           "unknown": is_true(self.ui.box_unknown_item.currentText()),
           "value": int(self.ui.box_value_item.cleanText())
