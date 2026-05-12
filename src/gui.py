@@ -722,7 +722,7 @@ class Gui_UpdatesDlg(QDialog):
 
 class Gui_RewardDlg(QMainWindow):
   def __init__(self, parent=None, _controller=None):
-    super().__init__(parent)
+    super().__init__()
     self.ui = Ui_rewardBuilder()
     self.ui.setupUi(self)
     self.parent = parent
@@ -1744,7 +1744,7 @@ class Gui_AssortDlg(QMainWindow):
 
 class Gui_TaskDlg(QMainWindow):
   def __init__(self, parent=None):
-    super().__init__(parent)
+    super().__init__()
     self.ui = Ui_TaskWindow()
     self.ui.setupUi(self)
     self.parent = parent
