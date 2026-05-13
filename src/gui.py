@@ -1301,11 +1301,12 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.ab_unlimitedcount.toggled.connect(self.unlimitedIsChecked)
     self.ui.ab_buyrestriction_checkbox.toggled.connect(self.brestrictionChecked)
     self.ui.ab_quest_check.toggled.connect(self.questLockedChecked)
-    self.ui.ab_weappart_check.toggled.connect(self.weaponPartChecked)
+    self.ui.ab_tab.currentChanged.connect(self.weaponPartChecked)
     self.ui.ab_table.itemSelectionChanged.connect(self.onWeaponSelected)
     self.ui.ab_table.itemClicked.connect(self.copy_clicked_cell)
     self.ui.ab_search.textChanged.connect(self.filterTable)
     self.ui.ab_itembarter_check.toggled.connect(self.itemBarterChecked)
+    self.weaponPartChecked(self.ui.ab_tab.currentIndex())
     self.itemlist = []
     self.barterlist = {}
     self.loyaltylist = {}
@@ -1318,7 +1319,6 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.ab_quest_id.setEnabled(False)
     self.ui.ab_itembarter_edit.setEnabled(False)
     self.ui.ab_tab.setCurrentIndex(0)
-    self.weaponPartChecked(self.ui.ab_weappart_check.isChecked())
     self.questLockedChecked(self.ui.ab_quest_check.isChecked())
     self.brestrictionChecked(self.ui.ab_buyrestriction_checkbox.isChecked())
     table = self.ui.ab_table
@@ -1331,6 +1331,31 @@ class Gui_AssortDlg(QMainWindow):
     for col in range (1,6):
       header.setSectionResizeMode(col,QHeaderView.ResizeMode.Stretch)
     self.ui.ab_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+
+  def dataBaseCall(self)
+
+  def verifyComplete(self):
+    check = True
+    self.ui.ab_weapmongo_edit.setStyleSheet("")
+    self.ui.ab_quantity.setStyleSheet("")
+    self.ui.ab_cost_edit.setStyleSheet("")
+    self.ui.ab_Item_Id.setStyleSheet("")
+
+    if self.ui.ab_tab.currentIndex() == 1:
+      if self.ui.ab_weapmongo_edit.text().strip() == "":
+        self.ui.ab_weapmongo_edit.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
+        check = False
+    else:
+      if self.ui.ab_quantity.text().strip() == "":
+        self.ui.ab_quantity.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
+        check = False
+      if self.ui.ab_cost_edit.text().strip() == "":
+        self.ui.ab_cost_edit.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
+        check = False
+      if self.ui.ab_Item_Id.text().strip() == "":
+        self.ui.ab_Item_Id.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
+        check = False
+    return check
 
   def copy_clicked_cell(self, item):
       
@@ -1431,10 +1456,10 @@ class Gui_AssortDlg(QMainWindow):
 
           display_name = tpl
           if isinstance(slot, str) and slot.startswith("mod_") and parent != "hideout":
-              display_name = f"{parent}+{slot}"   # <-- what you asked for
+              display_name = f"{parent}+{slot}"
 
           name_item = QTableWidgetItem(display_name)
-          name_item.setData(Qt.ItemDataRole.UserRole, it.get("_id", ""))  # keep your hidden id
+          name_item.setData(Qt.ItemDataRole.UserRole, it.get("_id", ""))
 
 
           table.setItem(row, 0, name_item)
@@ -1489,7 +1514,7 @@ class Gui_AssortDlg(QMainWindow):
 
   def questLockedChecked(self, checked): #UI behavior
       
-      if not self.ui.ab_weappart_check.isChecked(): #Checks to see if weaponpart is not checked and skips ui behavior if it is
+      if not self.ui.ab_tab.currentIndex() == 0: #Checks to see if weaponpart is not checked and skips ui behavior if it is
         if checked : 
           self.ui.ab_quest_id.setEnabled(True)
           self.ui.ab_condition_box.setEnabled(True)
@@ -1498,78 +1523,23 @@ class Gui_AssortDlg(QMainWindow):
           self.ui.ab_condition_box.setEnabled(False)
           self.ui.ab_quest_id.clear()
 
-  def weaponPartChecked(self, checked): #UI behavior
-    if checked : 
+  def weaponPartChecked(self, index): #UI behavior
+    if index == 1 : 
       self.ui.ab_quantity.clear()
-      self.ui.ab_quantity.setEnabled(False)
       self.ui.ab_Item_Id.clear()
-      self.ui.ab_Item_Id.setEnabled(False)
-      self.ui.ab_unlimitedcount.setEnabled(False)
       self.ui.ab_cost_edit.clear()
-      self.ui.ab_cost_edit.setEnabled(False)
-      self.ui.ab_rouble_radiobutton.setEnabled(False)
-      self.ui.ab_usd_button.setEnabled(False)
-      self.ui.ab_euro_button.setEnabled(False)
-      self.ui.ab_loyalty_combo.setEnabled(False)
-      self.ui.ab_quest_check.setEnabled(False)
-      self.ui.ab_quest_id.setEnabled(False)
       self.ui.ab_quest_id.clear()
-      self.ui.ab_condition_box.setEnabled(False)
-      self.ui.ab_buyrestriction_checkbox.setEnabled(False)
-      self.ui.ab_buyRestriction_edit.setEnabled(False)
       self.ui.ab_buyRestriction_edit.clear()
-      self.ui.ab_itembarter_check.setEnabled(False)
-      self.ui.ab_itembarter_edit.setEnabled(False)
       self.ui.ab_itembarter_edit.clear()
-      self.ui.ab_buyrestriction.setStyleSheet("color: gray;")
-      self.ui.ab_itemid.setStyleSheet("color: gray;")
-      self.ui.ab_quantity_2.setStyleSheet("color: gray;")
-      self.ui.ab_loyalty.setStyleSheet("color: gray;")
-      self.ui.ab_condition.setStyleSheet("color: gray;")
-      self.ui.ab_cost.setStyleSheet("color: gray;")
-
-      self.ui.ab_partid_edit.setEnabled(True)
-      self.ui.ab_weapmongo_edit.setEnabled(False)
-      self.ui.ab_modslot_combo.setEnabled(True)
-      self.ui.ab_mongo.setStyleSheet("")
-      self.ui.ab_weapid.setStyleSheet("")
-      self.ui.ab_modslot.setStyleSheet("")
       self.questLockedChecked(self.ui.ab_quest_check.isChecked())
       
     else:
       self.ui.ab_quantity.clear()
-      self.ui.ab_quantity.setEnabled(True)
       self.ui.ab_Item_Id.clear()
-      self.ui.ab_Item_Id.setEnabled(True)
-      self.ui.ab_unlimitedcount.setEnabled(True)
       self.ui.ab_cost_edit.clear()
-      self.ui.ab_cost_edit.setEnabled(True)
-      self.ui.ab_rouble_radiobutton.setEnabled(True)
-      self.ui.ab_usd_button.setEnabled(True)
-      self.ui.ab_euro_button.setEnabled(True)
-      self.ui.ab_loyalty_combo.setEnabled(True)
-      self.ui.ab_quest_check.setEnabled(True)
-      self.ui.ab_quest_id.setEnabled(True)
       self.ui.ab_quest_id.clear()
-      self.ui.ab_condition_box.setEnabled(True)
-      self.ui.ab_buyrestriction_checkbox.setEnabled(True)
-      self.ui.ab_buyRestriction_edit.setEnabled(True)
-      self.ui.ab_itembarter_check.setEnabled(True)
-      self.ui.ab_buyrestriction.setStyleSheet("")
-      self.ui.ab_itemid.setStyleSheet("")
-      self.ui.ab_quantity_2.setStyleSheet("")
-      self.ui.ab_loyalty.setStyleSheet("")
-      self.ui.ab_condition.setStyleSheet("")
-      self.ui.ab_cost.setStyleSheet("")
-
-      self.ui.ab_weapmongo_edit.setEnabled(False)
-      self.ui.ab_modslot_combo.setEnabled(False)
-      self.ui.ab_partid_edit.setEnabled(False)
       self.ui.ab_weapmongo_edit.clear()
       self.ui.ab_partid_edit.clear()
-      self.ui.ab_mongo.setStyleSheet("color: gray;")
-      self.ui.ab_weapid.setStyleSheet("color: gray;")
-      self.ui.ab_modslot.setStyleSheet("color: gray;")
 
       self.questLockedChecked(self.ui.ab_quest_check.isChecked())
       self.itemBarterChecked(self.ui.ab_itembarter_check.isChecked())
@@ -1611,8 +1581,7 @@ class Gui_AssortDlg(QMainWindow):
 
     table = self.ui.ab_table
 
-    if self.ui.ab_weappart_check.isChecked() and self.ui.ab_weapmongo_edit.text().strip() == "":
-      self.ui.ab_weapmongo_edit.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
+    if not self.verifyComplete():
       return
 
     #Item variables
@@ -1649,7 +1618,7 @@ class Gui_AssortDlg(QMainWindow):
       cashtype = "Euros"
 
     #selects item key structure depending on item or weapon part.
-    if self.ui.ab_weappart_check.isChecked():
+    if self.ui.ab_tab.currentIndex() == 1:
       item = {
         "_id": mongosaved,
         "_tpl": partID,
@@ -1734,7 +1703,7 @@ class Gui_AssortDlg(QMainWindow):
     row = table.rowCount()
     table.insertRow(row)
 
-    if not self.ui.ab_weappart_check.isChecked(): #if root item give it no Parent
+    if not self.ui.ab_tab.currentIndex() == 1: #if root item give it no Parent
       item_Id.setData(Qt.ItemDataRole.UserRole, None) 
     else:
       item_Id.setData(Qt.ItemDataRole.UserRole, parentID) #if its not give it clicked user role
