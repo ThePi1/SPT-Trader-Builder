@@ -550,9 +550,17 @@ class Gui_MainWindow(QMainWindow):
       return
     quest_text = select[0].text()
 
+    for window in self.windows: #Checks if QUESTDLG Open if so make active window.
+      if isinstance(window,Gui_QuestDlg) and window.isVisible():
+        window.activateWindow()
+        return
+
     # hacky but easier than setting up a bunch of tables in qt6
     quest_id = quest_text.split(" ")[-1]
     quest = self.quests[quest_id]
+
+    self.clear_table_fields()
+
     # create questbuilder window and load fields
     dlg = self.spawnWindow("QuestBuilder")
     dlg.load_settings_from_dict(quest)
@@ -602,6 +610,11 @@ class Gui_MainWindow(QMainWindow):
     dlg.exec()
 
   def onQuestWindow(self):
+     for window in self.windows: #Checks if QUESTDLG Open if so make active window.
+        if isinstance(window, Gui_QuestDlg) and window.isVisible():
+          window.activateWindow()
+          return
+     self.clear_table_fields()
      dlg = self.spawnWindow("QuestBuilder")
   
   def onAssortWindow(self):
