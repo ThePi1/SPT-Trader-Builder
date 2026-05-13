@@ -175,18 +175,24 @@ class Gui_MainWindow(QMainWindow):
     if hover: item.setToolTip(text)
     return item
 
-  def spawnWindow(self, window_type):
+  def spawnWindow(self, window_type, _parent=None):
+    if _parent is None:
+      _parent = self
     match window_type:
       case "QuestBuilder":
-        dlg = Gui_QuestDlg(parent=self)
+        dlg = Gui_QuestDlg(parent=_parent)
       case "DataWindow":
-        dlg = Gui_DataEditor(parent=self)
+        dlg = Gui_DataEditor(parent=_parent)
       case "AboutWindow":
-        dlg = Gui_AboutDlg(self)
+        dlg = Gui_AboutDlg(parent=_parent)
       case "UpdateWindow":
-        dlg = Gui_UpdatesDlg()
+        dlg = Gui_UpdatesDlg(parent=_parent)
       case "AssortBuilder":
-        dlg = Gui_AssortDlg(parent=self)
+        dlg = Gui_AssortDlg(parent=_parent)
+      case "RewardBuilder":
+        dlg = Gui_RewardDlg(parent=_parent)
+      case "TaskBuilder":
+        dlg = Gui_TaskDlg(parent=_parent)
 
     self.windows.append(dlg)
     return dlg
@@ -1076,10 +1082,10 @@ class Gui_QuestDlg(QMainWindow):
     self.show()
   
   def on_launch(self):
-    self.ui.pb_add_task.released.connect(lambda: Gui_TaskDlg(parent=self))
+    self.ui.pb_add_task.released.connect(lambda: self.parent.spawnWindow("TaskBuilder", _parent=self))
     self.ui.pb_rem_task.released.connect(lambda: self.parent.remove_selected_table_item(type="ConditionAny", table=self.ui.tb_cond))
     self.ui.pb_finalize_quest.released.connect(self.finalize)
-    self.ui.pb_add_reward.released.connect(lambda: Gui_RewardDlg(parent=self))
+    self.ui.pb_add_reward.released.connect(lambda: self.parent.spawnWindow("RewardBuilder", _parent=self))
     self.ui.pb_edit_reward.released.connect(self.edit_selected_reward)
     self.ui.pb_edit_task.released.connect(self.edit_selected_task)
     self.ui.pb_remove_reward.released.connect(self.remove_selected_reward)
@@ -1120,7 +1126,8 @@ class Gui_QuestDlg(QMainWindow):
             found_reward = reward
             break
     # create questbuilder window and load fields
-    dlg = Gui_RewardDlg(parent=self)
+    # dlg = Gui_RewardDlg(parent=self)
+    dlg = self.parent.spawnWindow("RewardBuilder", _parent=self)
     dlg.load_settings_from_dict(found_reward, type)
 
   def remove_selected_reward(self):
@@ -1211,7 +1218,7 @@ class Gui_QuestDlg(QMainWindow):
               breaknext = True
             
       # create questbuilder window and load fields
-      dlg = Gui_TaskDlg(parent=self)
+      dlg = self.parent.spawnWindow("TaskBuilder", _parent=self)
       dlg.load_settings_from_dict(found_reward, type)
 
   def finalize(self):
