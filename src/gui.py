@@ -1332,8 +1332,6 @@ class Gui_AssortDlg(QMainWindow):
       header.setSectionResizeMode(col,QHeaderView.ResizeMode.Stretch)
     self.ui.ab_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
-  def dataBaseCall(self)
-
   def verifyComplete(self):
     check = True
     self.ui.ab_weapmongo_edit.setStyleSheet("")
