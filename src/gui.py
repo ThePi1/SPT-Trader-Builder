@@ -565,7 +565,7 @@ class Gui_MainWindow(QMainWindow):
     quest_id = quest_text.split(" ")[-1]
     quest = self.quests[quest_id]
 
-    self.clear_table_fields()
+    # self.clear_table_fields()
 
     # create questbuilder window and load fields
     dlg = self.spawnWindow("QuestBuilder")
@@ -620,7 +620,7 @@ class Gui_MainWindow(QMainWindow):
         if isinstance(window, Gui_QuestDlg) and window.isVisible():
           window.activateWindow()
           return
-     self.clear_table_fields()
+    #  self.clear_table_fields()
      dlg = self.spawnWindow("QuestBuilder")
   
   def onAssortWindow(self):
