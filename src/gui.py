@@ -804,9 +804,9 @@ class Gui_RewardDlg(QMainWindow):
   def remove_selected_item(self, tab):
     match tab:
       case "AssortmentUnlock":
-        self.parent.parent.remove_selected_table_item(type="RewardAssortmentUnlock", table=self.ui.tb_asu_item, id_row=6)
+        self.parent.parent.remove_selected_table_item(type="RewardAssortmentUnlock", table=self.ui.tb_asu_item, id_row=0)
       case "Item":
-        self.parent.parent.remove_selected_table_item(type="RewardItem", table=self.ui.tb_item, id_row=6)
+        self.parent.parent.remove_selected_table_item(type="RewardItem", table=self.ui.tb_item, id_row=0)
 
   def select_target_id(self, item_obj, manual = False, manual_id = None):
     if manual:
