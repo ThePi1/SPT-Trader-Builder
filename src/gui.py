@@ -1353,6 +1353,7 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.ab_cost_edit.setStyleSheet("")
     self.ui.ab_Item_Id.setStyleSheet("")
     self.ui.ab_partid_edit.setStyleSheet("")
+    self.ui.ab_buyRestriction_edit.setStyleSheet("")
 
     if self.ui.ab_tab.currentIndex() == 1:
       if self.ui.ab_weapmongo_edit.text().strip() == "":
@@ -1370,6 +1371,9 @@ class Gui_AssortDlg(QMainWindow):
         check = False
       if self.ui.ab_Item_Id.text().strip() == "":
         self.ui.ab_Item_Id.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
+        check = False
+      if self.ui.ab_buyRestriction_edit.text().strip() == "" and self.ui.ab_buyrestriction_checkbox.isChecked():
+        self.ui.ab_buyRestriction_edit.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
         check = False
     return check
 
@@ -1512,6 +1516,7 @@ class Gui_AssortDlg(QMainWindow):
     if checked : 
       self.ui.ab_quantity.clear()
       self.ui.ab_quantity.setEnabled(False)
+      self.ui.ab_quantity.setStyleSheet("")
     else:
       self.ui.ab_quantity.setEnabled(True)
 
