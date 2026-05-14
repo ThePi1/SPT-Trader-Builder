@@ -1301,12 +1301,13 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.ab_unlimitedcount.toggled.connect(self.unlimitedIsChecked)
     self.ui.ab_buyrestriction_checkbox.toggled.connect(self.brestrictionChecked)
     self.ui.ab_quest_check.toggled.connect(self.questLockedChecked)
-    self.ui.ab_tab.currentChanged.connect(self.weaponPartChecked)
+    self.ui.ab_weap_ammo_check.toggled.connect(self.ammoCheckIsChecked)
+    self.ui.ab_tab.currentChanged.connect(self.tabChange)
     self.ui.ab_table.itemSelectionChanged.connect(self.onWeaponSelected)
     self.ui.ab_table.itemClicked.connect(self.copy_clicked_cell)
     self.ui.ab_search.textChanged.connect(self.filterTable)
     self.ui.ab_itembarter_check.toggled.connect(self.itemBarterChecked)
-    self.weaponPartChecked(self.ui.ab_tab.currentIndex())
+    self.tabChange(self.ui.ab_tab.currentIndex())
     self.itemlist = []
     self.barterlist = {}
     self.loyaltylist = {}
@@ -1315,6 +1316,7 @@ class Gui_AssortDlg(QMainWindow):
     self.setup_box_selections()
     self.ui.ab_rouble_radiobutton.setChecked(True)
     self.ui.ab_quest_check.setChecked(False)
+    self.ui.ab_weap_ammo_count.setEnabled(False)
     self.ui.ab_buyRestriction_edit.setEnabled(False)
     self.ui.ab_quest_id.setEnabled(False)
     self.ui.ab_itembarter_edit.setEnabled(False)
@@ -1332,19 +1334,35 @@ class Gui_AssortDlg(QMainWindow):
       header.setSectionResizeMode(col,QHeaderView.ResizeMode.Stretch)
     self.ui.ab_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
+  @staticmethod
+  def itemDatabase(tpl):
+    filename = "data/ab_itemName_reference.json"
+    
+    with open (filename, "r", encoding= "utf-8") as file:
+      reference = json.load(file)
+
+    for item in reference.get("items",[]):
+      if tpl == item.get("id",""):
+        return item.get("name","")
+    return tpl
+  
   def verifyComplete(self):
     check = True
     self.ui.ab_weapmongo_edit.setStyleSheet("")
     self.ui.ab_quantity.setStyleSheet("")
     self.ui.ab_cost_edit.setStyleSheet("")
     self.ui.ab_Item_Id.setStyleSheet("")
+    self.ui.ab_partid_edit.setStyleSheet("")
 
     if self.ui.ab_tab.currentIndex() == 1:
       if self.ui.ab_weapmongo_edit.text().strip() == "":
         self.ui.ab_weapmongo_edit.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
         check = False
+      if self.ui.ab_partid_edit.text().strip() == "" and not self.ui.ab_unlimitedcount.isChecked():
+        self.ui.ab_partid_edit.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
+        check = False
     else:
-      if self.ui.ab_quantity.text().strip() == "":
+      if self.ui.ab_quantity.text().strip() == "" and not self.ui.ab_unlimitedcount.isChecked():
         self.ui.ab_quantity.setStyleSheet("border: 2px solid red; background-color: #ffe6e6;")
         check = False
       if self.ui.ab_cost_edit.text().strip() == "":
@@ -1367,7 +1385,7 @@ class Gui_AssortDlg(QMainWindow):
     self.ui.ab_condition_box.addItems(self.parent.controller.ab_box_condition_req)
     self.ui.ab_modslot_combo.addItems(self.parent.controller.ab_box_modslot)
 
-  def onImportAssort(self): #AI WRITTEN function purely for fun lol.
+  def onImportAssort(self): #AI WRITTEN function purely for ease. I will be coming back to this.
       table = self.ui.ab_table
       filename, _ = QFileDialog.getOpenFileName(
           self,
@@ -1401,12 +1419,12 @@ class Gui_AssortDlg(QMainWindow):
       table.setSortingEnabled(True)
       table.horizontalHeader().setSortIndicatorShown(True)
 
-      for it in items:
-          item_id = it.get("_id", "")
-          tpl = it.get("_tpl", "")
+      for item in items:
+          item_id = item.get("_id", "")
+          tpl = item.get("_tpl", "")
           
 
-          upd = it.get("upd", {}) or {}
+          upd = item.get("upd", {}) or {}
           unlimited = bool(upd.get("UnlimitedCount", False))
           stack = upd.get("StackObjectsCount", 1)
 
@@ -1418,8 +1436,8 @@ class Gui_AssortDlg(QMainWindow):
           loyalty_display = "" if loyalty == "" else str(loyalty)
 
           # Quest locked?
-          quest_id = it.get("questID", "")
-          unlocked_on = it.get("unlockedOn", "")
+          quest_id = item.get("questID", "")
+          unlocked_on = item.get("unlockedOn", "")
           # show questID if present, otherwise blank
           quest_display = quest_id if quest_id else ""
 
@@ -1448,20 +1466,21 @@ class Gui_AssortDlg(QMainWindow):
           row = table.rowCount()
           table.insertRow(row)
 
-          tpl = it.get("_tpl", "")
-          slot = it.get("slotId", "")
-          parent = it.get("parentId", "")
+          tpl = item.get("_tpl", "")
+          slot = item.get("slotId", "")
+          parent = item.get("parentId", "")
 
-          display_name = tpl
+          display_name = self.itemDatabase(tpl);
           if isinstance(slot, str) and slot.startswith("mod_") and parent != "hideout":
               display_name = f"{parent}+{slot}"
 
           name_item = QTableWidgetItem(display_name)
-          name_item.setData(Qt.ItemDataRole.UserRole, it.get("_id", ""))
+          name_item.setData(Qt.ItemDataRole.UserRole, item.get("_id", ""))
 
 
           table.setItem(row, 0, name_item)
           table.setItem(row, 1, QTableWidgetItem(qty_display))
+          table.item(row, 1).setData(Qt.ItemDataRole.UserRole, item.get("_id", ""))
           table.setItem(row, 2, QTableWidgetItem(cost_display))
           table.setItem(row, 3, QTableWidgetItem(loyalty_display))
           table.setItem(row, 4, QTableWidgetItem(quest_display))
@@ -1474,7 +1493,7 @@ class Gui_AssortDlg(QMainWindow):
       return
     
     self.itemClicked = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)
-    self.parentid = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
+    self.parentid = self.ui.ab_table.item(row, 1).data(Qt.ItemDataRole.UserRole)
     print("* " + str(self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.UserRole)))
     self.ui.ab_weapmongo_edit.setText(self.parentid)
 
@@ -1496,6 +1515,13 @@ class Gui_AssortDlg(QMainWindow):
     else:
       self.ui.ab_quantity.setEnabled(True)
 
+  def ammoCheckIsChecked(self, checked):
+    if checked : 
+      self.ui.ab_weap_ammo_count.setEnabled(True)
+    else :
+      self.ui.ab_weap_ammo_count.setEnabled(False)
+      self.ui.ab_weap_ammo_count.clear()
+
   def brestrictionChecked(self, checked): #UI behavior
       if checked : 
         self.ui.ab_buyRestriction_edit.setEnabled(True)
@@ -1511,8 +1537,7 @@ class Gui_AssortDlg(QMainWindow):
         self.ui.ab_itembarter_edit.clear()
 
   def questLockedChecked(self, checked): #UI behavior
-      
-      if not self.ui.ab_tab.currentIndex() == 0: #Checks to see if weaponpart is not checked and skips ui behavior if it is
+      if not self.ui.ab_tab.currentIndex() == 1: #Checks to see if weaponpart is not checked and skips ui behavior if it is
         if checked : 
           self.ui.ab_quest_id.setEnabled(True)
           self.ui.ab_condition_box.setEnabled(True)
@@ -1520,25 +1545,30 @@ class Gui_AssortDlg(QMainWindow):
           self.ui.ab_quest_id.setEnabled(False)
           self.ui.ab_condition_box.setEnabled(False)
           self.ui.ab_quest_id.clear()
-
-  def weaponPartChecked(self, index): #UI behavior
-    if index == 1 : 
+    
+  def clearUI(self):
+      self.ui.ab_Item_Id.clear()
+      self.ui.ab_cost_edit.clear()
+      self.ui.ab_quest_id.clear()
+      self.ui.ab_weapmongo_edit.clear()
+      self.ui.ab_partid_edit.clear()
       self.ui.ab_quantity.clear()
       self.ui.ab_Item_Id.clear()
       self.ui.ab_cost_edit.clear()
       self.ui.ab_quest_id.clear()
       self.ui.ab_buyRestriction_edit.clear()
       self.ui.ab_itembarter_edit.clear()
-      self.questLockedChecked(self.ui.ab_quest_check.isChecked())
+      self.ui.ab_weap_ammo_count.clear()
+
+  def tabChange(self, index): #UI behavior
+    if index == 1 : 
+      self.clearUI()
+      self.ui.ab_quest_check.setChecked(False)
+      self.ui.ab_weapmongo_edit.setEnabled(False)
       
     else:
-      self.ui.ab_quantity.clear()
-      self.ui.ab_Item_Id.clear()
-      self.ui.ab_cost_edit.clear()
-      self.ui.ab_quest_id.clear()
-      self.ui.ab_weapmongo_edit.clear()
-      self.ui.ab_partid_edit.clear()
-
+      self.clearUI()
+      self.ui.ab_weap_ammo_check.setChecked(False)
       self.questLockedChecked(self.ui.ab_quest_check.isChecked())
       self.itemBarterChecked(self.ui.ab_itembarter_check.isChecked())
 
@@ -1556,7 +1586,7 @@ class Gui_AssortDlg(QMainWindow):
             rows_to_remove.append(row)
 
     for row in reversed(rows_to_remove):
-        child_id = self.ui.ab_table.item(row, 0).data(Qt.ItemDataRole.EditRole)
+        child_id = self.ui.ab_table.item(row, 1).data(Qt.ItemDataRole.UserRole)
         self.removeTableChildren(child_id)  # recurse before removing
         self.ui.ab_table.removeRow(row)
 
@@ -1565,7 +1595,7 @@ class Gui_AssortDlg(QMainWindow):
     if row < 0 : 
       return
     
-    mongosaved = self.ui.ab_table.item(row,0).data(Qt.ItemDataRole.EditRole)
+    mongosaved = self.ui.ab_table.item(row, 1).data(Qt.ItemDataRole.UserRole)
     self.remove_children(mongosaved)
     if mongosaved in self.barterlist: #checks if weapon part and skips barterlist and loyaltylist
       self.barterlist.pop(mongosaved)
@@ -1578,6 +1608,7 @@ class Gui_AssortDlg(QMainWindow):
   def add_item(self): #The basic assort add function
 
     table = self.ui.ab_table
+    table.setSortingEnabled(False)
 
     if not self.verifyComplete():
       return
@@ -1586,15 +1617,30 @@ class Gui_AssortDlg(QMainWindow):
     mongosaved = str(ObjectId())
     itemID = self.ui.ab_Item_Id.text().strip()
     unlimited = True if self.ui.ab_unlimitedcount.isChecked() else False
-    quantity = str(self.ui.ab_quantity.text() or 0)
-    barteritem = str(self.ui.ab_itembarter_edit.text() or 0)
-    loyaltylevel = str(self.ui.ab_loyalty_combo.currentText())
-    cost = self.ui.ab_cost_edit.text().strip() or 0
-    questLockedChecked = "Yes" if self.ui.ab_quest_check.isChecked() else "No"
-    questID = self.ui.ab_quest_id.text().strip()
-    buyrestriction = self.ui.ab_buyRestriction_edit.text() or 0
+    quantity = str(self.ui.ab_quantity.text())
+    if self.ui.ab_tab.currentIndex() == 1:
+      quantity = "N/A"
+    barteritem = str(self.ui.ab_itembarter_edit.text())
 
-    item_Id = QTableWidgetItem(str(itemID))
+    loyaltylevel = str(self.ui.ab_loyalty_combo.currentText())
+    if self.ui.ab_tab.currentIndex() == 1:
+      loyaltylevel = "N/A"
+
+    cost = self.ui.ab_cost_edit.text().strip()
+    if self.ui.ab_tab.currentIndex() == 1:
+      cost = "N/A"
+
+    if self.ui.ab_quest_check.isChecked():
+      questLockedChecked = "Yes"
+    elif self.ui.ab_tab.currentIndex() == 1:
+      questLockedChecked = "N/A"
+    else : questLockedChecked = "No"
+
+    questID = self.ui.ab_quest_id.text().strip()
+    buyrestriction = self.ui.ab_buyRestriction_edit.text()
+    ammoCount = str(self.ui.ab_weap_ammo_count.text())
+
+    item_Id = QTableWidgetItem()
 
     #Weapon Part Variables
     slotID = str(self.ui.ab_modslot_combo.currentText())
@@ -1606,7 +1652,9 @@ class Gui_AssortDlg(QMainWindow):
      # itemID = self.ui.ab_table.item(self.ui.ab_table.currentRow(),0).text() + " + " + self.ui.ab_modslot_combo.currentText()
 
     cashtype = "Undefined" #set cashtype then check type and apply
-    if self.ui.ab_rouble_radiobutton.isChecked() :
+    if self.ui.ab_tab.currentIndex() == 1:
+      cashtype = "N/A"
+    elif self.ui.ab_rouble_radiobutton.isChecked() :
       cashtype = "Roubles"
     elif self.ui.ab_usd_button.isChecked():
       cashtype = "USD"
@@ -1616,15 +1664,26 @@ class Gui_AssortDlg(QMainWindow):
       cashtype = "Euros"
 
     #selects item key structure depending on item or weapon part.
-    if self.ui.ab_tab.currentIndex() == 1:
-      item = {
-        "_id": mongosaved,
-        "_tpl": partID,
-        "parentId": parentID,
-        "slotId": slotID
-      }
+    if self.ui.ab_tab.currentIndex() == 1 :
+      if not self.ui.ab_weap_ammo_check.isChecked():
+        item = {
+          "_id": mongosaved,
+          "_tpl": partID,
+          "parentId": parentID,
+          "slotId": slotID
+        }
+      else:
+        item = { #sets initial item key structure for editing in logic.
+          "_id": mongosaved,
+          "_tpl": partID,
+          "parentId": parentID,
+          "slotId": "cartridges",
+          "location": 0,
+          "upd": {
+              "StackObjectsCount": ammoCount
+            }
+          }
       self.itemlist.append(item)
-
     else:
       item = { #sets initial item key structure for editing in logic.
         "_id": mongosaved,
@@ -1702,22 +1761,31 @@ class Gui_AssortDlg(QMainWindow):
     table.insertRow(row)
 
     if not self.ui.ab_tab.currentIndex() == 1: #if root item give it no Parent
-      item_Id.setData(Qt.ItemDataRole.UserRole, None) 
+      item_Id.setData(Qt.ItemDataRole.UserRole, None)
+      display_name = self.itemDatabase(itemID)
     else:
       item_Id.setData(Qt.ItemDataRole.UserRole, parentID) #if its not give it clicked user role
+      display_name = self.itemDatabase(partID)
 
+    
+    #print(f"After setText: {item_Id.text()}\n")
     item_Id.setData(Qt.ItemDataRole.EditRole, mongosaved)
+    item_Id.setText(display_name)
+    #print(f"itemID: {itemID}, partID: {partID}, display_name: {display_name}")
 
     tablequantity = "∞" if self.ui.ab_unlimitedcount.isChecked() else quantity
     
     table.setItem(row,0,item_Id)
     table.setItem(row,1,QTableWidgetItem(str(tablequantity)))
+    table.item(row,1).setData(Qt.ItemDataRole.UserRole, mongosaved)
     table.setItem(row,2,QTableWidgetItem(str(cost)))
     table.setItem(row,3,QTableWidgetItem(loyaltylevel))
     table.setItem(row,4,QTableWidgetItem(questLockedChecked))
     table.setItem(row,5,QTableWidgetItem(cashtype))
 
     self.ui.ab_weapmongo_edit.setStyleSheet("")
+
+    self.clearUI()
 
   def onExportAssort(self):  #export the finalized assort
     assort = {
