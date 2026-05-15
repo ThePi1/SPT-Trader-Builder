@@ -817,6 +817,8 @@ class Gui_RewardDlg(QMainWindow):
   def select_target_id(self, item_obj, manual = False, manual_id = None):
     if manual:
       return manual_id
+    if item_obj is None or len(item_obj) <= 0:
+      return ""
     else:
       if len(item_obj[0]) >= 1:
         try:
