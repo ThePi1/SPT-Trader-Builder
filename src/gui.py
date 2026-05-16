@@ -22,6 +22,17 @@ from tb_ui.gui_assort import Ui_AssortBuilder
 from tb_ui.gui_rewards import Ui_rewardBuilder
 from tb_ui.gui_datafiles import Ui_DataEditor
 
+def safe_file_dialog(method, window_title):
+  try:
+    filename, ok = method(window_title)
+    if ok:
+      return filename, ok
+    else:
+      return None, ok
+  except Exception as e:
+    print(f"Error opening file dialog: {e}")
+    return None, False
+
 def val_field(value, emptyval, defaultval, expectclass):
   if value == emptyval:
     return defaultval
@@ -327,7 +338,10 @@ class Gui_MainWindow(QMainWindow):
 
   def exportWeaponPresets(self,weaponlist):
     if self.weapon_preset_filename is None:
-      self.weapon_preset_filename, ok = QFileDialog.getSaveFileName(self, "Export Weapon Preset")
+      self.weapon_preset_filename, ok = safe_file_dialog(QFileDialog.getSaveFileName, "Export Weapon Preset")
+      if self.weapon_preset_filename is None or not ok:
+        print("No file selected for weapon presets, skipping export.")
+        return
     with open(self.weapon_preset_filename, "w") as f:
       json.dump(weaponlist, f, indent=2)
 
@@ -344,7 +358,12 @@ class Gui_MainWindow(QMainWindow):
   
   def analyze_cc(self):
     print(f"Analyzing CC subtypes, opening dialogue...")
-    filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
+
+    filename, ok = safe_file_dialog(QFileDialog.getOpenFileName, "Import Quest JSON")
+    if not ok or filename is None:
+      print("No file selected, aborting CC analysis.")
+      return
+
     print(filename)
     cc_keeptrack = {}
     non_cc_keeptrack = {}
@@ -374,7 +393,10 @@ class Gui_MainWindow(QMainWindow):
     print(non_cc_keeptrack)
 
   def importQuests(self):
-    filename, ok = QFileDialog.getOpenFileName(self, "Import Quest JSON")
+    filename, ok = safe_file_dialog(QFileDialog.getOpenFileName, "Import Quest JSON")
+    if not ok or filename is None:
+      print("No file selected, aborting quest import.")
+      return
     print(filename)
     with open(filename, "r") as f:
       try:
@@ -462,7 +484,10 @@ class Gui_MainWindow(QMainWindow):
     if self.itemsJSON is not None:
       self.itemsJSON = None
       print(f"Items.json detected, wiping and re-importing.")
-    filename, ok = QFileDialog.getOpenFileName(self, "Import items.json")
+    filename, ok = safe_file_dialog(QFileDialog.getOpenFileName, "Import items.json")
+    if not ok or filename is None:
+      print("No file selected, aborting items import.")
+      return
     with open(filename, "r", encoding="cp866") as f:
       self.itemsJSON = json.load(f)
 
@@ -492,7 +517,10 @@ class Gui_MainWindow(QMainWindow):
       qfilename = q_file
     else:
       try:
-        qfilename, ok = QFileDialog.getOpenFileName(self, "Open Quest JSON")
+        qfilename, ok = safe_file_dialog(QFileDialog.getOpenFileName, "Open Quest JSON")
+        if not ok or qfilename is None:
+          print("No file selected for quest JSON, aborting locale generation.")
+          return
       except:
         return
     print(qfilename)
@@ -501,7 +529,10 @@ class Gui_MainWindow(QMainWindow):
       lfilename = l_file
     else:
       try:
-        lfilename, ok = QFileDialog.getOpenFileName(self, "Open Locale JSON")
+        lfilename, ok = safe_file_dialog(QFileDialog.getOpenFileName, "Open Locale JSON")
+        if not ok or lfilename is None:
+          print("No file selected for locale JSON, aborting locale generation.")
+          return
       except:
         return
     print(lfilename)
@@ -628,7 +659,10 @@ class Gui_MainWindow(QMainWindow):
      
 
   def exportAll(self, quest):
-    qfilename, ok = QFileDialog.getSaveFileName(self, "Export Quest JSON")
+    qfilename, ok = safe_file_dialog(QFileDialog.getSaveFileName, "Export Quest JSON")
+    if not ok or qfilename is None:
+      print("No file selected for quest export, aborting export.")
+      return
     with open(qfilename, 'w') as f:
       try:
         out = json.dumps(quest, indent=4).strip('[]\n')
@@ -677,7 +711,10 @@ class Gui_DataEditor(QMainWindow):
     pass
 
   def import_wtt(self):
-    root_folder = QFileDialog.getExistingDirectory(self, "Select WTT root data folder")
+    root_folder = safe_file_dialog(QFileDialog.getExistingDirectory, "Select WTT root data folder")
+    if root_folder is None:
+      print("No folder selected, aborting WTT import.")
+      return
     print(f"Finding JSON files in root folder: {root_folder}")
     allfiles = Path(root_folder).rglob('*.json')
     datafiles,datafiles_to_disk = Gui_DataEditor.import_customdata(self.parent, list(allfiles), root_folder=root_folder)
