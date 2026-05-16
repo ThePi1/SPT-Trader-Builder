@@ -24,7 +24,7 @@ from tb_ui.gui_datafiles import Ui_DataEditor
 
 def safe_file_dialog(method, window_title):
   try:
-    filename, ok = method(window_title)
+    filename, ok = method(caption=window_title)
     if ok:
       return filename, ok
     else:
