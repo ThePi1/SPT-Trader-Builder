@@ -28,7 +28,7 @@
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
-      <string>Finish/Fail</string>
+      <string>Finish/Fail Only</string>
      </attribute>
      <widget class="QTabWidget" name="tabWidget">
       <property name="geometry">
@@ -69,7 +69,7 @@
          </rect>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>10</number>
         </property>
         <widget class="QWidget" name="tab_11">
          <attribute name="title">
@@ -1141,7 +1141,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </rect>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>4</number>
           </property>
           <widget class="QWidget" name="tab_25">
            <attribute name="title">
@@ -2781,7 +2781,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
-      <string>Start</string>
+      <string>Start Only</string>
      </attribute>
      <widget class="QTabWidget" name="tabWidget_3">
       <property name="geometry">
@@ -2859,138 +2859,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </property>
        </widget>
       </widget>
-      <widget class="QWidget" name="tab_4">
-       <attribute name="title">
-        <string>Quest</string>
-       </attribute>
-       <widget class="QWidget" name="gridLayoutWidget_23">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>301</width>
-          <height>80</height>
-         </rect>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_11">
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_47">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Minutes that must have passed since completing the quest target for this quest to become available&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Available after:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_48">
-           <property name="text">
-            <string>Target ID:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="fld_avail_qs"/>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="fld_tid_qs"/>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QPushButton" name="pb_finalize_qs">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>110</y>
-          <width>75</width>
-          <height>24</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Finalize</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_49">
-        <property name="geometry">
-         <rect>
-          <x>330</x>
-          <y>50</y>
-          <width>49</width>
-          <height>16</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Statuses:</string>
-        </property>
-       </widget>
-       <widget class="QWidget" name="gridLayoutWidget_24">
-        <property name="geometry">
-         <rect>
-          <x>330</x>
-          <y>10</y>
-          <width>281</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_12">
-         <item row="0" column="1">
-          <widget class="QComboBox" name="box_status_qs"/>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_50">
-           <property name="text">
-            <string>Status</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QTableWidget" name="tb_status_qs">
-        <property name="geometry">
-         <rect>
-          <x>330</x>
-          <y>80</y>
-          <width>331</width>
-          <height>81</height>
-         </rect>
-        </property>
-        <property name="selectionBehavior">
-         <enum>QAbstractItemView::SelectRows</enum>
-        </property>
-        <column>
-         <property name="text">
-          <string>status</string>
-         </property>
-        </column>
-       </widget>
-       <widget class="QWidget" name="gridLayoutWidget_29">
-        <property name="geometry">
-         <rect>
-          <x>620</x>
-          <y>10</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_17">
-         <item row="0" column="0">
-          <widget class="QPushButton" name="pb_addstatus_qs">
-           <property name="text">
-            <string>Add</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="pb_remstatus_qs">
-           <property name="text">
-            <string>Remove Selected</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
       <widget class="QWidget" name="tab_5">
        <attribute name="title">
         <string>TraderStanding</string>
@@ -3049,6 +2917,166 @@ li.checked::marker { content: &quot;\2612&quot;; }
         <property name="text">
          <string>Finalize</string>
         </property>
+       </widget>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_17">
+     <attribute name="title">
+      <string>Any</string>
+     </attribute>
+     <widget class="QTabWidget" name="tabWidget_8">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1241</width>
+        <height>351</height>
+       </rect>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_33">
+       <attribute name="title">
+        <string>Quest</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_30">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>301</width>
+          <height>80</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_21">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_76">
+           <property name="text">
+            <string>Target ID:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="fld_avail_qs"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="fld_tid_qs"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_75">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Minutes that must have passed since completing the quest target for this quest to become available&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Available after:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_47">
+           <property name="text">
+            <string>Timing</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="box_timing_qs"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pb_finalize_qs">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>110</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Finalize</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_77">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>50</y>
+          <width>49</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Statuses:</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_31">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>10</y>
+          <width>281</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_22">
+         <item row="0" column="1">
+          <widget class="QComboBox" name="box_status_qs"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_78">
+           <property name="text">
+            <string>Status</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QTableWidget" name="tb_status_qs">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>80</y>
+          <width>331</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <column>
+         <property name="text">
+          <string>status</string>
+         </property>
+        </column>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_32">
+        <property name="geometry">
+         <rect>
+          <x>620</x>
+          <y>10</y>
+          <width>181</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_23">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="pb_addstatus_qs">
+           <property name="text">
+            <string>Add</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="pb_remstatus_qs">
+           <property name="text">
+            <string>Remove Selected</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
      </widget>

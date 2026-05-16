@@ -1878,6 +1878,7 @@ class Gui_TaskDlg(QMainWindow):
     self.ui.box_target_tl.addItems(self.parent.parent.traders.keys())
     self.ui.box_compare_lv.addItems(ctr.default_compare)
     self.ui.box_status_qs.addItems(ctr.tb_queststatus)
+    self.ui.box_timing_qs.addItems(ctr.tb_any)
     self.ui.box_comparemethod_ts.addItems(ctr.default_compare)
     self.ui.box_cc_qtlab.addItems(ctr.qb_box_quest_type_label)
     self.ui.box_ff.addItems(ctr.tb_finishfail)
@@ -2382,7 +2383,7 @@ class Gui_TaskDlg(QMainWindow):
           "visibilityConditions": []
         }
       case "Quest":
-        timing = "Start"
+        timing = self.ui.box_timing_qs.currentText()
         local_status = self.parent.parent.get_singlecolumn_field_list("QStatus")
         local_status_int = [self.parent.parent.status[s] for s in local_status]
         local_availafter = val_field(self.ui.fld_avail_qs.displayText(), "", 0, int)

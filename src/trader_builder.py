@@ -54,6 +54,7 @@ class Controller:
     tb_exitstatus                         = str(parser.get('box_fields', 'tb_exitstatus')).split(',')
     tb_queststatus                        = str(parser.get('box_fields', 'tb_queststatus')).split(',')
     tb_finishfail                         = str(parser.get('box_fields', 'tb_finishfail')).split(',')
+    tb_any                                = str(parser.get('box_fields', 'tb_any')).split(',')
     tb_effect                             = str(parser.get('box_fields', 'tb_effect')).split(',')
     tb_buff                               = str(parser.get('box_fields', 'tb_buff')).split(',')
     wb_box_modslot                        = str(parser.get('box_fields', 'ab_box_modslot')).split(',')
