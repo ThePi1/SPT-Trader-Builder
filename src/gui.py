@@ -439,7 +439,7 @@ class Gui_MainWindow(QMainWindow):
     print(f"Debug: removing selected item, type: {type}, table: {table}. Table_fields: {self.table_fields}")
     # if we need to check multiple types (like for rewards), do so
     if type == "RewardAny":
-      alltypes = ["RewardFail", "RewardStarted", "RewardSuccess"]
+      alltypes = ["RewardFail", "RewardStarted", "RewardSuccess", "RewardAssortmentUnlock", "RewardSuccess"]
     elif type == "ConditionAny":
       alltypes = ["ConditionFinish", "ConditionStart", "ConditionFail"]
     else:
@@ -492,6 +492,9 @@ class Gui_MainWindow(QMainWindow):
       self.itemsJSON = json.load(f)
 
   def getAllChildrenCalc(self):
+    if self.itemsJSON is None:
+      print(f"No items.json loaded, cannot calculate children.")
+      return
     print(f"Enter via console the parent ID that you wish to use:")
     parent_id = input()
     found_ids = []
