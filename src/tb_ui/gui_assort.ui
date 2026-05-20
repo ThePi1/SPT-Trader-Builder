@@ -66,7 +66,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="ab_newitem_tab">
      <attribute name="title">
@@ -185,9 +185,6 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="5">
-        <widget class="QLineEdit" name="ab_quest_id"/>
-       </item>
        <item row="2" column="4">
         <widget class="QCheckBox" name="ab_quest_check">
          <property name="toolTip">
@@ -199,6 +196,16 @@
         </widget>
        </item>
        <item row="3" column="4">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Quest ID:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="5">
+        <widget class="QLineEdit" name="ab_quest_id"/>
+       </item>
+       <item row="4" column="4">
         <widget class="QLabel" name="ab_condition">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What requirement for the above quest to unlock item.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -208,10 +215,10 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="5">
+       <item row="4" column="5">
         <widget class="QComboBox" name="ab_condition_box"/>
        </item>
-       <item row="4" column="4">
+       <item row="7" column="4">
         <widget class="QLabel" name="ab_loyalty">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Which Loyalty Level.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -221,7 +228,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="5">
+       <item row="7" column="5">
         <widget class="QComboBox" name="ab_loyalty_combo"/>
        </item>
       </layout>
@@ -344,7 +351,7 @@
   </action>
   <action name="actionExport_Assort_json">
    <property name="text">
-    <string>Export Assort.json</string>
+    <string>Export Assort / Quest Assort</string>
    </property>
   </action>
  </widget>

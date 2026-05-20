@@ -1350,6 +1350,9 @@ class Gui_AssortDlg(QMainWindow):
     self.itemlist = []
     self.barterlist = {}
     self.loyaltylist = {}
+    self.questAssortFail = {}
+    self.questAssortStarted = {}
+    self.questAssortSuccess = {}
 
   def on_launch(self):
     self.setup_box_selections()
@@ -1662,6 +1665,8 @@ class Gui_AssortDlg(QMainWindow):
     itemID = self.ui.ab_Item_Id.text().strip()
     unlimited = True if self.ui.ab_unlimitedcount.isChecked() else False
     quantity = str(self.ui.ab_quantity.text())
+    questID = self.ui.ab_quest_id.text().strip()
+
     if self.ui.ab_tab.currentIndex() == 1:
       quantity = "N/A"
     barteritem = str(self.ui.ab_itembarter_edit.text())
@@ -1676,11 +1681,19 @@ class Gui_AssortDlg(QMainWindow):
 
     if self.ui.ab_quest_check.isChecked():
       questLockedChecked = "Yes"
+      qAssort = {mongosaved: questID}
+      if self.ui.ab_condition_box.currentText() == "Success":
+        self.questAssortSuccess.update(qAssort)
+      elif self.ui.ab_condition_box.currentText() == "Fail":
+        self.questAssortFail.update(qAssort)
+      else:
+        self.questAssortStarted.update(qAssort)
+
     elif self.ui.ab_tab.currentIndex() == 1:
       questLockedChecked = "N/A"
     else : questLockedChecked = "No"
 
-    questID = self.ui.ab_quest_id.text().strip()
+
     buyrestriction = self.ui.ab_buyRestriction_edit.text()
     ammoCount = str(self.ui.ab_weap_ammo_count.text())
 
@@ -1793,8 +1806,7 @@ class Gui_AssortDlg(QMainWindow):
           barterupdate.update({
             "_tpl": str(barteritem)
           })
-      
-      
+
       loyalty = {mongosaved: int(loyaltylevel)} 
 
 
@@ -1837,9 +1849,18 @@ class Gui_AssortDlg(QMainWindow):
       "barter_scheme": self.barterlist,
       "loyal_level_items": self.loyaltylist
     }
+
+    qAssort = {
+      "fail": self.questAssortFail,
+      "started": self.questAssortStarted,
+      "success": self.questAssortSuccess
+    }
     
     with open("Exported Files/assort.json", "w") as f:
       json.dump(assort, f, indent=2)
+    
+    with open("Exported Files/questassort.json", "w") as f:
+      json.dump(qAssort, f, indent=2)
 
 class Gui_TaskDlg(QMainWindow):
   def __init__(self, parent=None):
