@@ -3,11 +3,15 @@ import os
 import PyInstaller.__main__
 # Not tested on non-Windows but it should work... I think?
 
+
 def clean_folders(folders):
-    for path in folders:
-        if os.path.exists(path):
-            try: shutil.rmtree(path)
-            except: pass
+	for path in folders:
+		if os.path.exists(path):
+			try:
+				shutil.rmtree(path)
+			except:
+				pass
+
 
 print("Preparing folders for packaging...")
 
@@ -27,15 +31,17 @@ clean_folders([temp_dir, dist_dir, build_dir])
 os.mkdir(temp_dir)
 
 print("Running pyinstaller...")
-PyInstaller.__main__.run([
-    '.\\trader_builder.py',
-    '--onefile',
-    '--icon=data/icon.ico',
-    '--hide-console=hide-early'
-])
+PyInstaller.__main__.run(
+	[
+		".\\trader_builder.py",
+		"--onefile",
+		"--icon=data/icon.ico",
+		"--hide-console=hide-early",
+	]
+)
 print("Copying binary and license...")
 for f in os.listdir(dist_dir):
-    shutil.copy(os.path.join(dist_dir, f), temp_full_path)
+	shutil.copy(os.path.join(dist_dir, f), temp_full_path)
 shutil.copy("../LICENSE", temp_full_path)
 
 print("Adding data folder...")
@@ -45,9 +51,9 @@ print("Adding icon folder...")
 shutil.copytree(icon_dir, os.path.join(temp_dir, icon_dir))
 
 print("Zipping data...")
-shutil.make_archive(out_filename, 'zip', temp_dir)
+shutil.make_archive(out_filename, "zip", temp_dir)
 
 print("(Attempting to) clean up...")
 clean_folders([dist_dir, build_dir, temp_dir])
 if os.path.exists("trader_builder.spec"):
-    os.remove("trader_builder.spec")
+	os.remove("trader_builder.spec")

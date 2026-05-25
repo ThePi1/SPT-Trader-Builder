@@ -10,31 +10,46 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class Ui_UpdateMenu(object):
-    def setupUi(self, UpdateMenu):
-        UpdateMenu.setObjectName("UpdateMenu")
-        UpdateMenu.resize(300, 140)
-        UpdateMenu.setMinimumSize(QtCore.QSize(300, 140))
-        UpdateMenu.setMaximumSize(QtCore.QSize(300, 140))
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("tb_ui\\data/icon.ico"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
-        UpdateMenu.setWindowIcon(icon)
-        self.label = QtWidgets.QLabel(parent=UpdateMenu)
-        self.label.setGeometry(QtCore.QRect(10, 10, 280, 120))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
-        self.label.setSizePolicy(sizePolicy)
-        self.label.setScaledContents(False)
-        self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeading|QtCore.Qt.AlignmentFlag.AlignLeft|QtCore.Qt.AlignmentFlag.AlignTop)
-        self.label.setWordWrap(True)
-        self.label.setOpenExternalLinks(True)
-        self.label.setObjectName("label")
+	def setupUi(self, UpdateMenu):
+		UpdateMenu.setObjectName("UpdateMenu")
+		UpdateMenu.resize(300, 140)
+		UpdateMenu.setMinimumSize(QtCore.QSize(300, 140))
+		UpdateMenu.setMaximumSize(QtCore.QSize(300, 140))
+		icon = QtGui.QIcon()
+		icon.addPixmap(
+			QtGui.QPixmap("tb_ui\\data/icon.ico"),
+			QtGui.QIcon.Mode.Normal,
+			QtGui.QIcon.State.Off,
+		)
+		UpdateMenu.setWindowIcon(icon)
+		self.label = QtWidgets.QLabel(parent=UpdateMenu)
+		self.label.setGeometry(QtCore.QRect(10, 10, 280, 120))
+		sizePolicy = QtWidgets.QSizePolicy(
+			QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed
+		)
+		sizePolicy.setHorizontalStretch(0)
+		sizePolicy.setVerticalStretch(0)
+		sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+		self.label.setSizePolicy(sizePolicy)
+		self.label.setScaledContents(False)
+		self.label.setAlignment(
+			QtCore.Qt.AlignmentFlag.AlignLeading
+			| QtCore.Qt.AlignmentFlag.AlignLeft
+			| QtCore.Qt.AlignmentFlag.AlignTop
+		)
+		self.label.setWordWrap(True)
+		self.label.setOpenExternalLinks(True)
+		self.label.setObjectName("label")
 
-        self.retranslateUi(UpdateMenu)
-        QtCore.QMetaObject.connectSlotsByName(UpdateMenu)
+		self.retranslateUi(UpdateMenu)
+		QtCore.QMetaObject.connectSlotsByName(UpdateMenu)
 
-    def retranslateUi(self, UpdateMenu):
-        _translate = QtCore.QCoreApplication.translate
-        UpdateMenu.setWindowTitle(_translate("UpdateMenu", "About"))
-        self.label.setText(_translate("UpdateMenu", "<html><head/><body><p>Current version: V_CUR</p><p>Latest version: V_LAT</p><p>UPDATE_TEXT</p><a href=\"SRC_URL\"><span style=\" text-decoration: underline; color:#0000ff;\">SRC_URL</span></a></body></html>"))
+	def retranslateUi(self, UpdateMenu):
+		_translate = QtCore.QCoreApplication.translate
+		UpdateMenu.setWindowTitle(_translate("UpdateMenu", "About"))
+		self.label.setText(
+			_translate(
+				"UpdateMenu",
+				'<html><head/><body><p>Current version: V_CUR</p><p>Latest version: V_LAT</p><p>UPDATE_TEXT</p><a href="SRC_URL"><span style=" text-decoration: underline; color:#0000ff;">SRC_URL</span></a></body></html>',
+			)
+		)
