@@ -2,4 +2,3 @@ __pycache__
 local_dev
 src\__pycache__
 src\data\datafiles.json
-data\datafiles.json
