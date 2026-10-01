@@ -31,7 +31,7 @@ def _build_quest(main_window):
 	# Finish condition: HandoverItem with one item
 	task = quest_dlg.open_task_window()
 	add_table_field(
-		main_window.state, "HFItems", task.ui.tb_items, "5449016a4bdc2d6f028b456f", {0: "x"}, "5449016a4bdc2d6f028b456f"
+		task.fields, "HFItems", task.ui.tb_items, "5449016a4bdc2d6f028b456f", {0: "x"}, "5449016a4bdc2d6f028b456f"
 	)
 	task.ui.box_hofind_it.setCurrentText("HandoverItem")
 	task.ui.fld_quantity_it.setText("3")

@@ -55,7 +55,7 @@ def test_saving_a_quest_updates_the_main_window(main_window):
 	assert len(main_window.state.quests) == 1
 	assert main_window.ui.questList.count() == 1
 	assert main_window.ui.questList.item(0).text().startswith("My Quest, ")
-	assert main_window.state.table_fields == {}
+	assert quest.fields.data == {}  # nothing was added to this quest's tables
 
 
 def test_wtt_import_saves_datafiles_in_the_data_dir(main_window, tmp_path, monkeypatch):

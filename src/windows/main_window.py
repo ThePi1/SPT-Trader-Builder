@@ -176,7 +176,6 @@ class Gui_MainWindow(QMainWindow):
 
 	def on_quest_saved(self, quest_id, quest_name, quest):
 		self.state.quests[quest_id] = quest
-		self.state.clear_table_fields()
 		item = QListWidgetItem(f"{quest_name}, {quest_id}")
 		item.setData(Qt.ItemDataRole.UserRole, quest_id)
 		self.ui.questList.addItem(item)
@@ -558,7 +557,6 @@ class Gui_MainWindow(QMainWindow):
 			if isinstance(window, Gui_QuestDlg) and window.isVisible():
 				window.activateWindow()
 				return
-		#  self.clear_table_fields()
 		dlg = self.spawnWindow("QuestBuilder")
 
 	def onAssortWindow(self):

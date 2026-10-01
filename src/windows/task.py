@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QMainWindow
 
 from builders import conditions
 from tb_ui.gui_tasks import Ui_TaskWindow
+from state import TableFields
 from table_fields import add_table_field, remove_selected_table_item
 from utils import is_true, new_id, val_field
 
@@ -16,6 +17,7 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui = Ui_TaskWindow()
 		self.ui.setupUi(self)
 		self.state = state
+		self.fields = TableFields()  # this dialog's own table rows
 		self.id = new_id()
 		self.cc = []
 		# self.weapons = [] # used for CC/Kills, add ids in as needed
@@ -102,7 +104,7 @@ class Gui_TaskDlg(QMainWindow):
 		# Kills table add/remove buttons
 		self.ui.pb_addwep_cck.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"KillsWep",
 				self.ui.tb_wep,
 				self.ui.box_weapons_cck.currentText(),
@@ -112,7 +114,7 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_removewep_cck.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="KillsWep", table=self.ui.tb_wep
 			)
 		)
@@ -120,7 +122,7 @@ class Gui_TaskDlg(QMainWindow):
 		# self.ui.pb_removetar_cck.released.connect(lambda: self.state.remove_selected_table_item(type="KillsTarget", table=self.ui.tb_targets))
 		self.ui.pb_addtr_cck.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"KillsTargetRole",
 				self.ui.tb_targetrole,
 				self.ui.box_targetrole_cck.currentText(),
@@ -130,13 +132,13 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_removetr_cck.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="KillsTargetRole", table=self.ui.tb_targetrole
 			)
 		)
 		self.ui.pb_addbp_cck.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"KillsBodyPart",
 				self.ui.tb_bodypart,
 				self.ui.box_bodypart_cck.currentText(),
@@ -146,13 +148,13 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rembp_cck.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="KillsBodyPart", table=self.ui.tb_bodypart
 			)
 		)
 		self.ui.pb_add_imod.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"KillsModInc",
 				self.ui.tb_incmods,
 				self.ui.fld_incmod_cck.displayText(),
@@ -162,13 +164,13 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_imod.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="KillsModInc", table=self.ui.tb_incmods
 			)
 		)
 		self.ui.pb_add_emod.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"KillsModExc",
 				self.ui.tb_excmods,
 				self.ui.fld_excmod_cck.displayText(),
@@ -178,7 +180,7 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_emod.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="KillsExc", table=self.ui.tb_excmods
 			)
 		)
@@ -186,20 +188,20 @@ class Gui_TaskDlg(QMainWindow):
 		# Other table buttons
 		self.ui.pb_remove_cc.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="CounterCreator", table=self.ui.tb_cc
 			)
 		)
 
 		self.ui.pb_status_rem_cces.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="ExitStatus", table=self.ui.tb_cces
 			)
 		)
 		self.ui.pb_cces_add.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"ExitStatus",
 				self.ui.tb_cces,
 				self.ui.box_status_cces.currentText(),
@@ -210,7 +212,7 @@ class Gui_TaskDlg(QMainWindow):
 
 		self.ui.pb_add_ccl.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"Location",
 				self.ui.tb_ccl,
 				self.ui.box_location_ccl.currentText(),
@@ -220,14 +222,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_ccl.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="Location", table=self.ui.tb_ccl
 			)
 		)
 
 		self.ui.pb_addvis.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"VisibilityCond",
 				self.ui.tb_vis,
 				self.ui.fld_visibility_targetid.displayText(),
@@ -237,14 +239,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_remvis.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="VisibilityCond", table=self.ui.tb_vis
 			)
 		)
 
 		self.ui.pb_additem_it.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"HFItems",
 				self.ui.tb_items,
 				self.ui.fld_itemid_it.displayText(),
@@ -254,14 +256,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_remitem_it.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="HFItems", table=self.ui.tb_items
 			)
 		)
 
 		self.ui.pb_addstatus_qs.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"QStatus",
 				self.ui.tb_status_qs,
 				self.ui.box_status_qs.currentText(),
@@ -271,14 +273,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_remstatus_qs.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="QStatus", table=self.ui.tb_status_qs
 			)
 		)
 
 		self.ui.pb_add_li_target.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"LeaveItemTarget",
 				self.ui.tb_li_target,
 				self.ui.fld_li_target.displayText(),
@@ -288,14 +290,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_li_target.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="LeaveItemTarget", table=self.ui.tb_li_target
 			)
 		)
 
 		self.ui.pb_add_eqi.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"EquipmentInclusive",
 				self.ui.tb_eq_inc,
 				self.ui.fld_eqi.displayText(),
@@ -311,14 +313,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_eqi.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="EquipmentInclusive", table=self.ui.tb_eq_inc
 			)
 		)
 
 		self.ui.pb_add_eqe.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"EquipmentExclusive",
 				self.ui.tb_eq_exc,
 				self.ui.fld_eqi_2.displayText(),
@@ -334,14 +336,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_eqe.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="EquipmentExclusive", table=self.ui.tb_eq_exc
 			)
 		)
 
 		self.ui.pb_add_shbp.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"ShotsBodyPart",
 				self.ui.tb_sh_bp,
 				self.ui.box_shbp.currentText(),
@@ -351,14 +353,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_shbp.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="ShotsBodyPart", table=self.ui.tb_sh_bp
 			)
 		)
 
 		self.ui.pb_add_shtr.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"ShotsTargetRole",
 				self.ui.tb_sh_tr,
 				self.ui.box_shtr.currentText(),
@@ -368,14 +370,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_shtr.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="ShotsTargetRole", table=self.ui.tb_sh_tr
 			)
 		)
 
 		self.ui.pb_add_shw.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"ShotsWeapon",
 				self.ui.tb_sh_wep,
 				self.ui.fld_shw.displayText(),
@@ -385,14 +387,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_shw.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="ShotsWeapon", table=self.ui.tb_sh_wep
 			)
 		)
 
 		self.ui.pb_add_shmi.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"ShotsModsInclusive",
 				self.ui.tb_incmod_sh,
 				self.ui.fld_shmi.displayText(),
@@ -402,14 +404,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_shmi.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="ShotsModsInclusive", table=self.ui.tb_incmod_sh
 			)
 		)
 
 		self.ui.pb_add_shme.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"ShotsModsExclusive",
 				self.ui.tb_excmod_sh,
 				self.ui.fld_shme.displayText(),
@@ -419,14 +421,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_shme.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="ShotsModsExclusive", table=self.ui.tb_excmod_sh
 			)
 		)
 
 		self.ui.pb_add_hebp.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"HealthEffectBodyPart",
 				self.ui.tb_hebp,
 				self.ui.box_hebp.currentText(),
@@ -436,14 +438,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_hebp.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="HealthEffectBodyPart", table=self.ui.tb_hebp
 			)
 		)
 
 		self.ui.pb_add_heef.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"HealthEffectEffects",
 				self.ui.tb_heef,
 				self.ui.box_heef.currentText(),
@@ -453,14 +455,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_heef.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="HealthEffectEffects", table=self.ui.tb_heef
 			)
 		)
 
 		self.ui.pb_add_hb.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"HealthBuff",
 				self.ui.tb_hb,
 				self.ui.box_hb.currentText(),
@@ -470,14 +472,14 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_hb.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="HealthBuff", table=self.ui.tb_hb
 			)
 		)
 
 		self.ui.pb_add_iz.released.connect(
 			lambda: add_table_field(
-				self.state,
+				self.fields,
 				f"InZone",
 				self.ui.tb_iz,
 				self.ui.fld_iz.displayText(),
@@ -487,7 +489,7 @@ class Gui_TaskDlg(QMainWindow):
 		)
 		self.ui.pb_rem_iz.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="InZone", table=self.ui.tb_iz
 			)
 		)
@@ -508,17 +510,17 @@ class Gui_TaskDlg(QMainWindow):
 					subtask_id,
 					weapon_ids=[
 						state.weapons[wep]
-						for wep in state.get_singlecolumn_field_list("KillsWep")
+						for wep in self.fields.get_singlecolumn_field_list("KillsWep")
 					],
 					target=(
 						ui.box_targets_cck.currentText()
 						if ui.chk_cck_usetarget.isChecked()
 						else ""
 					),
-					target_roles=state.get_singlecolumn_field_list("KillsTargetRole"),
-					body_parts=state.get_singlecolumn_field_list("KillsBodyPart"),
-					mods_inclusive=state.get_singlecolumn_field_list("KillsModInc"),
-					mods_exclusive=state.get_singlecolumn_field_list("KillsModExc"),
+					target_roles=self.fields.get_singlecolumn_field_list("KillsTargetRole"),
+					body_parts=self.fields.get_singlecolumn_field_list("KillsBodyPart"),
+					mods_inclusive=self.fields.get_singlecolumn_field_list("KillsModInc"),
+					mods_exclusive=self.fields.get_singlecolumn_field_list("KillsModExc"),
 					distance=val_field(ui.fld_dist_cck.displayText(), "", 0, int),
 					distance_compare=ui.box_dist_compare_cck.currentText(),
 					time_from=val_field(ui.fld_time_from_cck.displayText(), "", 0, int),
@@ -527,28 +529,28 @@ class Gui_TaskDlg(QMainWindow):
 				)
 			case "ExitStatus":
 				cond = conditions.exit_status(
-					subtask_id, state.get_singlecolumn_field_list("ExitStatus")
+					subtask_id, self.fields.get_singlecolumn_field_list("ExitStatus")
 				)
 			case "ExitName":
 				cond = conditions.exit_name(subtask_id, ui.fld_exitname_ccen.displayText())
 			case "Location":
 				cond = conditions.location(
-					subtask_id, state.get_singlecolumn_field_list("Location")
+					subtask_id, self.fields.get_singlecolumn_field_list("Location")
 				)
 			case "Equipment":
 				cond = conditions.equipment(
 					subtask_id,
-					inclusive=state.get_multicolumn_values_list("EquipmentInclusive"),
-					exclusive=state.get_multicolumn_values_list("EquipmentExclusive"),
+					inclusive=self.fields.get_multicolumn_values_list("EquipmentInclusive"),
+					exclusive=self.fields.get_multicolumn_values_list("EquipmentExclusive"),
 					include_not_equipped=ui.cb_eq_uneq.isChecked(),
 				)
 			case "Shots":
 				cond = conditions.shots(
 					subtask_id,
-					body_parts=state.get_singlecolumn_field_list("ShotsBodyPart"),
-					target_roles=state.get_singlecolumn_field_list("ShotsTargetRole"),
-					mods_inclusive=state.get_singlecolumn_field_list("ShotsModsInclusive"),
-					mods_exclusive=state.get_singlecolumn_field_list("ShotsModsExclusive"),
+					body_parts=self.fields.get_singlecolumn_field_list("ShotsBodyPart"),
+					target_roles=self.fields.get_singlecolumn_field_list("ShotsTargetRole"),
+					mods_inclusive=self.fields.get_singlecolumn_field_list("ShotsModsInclusive"),
+					mods_exclusive=self.fields.get_singlecolumn_field_list("ShotsModsExclusive"),
 					distance=val_field(ui.fld_dist_sh.displayText(), "", 0, int),
 					distance_compare=ui.box_distcomp_sh.currentText(),
 					time_from=val_field(ui.fld_timefrom_sh.displayText(), "", 0, int),
@@ -560,8 +562,8 @@ class Gui_TaskDlg(QMainWindow):
 			case "HealthEffect":
 				cond = conditions.health_effect(
 					subtask_id,
-					body_parts=state.get_singlecolumn_field_list("HealthEffectBodyPart"),
-					effects=state.get_singlecolumn_field_list("HealthEffectEffects"),
+					body_parts=self.fields.get_singlecolumn_field_list("HealthEffectBodyPart"),
+					effects=self.fields.get_singlecolumn_field_list("HealthEffectEffects"),
 					energy=val_field(ui.fld_enval_he.displayText(), "", 0, int),
 					energy_compare=ui.box_encomp_he.currentText(),
 					hydration=val_field(ui.fld_hydval_he.displayText(), "", 0, int),
@@ -571,17 +573,17 @@ class Gui_TaskDlg(QMainWindow):
 				)
 			case "HealthBuff":
 				cond = conditions.health_buff(
-					subtask_id, state.get_singlecolumn_field_list("HealthBuff")
+					subtask_id, self.fields.get_singlecolumn_field_list("HealthBuff")
 				)
 			case "LaunchFlare":
 				cond = conditions.launch_flare(subtask_id, ui.fld_fl_zone.displayText())
 			case "InZone":
 				cond = conditions.in_zone(
-					subtask_id, state.get_singlecolumn_field_list("InZone")
+					subtask_id, self.fields.get_singlecolumn_field_list("InZone")
 				)
 
 		add_table_field(
-			state,
+			self.fields,
 			f"CounterCreator",
 			ui.tb_cc,
 			subtask_id,
@@ -593,14 +595,14 @@ class Gui_TaskDlg(QMainWindow):
 		"""Build the top-level condition from the form and hand it to the quest window."""
 		ui = self.ui
 		state = self.state
-		vis = state.get_singlecolumn_field_list("VisibilityCond")
+		vis = self.fields.get_singlecolumn_field_list("VisibilityCond")
 		match cond_type:
 			case "CounterCreator":
 				timing = ui.box_ff.currentText()
 				cond = conditions.counter_creator(
 					self.id,
 					counter_id=new_id(),
-					sub_conditions=state.get_multicolumn_values_list("CounterCreator"),
+					sub_conditions=self.fields.get_multicolumn_values_list("CounterCreator"),
 					parent_id=ui.fld_parentid_cc.displayText(),
 					quest_type=ui.box_cc_qtlab.currentText(),
 					value=val_field(ui.fld_quantity_cc.displayText(), "", 0, int),
@@ -618,7 +620,7 @@ class Gui_TaskDlg(QMainWindow):
 				cond = build_item_condition(
 					self.id,
 					parent_id=ui.fld_parentid_it.displayText(),
-					targets=state.get_singlecolumn_field_list("HFItems"),
+					targets=self.fields.get_singlecolumn_field_list("HFItems"),
 					value=val_field(ui.fld_quantity_it.displayText(), "", 0, int),
 					min_durability=val_field(ui.fld_mindur_it.displayText(), "", 0, int),
 					max_durability=val_field(ui.fld_maxdur_it.displayText(), "", 100, int),
@@ -640,7 +642,7 @@ class Gui_TaskDlg(QMainWindow):
 				cond = conditions.leave_item_at_location(
 					self.id,
 					parent_id=ui.fld_parentid_li.displayText(),
-					targets=state.get_singlecolumn_field_list("LeaveItemTarget"),
+					targets=self.fields.get_singlecolumn_field_list("LeaveItemTarget"),
 					value=val_field(ui.fld_quantity_li.displayText(), "", 0, int),
 					plant_time=val_field(ui.fld_plant_time_li.displayText(), "", 0, int),
 					min_durability=val_field(ui.fld_mindur_li.displayText(), "", 0, int),
@@ -689,7 +691,7 @@ class Gui_TaskDlg(QMainWindow):
 					self.id,
 					available_after=val_field(ui.fld_avail_qs.displayText(), "", 0, int),
 					status_ids=[
-						state.status[s] for s in state.get_singlecolumn_field_list("QStatus")
+						state.status[s] for s in self.fields.get_singlecolumn_field_list("QStatus")
 					],
 					target=ui.fld_tid_qs.displayText(),
 				)

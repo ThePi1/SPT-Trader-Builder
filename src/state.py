@@ -6,7 +6,6 @@ built so far, or the half-finished table rows of the dialog being edited.
 It deliberately knows nothing about Qt.
 """
 
-import copy
 import json
 import logging
 
@@ -30,6 +29,25 @@ def load_json(path, encoding="utf-8"):
 		return json.load(f)
 
 
+class TableFields:
+	"""The rows of the tables in ONE dialog, keyed by table type ("KillsWep", "RewardItem", ...), then row id.
+
+	Each dialog creates its own, so what a dialog collects can never leak into another
+	dialog (or another quest), and goes away when the dialog does.
+	"""
+
+	def __init__(self):
+		self.data = {}
+
+	def get_singlecolumn_field_list(self, key):
+		"""The row ids for one table type."""
+		return list(self.data.get(key, {}).keys())
+
+	def get_multicolumn_values_list(self, key):
+		"""The stored objects for one table type."""
+		return list(self.data.get(key, {}).values())
+
+
 class AppState:
 	def __init__(self, config, traders, weapons, locations, status, items, datafiles=None):
 		self.config = config
@@ -49,12 +67,6 @@ class AppState:
 
 		# Quests built so far, by quest id
 		self.quests = {}
-
-		# Rows of the tables in the dialog currently being filled in, keyed by table type
-		# ("RewardSuccess", "ConditionFinish", "KillsWep", ...), then by row id.
-		self.table_fields = {}
-		# When clearing table fields, keep any k/v pair with these strings in the key
-		self.table_fields_keep_str = ["Reward", "Condition"]
 
 	@classmethod
 	def load(cls, config):
@@ -78,44 +90,6 @@ class AppState:
 		allfiles = [item for sublist in state.datafiles.values() for item in sublist]
 		state.import_customdata(allfiles, root_folder=None)
 		return state
-
-	# --- table fields -------------------------------------------------------
-
-	def safe_clear_table_fields(self):
-		pre_fields = copy.deepcopy(self.table_fields)
-		for k, v in pre_fields.items():
-			found_safe = False
-			for keepstr in self.table_fields_keep_str:
-				if keepstr in k:
-					found_safe = True
-			if not found_safe:
-				log.debug(f"removing {k}:{v}, not a safe field")
-				self.table_fields.pop(k)
-
-	def clear_table_fields(self):
-		self.table_fields = {}
-
-	def get_singlecolumn_field_list(self, key):
-		if key in self.table_fields:
-			return list(self.table_fields[key].keys())
-		else:
-			return []
-
-	def get_multicolumn_values_list(self, key):
-		if key in self.table_fields:
-			return list(self.table_fields[key].values())
-		else:
-			return []
-
-	def reset_by_key(self, key):
-		if key in self.table_fields:
-			del self.table_fields[key]
-
-	def reset_by_id(self, id):
-		for category, cat_dict in self.table_fields.items():
-			if id in cat_dict:
-				del cat_dict[id]
-			# if id is found, remove it similar to reset by key above
 
 	# --- custom (WTT) data --------------------------------------------------
 

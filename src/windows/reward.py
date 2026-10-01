@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QMainWindow
 
 from builders import rewards
 from tb_ui.gui_rewards import Ui_rewardBuilder
+from state import TableFields
 from table_fields import add_table_field, remove_selected_table_item
 from utils import is_true, new_id
 
@@ -20,6 +21,7 @@ class Gui_RewardDlg(QMainWindow):
 		self.ui = Ui_rewardBuilder()
 		self.ui.setupUi(self)
 		self.state = state
+		self.fields = TableFields()  # this dialog's own table rows
 		self.on_launch()  # Custom code in this one
 		self.show()
 		self.id = new_id()
@@ -83,7 +85,7 @@ class Gui_RewardDlg(QMainWindow):
 				return
 
 		add_table_field(
-			self.state,
+			self.fields,
 			table_type,
 			table,
 			item["_id"],
@@ -102,12 +104,12 @@ class Gui_RewardDlg(QMainWindow):
 		match tab:
 			case "AssortmentUnlock":
 				remove_selected_table_item(
-					self.state,
+					self.fields,
 					type="RewardAssortmentUnlock", table=self.ui.tb_asu_item, id_row=0
 				)
 			case "Item":
 				remove_selected_table_item(
-					self.state,
+					self.fields,
 					type="RewardItem", table=self.ui.tb_item, id_row=0
 				)
 
@@ -124,7 +126,7 @@ class Gui_RewardDlg(QMainWindow):
 				)
 			case "AssortmentUnlock":
 				reward_timing = ui.box_rewardtiming_asu.currentText()
-				local_items = state.get_multicolumn_values_list("RewardAssortmentUnlock")
+				local_items = self.fields.get_multicolumn_values_list("RewardAssortmentUnlock")
 				reward = rewards.assortment_unlock(
 					self.id,
 					items=local_items,
@@ -146,7 +148,7 @@ class Gui_RewardDlg(QMainWindow):
 				)
 			case "Item":
 				reward_timing = ui.box_rewardtiming_item.currentText()
-				local_items = state.get_multicolumn_values_list("RewardItem")
+				local_items = self.fields.get_multicolumn_values_list("RewardItem")
 				reward = rewards.item(
 					self.id,
 					find_in_raid=is_true(ui.box_fir_item.currentText()),

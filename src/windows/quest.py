@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QMainWindow
 
 from builders import quests
 from tb_ui.gui_quests import Ui_QuestWindow
+from state import TableFields
 from table_fields import add_table_field, remove_selected_table_item
 from utils import is_true, new_id
 from windows.reward import Gui_RewardDlg
@@ -22,6 +23,7 @@ class Gui_QuestDlg(QMainWindow):
 		self.ui = Ui_QuestWindow()
 		self.ui.setupUi(self)
 		self.state = state
+		self.fields = TableFields()  # this quest's conditions and rewards
 		self.windows = []
 		self.on_launch()  # Custom code in this one
 		self.show()
@@ -30,7 +32,7 @@ class Gui_QuestDlg(QMainWindow):
 		self.ui.pb_add_task.released.connect(self.open_task_window)
 		self.ui.pb_rem_task.released.connect(
 			lambda: remove_selected_table_item(
-				self.state,
+				self.fields,
 				type="ConditionAny", table=self.ui.tb_cond
 			)
 		)
@@ -55,9 +57,8 @@ class Gui_QuestDlg(QMainWindow):
 		return dlg
 
 	def add_condition(self, timing, cond_type, cond_id, cond):
-		self.state.safe_clear_table_fields()
 		add_table_field(
-			self.state,
+			self.fields,
 			f"Condition{timing}",
 			self.ui.tb_cond,
 			cond_id,
@@ -66,9 +67,8 @@ class Gui_QuestDlg(QMainWindow):
 		)
 
 	def add_reward(self, reward_timing, reward_type, reward_id, reward):
-		self.state.safe_clear_table_fields()
 		add_table_field(
-			self.state,
+			self.fields,
 			f"Reward{reward_timing}",
 			self.ui.tb_rewards,
 			reward_id,
@@ -94,10 +94,10 @@ class Gui_QuestDlg(QMainWindow):
 
 	def remove_selected_reward(self):
 		remove_selected_table_item(
-			self.state,
+			self.fields,
 			type="RewardAny", table=self.ui.tb_rewards
 		)
-		log.debug(self.state.table_fields)
+		log.debug(self.fields.data)
 
 	def finalize(self):
 		ui = self.ui
@@ -113,15 +113,15 @@ class Gui_QuestDlg(QMainWindow):
 			quest_id,
 			name=quest_name,
 			can_show_notifications=is_true(ui.box_can_show_notif.currentText()),
-			finish_conditions=state.get_multicolumn_values_list("ConditionFinish"),
-			start_conditions=state.get_multicolumn_values_list("ConditionStart"),
-			fail_conditions=state.get_multicolumn_values_list("ConditionFail"),
+			finish_conditions=self.fields.get_multicolumn_values_list("ConditionFinish"),
+			start_conditions=self.fields.get_multicolumn_values_list("ConditionStart"),
+			fail_conditions=self.fields.get_multicolumn_values_list("ConditionFail"),
 			image=ui.fld_image_name.displayText(),
 			instant_complete=is_true(ui.box_insta_complete.currentText()),
 			location=location,
 			restartable=is_true(ui.box_restartable.currentText()),
 			rewards={
-				timing: state.get_multicolumn_values_list(f"Reward{timing}")
+				timing: self.fields.get_multicolumn_values_list(f"Reward{timing}")
 				for timing in ("Fail", "Started", "Success")
 			},
 			secret_quest=is_true(ui.box_secret_quest.currentText()),
