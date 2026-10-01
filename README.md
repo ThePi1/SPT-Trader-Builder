@@ -19,6 +19,7 @@ If you're not developing on Windows feel free to skip this (or make an analogue 
     src/trader_builder.py   entry point
     src/config.py           settings.ini + data/box_fields.json (dropdown lists)
     src/state.py            AppState: data shared by all windows
+    src/builders/           plain functions that build the exported JSON (no Qt)
     src/windows/            one module per window (quest, task, reward, assort, ...)
     src/tb_ui/              generated from the .ui files, don't edit by hand
     src/paths.py, utils.py, updates.py, table_fields.py   small shared helpers
@@ -27,7 +28,8 @@ If you're not developing on Windows feel free to skip this (or make an analogue 
     pip install -r requirements-dev.txt
     python -m pytest tests
 
-The tests drive the real windows offscreen and compare the generated quest, assort and locale JSON to the files in `tests/golden/`.
+`tests/test_builders.py` and `tests/test_state.py` test the JSON builders and shared state directly (no windows, fast).
+The other tests drive the real windows offscreen and compare the generated quest, assort and locale JSON to the files in `tests/golden/`.
 If you change the output on purpose, regenerate them with `UPDATE_GOLDEN=1 python -m pytest tests` and review the diff.
 
 ## Packaging binary
