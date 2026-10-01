@@ -1,4 +1,4 @@
 requests
 pyinstaller
-pyqt6
+pyside6
 pymongo

@@ -4,7 +4,7 @@ from os import path
 from pathlib import Path
 from gui import Gui_MainWindow, Gui_QuestDlg
 from configparser import ConfigParser
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QHeaderView
+from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QHeaderView
 
 
 # Parse string to boolean
