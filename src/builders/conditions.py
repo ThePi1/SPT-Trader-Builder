@@ -102,6 +102,7 @@ def equipment(cond_id, *, inclusive, exclusive, include_not_equipped):
 def shots(
 	cond_id,
 	*,
+	weapon_ids,
 	body_parts,
 	target_roles,
 	mods_inclusive,
@@ -129,7 +130,7 @@ def shots(
 		"savageRole": target_roles,
 		"target": target,
 		"value": value,
-		"weapon": [],
+		"weapon": weapon_ids,
 		"weaponCaliber": [],
 		"weaponModsExclusive": mods_exclusive,
 		"weaponModsInclusive": mods_inclusive,

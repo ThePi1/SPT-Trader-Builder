@@ -1,6 +1,7 @@
 import functools
 import json
 import logging
+import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -19,6 +20,13 @@ from paths import DATA_DIR, EXPORT_DIR
 from utils import new_id
 
 log = logging.getLogger(__name__)
+
+# How a field that needs fixing is marked
+ERROR_STYLE = "border: 2px solid red; background-color: #ffe6e6;"
+
+
+def _is_whole_number(text):
+	return re.fullmatch(r"[0-9]+", text.strip()) is not None
 
 
 @functools.lru_cache(maxsize=None)
@@ -96,56 +104,46 @@ class Gui_AssortDlg(QMainWindow):
 		return names.get(tpl, tpl)
 
 	def verifyComplete(self):
-		check = True
-		self.ui.ab_weapmongo_edit.setStyleSheet("")
-		self.ui.ab_quantity.setStyleSheet("")
-		self.ui.ab_cost_edit.setStyleSheet("")
-		self.ui.ab_Item_Id.setStyleSheet("")
-		self.ui.ab_partid_edit.setStyleSheet("")
-		self.ui.ab_buyRestriction_edit.setStyleSheet("")
+		"""Check the form before adding. Marks every bad field in red; returns True if all are fine."""
+		ui = self.ui
+		fields = [
+			ui.ab_weapmongo_edit,
+			ui.ab_quantity,
+			ui.ab_cost_edit,
+			ui.ab_Item_Id,
+			ui.ab_partid_edit,
+			ui.ab_buyRestriction_edit,
+			ui.ab_weap_ammo_count,
+		]
+		for field in fields:
+			field.setStyleSheet("")
 
-		if self.ui.ab_tab.currentIndex() == 1:
-			if self.ui.ab_weapmongo_edit.text().strip() == "":
-				self.ui.ab_weapmongo_edit.setStyleSheet(
-					"border: 2px solid red; background-color: #ffe6e6;"
-				)
-				check = False
-			if (
-				self.ui.ab_partid_edit.text().strip() == ""
-				and not self.ui.ab_unlimitedcount.isChecked()
+		bad = []
+		if ui.ab_tab.currentIndex() == 1:  # weapon part
+			if ui.ab_weapmongo_edit.text().strip() == "":
+				bad.append(ui.ab_weapmongo_edit)
+			if ui.ab_partid_edit.text().strip() == "" and not ui.ab_unlimitedcount.isChecked():
+				bad.append(ui.ab_partid_edit)
+			if ui.ab_weap_ammo_check.isChecked() and not _is_whole_number(
+				ui.ab_weap_ammo_count.text()
 			):
-				self.ui.ab_partid_edit.setStyleSheet(
-					"border: 2px solid red; background-color: #ffe6e6;"
-				)
-				check = False
-		else:
-			if (
-				self.ui.ab_quantity.text().strip() == ""
-				and not self.ui.ab_unlimitedcount.isChecked()
+				bad.append(ui.ab_weap_ammo_count)
+		else:  # a normal item for sale
+			# (these are all turned into numbers when the item is added, so they must be whole numbers)
+			if not ui.ab_unlimitedcount.isChecked() and not _is_whole_number(ui.ab_quantity.text()):
+				bad.append(ui.ab_quantity)
+			if not _is_whole_number(ui.ab_cost_edit.text()):
+				bad.append(ui.ab_cost_edit)
+			if ui.ab_Item_Id.text().strip() == "":
+				bad.append(ui.ab_Item_Id)
+			if ui.ab_buyrestriction_checkbox.isChecked() and not _is_whole_number(
+				ui.ab_buyRestriction_edit.text()
 			):
-				self.ui.ab_quantity.setStyleSheet(
-					"border: 2px solid red; background-color: #ffe6e6;"
-				)
-				check = False
-			if self.ui.ab_cost_edit.text().strip() == "":
-				self.ui.ab_cost_edit.setStyleSheet(
-					"border: 2px solid red; background-color: #ffe6e6;"
-				)
-				check = False
-			if self.ui.ab_Item_Id.text().strip() == "":
-				self.ui.ab_Item_Id.setStyleSheet(
-					"border: 2px solid red; background-color: #ffe6e6;"
-				)
-				check = False
-			if (
-				self.ui.ab_buyRestriction_edit.text().strip() == ""
-				and self.ui.ab_buyrestriction_checkbox.isChecked()
-			):
-				self.ui.ab_buyRestriction_edit.setStyleSheet(
-					"border: 2px solid red; background-color: #ffe6e6;"
-				)
-				check = False
-		return check
+				bad.append(ui.ab_buyRestriction_edit)
+
+		for field in bad:
+			field.setStyleSheet(ERROR_STYLE)
+		return not bad
 
 	def copy_clicked_cell(self, item):
 
@@ -450,15 +448,18 @@ class Gui_AssortDlg(QMainWindow):
 			cashtype = "Euros"
 
 		# selects item key structure depending on item or weapon part.
+		# Everything is built first and only then added to the lists, so an error while
+		# building can't leave a half-added item behind.
 		if self.ui.ab_tab.currentIndex() == 1:
 			item = assort_builders.weapon_part_item(
 				mongosaved,
 				partID,
 				parentID,
 				slotID,
-				ammo_count=ammoCount if self.ui.ab_weap_ammo_check.isChecked() else None,
+				ammo_count=int(ammoCount) if self.ui.ab_weap_ammo_check.isChecked() else None,
 			)
-			self.itemlist.append(item)
+			barter = {}
+			loyalty = {}
 		else:
 			item = assort_builders.assort_item(
 				mongosaved,
@@ -470,8 +471,6 @@ class Gui_AssortDlg(QMainWindow):
 				),
 				quest_id=questID if self.ui.ab_quest_check.isChecked() else None,
 			)
-			self.itemlist.append(item)
-
 			barter = assort_builders.barter_scheme(
 				mongosaved,
 				cost,
@@ -480,8 +479,9 @@ class Gui_AssortDlg(QMainWindow):
 			)
 			loyalty = {mongosaved: int(loyaltylevel)}
 
-			self.barterlist.update(barter)
-			self.loyaltylist.update(loyalty)
+		self.itemlist.append(item)
+		self.barterlist.update(barter)
+		self.loyaltylist.update(loyalty)
 
 		row = table.rowCount()
 		table.insertRow(row)

@@ -63,6 +63,7 @@ def test_kills_wraps_each_mod_in_its_own_list():
 def test_shots_uses_value_for_distance_and_does_not_wrap_mods():
 	cond = conditions.shots(
 		"s1",
+		weapon_ids=["w1"],
 		body_parts=[],
 		target_roles=[],
 		mods_inclusive=["m1"],
@@ -78,6 +79,7 @@ def test_shots_uses_value_for_distance_and_does_not_wrap_mods():
 	assert cond["distance"] == {"compareMethod": "<=", "value": 10}
 	assert cond["weaponModsInclusive"] == ["m1"]
 	assert cond["value"] == 5 and cond["conditionType"] == "Shots"
+	assert cond["weapon"] == ["w1"]
 
 
 def test_equipment_groups_items_by_or_group_in_order():

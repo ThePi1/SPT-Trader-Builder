@@ -41,7 +41,7 @@ class Gui_RewardDlg(QMainWindow):
 					new_id(),
 					ui.fld_utpl_item.displayText(),
 					stack_count=(
-						ui.box_soc_item.cleanText() if ui.chk_soc_item.isChecked() else None
+						ui.box_soc_item.value() if ui.chk_soc_item.isChecked() else None
 					),
 					spawned_in_session=ui.chk_fir_item.isChecked(),
 					parent_id=(
@@ -65,9 +65,7 @@ class Gui_RewardDlg(QMainWindow):
 					new_id(),
 					ui.fld_utpl_asu.displayText(),
 					stack_count=(
-						int(ui.box_soc_asu.cleanText())
-						if ui.chk_soc_asu.isChecked()
-						else None
+						ui.box_soc_asu.value() if ui.chk_soc_asu.isChecked() else None
 					),
 					spawned_in_session=ui.chk_fir_asu.isChecked(),
 					parent_id=(

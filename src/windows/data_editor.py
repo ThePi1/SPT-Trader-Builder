@@ -28,7 +28,7 @@ class Gui_DataEditor(QMainWindow):
 		root_folder, ok = safe_file_dialog(
 			QFileDialog.getExistingDirectory, "Select WTT root data folder"
 		)
-		if root_folder is None:
+		if not ok or not root_folder:
 			log.info("No folder selected, aborting WTT import.")
 			return
 		log.info(f"Finding JSON files in root folder: {root_folder}")

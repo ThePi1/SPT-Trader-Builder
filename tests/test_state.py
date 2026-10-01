@@ -54,12 +54,42 @@ def test_add_table_field_adds_a_row_and_stores_the_data(fields, table):
 	assert fields.data == {"Things": {"id1": {"d": 1}}}
 
 
-def test_adding_the_same_id_again_replaces_the_row_only_if_selected(fields, table):
-	add_table_field(fields, "Things", table, "id1", {0: "id1"}, "old")
-	table.selectRow(0)
-	add_table_field(fields, "Things", table, "id1", {0: "id1"}, "new")
-	assert table.rowCount() == 1
-	assert fields.data["Things"] == {"id1": "new"}
+def _column(table, col=0):
+	return [table.item(row, col).text() for row in range(table.rowCount())]
+
+
+def test_adding_the_same_id_again_updates_its_row_in_place(fields, table):
+	add_table_field(fields, "Things", table, "a", {0: "a", 1: "old"}, "old")
+	add_table_field(fields, "Things", table, "b", {0: "b", 1: "b-val"}, "b-data")
+	add_table_field(fields, "Things", table, "a", {0: "a", 1: "new"}, "new")
+	assert _column(table) == ["a", "b"]  # still two rows, same order
+	assert _column(table, 1) == ["new", "b-val"]
+	assert fields.data["Things"] == {"a": "new", "b": "b-data"}
+
+
+def test_re_adding_an_id_leaves_a_different_selected_row_alone(fields, table):
+	add_table_field(fields, "Things", table, "ak74", {0: "ak74"}, "ak74")
+	add_table_field(fields, "Things", table, "svd", {0: "svd"}, "svd")
+	table.selectRow(1)  # svd is selected...
+	add_table_field(fields, "Things", table, "ak74", {0: "ak74"}, "ak74")  # ...and ak74 is added again
+	assert _column(table) == ["ak74", "svd"]
+	assert set(fields.data["Things"]) == {"ak74", "svd"}
+
+
+def test_re_adding_an_id_with_nothing_selected_still_updates_it(fields, table):
+	add_table_field(fields, "Things", table, "a", {0: "a", 1: "old"}, "old")
+	table.clearSelection()
+	add_table_field(fields, "Things", table, "a", {0: "a", 1: "new"}, "new")
+	assert table.rowCount() == 1 and table.item(0, 1).text() == "new"
+	assert fields.data["Things"] == {"a": "new"}
+
+
+def test_the_same_id_in_different_tables_does_not_clash(fields, qapp):
+	one, two = QTableWidget(0, 1), QTableWidget(0, 1)
+	add_table_field(fields, "One", one, "x", {0: "x"}, 1)
+	add_table_field(fields, "Two", two, "x", {0: "x"}, 2)
+	assert one.rowCount() == 1 and two.rowCount() == 1
+	assert fields.data == {"One": {"x": 1}, "Two": {"x": 2}}
 
 
 def test_remove_selected_table_item(fields, table):

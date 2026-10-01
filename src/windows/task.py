@@ -181,7 +181,7 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui.pb_rem_emod.released.connect(
 			lambda: remove_selected_table_item(
 				self.fields,
-				type="KillsExc", table=self.ui.tb_excmods
+				type="KillsModExc", table=self.ui.tb_excmods
 			)
 		)
 
@@ -547,6 +547,7 @@ class Gui_TaskDlg(QMainWindow):
 			case "Shots":
 				cond = conditions.shots(
 					subtask_id,
+					weapon_ids=self.fields.get_singlecolumn_field_list("ShotsWeapon"),
 					body_parts=self.fields.get_singlecolumn_field_list("ShotsBodyPart"),
 					target_roles=self.fields.get_singlecolumn_field_list("ShotsTargetRole"),
 					mods_inclusive=self.fields.get_singlecolumn_field_list("ShotsModsInclusive"),
