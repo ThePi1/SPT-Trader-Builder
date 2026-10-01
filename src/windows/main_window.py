@@ -237,7 +237,9 @@ class Gui_MainWindow(QMainWindow):
 		# print("Button Started")
 
 		slotID = (
-			self.ui.wb_modslot_combo.currentText() if not self.ui.wb_base_check else ""
+			self.ui.wb_modslot_combo.currentText()
+			if not self.ui.wb_base_check.isChecked()
+			else ""
 		)
 		if (
 			self.ui.wb_base_check.isChecked()
