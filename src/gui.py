@@ -3,8 +3,7 @@ import re
 import json
 import copy
 import traceback
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+import logging
 from pathlib import Path
 
 from PySide6 import QtCore, QtGui
@@ -34,6 +33,9 @@ from tb_ui.gui_tasks import Ui_TaskWindow
 from tb_ui.gui_assort import Ui_AssortBuilder
 from tb_ui.gui_rewards import Ui_rewardBuilder
 from tb_ui.gui_datafiles import Ui_DataEditor
+from utils import is_true, new_id, val_field
+
+log = logging.getLogger(__name__)
 
 
 def safe_file_dialog(method, window_title):
@@ -50,38 +52,8 @@ def safe_file_dialog(method, window_title):
 		else:
 			return None, ok
 	except Exception as e:
-		print(f"Error opening file dialog: {e}")
+		log.error(f"Error opening file dialog: {e}")
 		return None, False
-
-
-def val_field(value, emptyval, defaultval, expectclass):
-	if value == emptyval:
-		return defaultval
-	else:
-		try:
-			convert_val = expectclass(value)
-			return convert_val
-		except Exception as e:
-			if expectclass == int:
-				return 0
-			if expectclass == float:
-				return 0.0
-			if expectclass == list:
-				return []
-			if expectclass == dict:
-				return {}
-			return ""
-
-
-# oops copy paste sue me, should replace boxes w/ checkbox
-def is_true(val):
-	val = val.lower()
-	if val in ("y", "yes", "t", "true", "on", "1"):
-		return True
-	elif val in ("n", "no", "f", "false", "off", "0"):
-		return False
-	else:
-		raise ValueError("invalid truth value %r" % (val,))
 
 
 class Gui_MainWindow(QMainWindow):
@@ -140,7 +112,7 @@ class Gui_MainWindow(QMainWindow):
 		self.status = self.importJson("data/status.json")
 		self.items = self.importJson("data/items.json")
 		self.item_id_name = {_data["_name"]: _id for _id, _data in self.items.items()}
-		print(f"Imported {len(self.items)} items.")
+		log.info(f"Imported {len(self.items)} items.")
 		self.status_invert = {v: k for k, v in self.status.items()}
 		self.quests = {}
 		try:
@@ -278,7 +250,7 @@ class Gui_MainWindow(QMainWindow):
 				if keepstr in k:
 					found_safe = True
 			if not found_safe:
-				print(f"Debug: removing {k}:{v}, not a safe field")
+				log.debug(f"removing {k}:{v}, not a safe field")
 				self.table_fields.pop(k)
 
 	def clear_table_fields(self):
@@ -324,7 +296,7 @@ class Gui_MainWindow(QMainWindow):
 		)
 
 	def addpart(self):  # add part to treeview and weaponlist
-		savedmongo = str(ObjectId())
+		savedmongo = new_id()
 		item_name = QStandardItem(self.ui.wb_weaponname_edit.text())
 		parent_ID = QStandardItem(self.ui.wb_itemid_edit.text())
 
@@ -347,7 +319,7 @@ class Gui_MainWindow(QMainWindow):
 
 		tree_index = self.ui.wb_treeview.currentIndex()
 		if not tree_index.isValid():  # checks if new index is valid
-			print("Tree index is not valid")
+			log.info("Tree index is not valid")
 			return
 
 		clicked_item = self.model.itemFromIndex(tree_index)  # gets data from tree_index
@@ -363,9 +335,9 @@ class Gui_MainWindow(QMainWindow):
 		parent_data = clicked_item.data(Qt.ItemDataRole.UserRole)
 
 		if parent_data is None:
-			print("No Parent Data")
+			log.info("No Parent Data")
 
-		child_savedmongo = str(ObjectId())
+		child_savedmongo = new_id()
 		child_name.setData(child_savedmongo, Qt.ItemDataRole.UserRole)
 		# print("Append Child")
 		# add item to treeview
@@ -413,7 +385,7 @@ class Gui_MainWindow(QMainWindow):
 				QFileDialog.getSaveFileName, "Export Weapon Preset"
 			)
 			if self.weapon_preset_filename is None or not ok:
-				print("No file selected for weapon presets, skipping export.")
+				log.info("No file selected for weapon presets, skipping export.")
 				return
 		with open(self.weapon_preset_filename, "w") as f:
 			json.dump(weaponlist, f, indent=2)
@@ -430,26 +402,26 @@ class Gui_MainWindow(QMainWindow):
 			return out
 
 	def analyze_cc(self):
-		print(f"Analyzing CC subtypes, opening dialogue...")
+		log.info(f"Analyzing CC subtypes, opening dialogue...")
 
 		filename, ok = safe_file_dialog(
 			QFileDialog.getOpenFileName, "Import Quest JSON"
 		)
 		if not ok or filename is None:
-			print("No file selected, aborting CC analysis.")
+			log.info("No file selected, aborting CC analysis.")
 			return
 
-		print(filename)
+		log.info(filename)
 		cc_keeptrack = {}
 		non_cc_keeptrack = {}
 		with open(filename, "r", encoding="utf-8") as f:
 			try:
 				quests_import = json.load(f)
 			except Exception as e:
-				print(f"Error loading quest file: {e}")
+				log.error(f"Error loading quest file: {e}")
 			for quest_id in quests_import.keys():
 				# print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
-				print(f"{quests_import[quest_id]['QuestName']}")
+				log.info(f"{quests_import[quest_id]['QuestName']}")
 				if (
 					"conditions" in quests_import[quest_id]
 					and "AvailableForFinish" in quests_import[quest_id]["conditions"]
@@ -465,42 +437,42 @@ class Gui_MainWindow(QMainWindow):
 							non_cc_keeptrack[avf_c["conditionType"]] += 1
 						if avf_c["conditionType"] == "CounterCreator":
 							for cond in avf_c["counter"]["conditions"]:
-								print(f"Inner conditionType: {cond['conditionType']}")
+								log.info(f"Inner conditionType: {cond['conditionType']}")
 								if cond["conditionType"] not in cc_keeptrack:
 									cc_keeptrack[cond["conditionType"]] = 1
 								else:
 									cc_keeptrack[cond["conditionType"]] += 1
 
-		print(cc_keeptrack)
-		print(non_cc_keeptrack)
+		log.info(cc_keeptrack)
+		log.info(non_cc_keeptrack)
 
 	def importQuests(self):
 		filename, ok = safe_file_dialog(
 			QFileDialog.getOpenFileName, "Import Quest JSON"
 		)
 		if not ok or filename is None:
-			print("No file selected, aborting quest import.")
+			log.info("No file selected, aborting quest import.")
 			return
-		print(filename)
+		log.info(filename)
 		with open(filename, "r") as f:
 			try:
 				quests_import = json.load(f)
 			except Exception as e:
-				print(f"Error loading quest file: {e}")
+				log.error(f"Error loading quest file: {e}")
 			for quest_id in quests_import.keys():
 				# print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
-				print(f"{quests_import[quest_id]['QuestName']}")
+				log.info(f"{quests_import[quest_id]['QuestName']}")
 				self.quests[quest_id] = quests_import[quest_id]
 				quest = QListWidgetItem(
 					f"{quests_import[quest_id]['QuestName']}, {quest_id}"
 				)
 				quest.setData(Qt.ItemDataRole.UserRole, quest_id)
 				self.ui.questList.addItem(quest)
-				print(quest.data(Qt.ItemDataRole.UserRole))
+				log.info(quest.data(Qt.ItemDataRole.UserRole))
 
 	def add_table_field(self, type, table, _id, values, dataobj):
-		print(
-			f"Debug: adding type: {type}, table: {table}, id: {_id}, values:  {values}, dataobj: {dataobj}"
+		log.debug(
+			f"adding type: {type}, table: {table}, id: {_id}, values:  {values}, dataobj: {dataobj}"
 		)
 		# for single column tables, the only column is the "id"
 		# values looks like this: {1: "col1 field", 2: "col2 field", ...}
@@ -518,14 +490,14 @@ class Gui_MainWindow(QMainWindow):
 			# add it into the table
 			row = table.rowCount()
 			table.insertRow(row)
-			print(values)
+			log.debug(values)
 			for col, text in values.items():
 				table.setItem(row, col, QTableWidgetItem(str(text)))
-		print(f"Table fields:\n{self.table_fields}")
+		log.info(f"Table fields:\n{self.table_fields}")
 
 	def remove_selected_table_item(self, type, table, id_row=0):
-		print(
-			f"Debug: removing selected item, type: {type}, table: {table}. Table_fields: {self.table_fields}"
+		log.debug(
+			f"removing selected item, type: {type}, table: {table}. Table_fields: {self.table_fields}"
 		)
 		# if we need to check multiple types (like for rewards), do so
 		if type == "RewardAny":
@@ -548,13 +520,13 @@ class Gui_MainWindow(QMainWindow):
 		row = select[0].row()
 		row_id = table.item(row, id_row).text()
 		for type in alltypes:
-			print(
-				f"Debug remove: type found?{type in self.table_fields}, row_id in typedict?{type in row_id in self.table_fields and row_id in self.table_fields[type]}"
+			log.debug(
+				f"type found?{type in self.table_fields}, row_id in typedict?{type in row_id in self.table_fields and row_id in self.table_fields[type]}"
 			)
 			if type in self.table_fields and row_id in self.table_fields[type]:
 				self.table_fields[type].pop(row_id)
 		table.removeRow(row)
-		print(f"Table fields:\n{self.table_fields}")
+		log.info(f"Table fields:\n{self.table_fields}")
 
 	def get_singlecolumn_field_list(self, key):
 		if key in self.table_fields:
@@ -581,12 +553,12 @@ class Gui_MainWindow(QMainWindow):
 	def loadItemsJSON(self):
 		if self.itemsJSON is not None:
 			self.itemsJSON = None
-			print(f"Items.json detected, wiping and re-importing.")
+			log.info(f"Items.json detected, wiping and re-importing.")
 		filename, ok = safe_file_dialog(
 			QFileDialog.getOpenFileName, "Import items.json"
 		)
 		if not ok or filename is None:
-			print("No file selected, aborting items import.")
+			log.info("No file selected, aborting items import.")
 			return
 		with open(filename, "r", encoding="cp866") as f:
 			self.itemsJSON = json.load(f)
@@ -624,13 +596,13 @@ class Gui_MainWindow(QMainWindow):
 					QFileDialog.getOpenFileName, "Open Quest JSON"
 				)
 				if not ok or qfilename is None:
-					print(
+					log.info(
 						"No file selected for quest JSON, aborting locale generation."
 					)
 					return
 			except:
 				return
-		print(qfilename)
+		log.info(qfilename)
 
 		if l_file:
 			lfilename = l_file
@@ -640,13 +612,13 @@ class Gui_MainWindow(QMainWindow):
 					QFileDialog.getOpenFileName, "Open Locale JSON"
 				)
 				if not ok or lfilename is None:
-					print(
+					log.info(
 						"No file selected for locale JSON, aborting locale generation."
 					)
 					return
 			except:
 				return
-		print(lfilename)
+		log.info(lfilename)
 
 		with open(qfilename, "r", encoding="utf-8") as f:
 			try:
@@ -667,7 +639,7 @@ class Gui_MainWindow(QMainWindow):
 				quests_import = json.load(f)
 				final_locale = {}
 				for quest_id, quest in quests_import.items():
-					print(f"Found quest: {quest['QuestName']} ({quest_id})")
+					log.info(f"Found quest: {quest['QuestName']} ({quest_id})")
 					if quest["QuestName"] in ["Collector"]:
 						continue  # we want to manually skip these
 					# do top-level quest fields
@@ -683,23 +655,23 @@ class Gui_MainWindow(QMainWindow):
 								# if "counter" in condition:
 								#   for cc in condition["counter"]["conditions"]:
 								#     locales.append(cc["id"])
-				print(locales)
+				log.info(locales)
 
 				with open(lfilename, "r") as baselocale_f:
 					base_locale = json.load(baselocale_f)
 					base_locale_existing = list(base_locale.items())
-					print(base_locale_existing)
+					log.info(base_locale_existing)
 					for bl_key, bl_val in base_locale_existing:
 						final_locale[bl_key] = bl_val
 					for bl_key in locales:
 						if bl_key not in final_locale:
 							final_locale[bl_key] = ""
-					print(final_locale)
+					log.info(final_locale)
 				with open(lfilename, "w") as savelocale_f:
 					json.dump(final_locale, savelocale_f, indent=4)
 
 			except Exception as e:
-				print(
+				log.error(
 					f"Error generating locale for quest file: {traceback.format_exc()}"
 				)
 
@@ -786,7 +758,7 @@ class Gui_MainWindow(QMainWindow):
 			QFileDialog.getSaveFileName, "Export Quest JSON"
 		)
 		if not ok or qfilename is None:
-			print("No file selected for quest export, aborting export.")
+			log.info("No file selected for quest export, aborting export.")
 			return
 		with open(qfilename, "w") as f:
 			try:
@@ -797,7 +769,7 @@ class Gui_MainWindow(QMainWindow):
 					message=f"The quest export has completed successfully and can be found at {qfilename}."
 				)
 			except Exception as e:
-				print(f"Error: {e}")
+				log.error(f"Error: {e}")
 				self.popup(
 					message=f"An error has occurred while exporting the final quest JSON file."
 				)
@@ -808,7 +780,7 @@ class Gui_MainWindow(QMainWindow):
 			self.createLocaleFromJSON(q_file=qfilename)
 			self.popup(message=f"The locale has been successfully updated.")
 		except Exception as e:
-			print(f"Error: {e}")
+			log.error(f"Error: {e}")
 			self.popup(
 				message=f"An error has occurred while updating the locale JSON file."
 			)
@@ -848,9 +820,9 @@ class Gui_DataEditor(QMainWindow):
 			QFileDialog.getExistingDirectory, "Select WTT root data folder"
 		)
 		if root_folder is None:
-			print("No folder selected, aborting WTT import.")
+			log.info("No folder selected, aborting WTT import.")
 			return
-		print(f"Finding JSON files in root folder: {root_folder}")
+		log.info(f"Finding JSON files in root folder: {root_folder}")
 		allfiles = Path(root_folder).rglob("*.json")
 		datafiles, datafiles_to_disk = Gui_DataEditor.import_customdata(
 			self.parent, list(allfiles), root_folder=root_folder
@@ -880,7 +852,7 @@ class Gui_DataEditor(QMainWindow):
 					try:
 						loaded_json = qb_window.importJson(str(path))
 					except Exception as e:
-						print(f"Cannot load {str(path)}, skipping")
+						log.error(f"Cannot load {str(path)}, skipping")
 						continue
 					if datatype not in datafiles:
 						datafiles[datatype] = []
@@ -938,7 +910,7 @@ class Gui_RewardDlg(QMainWindow):
 		self.parent = parent
 		self.on_launch()  # Custom code in this one
 		self.show()
-		self.id = str(ObjectId())
+		self.id = new_id()
 		# self.items_item = []
 		# self.items_asu = []
 
@@ -953,7 +925,7 @@ class Gui_RewardDlg(QMainWindow):
 		match tab:
 			case "Item":
 				item = {
-					"_id": str(ObjectId()),
+					"_id": new_id(),
 					"_tpl": self.ui.fld_utpl_item.displayText(),
 				}
 				if self.ui.chk_soc_item.isChecked() or self.ui.chk_fir_item.isChecked():
@@ -988,7 +960,7 @@ class Gui_RewardDlg(QMainWindow):
 
 			case "AssortmentUnlock":
 				item = {
-					"_id": str(ObjectId()),
+					"_id": new_id(),
 					"_tpl": self.ui.fld_utpl_asu.displayText(),
 				}
 				if self.ui.chk_soc_asu.isChecked() or self.ui.chk_fir_asu.isChecked():
@@ -1185,12 +1157,12 @@ class Gui_RewardDlg(QMainWindow):
 			{0: self.id, 1: reward_timing, 2: reward_type},
 			reward,
 		)
-		print(self.parent.parent.table_fields)
+		log.debug(self.parent.parent.table_fields)
 		self.close()
 
 	def load_settings_from_dict(self, settings, reward_timing):
 		pass
-		print(f"Loading reward from dict: {settings}")
+		log.info(f"Loading reward from dict: {settings}")
 		self.id = settings["id"]
 		# first field is the JSON key
 		# tuple is (item reference to set, type of item reference (determines func to set))
@@ -1391,7 +1363,7 @@ class Gui_QuestDlg(QMainWindow):
 		self.setup_box_selections()
 		self.setup_text_edit()
 		# can be edited later if needed
-		self.quest_id = str(ObjectId())
+		self.quest_id = new_id()
 
 	def setup_box_selections(self):
 		self.ui.box_avail_faction.addItems(self.parent.controller.qb_box_avail_faction)
@@ -1435,7 +1407,7 @@ class Gui_QuestDlg(QMainWindow):
 		self.parent.remove_selected_table_item(
 			type="RewardAny", table=self.ui.tb_rewards
 		)
-		print(self.parent.table_fields)
+		log.debug(self.parent.table_fields)
 
 	# def load_settings_from_dict(self, settings):
 	#   print(f"Loading settings from dict: {settings}")
@@ -1581,7 +1553,7 @@ class Gui_QuestDlg(QMainWindow):
 				"type": self.ui.box_quest_type_label.currentText(),
 			}
 		}
-		print(f"Added quest: {self.ui.fld_quest_name.displayText()}, id: {quest_id}")
+		log.info(f"Added quest: {self.ui.fld_quest_name.displayText()}, id: {quest_id}")
 		# may or may not be already in (if it was edited, it is)
 		# if quest_id in self.parent.quests:
 		#   old_quest = self.parent.quests.pop(quest_id)
@@ -1847,7 +1819,7 @@ class Gui_AssortDlg(QMainWindow):
 
 		self.itemClicked = self.ui.ab_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
 		self.parentid = self.ui.ab_table.item(row, 1).data(Qt.ItemDataRole.UserRole)
-		print("* " + str(self.ui.ab_table.item(row, 0).data(Qt.ItemDataRole.UserRole)))
+		log.info("* " + str(self.ui.ab_table.item(row, 0).data(Qt.ItemDataRole.UserRole)))
 		self.ui.ab_weapmongo_edit.setText(self.parentid)
 
 	def filterTable(self, query: str):
@@ -1979,7 +1951,7 @@ class Gui_AssortDlg(QMainWindow):
 			return
 
 		# Item variables
-		mongosaved = str(ObjectId())
+		mongosaved = new_id()
 		itemID = self.ui.ab_Item_Id.text().strip()
 		unlimited = True if self.ui.ab_unlimitedcount.isChecked() else False
 		quantity = str(self.ui.ab_quantity.text())
@@ -2149,7 +2121,7 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui = Ui_TaskWindow()
 		self.ui.setupUi(self)
 		self.parent = parent
-		self.id = str(ObjectId())
+		self.id = new_id()
 		self.cc = []
 		# self.weapons = [] # used for CC/Kills, add ids in as needed
 		# self.status = [] # used for CC/exitstatus
@@ -2584,7 +2556,7 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui.fld_taskid_gen.setText(self.id)
 
 	def cc_add(self, cond_type):
-		subtask_id = str(ObjectId())
+		subtask_id = new_id()
 		match cond_type:
 			case "VisitPlace":
 				cond = {
@@ -2837,7 +2809,7 @@ class Gui_TaskDlg(QMainWindow):
 				local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
 					"VisibilityCond"
 				)
-				local_counter = {"conditions": [], "id": str(ObjectId())}
+				local_counter = {"conditions": [], "id": new_id()}
 				local_counter["conditions"] = (
 					self.parent.parent.get_multicolumn_values_list("CounterCreator")
 				)

@@ -1,21 +1,13 @@
-import csv, json, os, sys, traceback, datetime, ctypes, time
+import logging, sys, traceback, ctypes
 import requests
-from os import path
 from pathlib import Path
 from gui import Gui_MainWindow, Gui_QuestDlg
 from configparser import ConfigParser
-from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QHeaderView
+from PySide6.QtWidgets import QApplication
+from utils import setup_logging
 
-
-# Parse string to boolean
-def is_true(val):
-	val = val.lower()
-	if val in ("y", "yes", "t", "true", "on", "1"):
-		return True
-	elif val in ("n", "no", "f", "false", "off", "0"):
-		return False
-	else:
-		raise ValueError("invalid truth value %r" % (val,))
+setup_logging()
+log = logging.getLogger(__name__)
 
 
 # Set up config parser and read in the settings file
@@ -83,7 +75,7 @@ class Controller:
 		wb_box_modslot = str(parser.get("box_fields", "ab_box_modslot")).split(",")
 
 	except Exception as e:
-		print(
+		log.error(
 			f"Error loading settings.ini file. Please check the exception below and the corresponding entry in the settings file.\nMost likely, the format for your entry is off. Check the top of settings.ini for more info.\n\n{traceback.format_exc()}"
 		)
 		exit()
@@ -98,25 +90,25 @@ class Controller:
 			latest_version = requests.get(Controller.version_url).text
 			return latest_version
 		except Exception as e:
-			print("Error fetching remote version")
+			log.error("Error fetching remote version")
 			return ""
 
 	def check_version():
 		try:
-			print("Checking version...\n")
+			log.info("Checking version...\n")
 			latest_version = Controller.get_version_from_remote()
 			local_version = Controller.get_version_from_file()
 			if local_version != latest_version:
-				print(
+				log.info(
 					f"Version {local_version} may be out of date!\nLatest version: {latest_version}\n\nPlease visit {Controller.project_url} to download the latest version."
 				)
-				print(
+				log.info(
 					"Or, if running from source, please pull the latest changes via 'git pull'"
 				)
 			else:
-				print(f"Version {local_version} is up to date.")
+				log.info(f"Version {local_version} is up to date.")
 		except Exception as e:
-			print(f"Error checking version: {e}")
+			log.error(f"Error checking version: {e}")
 
 	# This may get called before everything else gets initialized
 	def get_update_stats():

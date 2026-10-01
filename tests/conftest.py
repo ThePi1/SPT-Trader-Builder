@@ -35,15 +35,10 @@ def qapp():
 @pytest.fixture
 def fixed_ids(monkeypatch):
 	"""Make generated IDs deterministic (000...001, 000...002, ...)."""
-	import gui
+	import secrets
 
 	counter = iter(range(1, 10_000))
-
-	class FakeObjectId:
-		def __str__(self):
-			return f"{next(counter):024x}"
-
-	monkeypatch.setattr(gui, "ObjectId", FakeObjectId)
+	monkeypatch.setattr(secrets, "token_hex", lambda nbytes: f"{next(counter):0{nbytes * 2}x}")
 
 
 @pytest.fixture
