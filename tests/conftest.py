@@ -43,12 +43,26 @@ def fixed_ids(monkeypatch):
 
 
 @pytest.fixture
-def main_window(qapp, fixed_ids):
+def config(tmp_path):
+	"""A Config loaded from throwaway copies of the settings files, so tests can save settings safely."""
+	import shutil
+
 	from config import load_config
+	from paths import DATA_DIR
+
+	settings = tmp_path / "settings.ini"
+	box_fields = tmp_path / "box_fields.json"
+	shutil.copy(DATA_DIR / "settings.ini", settings)
+	shutil.copy(DATA_DIR / "box_fields.json", box_fields)
+	return load_config(settings, box_fields)
+
+
+@pytest.fixture
+def main_window(qapp, fixed_ids, config):
 	from state import AppState
 	from windows.main_window import Gui_MainWindow
 
-	win = Gui_MainWindow(AppState.load(load_config()))
+	win = Gui_MainWindow(AppState.load(config))
 	yield win
 	for w in win.windows:
 		w.close()

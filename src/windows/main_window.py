@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 
 from builders import assort as assort_builders
 from builders import locale as locale_builders
+from config import UPDATE_SETTING_NAMES
 from tb_ui.gui_main import Ui_MainGUI
 from updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
 from utils import new_id
@@ -26,6 +27,7 @@ from windows.assort import Gui_AssortDlg
 from windows.common import safe_file_dialog
 from windows.data_editor import Gui_DataEditor
 from windows.quest import Gui_QuestDlg
+from windows.settings import Gui_SettingsDlg
 from windows.update_dialog import Gui_UpdatesDlg
 
 log = logging.getLogger(__name__)
@@ -40,7 +42,7 @@ class Gui_MainWindow(QMainWindow):
 		self.setupTreeView()
 		self.state = state
 		self.update_status = pending_status(state.config)
-		self._update_worker = None
+		self._update_workers = []
 		self.setup_box_selections()
 		self.connect_actions()
 		self.setup_vars()
@@ -53,6 +55,7 @@ class Gui_MainWindow(QMainWindow):
 
 	def connect_actions(self):
 		self.ui.actionExit.triggered.connect(self.onExit)
+		self.ui.actionSettingsMenu.triggered.connect(self.onSettings)
 		self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
 		self.ui.actionLoad_items_json_for_below.triggered.connect(self.loadItemsJSON)
 		self.ui.actionGet_all_children_of_parent_ID.triggered.connect(
@@ -165,6 +168,8 @@ class Gui_MainWindow(QMainWindow):
 				dlg = Gui_UpdatesDlg(parent=self)
 			case "AssortBuilder":
 				dlg = Gui_AssortDlg(self.state, parent=self)
+			case "SettingsWindow":
+				dlg = Gui_SettingsDlg(self.state.config, parent=self)
 
 		self.windows.append(dlg)
 		return dlg
@@ -494,9 +499,11 @@ class Gui_MainWindow(QMainWindow):
 
 	def start_update_check(self):
 		"""Check for a newer release in the background; the result lands in set_update_status."""
+		for old_worker in self._update_workers:
+			old_worker.stale = True  # an older check's result must not overwrite this one's
 		worker = UpdateCheckWorker(self.state.config)
 		worker.signals.finished.connect(self.set_update_status)
-		self._update_worker = worker  # keep it (and its signals) alive until it finishes
+		self._update_workers.append(worker)  # keep it (and its signals) alive while it runs
 		QThreadPool.globalInstance().start(worker)
 
 	def set_update_status(self, status):
@@ -507,6 +514,15 @@ class Gui_MainWindow(QMainWindow):
 			)
 		elif status.state == UNKNOWN:
 			self.statusBar().showMessage(status.text, 8000)
+
+	def onSettings(self):
+		config = self.state.config
+		before = config.settings()
+		dlg = self.spawnWindow("SettingsWindow")
+		if dlg.exec() and any(before[name] != getattr(config, name) for name in UPDATE_SETTING_NAMES):
+			# the update settings changed, so check again with the new ones
+			self.update_status = pending_status(config)
+			self.start_update_check()
 
 	def onAbout(self):
 		dlg = self.spawnWindow("AboutWindow")

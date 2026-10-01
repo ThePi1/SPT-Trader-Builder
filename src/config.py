@@ -1,9 +1,30 @@
-"""Loads settings.ini (real settings) and box_fields.json (dropdown lists)."""
+"""Loads settings.ini (real settings) and box_fields.json (dropdown lists).
+
+settings.ini can be edited from the Settings dialog: ``Config.update_settings`` validates
+the new values, rewrites only the changed lines of the file (comments are kept), and
+applies them to the running app.
+"""
 
 import json
+import os
+import re
 from configparser import ConfigParser, Error as ConfigParserError
+from pathlib import Path
 
 from paths import DATA_DIR
+
+# Every value in settings.ini, in file order, as (section, key). Key names are unique,
+# so a settings dict is just {key: value}.
+SETTINGS_KEYS = (
+	("filepaths", "version_file"),
+	("filepaths", "version_url"),
+	("filepaths", "project_url"),
+	("defaults", "default_questicon"),
+)
+SETTING_NAMES = tuple(key for _, key in SETTINGS_KEYS)
+
+# Changing any of these means the update check should be run again
+UPDATE_SETTING_NAMES = ("version_file", "version_url", "project_url")
 
 # Every list the GUI expects to find in data/box_fields.json
 BOX_FIELD_KEYS = (
@@ -50,15 +71,35 @@ class Config:
 		version_url,
 		project_url,
 		default_questicon,
-		default_locale,
 		box_fields,
+		settings_path=None,
 	):
+		self.settings_path = settings_path
 		self.version_file = version_file
 		self.version_url = version_url
 		self.project_url = project_url
 		self.default_questicon = default_questicon
-		self.default_locale = default_locale
 		self.box_fields = box_fields
+
+	def settings(self):
+		"""The current value of everything in settings.ini, as {key: value}."""
+		return {name: getattr(self, name) for name in SETTING_NAMES}
+
+	def update_settings(self, values):
+		"""Save new settings to settings.ini and apply them to this running config.
+
+		Raises ValueError if a value is invalid (nothing is saved), and OSError if the
+		file can't be written (the running config is left unchanged).
+		"""
+		values = {name: values[name].strip() for name in SETTING_NAMES}
+		errors = validate_settings(values)
+		if errors:
+			raise ValueError("; ".join(f"{name}: {msg}" for name, msg in errors.items()))
+		if self.settings_path is None:
+			raise OSError("This configuration was not loaded from a settings file.")
+		save_settings(self.settings_path, values)
+		for name, value in values.items():
+			setattr(self, name, value)
 
 	def __getattr__(self, name):
 		# only called when normal lookup fails; lets config.default_tf work
@@ -72,7 +113,8 @@ def load_config(settings_path=None, box_fields_path=None):
 	settings_path = settings_path or DATA_DIR / "settings.ini"
 	box_fields_path = box_fields_path or DATA_DIR / "box_fields.json"
 
-	parser = ConfigParser()
+	# interpolation=None: values are literal, so a % in a URL isn't treated as a reference
+	parser = ConfigParser(interpolation=None)
 	if not parser.read(settings_path, encoding="utf-8"):
 		raise ConfigError(f"Could not read the settings file:\n{settings_path}")
 	try:
@@ -80,7 +122,6 @@ def load_config(settings_path=None, box_fields_path=None):
 		version_url = parser.get("filepaths", "version_url")
 		project_url = parser.get("filepaths", "project_url")
 		default_questicon = parser.get("defaults", "default_questicon")
-		default_locale = parser.get("defaults", "default_locale")
 	except ConfigParserError as e:
 		raise ConfigError(
 			f"There is a problem with the settings file:\n{settings_path}\n\n{e}"
@@ -113,6 +154,116 @@ def load_config(settings_path=None, box_fields_path=None):
 		version_url=version_url,
 		project_url=project_url,
 		default_questicon=default_questicon,
-		default_locale=default_locale,
 		box_fields=box_fields,
+		settings_path=settings_path,
 	)
+
+
+# --- editing settings.ini ------------------------------------------------------------
+
+
+def validate_settings(values):
+	"""Check a {key: value} dict of settings.
+
+	Returns {key: message} for each bad value (empty if everything is fine).
+	"""
+	errors = {}
+	for name in SETTING_NAMES:
+		value = values.get(name, "")
+		if "\n" in value or "\r" in value:
+			errors[name] = "Must be a single line."
+	for name in ("version_file", "default_questicon"):
+		if name not in errors and not values.get(name, "").strip():
+			errors[name] = "Required."
+	for name in ("version_url", "project_url"):
+		if name not in errors and not re.fullmatch(r"https?://\S+", values.get(name, "").strip()):
+			errors[name] = "Must be a web address starting with http:// or https://"
+	return errors
+
+
+_SECTION_RE = re.compile(r"^\s*\[([^\]]+)\]\s*$")
+_KEY_RE = re.compile(r"^(?P<key>[^=:\s#;\[][^=:]*?)(?P<sep>\s*[=:]\s*)(?P<value>.*)$")
+
+
+def _is_section_line(line):
+	return _SECTION_RE.match(line.rstrip("\r\n")) is not None
+
+
+def update_ini_text(text, values):
+	"""Return settings.ini text with the given {key: value} settings changed.
+
+	Only the lines of the changed keys are touched: comments, blank lines, other
+	entries and the file's line endings stay as they are. A key that isn't in the
+	file yet is added at the end of its section (creating the section if needed).
+	"""
+	for name, value in values.items():
+		if "\n" in value or "\r" in value:
+			raise ValueError(f"{name} must be a single line")
+	section_of = {key: section for section, key in SETTINGS_KEYS}
+	eol = "\r\n" if "\r\n" in text else "\n"
+	pending = dict(values)
+
+	out = []
+	section = None
+	skipping_continuation = False
+	for line in text.splitlines(keepends=True):
+		if skipping_continuation:
+			# an indented line after a value continues it: drop it along with the old value
+			if line.strip() and line[0] in " \t":
+				continue
+			skipping_continuation = False
+		body = line.rstrip("\r\n")
+		ending = line[len(body) :]
+		m = _SECTION_RE.match(body)
+		if m:
+			section = m.group(1)
+		else:
+			m = _KEY_RE.match(body)
+			if m:
+				key = m.group("key").strip().lower()
+				if key in pending and section_of.get(key) == section:
+					line = f"{m.group('key')}{m.group('sep')}{pending.pop(key)}{ending or eol}"
+					skipping_continuation = True
+		out.append(line)
+
+	# keys that weren't in the file: add them to the end of their section
+	for name in [n for n in SETTING_NAMES if n in pending]:
+		want = section_of[name]
+		start = None
+		for i, line in enumerate(out):
+			m = _SECTION_RE.match(line.rstrip("\r\n"))
+			if m and m.group(1) == want:
+				start = i
+		if start is None:
+			if out and not out[-1].endswith(("\n", "\r")):
+				out[-1] += eol
+			out += [eol, f"[{want}]{eol}"]
+			start = len(out) - 1
+		# the last non-blank line of the section
+		end = start
+		for i in range(start + 1, len(out)):
+			if _is_section_line(out[i]):
+				break
+			if out[i].strip():
+				end = i
+		if not out[end].endswith(("\n", "\r")):
+			out[end] += eol
+		out.insert(end + 1, f"{name} = {pending.pop(name)}{eol}")
+	return "".join(out)
+
+
+def save_settings(settings_path, values):
+	"""Write {key: value} settings into settings.ini (see update_ini_text)."""
+	settings_path = Path(settings_path)
+	with open(settings_path, encoding="utf-8", newline="") as f:
+		text = f.read()
+	new_text = update_ini_text(text, values)
+	# write a temp file and swap it in, so a failure can't leave a half-written settings file
+	tmp_path = settings_path.with_name(settings_path.name + ".tmp")
+	try:
+		with open(tmp_path, "w", encoding="utf-8", newline="") as f:
+			f.write(new_text)
+		os.replace(tmp_path, settings_path)
+	finally:
+		if tmp_path.exists():
+			tmp_path.unlink()

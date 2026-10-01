@@ -7,6 +7,10 @@ A tool for building EFT SPT Quests.
     cd src
     python .\trader_builder.py
 
+## Settings
+The values in `src/data/settings.ini` (update check URLs and the quest defaults) can be edited from **Settings > Edit Settings...** in the app. Saving only rewrites the lines you changed, so the comments in the file are kept.
+The dropdown lists live in `src/data/box_fields.json` and are not editable from the app.
+
 ## GUI
 The GUI is currently created using PySide6 and laid out using the Qt Designer tool.
 

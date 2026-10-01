@@ -304,7 +304,7 @@ class Ui_MainGUI(object):
     def retranslateUi(self, MainGUI):
         MainGUI.setWindowTitle(QCoreApplication.translate("MainGUI", u"SPT Trader Builder", None))
         self.actionAbout.setText(QCoreApplication.translate("MainGUI", u"About", None))
-        self.actionSettingsMenu.setText(QCoreApplication.translate("MainGUI", u"See settings.ini for more details.", None))
+        self.actionSettingsMenu.setText(QCoreApplication.translate("MainGUI", u"Edit Settings...", None))
         self.actionExit.setText(QCoreApplication.translate("MainGUI", u"Exit", None))
         self.actionUpdateCheck.setText(QCoreApplication.translate("MainGUI", u"Check for Updates", None))
         self.actionQuest_Builder.setText(QCoreApplication.translate("MainGUI", u"Quest Builder", None))

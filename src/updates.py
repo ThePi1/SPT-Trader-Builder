@@ -94,6 +94,7 @@ class UpdateCheckWorker(QRunnable):
 		super().__init__()
 		self.setAutoDelete(False)  # the window keeps the worker (and its signals) alive
 		self.config = config
+		self.stale = False  # set when a newer check has been started; the result is dropped
 		self.signals = _WorkerSignals()
 
 	def run(self):
@@ -104,4 +105,5 @@ class UpdateCheckWorker(QRunnable):
 			status = UpdateStatus(
 				read_local_version(self.config), "", UNKNOWN, self.config.project_url
 			)
-		self.signals.finished.emit(status)
+		if not self.stale:
+			self.signals.finished.emit(status)

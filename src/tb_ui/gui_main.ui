@@ -431,7 +431,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>See settings.ini for more details.</string>
+    <string>Edit Settings...</string>
    </property>
   </action>
   <action name="actionExit">
