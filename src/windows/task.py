@@ -646,9 +646,7 @@ class Gui_TaskDlg(QMainWindow):
 					value=val_field(ui.fld_quantity_li.displayText(), "", 0, int),
 					plant_time=val_field(ui.fld_plant_time_li.displayText(), "", 0, int),
 					min_durability=val_field(ui.fld_mindur_li.displayText(), "", 0, int),
-					# NOTE: this form has no max-durability field, so the min field is read
-					# for both (as it always has been); a blank field means 100.
-					max_durability=val_field(ui.fld_mindur_li.displayText(), "", 100, int),
+					max_durability=val_field(ui.fld_maxdur_li.displayText(), "", 100, int),
 					only_found_in_raid=is_true(ui.box_fir_li.currentText()),
 					zone_id=ui.fld_zoneid_li.displayText(),
 					visibility_conditions=vis,
