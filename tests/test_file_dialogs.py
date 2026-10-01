@@ -29,8 +29,23 @@ def test_a_chosen_folder_is_returned():
 def test_a_chosen_file_is_returned():
 	assert safe_file_dialog(lambda caption: ("C:/a.json", "JSON (*.json)"), "pick") == (
 		"C:/a.json",
-		"JSON (*.json)",
+		True,
 	)
+
+
+@pytest.mark.parametrize("selected_filter", ["", None, "All Files (*)"])
+def test_a_chosen_file_counts_whatever_the_selected_filter_is(selected_filter):
+	# the second item Qt returns is the selected filter, not a success flag
+	assert safe_file_dialog(lambda caption: ("C:/a.json", selected_filter), "pick") == (
+		"C:/a.json",
+		True,
+	)
+
+
+def test_the_dialog_is_called_with_the_window_title():
+	seen = []
+	safe_file_dialog(lambda caption: seen.append(caption) or ("", ""), "Import Quest JSON")
+	assert seen == ["Import Quest JSON"]
 
 
 def test_a_dialog_that_raises_is_a_cancel():
