@@ -1,8 +1,5 @@
 """Every window can be constructed without errors."""
 
-import gui
-
-
 def test_main_window_loads_data(main_window):
 	assert main_window.state.traders
 	assert main_window.state.items

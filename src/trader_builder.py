@@ -1,10 +1,10 @@
 import logging, os, sys, ctypes
 from PySide6.QtWidgets import QApplication, QMessageBox
 from config import ConfigError, load_config
-from gui import Gui_MainWindow
 from paths import APP_DIR
 from state import AppState
 from utils import setup_logging
+from windows.main_window import Gui_MainWindow
 
 setup_logging()
 log = logging.getLogger(__name__)

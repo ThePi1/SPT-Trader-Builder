@@ -44,11 +44,11 @@ def fixed_ids(monkeypatch):
 
 @pytest.fixture
 def main_window(qapp, fixed_ids):
-	import gui
 	from config import load_config
 	from state import AppState
+	from windows.main_window import Gui_MainWindow
 
-	win = gui.Gui_MainWindow(AppState.load(load_config()))
+	win = Gui_MainWindow(AppState.load(load_config()))
 	yield win
 	for w in win.windows:
 		w.close()

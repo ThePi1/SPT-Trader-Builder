@@ -2,9 +2,12 @@
 
 import json
 
-import gui
 from config import load_config
 from state import AppState
+from windows import data_editor
+from windows.assort import Gui_AssortDlg
+from windows.reward import Gui_RewardDlg
+from windows.task import Gui_TaskDlg
 
 
 def _state():
@@ -12,7 +15,7 @@ def _state():
 
 
 def test_task_dialog_works_without_a_parent(qapp, fixed_ids):
-	dlg = gui.Gui_TaskDlg(_state())
+	dlg = Gui_TaskDlg(_state())
 	received = []
 	dlg.condition_ready.connect(lambda *args: received.append(args))
 	dlg.ui.fld_value_lv.setText("20")
@@ -23,7 +26,7 @@ def test_task_dialog_works_without_a_parent(qapp, fixed_ids):
 
 
 def test_reward_dialog_works_without_a_parent(qapp, fixed_ids):
-	dlg = gui.Gui_RewardDlg(_state())
+	dlg = Gui_RewardDlg(_state())
 	received = []
 	dlg.reward_ready.connect(lambda *args: received.append(args))
 	dlg.ui.box_amount_exp.setText("100")
@@ -33,7 +36,7 @@ def test_reward_dialog_works_without_a_parent(qapp, fixed_ids):
 
 
 def test_assort_dialog_works_without_a_parent(qapp):
-	assert gui.Gui_AssortDlg(_state()).ui.ab_loyalty_combo.count() > 0
+	assert Gui_AssortDlg(_state()).ui.ab_loyalty_combo.count() > 0
 
 
 def test_child_dialogs_are_owned_by_their_opener(main_window):
@@ -65,8 +68,8 @@ def test_wtt_import_saves_datafiles_in_the_data_dir(main_window, tmp_path, monke
 	)
 	data_dir = tmp_path / "somewhere_else"
 	data_dir.mkdir()
-	monkeypatch.setattr(gui, "DATA_DIR", data_dir)
-	monkeypatch.setattr(gui, "safe_file_dialog", lambda method, title: (str(wtt), True))
+	monkeypatch.setattr(data_editor, "DATA_DIR", data_dir)
+	monkeypatch.setattr(data_editor, "safe_file_dialog", lambda method, title: (str(wtt), True))
 
 	editor = main_window.spawnWindow("DataWindow")
 	editor.import_wtt()
