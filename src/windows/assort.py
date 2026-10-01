@@ -11,13 +11,15 @@ from PySide6.QtWidgets import (
 	QAbstractScrollArea,
 	QFileDialog,
 	QMainWindow,
+	QMessageBox,
 	QTableWidgetItem,
 )
 
 from builders import assort as assort_builders
 from tb_ui.gui_assort import Ui_AssortBuilder
-from paths import DATA_DIR, EXPORT_DIR
+from paths import DATA_DIR
 from utils import new_id
+from windows.common import safe_file_dialog
 
 log = logging.getLogger(__name__)
 
@@ -515,12 +517,28 @@ class Gui_AssortDlg(QMainWindow):
 		self.clearUI()
 
 	def onExportAssort(self):  # export the finalized assort
+		filename, ok = safe_file_dialog(QFileDialog.getSaveFileName, "Export Assort JSON")
+		if not ok or filename is None:
+			log.info("No file selected for assort export, aborting export.")
+			return
+
 		assort = {
 			"items": self.itemlist,
 			"barter_scheme": self.barterlist,
 			"loyal_level_items": self.loyaltylist,
 		}
-
-		EXPORT_DIR.mkdir(exist_ok=True)
-		with open(EXPORT_DIR / "assort.json", "w") as f:
-			json.dump(assort, f, indent=2)
+		try:
+			with open(filename, "w", encoding="utf-8") as f:
+				json.dump(assort, f, indent=2)
+		except OSError as e:
+			log.error(f"Could not export the assort to {filename}: {e}")
+			QMessageBox.critical(
+				self, "Export Assort JSON", f"The assort could not be exported to {filename}.\n\n{e}"
+			)
+			return
+		log.info(f"Exported the assort to {filename}")
+		QMessageBox.information(
+			self,
+			"Export Assort JSON",
+			f"The assort export has completed successfully and can be found at {filename}.",
+		)
