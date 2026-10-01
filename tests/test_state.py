@@ -26,11 +26,8 @@ def table(qapp):
 	return table
 
 
-def test_game_data_is_loaded_and_indexed(state):
+def test_game_data_is_loaded(state):
 	assert state.traders and state.items and state.locations and state.weapons
-	name, trader_id = next(iter(state.traders.items()))
-	assert state.traders_invert[trader_id] == name
-	assert all(state.status_invert[v] == k for k, v in state.status.items())
 
 
 def test_field_lists(fresh):

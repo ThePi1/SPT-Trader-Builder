@@ -17,3 +17,8 @@ def test_all_windows_open(main_window):
 	# quest/assort/data/about/update are tracked by the main window; task/reward by the quest dialog
 	assert len(main_window.windows) == 5
 	assert len(quest.windows) == 2
+
+
+def test_edit_selected_quest_is_gone(main_window):
+	assert not hasattr(main_window.ui, "actionEdit_Selected_Quest")
+	assert not hasattr(main_window, "editSelectedQuest")

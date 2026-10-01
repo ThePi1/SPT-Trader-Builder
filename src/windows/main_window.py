@@ -54,7 +54,6 @@ class Gui_MainWindow(QMainWindow):
 	def connect_actions(self):
 		self.ui.actionExit.triggered.connect(self.onExit)
 		self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
-		self.ui.actionEdit_Selected_Quest.triggered.connect(self.editSelectedQuest)
 		self.ui.actionLoad_items_json_for_below.triggered.connect(self.loadItemsJSON)
 		self.ui.actionGet_all_children_of_parent_ID.triggered.connect(
 			self.getAllChildrenCalc
@@ -474,29 +473,6 @@ class Gui_MainWindow(QMainWindow):
 				log.error(
 					f"Error generating locale for quest file: {traceback.format_exc()}"
 				)
-
-	def editSelectedQuest(self):
-		qlist = self.ui.questList
-		select = qlist.selectedItems()
-		# if no quest selected, just skip
-		if len(select) <= 0:
-			return
-		quest_text = select[0].text()
-
-		for window in self.windows:  # Checks if QUESTDLG Open if so make active window.
-			if isinstance(window, Gui_QuestDlg) and window.isVisible():
-				window.activateWindow()
-				return
-
-		# hacky but easier than setting up a bunch of tables in qt6
-		quest_id = quest_text.split(" ")[-1]
-		quest = self.state.quests[quest_id]
-
-		# self.clear_table_fields()
-
-		# create questbuilder window and load fields
-		dlg = self.spawnWindow("QuestBuilder")
-		dlg.load_settings_from_dict(quest)
 
 	def remove_selected_quest(self):
 		qlist = self.ui.questList

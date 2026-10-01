@@ -36,12 +36,9 @@ class AppState:
 
 		# Game data
 		self.traders = traders
-		# used for going back from ID to trader name for loading quest to edit
-		self.traders_invert = {v: k for k, v in traders.items()}
 		self.weapons = weapons
 		self.locations = locations
 		self.status = status
-		self.status_invert = {v: k for k, v in status.items()}
 		self.items = items
 		self.item_id_name = {_data["_name"]: _id for _id, _data in items.items()}
 

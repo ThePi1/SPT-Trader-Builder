@@ -92,121 +92,12 @@ class Gui_QuestDlg(QMainWindow):
 	def setup_text_edit(self):
 		pass
 
-	# def edit_selected_reward(self):
-	#   tb_reward = self.ui.tb_rewards
-	#   select = tb_reward.selectedItems()
-	#   # if no reward selected, just skip
-	#   if len(select) <= 0:
-	#     return
-	#   row = select[0].row()
-	#   reward_id = tb_reward.item(row, 0).text()
-
-	#   for type in ["Fail", "Started", "Success"]:
-	#     if f"Reward{type}" in self.state.table_fields:
-	#       for id in self.state.table_fields[f"Reward{type}"]:
-	#         print(id)
-	#         reward = self.state.table_fields[f"Reward{type}"][id]
-	#         if id == reward_id:
-	#           found_reward = reward
-	#           break
-	#   # create questbuilder window and load fields
-	#   # dlg = Gui_RewardDlg(parent=self)
-	#   dlg = self.state.spawnWindow("RewardBuilder", _parent=self)
-	#   dlg.load_settings_from_dict(found_reward, type)
-
 	def remove_selected_reward(self):
 		remove_selected_table_item(
 			self.state,
 			type="RewardAny", table=self.ui.tb_rewards
 		)
 		log.debug(self.state.table_fields)
-
-	# def load_settings_from_dict(self, settings):
-	#   print(f"Loading settings from dict: {settings}")
-	#   quest_id = settings["_id"]
-	#   self.quest_id = quest_id
-	#   # first field is the JSON key
-	#   # tuple is (item reference to set, type of item reference (determines func to set))
-	#   field_map = {
-	#     "QuestName": (self.ui.fld_quest_name, "fld"),
-	#     "_id": (None, "skip"),
-	#     "canShowNotificationsInGame": (self.ui.box_can_show_notif, "box"),
-	#     "conditions":(None, "conditions"),
-	#     "image": (self.ui.fld_image_name, "fld"),
-	#     "instantComplete": (self.ui.box_insta_complete, "box"),
-	#     "location": (self.ui.box_location, "box"),
-	#     "restartable": (self.ui.box_restartable, "box"),
-	#     "rewards": (None, "rewards"),
-	#     "secretQuest": (self.ui.box_secret_quest, "box"),
-	#     "side": (self.ui.box_avail_faction, "box"),
-	#     "traderId": (self.ui.box_trader, "traderid"),
-	#     "type": (self.ui.box_quest_type_label, "box")
-	#   }
-	#   for k,v in settings.items():
-	#     if k in field_map:
-	#       set_obj = field_map[k][0]
-	#       set_type = field_map[k][1]
-	#       match set_type:
-	#         case "skip":
-	#           #print(f"Setting {k} to {v}, type skip")
-	#           pass
-	#         case "fld":
-	#           #print(f"Setting {k} to {v}, type field")
-	#           set_obj.setText(str(v))
-	#         case "box":
-	#           #print(f"Setting {k} to {v}, type box")
-	#           set_obj.setCurrentText(str(v))
-	#         case "traderid":
-	#           #print(f"Setting {k} to {v}, type traderid")
-	#           set_obj.setCurrentText(self.state.traders_invert[str(v)])
-	#         case "rewards":
-	#           print("Loading rewards...")
-	#           local_rewards = copy.deepcopy(v) # copy it b/c pass by reference screws thing up here
-	#           for type in ["Fail", "Started", "Success"]:
-	#             for reward in local_rewards[type]:
-	#               if f"Reward{type}" not in self.state.table_fields:
-	#                 self.state.table_fields[f"Reward{type}"] = {}
-	#               self.state.add_table_field(f"Reward{type}", self.ui.tb_rewards, reward['id'], {0: reward['id'], 1:type, 2:reward['type']}, reward)
-	#           print("Done loading rewards!")
-	#         case "conditions":
-	#           print("Loading conditions...")
-	#           local_conditions = copy.deepcopy(v)
-	#           for type in ["Finish", "Start", "Fail"]:
-	#             m = {"Finish":"AvailableForFinish", "Start":"AvailableForStart", "Fail":"Fail"}
-	#             for cond in local_conditions[m[type]]:
-	#               if f"Condition{type}" not in self.state.table_fields:
-	#                 self.state.table_fields[f"Condition{type}"] = {}
-	#               self.state.add_table_field(f"Condition{type}", self.ui.tb_cond, cond['id'], {0: cond['id'], 1:type, 2:cond['conditionType']}, cond)
-	#           print("Done loading conditions!")
-	#           pass
-	#     else:
-	#       print(f"Skipping {k}")
-
-	# def edit_selected_task(self):
-	#     breaknext = False
-	#     tb_cond = self.ui.tb_cond
-	#     select = tb_cond.selectedItems()
-	#     # if no cond selected, just skip
-	#     if len(select) <= 0:
-	#       return
-	#     row = select[0].row()
-	#     cond_id = tb_cond.item(row, 0).text()
-
-	#     for type in ["Finish", "Start", "Fail"]:
-	#       if breaknext: break
-	#       if f"Condition{type}" in self.state.table_fields:
-	#         for id in self.state.table_fields[f"Condition{type}"]:
-	#           if breaknext: break
-	#           print(id)
-	#           cond = self.state.table_fields[f"Condition{type}"][id]
-	#           if id == cond_id:
-	#             print(f"Editing task: found id {id} under type {type}.")
-	#             found_reward = cond
-	#             breaknext = True
-
-	#     # create questbuilder window and load fields
-	#     dlg = self.state.spawnWindow("TaskBuilder", _parent=self)
-	#     dlg.load_settings_from_dict(found_reward, type)
 
 	def finalize(self):
 		ui = self.ui

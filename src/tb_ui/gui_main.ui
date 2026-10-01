@@ -400,7 +400,6 @@
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionEdit_Selected_Quest"/>
     <addaction name="actionEdit_Tracked_Data_Files_locale_quest"/>
     <addaction name="separator"/>
     <addaction name="actionRemove_Selected_Quest"/>
@@ -468,11 +467,6 @@
   <action name="actionView_Queued_Quests">
    <property name="text">
     <string>View Queued Quests</string>
-   </property>
-  </action>
-  <action name="actionEdit_Selected_Quest">
-   <property name="text">
-    <string>Edit Selected Quest</string>
    </property>
   </action>
   <action name="actionAdd_queued_to_open_list">
