@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 
@@ -18,6 +19,18 @@ from paths import DATA_DIR, EXPORT_DIR
 from utils import new_id
 
 log = logging.getLogger(__name__)
+
+
+@functools.lru_cache(maxsize=None)
+def _load_item_names(path):
+	"""{item id: display name} from the reference file. Read once per run (keyed by path)."""
+	with open(path, "r", encoding="utf-8") as file:
+		reference = json.load(file)
+	names = {}
+	for item in reference.get("items", []):
+		# if an id is listed twice, the first entry wins
+		names.setdefault(item.get("id", ""), item.get("name", ""))
+	return names
 
 
 class Gui_AssortDlg(QMainWindow):
@@ -79,15 +92,8 @@ class Gui_AssortDlg(QMainWindow):
 
 	@staticmethod
 	def itemDatabase(tpl):
-		filename = DATA_DIR / "ab_itemName_reference.json"
-
-		with open(filename, "r", encoding="utf-8") as file:
-			reference = json.load(file)
-
-		for item in reference.get("items", []):
-			if tpl == item.get("id", ""):
-				return item.get("name", "")
-		return tpl
+		names = _load_item_names(DATA_DIR / "ab_itemName_reference.json")
+		return names.get(tpl, tpl)
 
 	def verifyComplete(self):
 		check = True
