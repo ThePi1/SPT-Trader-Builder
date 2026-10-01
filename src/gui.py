@@ -7,10 +7,10 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 from pathlib import Path
 
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtGui import QStandardItemModel, QStandardItem
-from PyQt6.QtCore import Qt, QRunnable
-from PyQt6.QtWidgets import (
+from PySide6 import QtCore, QtGui
+from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtCore import Qt, QRunnable
+from PySide6.QtWidgets import (
 	QApplication,
 	QAbstractItemView,
 	QDialog,
