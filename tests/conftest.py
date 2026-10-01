@@ -1,8 +1,8 @@
 """Shared test setup.
 
-The app uses paths relative to ``src/`` (``data/...``), so tests run with
-``src/`` as both the import root and the working directory, and Qt is forced
-into offscreen mode so no real windows are needed.
+Tests import from ``src/`` but run with an unrelated working directory (to prove
+the app doesn't depend on it), and Qt is forced into offscreen mode so no real
+windows are needed.
 """
 
 import json
@@ -21,8 +21,9 @@ sys.path.insert(0, str(SRC))
 
 
 @pytest.fixture(autouse=True)
-def _run_from_src(monkeypatch):
-	monkeypatch.chdir(SRC)
+def _run_from_elsewhere(monkeypatch, tmp_path):
+	# The app must not depend on the current working directory.
+	monkeypatch.chdir(tmp_path)
 
 
 @pytest.fixture(scope="session")

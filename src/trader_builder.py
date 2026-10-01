@@ -1,9 +1,9 @@
-import logging, sys, traceback, ctypes
+import logging, os, sys, traceback, ctypes
 import requests
-from pathlib import Path
 from gui import Gui_MainWindow, Gui_QuestDlg
 from configparser import ConfigParser
 from PySide6.QtWidgets import QApplication
+from paths import APP_DIR, DATA_DIR
 from utils import setup_logging
 
 setup_logging()
@@ -12,8 +12,7 @@ log = logging.getLogger(__name__)
 
 # Set up config parser and read in the settings file
 parser = ConfigParser()
-base_path = Path(__file__).parent
-parser.read("data/settings.ini")
+parser.read(DATA_DIR / "settings.ini")
 
 
 class Controller:
@@ -81,7 +80,7 @@ class Controller:
 		exit()
 
 	def get_version_from_file():
-		with open(Controller.version_file) as local_version_file:
+		with open(APP_DIR / Controller.version_file) as local_version_file:
 			local_version = local_version_file.read()
 			return local_version
 
@@ -129,6 +128,10 @@ def fix_win_taskbar():
 
 # Main method
 def main():
+	# The compiled UI files reference the window icon as "data/icon.ico", relative to the
+	# working directory, so make sure we're running from the app folder.
+	os.chdir(APP_DIR)
+
 	# Use this on Windows to add the icon back to the taskbar
 	# No idea how this works on Mac/Linux for now, haha
 	if sys.platform == "win32":

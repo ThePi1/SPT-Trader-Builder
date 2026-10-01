@@ -33,6 +33,7 @@ from tb_ui.gui_tasks import Ui_TaskWindow
 from tb_ui.gui_assort import Ui_AssortBuilder
 from tb_ui.gui_rewards import Ui_rewardBuilder
 from tb_ui.gui_datafiles import Ui_DataEditor
+from paths import DATA_DIR, EXPORT_DIR
 from utils import is_true, new_id, val_field
 
 log = logging.getLogger(__name__)
@@ -104,19 +105,19 @@ class Gui_MainWindow(QMainWindow):
 		# self.ui.wb_treeview.itemSelectionChanged.connect(self.onWeaponSelected)
 
 	def import_datafiles(self):
-		self.traders = self.importJson("data/traders.json")
+		self.traders = self.importJson(DATA_DIR / "traders.json")
 		# used for going back from ID to trader name for loading quest to edit
 		self.traders_invert = {v: k for k, v in self.traders.items()}
-		self.weapons = self.importJson("data/weapons.json")
-		self.locations = self.importJson("data/locations.json")
-		self.status = self.importJson("data/status.json")
-		self.items = self.importJson("data/items.json")
+		self.weapons = self.importJson(DATA_DIR / "weapons.json")
+		self.locations = self.importJson(DATA_DIR / "locations.json")
+		self.status = self.importJson(DATA_DIR / "status.json")
+		self.items = self.importJson(DATA_DIR / "items.json")
 		self.item_id_name = {_data["_name"]: _id for _id, _data in self.items.items()}
 		log.info(f"Imported {len(self.items)} items.")
 		self.status_invert = {v: k for k, v in self.status.items()}
 		self.quests = {}
 		try:
-			self.datafiles = self.importJson("data/datafiles.json")
+			self.datafiles = self.importJson(DATA_DIR / "datafiles.json")
 		except Exception as e:
 			self.datafiles = {}
 		self.customdata = {}
@@ -1632,7 +1633,7 @@ class Gui_AssortDlg(QMainWindow):
 
 	@staticmethod
 	def itemDatabase(tpl):
-		filename = "data/ab_itemName_reference.json"
+		filename = DATA_DIR / "ab_itemName_reference.json"
 
 		with open(filename, "r", encoding="utf-8") as file:
 			reference = json.load(file)
@@ -2111,7 +2112,8 @@ class Gui_AssortDlg(QMainWindow):
 			"loyal_level_items": self.loyaltylist,
 		}
 
-		with open("Exported Files/assort.json", "w") as f:
+		EXPORT_DIR.mkdir(exist_ok=True)
+		with open(EXPORT_DIR / "assort.json", "w") as f:
 			json.dump(assort, f, indent=2)
 
 
