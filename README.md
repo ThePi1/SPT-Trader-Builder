@@ -26,15 +26,18 @@ If you're not developing on Windows feel free to skip this (or make an analogue 
     src/builders/           plain functions that build the exported JSON (no Qt)
     src/windows/            one module per window (quest, task, reward, assort, ...)
     src/tb_ui/              generated from the .ui files, don't edit by hand
+    src/tests/              the test suite (see below)
     src/paths.py, utils.py, updates.py, table_fields.py   small shared helpers
 
 ## Tests
-    pip install -r requirements-dev.txt
-    python -m pytest tests
+From the repository root:
 
-`tests/test_builders.py` and `tests/test_state.py` test the JSON builders and shared state directly (no windows, fast).
-The other tests drive the real windows offscreen and compare the generated quest, assort and locale JSON to the files in `tests/golden/`.
-If you change the output on purpose, regenerate them with `UPDATE_GOLDEN=1 python -m pytest tests` and review the diff.
+    pip install -r requirements-dev.txt
+    python -m pytest src/tests
+
+`src/tests/test_builders.py` and `src/tests/test_state.py` test the JSON builders and shared state directly (no windows, fast).
+The other tests drive the real windows offscreen and compare the generated quest, assort and locale JSON to the files in `src/tests/golden/`.
+If you change the output on purpose, regenerate them with `UPDATE_GOLDEN=1 python -m pytest src/tests` and review the diff.
 
 ## Packaging binary
 Packaged with Python 3.11.6.

@@ -1,5 +1,5 @@
 __pycache__
 local_dev
-src\__pycache__
-src\data\datafiles.json.pytest_cache
+src/data/datafiles.json
 src/trader_builder.log*
+.pytest_cache/

@@ -15,7 +15,7 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-SRC = Path(__file__).resolve().parent.parent / "src"
+SRC = Path(__file__).resolve().parent.parent  # the tests live in src/tests
 GOLDEN = Path(__file__).resolve().parent / "golden"
 sys.path.insert(0, str(SRC))
 
@@ -71,7 +71,7 @@ def main_window(qapp, fixed_ids, config):
 
 @pytest.fixture
 def check_golden():
-	"""Compare a JSON-able object to tests/golden/<name>.json.
+	"""Compare a JSON-able object to src/tests/golden/<name>.json.
 
 	Run with UPDATE_GOLDEN=1 to (re)write the golden file instead.
 	"""
