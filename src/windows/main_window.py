@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
 	QTableWidgetItem,
 )
 
+from builders import assort as assort_builders
+from builders import locale as locale_builders
 from tb_ui.gui_main import Ui_MainGUI
 from updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
 from utils import new_id
@@ -286,22 +288,13 @@ class Gui_MainWindow(QMainWindow):
 		# print("Database ID: " + databaseID)
 		# print("Parent ID: " + parentID)
 
-		if not self.ui.wb_base_check.isChecked():
-			item = {
-				"_id": databaseID,
-				"_tpl": ItemID,
-				"parentId": parentID,
-				"slotId": slotID,
-			}
-
-		else:
-			item = {  # sets initial item key structure for editing in logic.
-				"_id": databaseID,
-				"_tpl": ItemID,
-				"parentId": "hideout",
-				"slotId": "hideout",
-				"upd": {},
-			}
+		item = assort_builders.weapon_preset_part(
+			databaseID,
+			ItemID,
+			parentID,
+			slotID,
+			is_base=self.ui.wb_base_check.isChecked(),
+		)
 		finalized_item = {databaseID: item}
 		self.weaponlist.append(finalized_item)
 		self.exportWeaponPresets(self.weaponlist)
@@ -464,51 +457,16 @@ class Gui_MainWindow(QMainWindow):
 
 		with open(qfilename, "r", encoding="utf-8") as f:
 			try:
-				locales = []
-				q_locstr = [
-					"name",
-					"note",
-					"acceptPlayerMessage",
-					"changeQuestMessageText",
-					"completePlayerMessage",
-					"declinePlayerMessage",
-					"description",
-					"failMessageText",
-					"startedMessageText",
-					"successMessageText",
-				]
-				cond_subtype = ["AvailableForFinish", "AvailableForStart", "Fail"]
 				quests_import = json.load(f)
-				final_locale = {}
 				for quest_id, quest in quests_import.items():
 					log.info(f"Found quest: {quest['QuestName']} ({quest_id})")
-					if quest["QuestName"] in ["Collector"]:
-						continue  # we want to manually skip these
-					# do top-level quest fields
-					for s in q_locstr:
-						if s in quest:
-							locales.append(f"{quest_id} {s}")
-					# do condition ids
-					for c in cond_subtype:
-						# if not empty
-						if len(quest["conditions"][c]) > 0:
-							for condition in quest["conditions"][c]:
-								locales.append(condition["id"])
-								# if "counter" in condition:
-								#   for cc in condition["counter"]["conditions"]:
-								#     locales.append(cc["id"])
-				log.info(locales)
+				locales = locale_builders.locale_keys(quests_import)
+				log.debug(locales)
 
 				with open(lfilename, "r") as baselocale_f:
 					base_locale = json.load(baselocale_f)
-					base_locale_existing = list(base_locale.items())
-					log.info(base_locale_existing)
-					for bl_key, bl_val in base_locale_existing:
-						final_locale[bl_key] = bl_val
-					for bl_key in locales:
-						if bl_key not in final_locale:
-							final_locale[bl_key] = ""
-					log.info(final_locale)
+				final_locale = locale_builders.merge_locale(base_locale, locales)
+				log.debug(final_locale)
 				with open(lfilename, "w") as savelocale_f:
 					json.dump(final_locale, savelocale_f, indent=4)
 

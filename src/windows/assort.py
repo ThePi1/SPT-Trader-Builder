@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 	QTableWidgetItem,
 )
 
+from builders import assort as assort_builders
 from tb_ui.gui_assort import Ui_AssortBuilder
 from paths import DATA_DIR, EXPORT_DIR
 from utils import new_id
@@ -221,12 +222,7 @@ class Gui_AssortDlg(QMainWindow):
 						cost_display = str(payment0.get("count", ""))
 						currency_display = str(payment0.get("_tpl", ""))
 
-						if currency_display == "5449016a4bdc2d6f028b456f":
-							currency_display = "Roubles"
-						elif currency_display == "5696686a4bdc2da3298b456a":
-							currency_display = "USD"
-						else:
-							currency_display = "Euro"
+						currency_display = assort_builders.currency_name(currency_display)
 
 			# Insert row
 			row = table.rowCount()
@@ -449,71 +445,33 @@ class Gui_AssortDlg(QMainWindow):
 
 		# selects item key structure depending on item or weapon part.
 		if self.ui.ab_tab.currentIndex() == 1:
-			if not self.ui.ab_weap_ammo_check.isChecked():
-				item = {
-					"_id": mongosaved,
-					"_tpl": partID,
-					"parentId": parentID,
-					"slotId": slotID,
-				}
-			else:
-				item = {  # sets initial item key structure for editing in logic.
-					"_id": mongosaved,
-					"_tpl": partID,
-					"parentId": parentID,
-					"slotId": "cartridges",
-					"location": 0,
-					"upd": {"StackObjectsCount": ammoCount},
-				}
+			item = assort_builders.weapon_part_item(
+				mongosaved,
+				partID,
+				parentID,
+				slotID,
+				ammo_count=ammoCount if self.ui.ab_weap_ammo_check.isChecked() else None,
+			)
 			self.itemlist.append(item)
 		else:
-			item = {  # sets initial item key structure for editing in logic.
-				"_id": mongosaved,
-				"_tpl": itemID,
-				"parentId": "hideout",
-				"slotId": "hideout",
-				"upd": {},
-			}
-
-			if self.ui.ab_unlimitedcount.isChecked():
-				item["upd"].update(
-					{"UnlimitedCount": unlimited, "StackObjectsCount": 9999}
-				)
-
-			else:
-				item["upd"].update(
-					{"UnlimitedCount": unlimited, "StackObjectsCount": int(quantity)}
-				)
-
-			if self.ui.ab_buyrestriction_checkbox.isChecked():
-				item["upd"].update(
-					{
-						"BuyRestrictionMax": int(buyrestriction),
-						"BuyRestrictionCurrent": 0,
-					}
-				)
-
-			if self.ui.ab_quest_check.isChecked():
-				item.update({"unlockedOn": "success", "questID": questID})
+			item = assort_builders.assort_item(
+				mongosaved,
+				itemID,
+				unlimited=unlimited,
+				quantity=quantity,
+				buy_restriction=(
+					buyrestriction if self.ui.ab_buyrestriction_checkbox.isChecked() else None
+				),
+				quest_id=questID if self.ui.ab_quest_check.isChecked() else None,
+			)
 			self.itemlist.append(item)
 
-			barter = {  # sets initial barter_scheme key structure for editing in logic.
-				mongosaved: [[{"count": int(cost), "_tpl": "cash"}]]
-			}
-			barterupdate = barter[mongosaved][0][
-				0
-			]  # sets path for updating cashtypes cleans up logic readability
-
-			match cashtype:
-				case "Roubles":
-					barterupdate.update({"_tpl": "5449016a4bdc2d6f028b456f"})
-				case "USD":
-					barterupdate.update({"_tpl": "5696686a4bdc2da3298b456a"})
-				case "Euros":
-					barterupdate.update({"_tpl": "569668774bdc2da2298b4568"})
-				case "Item":
-					barterupdate.update({"_tpl": str(barteritem)})
-
+			barter = assort_builders.barter_scheme(
+				mongosaved,
+				cost,
+				currency=cashtype,
+				barter_item_tpl=str(barteritem) if cashtype == "Item" else None,
+			)
 			loyalty = {mongosaved: int(loyaltylevel)}
 
 			self.barterlist.update(barter)

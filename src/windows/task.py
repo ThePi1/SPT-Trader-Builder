@@ -1,6 +1,7 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMainWindow
 
+from builders import conditions
 from tb_ui.gui_tasks import Ui_TaskWindow
 from table_fields import add_table_field, remove_selected_table_item
 from utils import is_true, new_id, val_field
@@ -495,518 +496,211 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui.fld_taskid_gen.setText(self.id)
 
 	def cc_add(self, cond_type):
+		"""Build one CounterCreator sub-condition from the form and add it to the CC table."""
+		ui = self.ui
+		state = self.state
 		subtask_id = new_id()
 		match cond_type:
 			case "VisitPlace":
-				cond = {
-					"conditionType": "VisitPlace",
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": subtask_id,
-					"target": self.ui.fld_zoneid_ccvp.displayText(),
-					"value": 1,
-				}
+				cond = conditions.visit_place(subtask_id, ui.fld_zoneid_ccvp.displayText())
 			case "Kills":
-				local_weapons = self.state.get_singlecolumn_field_list(
-					"KillsWep"
-				)
-				local_weapons_id = []
-				for wep in local_weapons:
-					local_weapons_id.append(self.state.weapons[wep])
-				# local_targets = self.state.get_singlecolumn_field_list("KillsTarget")
-				if self.ui.chk_cck_usetarget.isChecked():
-					local_targets = self.ui.box_targets_cck.currentText()
-				else:
-					local_targets = ""
-				local_targetrole = self.state.get_singlecolumn_field_list(
-					"KillsTargetRole"
-				)
-				local_bodypart = self.state.get_singlecolumn_field_list(
-					"KillsBodyPart"
-				)
-				pre_local_incmod = self.state.get_singlecolumn_field_list(
-					"KillsModInc"
-				)
-				local_incmod = [[item] for item in pre_local_incmod]
-				pre_local_excmod = self.state.get_singlecolumn_field_list(
-					"KillsModExc"
-				)
-				local_excmod = [[item] for item in pre_local_excmod]
-				local_dist = val_field(self.ui.fld_dist_cck.displayText(), "", 0, int)
-				local_timefrom = val_field(
-					self.ui.fld_time_from_cck.displayText(), "", 0, int
-				)
-				local_timeto = val_field(
-					self.ui.fld_time_to_cck.displayText(), "", 0, int
-				)
-
-				cond = {
-					"bodyPart": local_bodypart,
-					"compareMethod": ">=",  # hard code for kill quest
-					"conditionType": "Kills",
-					"daytime": {"from": local_timefrom, "to": local_timeto},
-					"distance": {
-						"compareMethod": self.ui.box_dist_compare_cck.currentText(),
-						"distance": local_dist,
-					},
-					"dynamicLocale": False,
-					"enemyEquipmentExclusive": [],
-					"enemyEquipmentInclusive": [],
-					"enemyHealthEffects": [],
-					"id": subtask_id,
-					"resetOnSessionEnd": self.ui.chk_cck_reset_sessionend.isChecked(),
-					"savageRole": local_targetrole,
-					"target": local_targets,
-					"value": 1,
-					"weapon": local_weapons_id,
-					"weaponCaliber": [],
-					"weaponModsExclusive": local_excmod,
-					"weaponModsInclusive": local_incmod,
-				}
-			case "ExitStatus":
-				local_status = self.state.get_singlecolumn_field_list(
-					"ExitStatus"
-				)
-				cond = {
-					"conditionType": "ExitStatus",
-					"dynamicLocale": False,
-					"id": subtask_id,
-					"status": local_status,
-				}
-			case "ExitName":
-				cond = {
-					"conditionType": "ExitName",
-					"dynamicLocale": False,
-					"id": subtask_id,
-					"exitName": self.ui.fld_exitname_ccen.displayText(),
-				}
-			case "Location":
-				local_locations = self.state.get_singlecolumn_field_list(
-					"Location"
-				)
-				cond = {
-					"conditionType": "Location",
-					"dynamicLocale": False,
-					"id": subtask_id,
-					"target": local_locations,
-				}
-			case "Equipment":
-				# This is all kind of a lot of work, but basically it's grouping the lists by org(or_group) for a list of multiple lists.
-				# So, you can have (this set of 3 equip items) OR  (this other set of 2), etc.
-				local_eqi = self.state.get_multicolumn_values_list(
-					"EquipmentInclusive"
-				)
-				local_eqe = self.state.get_multicolumn_values_list(
-					"EquipmentExclusive"
-				)
-				local_eqi_dict = {}
-				local_eqe_dict = {}
-				for e in local_eqi:
-					if e["org"] not in local_eqi_dict:
-						local_eqi_dict[e["org"]] = [e["id"]]
-					else:
-						local_eqi_dict[e["org"]].append(e["id"])
-
-				for e in local_eqe:
-					if e["org"] not in local_eqe_dict:
-						local_eqe_dict[e["org"]] = [e["id"]]
-					else:
-						local_eqe_dict[e["org"]].append(e["id"])
-
-				cond = {
-					"IncludeNotEquippedItems": self.ui.cb_eq_uneq.isChecked(),
-					"conditionType": "Equipment",
-					"dynamicLocale": False,
-					"equipmentExclusive": list(local_eqe_dict.values()),
-					"equipmentInclusive": list(local_eqi_dict.values()),
-					"id": subtask_id,
-				}
-			case "Shots":
-				local_bodypart = self.state.get_singlecolumn_field_list(
-					"ShotsBodyPart"
-				)
-				local_targetrole = self.state.get_singlecolumn_field_list(
-					"ShotsTargetRole"
-				)
-				local_weapons = self.state.get_singlecolumn_field_list(
-					"ShotsWeapon"
-				)
-				local_modinc = self.state.get_singlecolumn_field_list(
-					"ShotsModsInclusive"
-				)
-				local_modexc = self.state.get_singlecolumn_field_list(
-					"ShotsModsExclusive"
-				)
-				local_dist = val_field(self.ui.fld_dist_sh.displayText(), "", 0, int)
-				local_timefrom = val_field(
-					self.ui.fld_timefrom_sh.displayText(), "", 0, int
-				)
-				local_timeto = val_field(
-					self.ui.fld_timeto_sh.displayText(), "", 0, int
-				)
-				local_value = val_field(self.ui.fld_value_sh.displayText(), "", 0, int)
-				cond = {
-					"bodyPart": local_bodypart,
-					"compareMethod": ">=",
-					"conditionType": "Shots",
-					"daytime": {"from": local_timefrom, "to": local_timeto},
-					"distance": {
-						"compareMethod": self.ui.box_distcomp_sh.currentText(),
-						"value": local_dist,
-					},
-					"dynamicLocale": False,
-					"enemyEquipmentExclusive": [],
-					"enemyEquipmentInclusive": [],
-					"enemyHealthEffects": [],
-					"id": subtask_id,
-					"resetOnSessionEnd": self.ui.chk_cck_reset_sessionend_2.isChecked(),
-					"savageRole": local_targetrole,
-					"target": self.ui.box_target_sh.currentText(),
-					"value": local_value,
-					"weapon": [],
-					"weaponCaliber": [],
-					"weaponModsExclusive": local_modexc,
-					"weaponModsInclusive": local_modinc,
-				}
-			case "HealthEffect":
-				local_enval = val_field(self.ui.fld_enval_he.displayText(), "", 0, int)
-				local_timeval = val_field(
-					self.ui.fld_timeval_he.displayText(), "", 0, int
-				)
-				local_hydval = val_field(
-					self.ui.fld_hydval_he.displayText(), "", 0, int
-				)
-				local_bodypart = self.state.get_singlecolumn_field_list(
-					"HealthEffectBodyPart"
-				)
-				local_effect = self.state.get_singlecolumn_field_list(
-					"HealthEffectEffects"
-				)
-				cond = {
-					"bodyPartsWithEffects": [
-						{"bodyParts": local_bodypart, "effects": local_effect}
+				cond = conditions.kills(
+					subtask_id,
+					weapon_ids=[
+						state.weapons[wep]
+						for wep in state.get_singlecolumn_field_list("KillsWep")
 					],
-					"conditionType": "HealthEffect",
-					"dynamicLocale": False,
-					"energy": {
-						"compareMethod": self.ui.box_encomp_he.currentText(),
-						"value": local_enval,
-					},
-					"hydration": {
-						"compareMethod": self.ui.box_hydcomp_he.currentText(),
-						"value": local_hydval,
-					},
-					"id": subtask_id,
-					"time": {
-						"compareMethod": self.ui.box_timecomp_he.currentText(),
-						"value": local_timeval,
-					},
-				}
-			case "HealthBuff":
-				local_buff = self.state.get_singlecolumn_field_list(
-					"HealthBuff"
+					target=(
+						ui.box_targets_cck.currentText()
+						if ui.chk_cck_usetarget.isChecked()
+						else ""
+					),
+					target_roles=state.get_singlecolumn_field_list("KillsTargetRole"),
+					body_parts=state.get_singlecolumn_field_list("KillsBodyPart"),
+					mods_inclusive=state.get_singlecolumn_field_list("KillsModInc"),
+					mods_exclusive=state.get_singlecolumn_field_list("KillsModExc"),
+					distance=val_field(ui.fld_dist_cck.displayText(), "", 0, int),
+					distance_compare=ui.box_dist_compare_cck.currentText(),
+					time_from=val_field(ui.fld_time_from_cck.displayText(), "", 0, int),
+					time_to=val_field(ui.fld_time_to_cck.displayText(), "", 0, int),
+					reset_on_session_end=ui.chk_cck_reset_sessionend.isChecked(),
 				)
-				cond = {
-					"conditionType": "HealthBuff",
-					"dynamicLocale": False,
-					"id": subtask_id,
-					"target": local_buff,
-				}
+			case "ExitStatus":
+				cond = conditions.exit_status(
+					subtask_id, state.get_singlecolumn_field_list("ExitStatus")
+				)
+			case "ExitName":
+				cond = conditions.exit_name(subtask_id, ui.fld_exitname_ccen.displayText())
+			case "Location":
+				cond = conditions.location(
+					subtask_id, state.get_singlecolumn_field_list("Location")
+				)
+			case "Equipment":
+				cond = conditions.equipment(
+					subtask_id,
+					inclusive=state.get_multicolumn_values_list("EquipmentInclusive"),
+					exclusive=state.get_multicolumn_values_list("EquipmentExclusive"),
+					include_not_equipped=ui.cb_eq_uneq.isChecked(),
+				)
+			case "Shots":
+				cond = conditions.shots(
+					subtask_id,
+					body_parts=state.get_singlecolumn_field_list("ShotsBodyPart"),
+					target_roles=state.get_singlecolumn_field_list("ShotsTargetRole"),
+					mods_inclusive=state.get_singlecolumn_field_list("ShotsModsInclusive"),
+					mods_exclusive=state.get_singlecolumn_field_list("ShotsModsExclusive"),
+					distance=val_field(ui.fld_dist_sh.displayText(), "", 0, int),
+					distance_compare=ui.box_distcomp_sh.currentText(),
+					time_from=val_field(ui.fld_timefrom_sh.displayText(), "", 0, int),
+					time_to=val_field(ui.fld_timeto_sh.displayText(), "", 0, int),
+					value=val_field(ui.fld_value_sh.displayText(), "", 0, int),
+					target=ui.box_target_sh.currentText(),
+					reset_on_session_end=ui.chk_cck_reset_sessionend_2.isChecked(),
+				)
+			case "HealthEffect":
+				cond = conditions.health_effect(
+					subtask_id,
+					body_parts=state.get_singlecolumn_field_list("HealthEffectBodyPart"),
+					effects=state.get_singlecolumn_field_list("HealthEffectEffects"),
+					energy=val_field(ui.fld_enval_he.displayText(), "", 0, int),
+					energy_compare=ui.box_encomp_he.currentText(),
+					hydration=val_field(ui.fld_hydval_he.displayText(), "", 0, int),
+					hydration_compare=ui.box_hydcomp_he.currentText(),
+					time=val_field(ui.fld_timeval_he.displayText(), "", 0, int),
+					time_compare=ui.box_timecomp_he.currentText(),
+				)
+			case "HealthBuff":
+				cond = conditions.health_buff(
+					subtask_id, state.get_singlecolumn_field_list("HealthBuff")
+				)
 			case "LaunchFlare":
-				cond = {
-					"conditionType": "LaunchFlare",
-					"dynamicLocale": False,
-					"id": subtask_id,
-					"target": self.ui.fld_fl_zone.displayText(),
-				}
+				cond = conditions.launch_flare(subtask_id, ui.fld_fl_zone.displayText())
 			case "InZone":
-				local_zone = self.state.get_singlecolumn_field_list("InZone")
-				cond = {
-					"conditionType": "InZone",
-					"dynamicLocale": False,
-					"id": subtask_id,
-					"zoneIds": local_zone,
-				}
+				cond = conditions.in_zone(
+					subtask_id, state.get_singlecolumn_field_list("InZone")
+				)
 
 		add_table_field(
-			self.state,
+			state,
 			f"CounterCreator",
-			self.ui.tb_cc,
+			ui.tb_cc,
 			subtask_id,
 			{0: subtask_id, 1: cond_type},
 			cond,
 		)
 
 	def finalize(self, cond_type):
-		timing = ""
+		"""Build the top-level condition from the form and hand it to the quest window."""
+		ui = self.ui
+		state = self.state
+		vis = state.get_singlecolumn_field_list("VisibilityCond")
 		match cond_type:
-			# 3 different types of ids, all unique:
-			# one, each cc list item has its own id
-			# two, the whole cc list itself has an id
-			# three, the top-level CC task/condition has an id
-			# we use number 3 for the id in the internal datastore, and show that id in the task/cond list
 			case "CounterCreator":
-				local_vis_cond = self.state.get_singlecolumn_field_list(
-					"VisibilityCond"
+				timing = ui.box_ff.currentText()
+				cond = conditions.counter_creator(
+					self.id,
+					counter_id=new_id(),
+					sub_conditions=state.get_multicolumn_values_list("CounterCreator"),
+					parent_id=ui.fld_parentid_cc.displayText(),
+					quest_type=ui.box_cc_qtlab.currentText(),
+					value=val_field(ui.fld_quantity_cc.displayText(), "", 0, int),
+					visibility_conditions=vis,
 				)
-				local_counter = {"conditions": [], "id": new_id()}
-				local_counter["conditions"] = (
-					self.state.get_multicolumn_values_list("CounterCreator")
-				)
-				local_value = val_field(
-					self.ui.fld_quantity_cc.displayText(), "", 0, int
-				)
-				timing = self.ui.box_ff.currentText()
-				cond = {
-					"completeInSeconds": 0,
-					"conditionType": "CounterCreator",
-					"counter": local_counter,
-					"doNotResetIfCounterCompleted": False,  # TODO: implement gui for this
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"isNecessary": False,  # TODO: implement gui for this
-					"isResetOnConditionFailed": False,  # TODO: implement gui for this
-					"oneSessionOnly": False,
-					"parentId": self.ui.fld_parentid_cc.displayText(),
-					"type": self.ui.box_cc_qtlab.currentText(),
-					"value": local_value,
-					"visibilityConditions": local_vis_cond,
-				}
 			case "Item":
-				sub_cond_type = self.ui.box_hofind_it.currentText()
+				timing = ui.box_ff_it.currentText()
+				sub_cond_type = ui.box_hofind_it.currentText()
 				if sub_cond_type == "FindItem":
-					local_vis_cond = self.state.get_singlecolumn_field_list(
-						"VisibilityCond"
-					)
-					timing = self.ui.box_ff_it.currentText()
-					local_target = self.state.get_singlecolumn_field_list(
-						"HFItems"
-					)
-					local_value = val_field(
-						self.ui.fld_quantity_it.displayText(), "", 0, int
-					)
-
-					cond = {
-						"conditionType": "FindItem",
-						"countInRaid": False,
-						"dogtagLevel": 0,
-						"dynamicLocale": False,
-						"globalQuestCounterId": "",
-						"id": self.id,
-						"index": 0,
-						"inEncoded": False,
-						"maxDurability": val_field(
-							self.ui.fld_maxdur_it.displayText(), "", 100, int
-						),
-						"minDurability": val_field(
-							self.ui.fld_mindur_it.displayText(), "", 0, int
-						),
-						"onlyFoundInRaid": is_true(
-							self.ui.box_only_fir_it.currentText()
-						),
-						"parentId": self.ui.fld_parentid_it.displayText(),
-						"target": local_target,
-						"value": local_value,
-						"visibilityConditions": local_vis_cond,
-					}
-
-				if sub_cond_type == "HandoverItem":
-					local_vis_cond = self.state.get_singlecolumn_field_list(
-						"VisibilityCond"
-					)
-					timing = self.ui.box_ff_it.currentText()
-					local_target = self.state.get_singlecolumn_field_list(
-						"HFItems"
-					)
-					local_value = val_field(
-						self.ui.fld_quantity_it.displayText(), "", 0, int
-					)
-					cond = {
-						"conditionType": "HandoverItem",
-						"dogtagLevel": 0,
-						"dynamicLocale": False,
-						"globalQuestCounterId": "",
-						"id": self.id,
-						"index": 0,
-						"inEncoded": False,
-						"minDurability": val_field(
-							self.ui.fld_mindur_it.displayText(), "", 0, int
-						),
-						"maxDurability": val_field(
-							self.ui.fld_maxdur_it.displayText(), "", 100, int
-						),
-						"onlyFoundInRaid": is_true(
-							self.ui.box_only_fir_it.currentText()
-						),
-						"parentId": self.ui.fld_parentid_it.displayText(),
-						"target": local_target,
-						"value": local_value,
-						"visibilityConditions": local_vis_cond,
-					}
-
+					build_item_condition = conditions.find_item
+				elif sub_cond_type == "HandoverItem":
+					build_item_condition = conditions.handover_item
+				else:
+					raise ValueError(f"Unknown item condition type: {sub_cond_type}")
+				cond = build_item_condition(
+					self.id,
+					parent_id=ui.fld_parentid_it.displayText(),
+					targets=state.get_singlecolumn_field_list("HFItems"),
+					value=val_field(ui.fld_quantity_it.displayText(), "", 0, int),
+					min_durability=val_field(ui.fld_mindur_it.displayText(), "", 0, int),
+					max_durability=val_field(ui.fld_maxdur_it.displayText(), "", 100, int),
+					only_found_in_raid=is_true(ui.box_only_fir_it.currentText()),
+					visibility_conditions=vis,
+				)
 			case "Skill":
-				local_vis_cond = self.state.get_singlecolumn_field_list(
-					"VisibilityCond"
+				timing = ui.box_ff_sk.currentText()
+				cond = conditions.skill(
+					self.id,
+					compare_method=ui.box_compare_sk.currentText(),
+					parent_id=ui.fld_parentid_sk_2.displayText(),
+					target=ui.box_target_sk.currentText(),
+					value=val_field(ui.fld_level_sk.displayText(), "", 0, int),
+					visibility_conditions=vis,
 				)
-				timing = self.ui.box_ff_sk.currentText()
-				local_value = val_field(self.ui.fld_level_sk.displayText(), "", 0, int)
-				cond = {
-					"compareMethod": self.ui.box_compare_sk.currentText(),
-					"conditionType": "Skill",
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"parentId": self.ui.fld_parentid_sk_2.displayText(),
-					"target": self.ui.box_target_sk.currentText(),
-					"value": local_value,
-					"visibilityConditions": local_vis_cond,
-				}
 			case "LeaveItemAtLocation":
-				local_vis_cond = self.state.get_singlecolumn_field_list(
-					"VisibilityCond"
+				timing = ui.box_ff_li.currentText()
+				cond = conditions.leave_item_at_location(
+					self.id,
+					parent_id=ui.fld_parentid_li.displayText(),
+					targets=state.get_singlecolumn_field_list("LeaveItemTarget"),
+					value=val_field(ui.fld_quantity_li.displayText(), "", 0, int),
+					plant_time=val_field(ui.fld_plant_time_li.displayText(), "", 0, int),
+					min_durability=val_field(ui.fld_mindur_li.displayText(), "", 0, int),
+					# NOTE: this form has no max-durability field, so the min field is read
+					# for both (as it always has been); a blank field means 100.
+					max_durability=val_field(ui.fld_mindur_li.displayText(), "", 100, int),
+					only_found_in_raid=is_true(ui.box_fir_li.currentText()),
+					zone_id=ui.fld_zoneid_li.displayText(),
+					visibility_conditions=vis,
 				)
-				local_target_ids = self.state.get_singlecolumn_field_list(
-					"LeaveItemTarget"
-				)
-				timing = self.ui.box_ff_li.currentText()
-				local_ptime = val_field(
-					self.ui.fld_plant_time_li.displayText(), "", 0, int
-				)
-				local_value = val_field(
-					self.ui.fld_quantity_li.displayText(), "", 0, int
-				)
-				cond = {
-					"conditionType": "LeaveItemAtLocation",
-					"dogtagLevel": 0,
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"inEncoded": False,
-					"minDurability": val_field(
-						self.ui.fld_mindur_li.displayText(), "", 0, int
-					),
-					"maxDurability": val_field(
-						self.ui.fld_mindur_li.displayText(), "", 100, int
-					),
-					"onlyFoundInRaid": is_true(self.ui.box_fir_li.currentText()),
-					"parentId": self.ui.fld_parentid_li.displayText(),
-					"plantTime": local_ptime,
-					"target": local_target_ids,
-					"value": local_value,
-					"visibilityConditions": local_vis_cond,
-					"zoneId": self.ui.fld_zoneid_li.displayText(),
-				}
 			case "PlaceBeacon":
-				local_vis_cond = self.state.get_singlecolumn_field_list(
-					"VisibilityCond"
+				timing = ui.box_ff_pb.currentText()
+				cond = conditions.place_beacon(
+					self.id,
+					parent_id=ui.fld_parentid_pb.displayText(),
+					plant_time=val_field(ui.sb_time_pb.cleanText(), "", 10, int),
+					value=val_field(ui.sb_value_pb.cleanText(), "", 1, int),
+					zone_id=ui.fld_zoneid_pb.displayText(),
+					visibility_conditions=vis,
 				)
-				timing = self.ui.box_ff_pb.currentText()
-				local_ptime = val_field(self.ui.sb_time_pb.cleanText(), "", 10, int)
-				local_value = val_field(self.ui.sb_value_pb.cleanText(), "", 1, int)
-				cond = {
-					"conditionType": "PlaceBeacon",
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"parentId": self.ui.fld_parentid_pb.displayText(),
-					"plantTime": local_ptime,
-					"target": [
-						"5991b51486f77447b112d44f"
-					],  # ItemID for the MS2000 marker, can also use Radio Repeater (63a0b2eabea67a6d93009e52) according to docs
-					"value": local_value,
-					"visibilityConditions": local_vis_cond,
-					"zoneId": self.ui.fld_zoneid_pb.displayText(),
-				}
 			case "WeaponAssembly":
-				# TODO: implement
-				local_vis_cond = self.state.get_singlecolumn_field_list(
-					"VisibilityCond"
-				)
 				timing = "Finish"
-				cond = {
-					"weapon_assembly_placeholder": "add_weapon_assembly_object_here"
-				}
-				pass
+				cond = conditions.weapon_assembly()
 			case "TraderLoyalty":
-				local_vis_cond = self.state.get_singlecolumn_field_list(
-					"VisibilityCond"
+				timing = ui.box_ff_tl.currentText()
+				cond = conditions.trader_loyalty(
+					self.id,
+					compare_method=ui.box_compare_tl.currentText(),
+					parent_id=ui.fld_parentid_tl.displayText(),
+					trader_id=state.traders[ui.box_target_tl.currentText()],
+					value=val_field(ui.fld_level_tl.displayText(), "", 0, int),
+					visibility_conditions=vis,
 				)
-				timing = self.ui.box_ff_tl.currentText()
-				local_value = val_field(self.ui.fld_level_tl.displayText(), "", 0, int)
-				cond = {
-					"compareMethod": self.ui.box_compare_tl.currentText(),
-					"conditionType": "TraderLoyalty",
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"parentId": self.ui.fld_parentid_tl.displayText(),  # TODO: this isn't actually in the docs, does it work?? remove if not
-					"target": self.state.traders[
-						self.ui.box_target_tl.currentText()
-					],
-					"value": local_value,
-					"visibilityConditions": local_vis_cond,
-				}
 
 			# These 3 next are start-only
 			case "Level":
 				timing = "Start"
-				local_value = val_field(self.ui.fld_value_lv.displayText(), "", 0, int)
-				cond = {
-					"compareMethod": self.ui.box_compare_lv.currentText(),
-					"conditionType": "Level",
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"parentId": "",
-					"value": local_value,
-					"visibilityConditions": [],
-				}
-			case "Quest":
-				timing = self.ui.box_timing_qs.currentText()
-				local_status = self.state.get_singlecolumn_field_list("QStatus")
-				local_status_int = [self.state.status[s] for s in local_status]
-				local_availafter = val_field(
-					self.ui.fld_avail_qs.displayText(), "", 0, int
+				cond = conditions.level(
+					self.id,
+					compare_method=ui.box_compare_lv.currentText(),
+					value=val_field(ui.fld_value_lv.displayText(), "", 0, int),
 				)
-				cond = {
-					"availableAfter": local_availafter,
-					"conditionType": "Quest",
-					"dispersion": 0,
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"parentId": "",
-					"status": local_status_int,
-					"target": self.ui.fld_tid_qs.displayText(),
-					"visibilityConditions": [],
-				}
+			case "Quest":
+				timing = ui.box_timing_qs.currentText()
+				cond = conditions.quest_status(
+					self.id,
+					available_after=val_field(ui.fld_avail_qs.displayText(), "", 0, int),
+					status_ids=[
+						state.status[s] for s in state.get_singlecolumn_field_list("QStatus")
+					],
+					target=ui.fld_tid_qs.displayText(),
+				)
 			case "TraderStanding":
 				timing = "Start"
-				local_availafter = val_field(
-					self.ui.fld_value_ts.displayText(), "", 0, int
+				cond = conditions.trader_standing(
+					self.id,
+					compare_method=ui.box_comparemethod_ts.currentText(),
+					trader_id=state.traders[ui.box_trader_ts.currentText()],
+					value=val_field(ui.fld_value_ts.displayText(), "", 0, int),
 				)
-				cond = {
-					"compareMethod": self.ui.box_comparemethod_ts.currentText(),
-					"conditionType": "TraderStanding",
-					"dynamicLocale": False,
-					"globalQuestCounterId": "",
-					"id": self.id,
-					"index": 0,
-					"parentId": "",
-					"target": self.state.traders[
-						self.ui.box_trader_ts.currentText()
-					],
-					"value": local_value,
-					"visibilityConditions": [],
-				}
 
 		self.condition_ready.emit(timing, cond_type, self.id, cond)
 		self.close()

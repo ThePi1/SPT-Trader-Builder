@@ -4,6 +4,7 @@ import logging
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMainWindow
 
+from builders import rewards
 from tb_ui.gui_rewards import Ui_rewardBuilder
 from table_fields import add_table_field, remove_selected_table_item
 from utils import is_true, new_id
@@ -31,85 +32,72 @@ class Gui_RewardDlg(QMainWindow):
 		self.setup_buttons()
 
 	def add_item(self, tab):
-		has_soc = False
-		has_pid = False
-		has_sid = False
+		ui = self.ui
 		match tab:
 			case "Item":
-				item = {
-					"_id": new_id(),
-					"_tpl": self.ui.fld_utpl_item.displayText(),
-				}
-				if self.ui.chk_soc_item.isChecked() or self.ui.chk_fir_item.isChecked():
-					item["upd"] = {}
-				if self.ui.chk_soc_item.isChecked():
-					item["upd"]["StackObjectsCount"] = self.ui.box_soc_item.cleanText()
-					has_soc = True
-				if self.ui.chk_fir_item.isChecked():
-					item["upd"]["SpawnedInSession"] = self.ui.chk_fir_item.isChecked()
-				if self.ui.chk_parentid_item.isChecked():
-					item["parentId"] = self.ui.fld_parentid_item.displayText()
-					has_pid = True
-				if self.ui.chk_slotid_item.isChecked():
-					item["slotId"] = self.ui.fld_slotid_item.displayText()
-					has_sid = True
-				# self.items_item.append(item)
-				# self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {self.ui.chk_fir_item.isChecked()}")
-				add_table_field(
-					self.state,
-					f"RewardItem",
-					self.ui.tb_item,
-					item["_id"],
-					{
-						0: item["_id"],
-						1: item["_tpl"],
-						2: item["upd"]["StackObjectsCount"] if has_soc else "n/a",
-						3: item["parentId"] if has_pid else "n/a",
-						4: item["slotId"] if has_sid else "n/a",
-						5: self.ui.chk_fir_item.isChecked(),
-					},
-					item,
+				table, table_type, fir_check = ui.tb_item, "RewardItem", ui.chk_fir_item
+				item = rewards.reward_item(
+					new_id(),
+					ui.fld_utpl_item.displayText(),
+					stack_count=(
+						ui.box_soc_item.cleanText() if ui.chk_soc_item.isChecked() else None
+					),
+					spawned_in_session=ui.chk_fir_item.isChecked(),
+					parent_id=(
+						ui.fld_parentid_item.displayText()
+						if ui.chk_parentid_item.isChecked()
+						else None
+					),
+					slot_id=(
+						ui.fld_slotid_item.displayText()
+						if ui.chk_slotid_item.isChecked()
+						else None
+					),
 				)
-
 			case "AssortmentUnlock":
-				item = {
-					"_id": new_id(),
-					"_tpl": self.ui.fld_utpl_asu.displayText(),
-				}
-				if self.ui.chk_soc_asu.isChecked() or self.ui.chk_fir_asu.isChecked():
-					item["upd"] = {}
-				if self.ui.chk_soc_asu.isChecked():
-					item["upd"]["StackObjectsCount"] = int(
-						self.ui.box_soc_asu.cleanText()
-					)
-					has_soc = True
-				if self.ui.chk_fir_asu.isChecked():
-					item["upd"]["SpawnedInSession"] = self.ui.chk_fir_asu.isChecked()
-				if self.ui.chk_parentid_asu.isChecked():
-					item["parentId"] = self.ui.box_parentid_asu.displayText()
-					has_pid = True
-				if self.ui.chk_slotid_asu.isChecked():
-					item["slotId"] = self.ui.box_slotid_asu.displayText()
-					has_sid = True
-
-				# self.items_asu.append(item)
-				# self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, fir: {self.ui.chk_fir_asu.isChecked()}")
-
-				add_table_field(
-					self.state,
-					f"RewardAssortmentUnlock",
-					self.ui.tb_asu_item,
-					item["_id"],
-					{
-						0: item["_id"],
-						1: item["_tpl"],
-						2: item["upd"]["StackObjectsCount"] if has_soc else "n/a",
-						3: item["parentId"] if has_pid else "n/a",
-						4: item["slotId"] if has_sid else "n/a",
-						5: self.ui.chk_fir_asu.isChecked(),
-					},
-					item,
+				table, table_type, fir_check = (
+					ui.tb_asu_item,
+					"RewardAssortmentUnlock",
+					ui.chk_fir_asu,
 				)
+				item = rewards.reward_item(
+					new_id(),
+					ui.fld_utpl_asu.displayText(),
+					stack_count=(
+						int(ui.box_soc_asu.cleanText())
+						if ui.chk_soc_asu.isChecked()
+						else None
+					),
+					spawned_in_session=ui.chk_fir_asu.isChecked(),
+					parent_id=(
+						ui.box_parentid_asu.displayText()
+						if ui.chk_parentid_asu.isChecked()
+						else None
+					),
+					slot_id=(
+						ui.box_slotid_asu.displayText()
+						if ui.chk_slotid_asu.isChecked()
+						else None
+					),
+				)
+			case _:
+				return
+
+		add_table_field(
+			self.state,
+			table_type,
+			table,
+			item["_id"],
+			{
+				0: item["_id"],
+				1: item["_tpl"],
+				2: item.get("upd", {}).get("StackObjectsCount", "n/a"),
+				3: item.get("parentId", "n/a"),
+				4: item.get("slotId", "n/a"),
+				5: fir_check.isChecked(),
+			},
+			item,
+		)
 
 	def remove_selected_item(self, tab):
 		match tab:
@@ -124,131 +112,84 @@ class Gui_RewardDlg(QMainWindow):
 					type="RewardItem", table=self.ui.tb_item, id_row=0
 				)
 
-	def select_target_id(self, item_obj, manual=False, manual_id=None):
-		if manual:
-			return manual_id
-		if item_obj is None or len(item_obj) <= 0:
-			return ""
-		else:
-			if len(item_obj[0]) >= 1:
-				try:
-					return item_obj[0]["_id"]
-				except Exception as e:
-					return ""
-			else:  # Should never happen, but if there is no ID (empty item list might happen)
-				return ""
-
 	def finalize(self, reward_type):
+		ui = self.ui
+		state = self.state
 		match reward_type:
 			case "Achievement":
-				reward_timing = self.ui.box_rewardtiming_ach.currentText()
-				reward = {
-					"availableInGameEditions": [],
-					"id": self.id,
-					"index": 0,
-					"target": self.ui.fld_ach_id_ach.displayText(),
-					"type": "Achievement",
-					"unknown": is_true(self.ui.bx_unknown_ach.currentText()),
-				}
+				reward_timing = ui.box_rewardtiming_ach.currentText()
+				reward = rewards.achievement(
+					self.id,
+					target=ui.fld_ach_id_ach.displayText(),
+					unknown=is_true(ui.bx_unknown_ach.currentText()),
+				)
 			case "AssortmentUnlock":
-				reward_timing = self.ui.box_rewardtiming_asu.currentText()
-				local_items = self.state.get_multicolumn_values_list(
-					"RewardAssortmentUnlock"
-				)
-				reward = {
-					"availableInGameEditions": [],
-					"id": self.id,
-					"index": 0,
-					"items": local_items,
-					"loyaltyLevel": int(self.ui.box_loyalty_asu.cleanText()),
-					"target": self.select_target_id(
-						item_obj=local_items,
-						manual=self.ui.chk_target_specify_asu.isChecked(),
-						manual_id=self.ui.fld_man_target_asu.displayText(),
+				reward_timing = ui.box_rewardtiming_asu.currentText()
+				local_items = state.get_multicolumn_values_list("RewardAssortmentUnlock")
+				reward = rewards.assortment_unlock(
+					self.id,
+					items=local_items,
+					loyalty_level=int(ui.box_loyalty_asu.cleanText()),
+					target=(
+						ui.fld_man_target_asu.displayText()
+						if ui.chk_target_specify_asu.isChecked()
+						else rewards.first_item_id(local_items)
 					),
-					"traderId": self.state.traders[
-						self.ui.box_trader_asu.currentText()
-					],
-					"type": "AssortmentUnlock",
-					"unknown": is_true(self.ui.box_unknown_asu.currentText()),
-				}
+					trader_id=state.traders[ui.box_trader_asu.currentText()],
+					unknown=is_true(ui.box_unknown_asu.currentText()),
+				)
 			case "Experience":
-				reward_timing = self.ui.box_rewardtiming_exp.currentText()
-				reward = {
-					"availableInGameEditions": [],
-					"id": self.id,
-					"index": 0,
-					"type": "Experience",
-					"unknown": is_true(self.ui.box_unknown_exp.currentText()),
-					"value": int(self.ui.box_amount_exp.displayText()),
-				}
-			case "Item":
-				reward_timing = self.ui.box_rewardtiming_item.currentText()
-				local_items = self.state.get_multicolumn_values_list(
-					"RewardItem"
+				reward_timing = ui.box_rewardtiming_exp.currentText()
+				reward = rewards.experience(
+					self.id,
+					unknown=is_true(ui.box_unknown_exp.currentText()),
+					value=int(ui.box_amount_exp.displayText()),
 				)
-				reward = {
-					"availableInGameEditions": [],
-					"findInRaid": is_true(self.ui.box_fir_item.currentText()),
-					"id": self.id,
-					"index": 0,
-					"items": local_items,
-					"target": self.select_target_id(
-						item_obj=local_items,
-						manual=self.ui.chk_target_specify_it.isChecked(),
-						manual_id=self.ui.fld_man_target_it.displayText(),
+			case "Item":
+				reward_timing = ui.box_rewardtiming_item.currentText()
+				local_items = state.get_multicolumn_values_list("RewardItem")
+				reward = rewards.item(
+					self.id,
+					find_in_raid=is_true(ui.box_fir_item.currentText()),
+					items=local_items,
+					target=(
+						ui.fld_man_target_it.displayText()
+						if ui.chk_target_specify_it.isChecked()
+						else rewards.first_item_id(local_items)
 					),
-					"type": "Item",
-					"unknown": is_true(self.ui.box_unknown_item.currentText()),
-					"value": int(self.ui.box_value_item.cleanText()),
-				}
+					unknown=is_true(ui.box_unknown_item.currentText()),
+					value=int(ui.box_value_item.cleanText()),
+				)
 			case "Skill":
-				reward_timing = self.ui.box_rewardtiming_sk.currentText()
-				reward = {
-					"availableInGameEditions": [],
-					"id": self.id,
-					"index": 0,
-					"target": self.ui.box_skill_sk.currentText(),
-					"type": "Skill",
-					"unknown": is_true(self.ui.box_unknown_sk.currentText()),
-					"value": int(self.ui.box_points_sk.cleanText()),
-				}
+				reward_timing = ui.box_rewardtiming_sk.currentText()
+				reward = rewards.skill(
+					self.id,
+					target=ui.box_skill_sk.currentText(),
+					unknown=is_true(ui.box_unknown_sk.currentText()),
+					value=int(ui.box_points_sk.cleanText()),
+				)
 			case "StashRows":
-				reward_timing = self.ui.box_rewardtiming_sr.currentText()
-				reward = {
-					"availableInGameEditions": [],
-					"id": self.id,
-					"index": 0,
-					"type": "StashRows",
-					"unknown": is_true(self.ui.box_unknown_sr.currentText()),
-					"value": int(self.ui.box_rows_sr.cleanText()),
-				}
+				reward_timing = ui.box_rewardtiming_sr.currentText()
+				reward = rewards.stash_rows(
+					self.id,
+					unknown=is_true(ui.box_unknown_sr.currentText()),
+					value=int(ui.box_rows_sr.cleanText()),
+				)
 			case "TraderStanding":
-				reward_timing = self.ui.box_rewardtiming_ts.currentText()
-				reward = {
-					"availableInGameEditions": [],
-					"id": self.id,
-					"index": 0,
-					"target": self.state.traders[
-						self.ui.box_trader_ts.currentText()
-					],
-					"type": "TraderStanding",
-					"unknown": is_true(self.ui.box_unknown_ts.currentText()),
-					"value": float(self.ui.box_loyalty_ts.cleanText()),
-				}
-
+				reward_timing = ui.box_rewardtiming_ts.currentText()
+				reward = rewards.trader_standing(
+					self.id,
+					target=state.traders[ui.box_trader_ts.currentText()],
+					unknown=is_true(ui.box_unknown_ts.currentText()),
+					value=float(ui.box_loyalty_ts.cleanText()),
+				)
 			case "TraderUnlock":
-				reward_timing = self.ui.box_rewardtiming_tul.currentText()
-				reward = {
-					"availableInGameEditions": [],
-					"id": self.id,
-					"index": 0,
-					"target": self.state.traders[
-						self.ui.box_trader_tul.currentText()
-					],
-					"type": "TraderUnlock",
-					"unknown": is_true(self.ui.box_unknown_tul.currentText()),
-				}
+				reward_timing = ui.box_rewardtiming_tul.currentText()
+				reward = rewards.trader_unlock(
+					self.id,
+					target=state.traders[ui.box_trader_tul.currentText()],
+					unknown=is_true(ui.box_unknown_tul.currentText()),
+				)
 
 		self.reward_ready.emit(reward_timing, reward_type, self.id, reward)
 		self.close()

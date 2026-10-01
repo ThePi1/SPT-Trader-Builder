@@ -3,6 +3,7 @@ import logging
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMainWindow
 
+from builders import quests
 from tb_ui.gui_quests import Ui_QuestWindow
 from table_fields import add_table_field, remove_selected_table_item
 from utils import is_true, new_id
@@ -208,72 +209,35 @@ class Gui_QuestDlg(QMainWindow):
 	#     dlg.load_settings_from_dict(found_reward, type)
 
 	def finalize(self):
+		ui = self.ui
+		state = self.state
 		quest_id = self.quest_id
-		rewards_calc = {"Fail": [], "Started": [], "Success": []}
-		for k, v in rewards_calc.items():
-			if f"Reward{k}" in self.state.table_fields:
-				for _id, reward in self.state.table_fields[f"Reward{k}"].items():
-					rewards_calc[k].append(reward)
-					# print(_id, reward)
-		location_calc = (
+		quest_name = ui.fld_quest_name.displayText()
+		location = (
 			"any"
-			if self.ui.box_location.currentText() == "any"
-			else self.state.locations[self.ui.box_location.currentText()]
+			if ui.box_location.currentText() == "any"
+			else state.locations[ui.box_location.currentText()]
 		)
-		quest = {
-			quest_id: {
-				"QuestName": self.ui.fld_quest_name.displayText(),
-				"_id": quest_id,
-				"acceptPlayerMessage": quest_id + " acceptPlayerMessage",
-				"acceptanceAndFinishingSource": "eft",
-				"arenaLocations": [],
-				"canShowNotificationsInGame": is_true(
-					self.ui.box_can_show_notif.currentText()
-				),
-				"changeQuestMessageText": quest_id + " changeQuestMessageText",
-				"completePlayerMessage": quest_id + " completePlayerMessage",
-				"conditions": {
-					"AvailableForFinish": self.state.get_multicolumn_values_list(
-						"ConditionFinish"
-					),  # ConditionFinish
-					"AvailableForStart": self.state.get_multicolumn_values_list(
-						"ConditionStart"
-					),  # ConditionStart
-					"Fail": self.state.get_multicolumn_values_list(
-						"ConditionFail"
-					),  # ConditionFail
-				},
-				"declinePlayerMessage": quest_id + " declinePlayerMessage",
-				"description": quest_id + " description",
-				"failMessageText": quest_id + " failMessageText",
-				"image": self.ui.fld_image_name.displayText(),
-				"instantComplete": is_true(self.ui.box_insta_complete.currentText()),
-				"isKey": False,
-				"location": location_calc,
-				"name": quest_id + " name",
-				"note": quest_id + " note",
-				"progressSource": "eft",
-				"rankingModes": [],
-				"restartable": is_true(self.ui.box_restartable.currentText()),
-				"rewards": rewards_calc,
-				"secretQuest": is_true(self.ui.box_secret_quest.currentText()),
-				"side": self.ui.box_avail_faction.currentText(),
-				"startedMessageText": quest_id + " startedMessageText",
-				"successMessageText": quest_id + " successMessageText",
-				"traderId": self.state.traders[self.ui.box_trader.currentText()],
-				"type": self.ui.box_quest_type_label.currentText(),
-			}
-		}
-		log.info(f"Added quest: {self.ui.fld_quest_name.displayText()}, id: {quest_id}")
-		# may or may not be already in (if it was edited, it is)
-		# if quest_id in self.state.quests:
-		#   old_quest = self.state.quests.pop(quest_id)
-		# for i in range(self.state.ui.questList.count()):
-		#   if str(quest_id) in self.state.ui.questList.item(i).text():
-		#     self.state.ui.questList.takeItem(i)
-		#     break
-
-		self.quest_saved.emit(
-			quest_id, self.ui.fld_quest_name.displayText(), quest[quest_id]
+		quest = quests.quest(
+			quest_id,
+			name=quest_name,
+			can_show_notifications=is_true(ui.box_can_show_notif.currentText()),
+			finish_conditions=state.get_multicolumn_values_list("ConditionFinish"),
+			start_conditions=state.get_multicolumn_values_list("ConditionStart"),
+			fail_conditions=state.get_multicolumn_values_list("ConditionFail"),
+			image=ui.fld_image_name.displayText(),
+			instant_complete=is_true(ui.box_insta_complete.currentText()),
+			location=location,
+			restartable=is_true(ui.box_restartable.currentText()),
+			rewards={
+				timing: state.get_multicolumn_values_list(f"Reward{timing}")
+				for timing in ("Fail", "Started", "Success")
+			},
+			secret_quest=is_true(ui.box_secret_quest.currentText()),
+			side=ui.box_avail_faction.currentText(),
+			trader_id=state.traders[ui.box_trader.currentText()],
+			quest_type=ui.box_quest_type_label.currentText(),
 		)
+		log.info(f"Added quest: {quest_name}, id: {quest_id}")
+		self.quest_saved.emit(quest_id, quest_name, quest)
 		self.close()

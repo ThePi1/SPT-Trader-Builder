@@ -77,3 +77,15 @@ def test_wtt_import_saves_datafiles_in_the_data_dir(main_window, tmp_path, monke
 	saved = json.loads((data_dir / "datafiles.json").read_text())
 	assert list(saved) == ["CustomItems"]
 	assert main_window.state.id_search["N"] == "abc"
+
+
+def test_trader_standing_task_can_be_finalized(qapp, fixed_ids):
+	# Used to crash with an undefined variable (the value was read into the wrong name).
+	dlg = Gui_TaskDlg(_state())
+	received = []
+	dlg.condition_ready.connect(lambda *args: received.append(args))
+	dlg.ui.fld_value_ts.setText("3")
+	dlg.finalize("TraderStanding")
+	(timing, cond_type, _, cond), = received
+	assert (timing, cond_type) == ("Start", "TraderStanding")
+	assert cond["value"] == 3
