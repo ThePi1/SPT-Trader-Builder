@@ -1,4 +1,4 @@
 __pycache__
 local_dev
 src\__pycache__
-src\data\datafiles.json
+src\data\datafiles.json.pytest_cache

@@ -15,6 +15,13 @@ This is included with PySide6 (`pip install -r requirements.txt`) and launched w
 `..\tools\update_gui_py.ps1` is ran from the `src\tb_ui` folder to compile the `.ui` files into their `.py` counterparts.
 If you're not developing on Windows feel free to skip this (or make an analogue to it), and just run the commands yourself in that file as needed.
 
+## Tests
+    pip install -r requirements-dev.txt
+    python -m pytest tests
+
+The tests drive the real windows offscreen and compare the generated quest, assort and locale JSON to the files in `tests/golden/`.
+If you change the output on purpose, regenerate them with `UPDATE_GOLDEN=1 python -m pytest tests` and review the diff.
+
 ## Packaging binary
 Packaged with Python 3.11.6.
 
