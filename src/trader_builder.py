@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from config import ConfigError, load_config
 from gui import Gui_MainWindow
 from paths import APP_DIR
+from state import AppState
 from utils import setup_logging
 
 setup_logging()
@@ -33,20 +34,14 @@ def main():
 		log.error(str(e))
 		QMessageBox.critical(None, "Trader Builder - settings error", str(e))
 		sys.exit(1)
-	win = Gui_MainWindow(config)
+	win = Gui_MainWindow(AppState.load(config))
 
 	# # Set up triggers
 	win.ui.actionAbout.triggered.connect(win.onAbout)
 	win.ui.actionUpdateCheck.triggered.connect(win.onUpdateWindow)
-	win.ui.actionQuest_Builder.triggered.connect(
-		lambda: Gui_MainWindow.onQuestWindow(win)
-	)
-	win.ui.actionAssort_Builder.triggered.connect(
-		lambda: Gui_MainWindow.onAssortWindow(win)
-	)
-	win.ui.actionEdit_Tracked_Data_Files_locale_quest.triggered.connect(
-		lambda: Gui_MainWindow.editDataFiles(win)
-	)
+	win.ui.actionQuest_Builder.triggered.connect(win.onQuestWindow)
+	win.ui.actionAssort_Builder.triggered.connect(win.onAssortWindow)
+	win.ui.actionEdit_Tracked_Data_Files_locale_quest.triggered.connect(win.editDataFiles)
 
 	win.show()
 	win.start_update_check()

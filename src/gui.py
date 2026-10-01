@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PySide6 import QtCore, QtGui
 from PySide6.QtGui import QStandardItemModel, QStandardItem
-from PySide6.QtCore import Qt, QRunnable, QThreadPool
+from PySide6.QtCore import Qt, QRunnable, QThreadPool, Signal
 from PySide6.QtWidgets import (
 	QApplication,
 	QAbstractItemView,
@@ -34,6 +34,7 @@ from tb_ui.gui_assort import Ui_AssortBuilder
 from tb_ui.gui_rewards import Ui_rewardBuilder
 from tb_ui.gui_datafiles import Ui_DataEditor
 from paths import DATA_DIR, EXPORT_DIR
+from table_fields import add_table_field, remove_selected_table_item
 from updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
 from utils import is_true, new_id, val_field
 
@@ -59,26 +60,20 @@ def safe_file_dialog(method, window_title):
 
 
 class Gui_MainWindow(QMainWindow):
-	def __init__(self, controller, parent=None):
+	def __init__(self, state, parent=None):
 		super().__init__(parent)
 		self.ui = Ui_MainGUI()
 		self.ui.setupUi(self)
 		self.on_launch()
 		self.setupTreeView()
-		self.controller = controller
-		self.parent = parent
-		self.update_status = pending_status(controller)
+		self.state = state
+		self.update_status = pending_status(state.config)
 		self._update_worker = None
 		self.setup_box_selections()
 		self.connect_actions()
-		self.import_datafiles()
 		self.setup_vars()
 
 	def setup_vars(self):
-		# RewardFail RewardStarted RewardSuccess
-		self.table_fields = {}
-		# When clearing table fields, keep any k/v pair with these strings in the key
-		self.table_fields_keep_str = ["Reward", "Condition"]
 		self.weaponlist = []
 		self.windows = []
 		self.itemsJSON = None
@@ -107,36 +102,6 @@ class Gui_MainWindow(QMainWindow):
 		self.ui.fld_idlookup.textChanged.connect(self.update_idlookup)
 		# self.ui.wb_treeview.itemSelectionChanged.connect(self.onWeaponSelected)
 
-	def import_datafiles(self):
-		self.traders = self.importJson(DATA_DIR / "traders.json")
-		# used for going back from ID to trader name for loading quest to edit
-		self.traders_invert = {v: k for k, v in self.traders.items()}
-		self.weapons = self.importJson(DATA_DIR / "weapons.json")
-		self.locations = self.importJson(DATA_DIR / "locations.json")
-		self.status = self.importJson(DATA_DIR / "status.json")
-		self.items = self.importJson(DATA_DIR / "items.json")
-		self.item_id_name = {_data["_name"]: _id for _id, _data in self.items.items()}
-		log.info(f"Imported {len(self.items)} items.")
-		self.status_invert = {v: k for k, v in self.status.items()}
-		self.quests = {}
-		try:
-			self.datafiles = self.importJson(DATA_DIR / "datafiles.json")
-		except Exception as e:
-			self.datafiles = {}
-		self.customdata = {}
-		self.id_search = {}
-
-		# import custom data from WTT file list
-		allfiles = [item for sublist in self.datafiles.values() for item in sublist]
-		datafiles, datafiles_to_disk = Gui_DataEditor.import_customdata(
-			self, allfiles, root_folder=None
-		)
-		self.customdata = datafiles
-
-	def add_items_to_idsearch(self):
-		for _id, _data in self.items.items():
-			self.id_search[_data["_name"]] = _id
-
 	def update_idlookup(self):
 		self.ui.id_table.setRowCount(0)
 		search_str = self.ui.fld_idlookup.displayText()
@@ -144,24 +109,24 @@ class Gui_MainWindow(QMainWindow):
 			search_re = re.compile(search_str, re.IGNORECASE)
 		except Exception as e:
 			search_re = re.compile("")
-		keys_to_search = list(self.id_search.keys())
+		keys_to_search = list(self.state.id_search.keys())
 		local_quest_ids = {}
 
 		# add newly created quests
-		for _id, _data in self.quests.items():
+		for _id, _data in self.state.quests.items():
 			keys_to_search.append(_data["QuestName"])
 			local_quest_ids[_data["QuestName"]] = _id
 
 		# add item keys
-		for _id, _data in self.items.items():
+		for _id, _data in self.state.items.items():
 			keys_to_search.append(_data["_name"])
 
 		# add locations
-		for _location, _id in self.locations.items():
+		for _location, _id in self.state.locations.items():
 			keys_to_search.append(_location)
 
 		# add traders
-		for _trader, _id in self.traders.items():
+		for _trader, _id in self.state.traders.items():
 			keys_to_search.append(_trader)
 
 		# do the filtered search and inserts
@@ -169,9 +134,9 @@ class Gui_MainWindow(QMainWindow):
 		for key in filtered_keys:
 			row_position = self.ui.id_table.rowCount()
 			self.ui.id_table.insertRow(row_position)
-			if key in self.id_search:
+			if key in self.state.id_search:
 				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.id_search[key])
+					row_position, 0, Gui_MainWindow.table_widget(self.state.id_search[key])
 				)
 				self.ui.id_table.setItem(
 					row_position, 2, Gui_MainWindow.table_widget("wtt_custom")
@@ -183,23 +148,23 @@ class Gui_MainWindow(QMainWindow):
 				self.ui.id_table.setItem(
 					row_position, 2, Gui_MainWindow.table_widget("new_quest")
 				)
-			elif key in self.item_id_name:
+			elif key in self.state.item_id_name:
 				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.item_id_name[key])
+					row_position, 0, Gui_MainWindow.table_widget(self.state.item_id_name[key])
 				)
 				self.ui.id_table.setItem(
 					row_position, 2, Gui_MainWindow.table_widget("eft_item")
 				)
-			elif key in self.locations.keys():
+			elif key in self.state.locations.keys():
 				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.locations[key])
+					row_position, 0, Gui_MainWindow.table_widget(self.state.locations[key])
 				)
 				self.ui.id_table.setItem(
 					row_position, 2, Gui_MainWindow.table_widget("location")
 				)
-			elif key in self.traders.keys():
+			elif key in self.state.traders.keys():
 				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.traders[key])
+					row_position, 0, Gui_MainWindow.table_widget(self.state.traders[key])
 				)
 				self.ui.id_table.setItem(
 					row_position, 2, Gui_MainWindow.table_widget("trader")
@@ -216,27 +181,29 @@ class Gui_MainWindow(QMainWindow):
 			item.setToolTip(text)
 		return item
 
-	def spawnWindow(self, window_type, _parent=None):
-		if _parent is None:
-			_parent = self
+	def spawnWindow(self, window_type):
 		match window_type:
 			case "QuestBuilder":
-				dlg = Gui_QuestDlg(parent=_parent)
+				dlg = Gui_QuestDlg(self.state, parent=self)
+				dlg.quest_saved.connect(self.on_quest_saved)
 			case "DataWindow":
-				dlg = Gui_DataEditor(parent=_parent)
+				dlg = Gui_DataEditor(self.state, parent=self)
 			case "AboutWindow":
-				dlg = Gui_AboutDlg(parent=_parent)
+				dlg = Gui_AboutDlg(parent=self)
 			case "UpdateWindow":
-				dlg = Gui_UpdatesDlg(parent=_parent)
+				dlg = Gui_UpdatesDlg(parent=self)
 			case "AssortBuilder":
-				dlg = Gui_AssortDlg(parent=_parent)
-			case "RewardBuilder":
-				dlg = Gui_RewardDlg(parent=_parent)
-			case "TaskBuilder":
-				dlg = Gui_TaskDlg(parent=_parent)
+				dlg = Gui_AssortDlg(self.state, parent=self)
 
 		self.windows.append(dlg)
 		return dlg
+
+	def on_quest_saved(self, quest_id, quest_name, quest):
+		self.state.quests[quest_id] = quest
+		self.state.clear_table_fields()
+		item = QListWidgetItem(f"{quest_name}, {quest_id}")
+		item.setData(Qt.ItemDataRole.UserRole, quest_id)
+		self.ui.questList.addItem(item)
 
 	def on_launch(self):
 		self.ui.main_tab.setCurrentIndex(0)
@@ -244,21 +211,7 @@ class Gui_MainWindow(QMainWindow):
 		self.baseWeaponChecked(self.ui.wb_base_check.isChecked())
 
 	def setup_box_selections(self):
-		self.ui.wb_modslot_combo.addItems(self.controller.ab_box_modslot)
-
-	def safe_clear_table_fields(self):
-		pre_fields = copy.deepcopy(self.table_fields)
-		for k, v in pre_fields.items():
-			found_safe = False
-			for keepstr in self.table_fields_keep_str:
-				if keepstr in k:
-					found_safe = True
-			if not found_safe:
-				log.debug(f"removing {k}:{v}, not a safe field")
-				self.table_fields.pop(k)
-
-	def clear_table_fields(self):
-		self.table_fields = {}
+		self.ui.wb_modslot_combo.addItems(self.state.config.ab_box_modslot)
 
 	def filterList(self, query: str):
 		lst = self.ui.questList
@@ -400,11 +353,6 @@ class Gui_MainWindow(QMainWindow):
 		text = item.data(Qt.ItemDataRole.UserRole)
 		QApplication.clipboard().setText(text)
 
-	def importJson(self, path, _encoding="utf-8"):
-		with open(path, "r", encoding=_encoding) as f:
-			out = json.load(f)
-			return out
-
 	def analyze_cc(self):
 		log.info(f"Analyzing CC subtypes, opening dialogue...")
 
@@ -466,93 +414,13 @@ class Gui_MainWindow(QMainWindow):
 			for quest_id in quests_import.keys():
 				# print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
 				log.info(f"{quests_import[quest_id]['QuestName']}")
-				self.quests[quest_id] = quests_import[quest_id]
+				self.state.quests[quest_id] = quests_import[quest_id]
 				quest = QListWidgetItem(
 					f"{quests_import[quest_id]['QuestName']}, {quest_id}"
 				)
 				quest.setData(Qt.ItemDataRole.UserRole, quest_id)
 				self.ui.questList.addItem(quest)
 				log.info(quest.data(Qt.ItemDataRole.UserRole))
-
-	def add_table_field(self, type, table, _id, values, dataobj):
-		log.debug(
-			f"adding type: {type}, table: {table}, id: {_id}, values:  {values}, dataobj: {dataobj}"
-		)
-		# for single column tables, the only column is the "id"
-		# values looks like this: {1: "col1 field", 2: "col2 field", ...}
-		if type not in self.table_fields:
-			self.table_fields[type] = {}
-
-		# we already have an entry for this, let's remove it first
-		if _id in self.table_fields[type]:
-			self.remove_selected_table_item(type=type, table=table)
-
-		# add it into the list if it doesn't already exist
-		if not _id in self.table_fields[type]:
-			# set data
-			self.table_fields[type][_id] = dataobj
-			# add it into the table
-			row = table.rowCount()
-			table.insertRow(row)
-			log.debug(values)
-			for col, text in values.items():
-				table.setItem(row, col, QTableWidgetItem(str(text)))
-		log.info(f"Table fields:\n{self.table_fields}")
-
-	def remove_selected_table_item(self, type, table, id_row=0):
-		log.debug(
-			f"removing selected item, type: {type}, table: {table}. Table_fields: {self.table_fields}"
-		)
-		# if we need to check multiple types (like for rewards), do so
-		if type == "RewardAny":
-			alltypes = [
-				"RewardFail",
-				"RewardStarted",
-				"RewardSuccess",
-				"RewardAssortmentUnlock",
-				"RewardSuccess",
-			]
-		elif type == "ConditionAny":
-			alltypes = ["ConditionFinish", "ConditionStart", "ConditionFail"]
-		else:
-			alltypes = [type]
-
-		select = table.selectedItems()
-		# if no reward selected, just skip
-		if len(select) <= 0:
-			return
-		row = select[0].row()
-		row_id = table.item(row, id_row).text()
-		for type in alltypes:
-			log.debug(
-				f"type found?{type in self.table_fields}, row_id in typedict?{type in row_id in self.table_fields and row_id in self.table_fields[type]}"
-			)
-			if type in self.table_fields and row_id in self.table_fields[type]:
-				self.table_fields[type].pop(row_id)
-		table.removeRow(row)
-		log.info(f"Table fields:\n{self.table_fields}")
-
-	def get_singlecolumn_field_list(self, key):
-		if key in self.table_fields:
-			return list(self.table_fields[key].keys())
-		else:
-			return []
-
-	def get_multicolumn_values_list(self, key):
-		if key in self.table_fields:
-			return list(self.table_fields[key].values())
-		else:
-			return []
-
-	def reset_by_key(self, key):
-		if key in self.table_fields:
-			del self.table_fields[key]
-
-	def reset_by_id(self, id):
-		for category, cat_dict in self.table_fields.items():
-			if id in cat_dict:
-				del cat_dict[id]
-			# if id is found, remove it similar to reset by key above
 
 	def loadItemsJSON(self):
 		if self.itemsJSON is not None:
@@ -694,7 +562,7 @@ class Gui_MainWindow(QMainWindow):
 
 		# hacky but easier than setting up a bunch of tables in qt6
 		quest_id = quest_text.split(" ")[-1]
-		quest = self.quests[quest_id]
+		quest = self.state.quests[quest_id]
 
 		# self.clear_table_fields()
 
@@ -713,8 +581,8 @@ class Gui_MainWindow(QMainWindow):
 		# hacky but easier than setting up a bunch of tables in qt6
 		quest_id = quest_text.split(" ")[-1]
 		# remove the quest-to-be-edited from the lists
-		if quest_id in self.quests:
-			old_quest = self.quests.pop(quest_id)
+		if quest_id in self.state.quests:
+			old_quest = self.state.quests.pop(quest_id)
 		for i in range(self.ui.questList.count()):
 			if str(quest_id) in self.ui.questList.item(i).text():
 				self.ui.questList.takeItem(i)
@@ -722,7 +590,7 @@ class Gui_MainWindow(QMainWindow):
 
 	def start_update_check(self):
 		"""Check for a newer release in the background; the result lands in set_update_status."""
-		worker = UpdateCheckWorker(self.controller)
+		worker = UpdateCheckWorker(self.state.config)
 		worker.signals.finished.connect(self.set_update_status)
 		self._update_worker = worker  # keep it (and its signals) alive until it finishes
 		QThreadPool.globalInstance().start(worker)
@@ -752,7 +620,7 @@ class Gui_MainWindow(QMainWindow):
 		dlg.exec()
 
 	def onExportQuests(self):
-		self.exportAll(self.quests)
+		self.exportAll(self.state.quests)
 
 	def onExit(self):
 		sys.exit(0)
@@ -813,10 +681,9 @@ class Gui_MainWindow(QMainWindow):
 
 class Gui_AboutDlg(QDialog):
 	def __init__(self, parent=None):
-		super().__init__()
+		super().__init__(parent)
 		self.ui = Ui_AboutMenu()
 		self.ui.setupUi(self)
-		self.parent = parent
 
 	def updateAbout(self, ver_current, url_text):
 		text = self.ui.label.text()
@@ -826,12 +693,12 @@ class Gui_AboutDlg(QDialog):
 
 
 class Gui_DataEditor(QMainWindow):
-	def __init__(self, parent=None):
-		super().__init__()
+	def __init__(self, state, parent=None):
+		super().__init__(parent)
 		self.ui = Ui_DataEditor()
 		self.ui.setupUi(self)
+		self.state = state
 		self.on_launch()
-		self.parent = parent
 		self.show()
 		self.ui.pb_wtt_import.released.connect(self.import_wtt)
 
@@ -847,74 +714,22 @@ class Gui_DataEditor(QMainWindow):
 			return
 		log.info(f"Finding JSON files in root folder: {root_folder}")
 		allfiles = Path(root_folder).rglob("*.json")
-		datafiles, datafiles_to_disk = Gui_DataEditor.import_customdata(
-			self.parent, list(allfiles), root_folder=root_folder
+		datafiles, datafiles_to_disk = self.state.import_customdata(
+			list(allfiles), root_folder=root_folder
 		)
 
-		with open("data\\datafiles.json", "w") as f:
+		with open(DATA_DIR / "datafiles.json", "w") as f:
 			json.dump(datafiles_to_disk, f)
 		self.ui.statusbar.showMessage(
 			f"Loaded {sum(len(sublist) for sublist in datafiles)} data files."
 		)
 
-	@staticmethod
-	def import_customdata(qb_window, pathlist, root_folder=None):
-		datafiles_to_disk = {}
-		datafiles = {}
-		datatypes = [
-			"CustomItems",
-			"CustomLocales",
-			"CustomQuestZones",
-			"CustomQuests",
-			"CustomLootspawns",
-			"RootWTTFolder",
-		]
-		for path in pathlist:
-			for datatype in datatypes:
-				if datatype in str(path):
-					try:
-						loaded_json = qb_window.importJson(str(path))
-					except Exception as e:
-						log.error(f"Cannot load {str(path)}, skipping")
-						continue
-					if datatype not in datafiles:
-						datafiles[datatype] = []
-					if datatype not in datafiles_to_disk:
-						datafiles_to_disk[datatype] = []
-					# insert path in disk dict
-					datafiles_to_disk[datatype].append(str(path))
-					# category-specific logic
-					if "CustomItems" in str(path):
-						for _id, _data in loaded_json.items():
-							qb_window.id_search[_data["locales"]["en"]["name"]] = _id
-							qb_window.id_search[_data["locales"]["en"]["shortName"]] = (
-								_id
-							)
-							qb_window.id_search[
-								_data["locales"]["en"]["description"]
-							] = _id
-					elif "CustomQuests" in str(path):
-						if "en.json" in str(path):
-							for _id, _data in loaded_json.items():
-								qb_window.id_search[_data] = _id
-						elif "quest_definitions.json" in str(path):
-							for _id, _data in loaded_json.items():
-								quest = loaded_json[_id]
-								qb_window.id_search[quest["QuestName"]] = _id
-
-					datafiles[datatype].append(loaded_json)
-		if root_folder:
-			datafiles["RootWTTFolder"] = [str(root_folder)]
-		qb_window.customdata = datafiles
-		return datafiles, datafiles_to_disk
-
 
 class Gui_UpdatesDlg(QDialog):
 	def __init__(self, parent=None):
-		super().__init__()
+		super().__init__(parent)
 		self.ui = Ui_UpdateMenu()
 		self.ui.setupUi(self)
-		self.parent = parent
 
 	def updateVersion(self, ver_current, ver_latest, url_text, update_text):
 		text = self.ui.label.text()
@@ -926,11 +741,14 @@ class Gui_UpdatesDlg(QDialog):
 
 
 class Gui_RewardDlg(QMainWindow):
-	def __init__(self, parent=None, _controller=None):
-		super().__init__()
+	# (reward_timing, reward_type, reward_id, reward) - sent when the user finalizes a reward
+	reward_ready = Signal(str, str, str, object)
+
+	def __init__(self, state, parent=None):
+		super().__init__(parent)
 		self.ui = Ui_rewardBuilder()
 		self.ui.setupUi(self)
-		self.parent = parent
+		self.state = state
 		self.on_launch()  # Custom code in this one
 		self.show()
 		self.id = new_id()
@@ -966,7 +784,8 @@ class Gui_RewardDlg(QMainWindow):
 					has_sid = True
 				# self.items_item.append(item)
 				# self.ui.list_items_item.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, parentId: {item['parentId'] if has_pid else 'n/a'}, slotId: {item['slotId'] if has_sid else 'n/a'}, fir: {self.ui.chk_fir_item.isChecked()}")
-				self.parent.parent.add_table_field(
+				add_table_field(
+					self.state,
 					f"RewardItem",
 					self.ui.tb_item,
 					item["_id"],
@@ -1005,7 +824,8 @@ class Gui_RewardDlg(QMainWindow):
 				# self.items_asu.append(item)
 				# self.ui.list_items_asu.addItem(f"_id: {item['_id']}, _tpl: {item['_tpl']}, SOC: {item['upd']['StackObjectsCount'] if has_soc else 'n/a'}, fir: {self.ui.chk_fir_asu.isChecked()}")
 
-				self.parent.parent.add_table_field(
+				add_table_field(
+					self.state,
 					f"RewardAssortmentUnlock",
 					self.ui.tb_asu_item,
 					item["_id"],
@@ -1023,11 +843,13 @@ class Gui_RewardDlg(QMainWindow):
 	def remove_selected_item(self, tab):
 		match tab:
 			case "AssortmentUnlock":
-				self.parent.parent.remove_selected_table_item(
+				remove_selected_table_item(
+					self.state,
 					type="RewardAssortmentUnlock", table=self.ui.tb_asu_item, id_row=0
 				)
 			case "Item":
-				self.parent.parent.remove_selected_table_item(
+				remove_selected_table_item(
+					self.state,
 					type="RewardItem", table=self.ui.tb_item, id_row=0
 				)
 
@@ -1059,7 +881,7 @@ class Gui_RewardDlg(QMainWindow):
 				}
 			case "AssortmentUnlock":
 				reward_timing = self.ui.box_rewardtiming_asu.currentText()
-				local_items = self.parent.parent.get_multicolumn_values_list(
+				local_items = self.state.get_multicolumn_values_list(
 					"RewardAssortmentUnlock"
 				)
 				reward = {
@@ -1073,7 +895,7 @@ class Gui_RewardDlg(QMainWindow):
 						manual=self.ui.chk_target_specify_asu.isChecked(),
 						manual_id=self.ui.fld_man_target_asu.displayText(),
 					),
-					"traderId": self.parent.parent.traders[
+					"traderId": self.state.traders[
 						self.ui.box_trader_asu.currentText()
 					],
 					"type": "AssortmentUnlock",
@@ -1091,7 +913,7 @@ class Gui_RewardDlg(QMainWindow):
 				}
 			case "Item":
 				reward_timing = self.ui.box_rewardtiming_item.currentText()
-				local_items = self.parent.parent.get_multicolumn_values_list(
+				local_items = self.state.get_multicolumn_values_list(
 					"RewardItem"
 				)
 				reward = {
@@ -1136,7 +958,7 @@ class Gui_RewardDlg(QMainWindow):
 					"availableInGameEditions": [],
 					"id": self.id,
 					"index": 0,
-					"target": self.parent.parent.traders[
+					"target": self.state.traders[
 						self.ui.box_trader_ts.currentText()
 					],
 					"type": "TraderStanding",
@@ -1150,37 +972,14 @@ class Gui_RewardDlg(QMainWindow):
 					"availableInGameEditions": [],
 					"id": self.id,
 					"index": 0,
-					"target": self.parent.parent.traders[
+					"target": self.state.traders[
 						self.ui.box_trader_tul.currentText()
 					],
 					"type": "TraderUnlock",
 					"unknown": is_true(self.ui.box_unknown_tul.currentText()),
 				}
 
-		rewards = self.parent.rewards
-		table = self.parent.ui.tb_rewards
-
-		# # remove rewards with the same id, if they already exist in either the reward lists or the qt list
-		# for type in ["Fail", "Started", "Success"]:
-		#   for reward_idx in range(len(rewards[type])):
-		#     if rewards[type][reward_idx]["id"] == self.id:
-		#       rewards[type].pop(reward_idx)
-		#       break
-
-		# for i in range(table.rowCount()):
-		#   if str(self.id) in table.item(i, 0).text():#row,column
-		#     table.removeRow(i)
-		#     break
-
-		self.parent.parent.safe_clear_table_fields()
-		self.parent.parent.add_table_field(
-			f"Reward{reward_timing}",
-			self.parent.ui.tb_rewards,
-			self.id,
-			{0: self.id, 1: reward_timing, 2: reward_type},
-			reward,
-		)
-		log.debug(self.parent.parent.table_fields)
+		self.reward_ready.emit(reward_timing, reward_type, self.id, reward)
 		self.close()
 
 	def load_settings_from_dict(self, settings, reward_timing):
@@ -1205,7 +1004,7 @@ class Gui_RewardDlg(QMainWindow):
 				self.ui.tabWidget.setCurrentIndex(6)
 
 			case "AssortmentUnlock":
-				trader = self.parent.parent.traders_invert[settings["traderId"]]
+				trader = self.state.traders_invert[settings["traderId"]]
 				self.ui.fld_tid_asu.setText(settings["target"])
 				self.ui.box_trader_asu.setCurrentText(trader)
 				self.ui.box_loyalty_asu.setValue(int(settings["loyaltyLevel"]))
@@ -1217,7 +1016,8 @@ class Gui_RewardDlg(QMainWindow):
 					has_soc = "upd" in item and "StackObjectsCount" in item["upd"]
 					has_pid = "parentId" in item
 					has_sid = "slotId" in item
-					self.parent.parent.add_table_field(
+					add_table_field(
+						self.state,
 						f"RewardAssortmentUnlock",
 						self.ui.tb_asu_item,
 						item["_id"],
@@ -1251,7 +1051,8 @@ class Gui_RewardDlg(QMainWindow):
 					has_soc = "upd" in item and "StackObjectsCount" in item["upd"]
 					has_pid = "parentId" in item
 					has_sid = "slotId" in item
-					self.parent.parent.add_table_field(
+					add_table_field(
+						self.state,
 						f"RewardItem",
 						self.ui.tb_item,
 						item["_id"],
@@ -1281,7 +1082,7 @@ class Gui_RewardDlg(QMainWindow):
 				self.ui.box_unknown_sr.setCurrentText(unknown_or)
 
 			case "TraderStanding":
-				trader = self.parent.parent.traders_invert[settings["target"]]
+				trader = self.state.traders_invert[settings["target"]]
 				self.ui.tabWidget.setCurrentIndex(3)
 				self.ui.box_rewardtiming_ts.setCurrentText(reward_timing)
 				self.ui.box_loyalty_ts.setValue(float(settings["value"]))
@@ -1289,7 +1090,7 @@ class Gui_RewardDlg(QMainWindow):
 				self.ui.box_unknown_ts.setCurrentText(unknown_or)
 
 			case "TraderUnlock":
-				trader = self.parent.parent.traders_invert[settings["target"]]
+				trader = self.state.traders_invert[settings["target"]]
 				self.ui.tabWidget.setCurrentIndex(7)
 				self.ui.box_rewardtiming_tul.setCurrentText(reward_timing)
 				self.ui.box_unknown_tul.setCurrentText(unknown_or)
@@ -1320,86 +1121,120 @@ class Gui_RewardDlg(QMainWindow):
 		)
 
 	def setup_box_selections(self):
-		self.ui.box_trader_asu.addItems(self.parent.parent.traders.keys())
-		self.ui.box_trader_ts.addItems(self.parent.parent.traders.keys())
-		self.ui.box_trader_tul.addItems(self.parent.parent.traders.keys())
-		self.ui.box_unknown_exp.addItems(self.parent.parent.controller.default_ft)
+		self.ui.box_trader_asu.addItems(self.state.traders.keys())
+		self.ui.box_trader_ts.addItems(self.state.traders.keys())
+		self.ui.box_trader_tul.addItems(self.state.traders.keys())
+		self.ui.box_unknown_exp.addItems(self.state.config.default_ft)
 		self.ui.box_rewardtiming_exp.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
-		self.ui.box_fir_item.addItems(self.parent.parent.controller.default_tf)
-		self.ui.box_unknown_item.addItems(self.parent.parent.controller.default_ft)
+		self.ui.box_fir_item.addItems(self.state.config.default_tf)
+		self.ui.box_unknown_item.addItems(self.state.config.default_ft)
 		self.ui.box_rewardtiming_item.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
-		self.ui.box_unknown_asu.addItems(self.parent.parent.controller.default_ft)
+		self.ui.box_unknown_asu.addItems(self.state.config.default_ft)
 		self.ui.box_rewardtiming_asu.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
-		self.ui.box_unknown_ts.addItems(self.parent.parent.controller.default_ft)
+		self.ui.box_unknown_ts.addItems(self.state.config.default_ft)
 		self.ui.box_rewardtiming_ts.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
-		self.ui.box_skill_sk.addItems(self.parent.parent.controller.default_skills)
-		self.ui.box_unknown_sk.addItems(self.parent.parent.controller.default_ft)
+		self.ui.box_skill_sk.addItems(self.state.config.default_skills)
+		self.ui.box_unknown_sk.addItems(self.state.config.default_ft)
 		self.ui.box_rewardtiming_sk.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
 		self.ui.box_rewardtiming_sr.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
-		self.ui.box_unknown_sr.addItems(self.parent.parent.controller.default_ft)
-		self.ui.bx_unknown_ach.addItems(self.parent.parent.controller.default_ft)
+		self.ui.box_unknown_sr.addItems(self.state.config.default_ft)
+		self.ui.bx_unknown_ach.addItems(self.state.config.default_ft)
 		self.ui.box_rewardtiming_ach.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
 		self.ui.box_rewardtiming_tul.addItems(
-			self.parent.parent.controller.reward_timing
+			self.state.config.reward_timing
 		)
-		self.ui.box_unknown_tul.addItems(self.parent.parent.controller.default_ft)
+		self.ui.box_unknown_tul.addItems(self.state.config.default_ft)
 
 
 class Gui_QuestDlg(QMainWindow):
-	def __init__(self, parent=None, _controller=None):
-		super().__init__()
+	# (quest_id, quest_name, quest) - sent when the user finalizes the quest
+	quest_saved = Signal(str, str, object)
+
+	def __init__(self, state, parent=None):
+		super().__init__(parent)
 		self.ui = Ui_QuestWindow()
 		self.ui.setupUi(self)
-		self.parent = parent
-		self.rewards = {"Fail": [], "Started": [], "Success": []}
+		self.state = state
+		self.windows = []
 		self.on_launch()  # Custom code in this one
 		self.show()
 
 	def on_launch(self):
-		self.ui.pb_add_task.released.connect(
-			lambda: self.parent.spawnWindow("TaskBuilder", _parent=self)
-		)
+		self.ui.pb_add_task.released.connect(self.open_task_window)
 		self.ui.pb_rem_task.released.connect(
-			lambda: self.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="ConditionAny", table=self.ui.tb_cond
 			)
 		)
 		self.ui.pb_finalize_quest.released.connect(self.finalize)
-		self.ui.pb_add_reward.released.connect(
-			lambda: self.parent.spawnWindow("RewardBuilder", _parent=self)
-		)
+		self.ui.pb_add_reward.released.connect(self.open_reward_window)
 		self.ui.pb_remove_reward.released.connect(self.remove_selected_reward)
 		self.setup_box_selections()
 		self.setup_text_edit()
 		# can be edited later if needed
 		self.quest_id = new_id()
 
-	def setup_box_selections(self):
-		self.ui.box_avail_faction.addItems(self.parent.controller.qb_box_avail_faction)
-		self.ui.box_quest_type_label.addItems(
-			self.parent.controller.qb_box_quest_type_label
+	def open_task_window(self):
+		dlg = Gui_TaskDlg(self.state, parent=self)
+		dlg.condition_ready.connect(self.add_condition)
+		self.windows.append(dlg)
+		return dlg
+
+	def open_reward_window(self):
+		dlg = Gui_RewardDlg(self.state, parent=self)
+		dlg.reward_ready.connect(self.add_reward)
+		self.windows.append(dlg)
+		return dlg
+
+	def add_condition(self, timing, cond_type, cond_id, cond):
+		self.state.safe_clear_table_fields()
+		add_table_field(
+			self.state,
+			f"Condition{timing}",
+			self.ui.tb_cond,
+			cond_id,
+			{0: cond_id, 1: timing, 2: cond_type},
+			cond,
 		)
-		self.ui.box_trader.addItems(self.parent.traders.keys())
-		self.ui.box_location.addItems(self.parent.controller.qb_box_location)
-		self.ui.fld_image_name.setText(self.parent.controller.default_questicon)
-		self.ui.box_can_show_notif.addItems(self.parent.controller.default_tf)
-		self.ui.box_insta_complete.addItems(self.parent.controller.default_ft)
-		self.ui.box_restartable.addItems(self.parent.controller.default_ft)
-		self.ui.box_secret_quest.addItems(self.parent.controller.default_ft)
+
+	def add_reward(self, reward_timing, reward_type, reward_id, reward):
+		self.state.safe_clear_table_fields()
+		add_table_field(
+			self.state,
+			f"Reward{reward_timing}",
+			self.ui.tb_rewards,
+			reward_id,
+			{0: reward_id, 1: reward_timing, 2: reward_type},
+			reward,
+		)
+
+	def setup_box_selections(self):
+		self.ui.box_avail_faction.addItems(self.state.config.qb_box_avail_faction)
+		self.ui.box_quest_type_label.addItems(
+			self.state.config.qb_box_quest_type_label
+		)
+		self.ui.box_trader.addItems(self.state.traders.keys())
+		self.ui.box_location.addItems(self.state.config.qb_box_location)
+		self.ui.fld_image_name.setText(self.state.config.default_questicon)
+		self.ui.box_can_show_notif.addItems(self.state.config.default_tf)
+		self.ui.box_insta_complete.addItems(self.state.config.default_ft)
+		self.ui.box_restartable.addItems(self.state.config.default_ft)
+		self.ui.box_secret_quest.addItems(self.state.config.default_ft)
 
 	def setup_text_edit(self):
 		pass
@@ -1414,23 +1249,24 @@ class Gui_QuestDlg(QMainWindow):
 	#   reward_id = tb_reward.item(row, 0).text()
 
 	#   for type in ["Fail", "Started", "Success"]:
-	#     if f"Reward{type}" in self.parent.table_fields:
-	#       for id in self.parent.table_fields[f"Reward{type}"]:
+	#     if f"Reward{type}" in self.state.table_fields:
+	#       for id in self.state.table_fields[f"Reward{type}"]:
 	#         print(id)
-	#         reward = self.parent.table_fields[f"Reward{type}"][id]
+	#         reward = self.state.table_fields[f"Reward{type}"][id]
 	#         if id == reward_id:
 	#           found_reward = reward
 	#           break
 	#   # create questbuilder window and load fields
 	#   # dlg = Gui_RewardDlg(parent=self)
-	#   dlg = self.parent.spawnWindow("RewardBuilder", _parent=self)
+	#   dlg = self.state.spawnWindow("RewardBuilder", _parent=self)
 	#   dlg.load_settings_from_dict(found_reward, type)
 
 	def remove_selected_reward(self):
-		self.parent.remove_selected_table_item(
+		remove_selected_table_item(
+			self.state,
 			type="RewardAny", table=self.ui.tb_rewards
 		)
-		log.debug(self.parent.table_fields)
+		log.debug(self.state.table_fields)
 
 	# def load_settings_from_dict(self, settings):
 	#   print(f"Loading settings from dict: {settings}")
@@ -1469,15 +1305,15 @@ class Gui_QuestDlg(QMainWindow):
 	#           set_obj.setCurrentText(str(v))
 	#         case "traderid":
 	#           #print(f"Setting {k} to {v}, type traderid")
-	#           set_obj.setCurrentText(self.parent.traders_invert[str(v)])
+	#           set_obj.setCurrentText(self.state.traders_invert[str(v)])
 	#         case "rewards":
 	#           print("Loading rewards...")
 	#           local_rewards = copy.deepcopy(v) # copy it b/c pass by reference screws thing up here
 	#           for type in ["Fail", "Started", "Success"]:
 	#             for reward in local_rewards[type]:
-	#               if f"Reward{type}" not in self.parent.table_fields:
-	#                 self.parent.table_fields[f"Reward{type}"] = {}
-	#               self.parent.add_table_field(f"Reward{type}", self.ui.tb_rewards, reward['id'], {0: reward['id'], 1:type, 2:reward['type']}, reward)
+	#               if f"Reward{type}" not in self.state.table_fields:
+	#                 self.state.table_fields[f"Reward{type}"] = {}
+	#               self.state.add_table_field(f"Reward{type}", self.ui.tb_rewards, reward['id'], {0: reward['id'], 1:type, 2:reward['type']}, reward)
 	#           print("Done loading rewards!")
 	#         case "conditions":
 	#           print("Loading conditions...")
@@ -1485,9 +1321,9 @@ class Gui_QuestDlg(QMainWindow):
 	#           for type in ["Finish", "Start", "Fail"]:
 	#             m = {"Finish":"AvailableForFinish", "Start":"AvailableForStart", "Fail":"Fail"}
 	#             for cond in local_conditions[m[type]]:
-	#               if f"Condition{type}" not in self.parent.table_fields:
-	#                 self.parent.table_fields[f"Condition{type}"] = {}
-	#               self.parent.add_table_field(f"Condition{type}", self.ui.tb_cond, cond['id'], {0: cond['id'], 1:type, 2:cond['conditionType']}, cond)
+	#               if f"Condition{type}" not in self.state.table_fields:
+	#                 self.state.table_fields[f"Condition{type}"] = {}
+	#               self.state.add_table_field(f"Condition{type}", self.ui.tb_cond, cond['id'], {0: cond['id'], 1:type, 2:cond['conditionType']}, cond)
 	#           print("Done loading conditions!")
 	#           pass
 	#     else:
@@ -1505,32 +1341,32 @@ class Gui_QuestDlg(QMainWindow):
 
 	#     for type in ["Finish", "Start", "Fail"]:
 	#       if breaknext: break
-	#       if f"Condition{type}" in self.parent.table_fields:
-	#         for id in self.parent.table_fields[f"Condition{type}"]:
+	#       if f"Condition{type}" in self.state.table_fields:
+	#         for id in self.state.table_fields[f"Condition{type}"]:
 	#           if breaknext: break
 	#           print(id)
-	#           cond = self.parent.table_fields[f"Condition{type}"][id]
+	#           cond = self.state.table_fields[f"Condition{type}"][id]
 	#           if id == cond_id:
 	#             print(f"Editing task: found id {id} under type {type}.")
 	#             found_reward = cond
 	#             breaknext = True
 
 	#     # create questbuilder window and load fields
-	#     dlg = self.parent.spawnWindow("TaskBuilder", _parent=self)
+	#     dlg = self.state.spawnWindow("TaskBuilder", _parent=self)
 	#     dlg.load_settings_from_dict(found_reward, type)
 
 	def finalize(self):
 		quest_id = self.quest_id
 		rewards_calc = {"Fail": [], "Started": [], "Success": []}
 		for k, v in rewards_calc.items():
-			if f"Reward{k}" in self.parent.table_fields:
-				for _id, reward in self.parent.table_fields[f"Reward{k}"].items():
+			if f"Reward{k}" in self.state.table_fields:
+				for _id, reward in self.state.table_fields[f"Reward{k}"].items():
 					rewards_calc[k].append(reward)
 					# print(_id, reward)
 		location_calc = (
 			"any"
 			if self.ui.box_location.currentText() == "any"
-			else self.parent.locations[self.ui.box_location.currentText()]
+			else self.state.locations[self.ui.box_location.currentText()]
 		)
 		quest = {
 			quest_id: {
@@ -1545,13 +1381,13 @@ class Gui_QuestDlg(QMainWindow):
 				"changeQuestMessageText": quest_id + " changeQuestMessageText",
 				"completePlayerMessage": quest_id + " completePlayerMessage",
 				"conditions": {
-					"AvailableForFinish": self.parent.get_multicolumn_values_list(
+					"AvailableForFinish": self.state.get_multicolumn_values_list(
 						"ConditionFinish"
 					),  # ConditionFinish
-					"AvailableForStart": self.parent.get_multicolumn_values_list(
+					"AvailableForStart": self.state.get_multicolumn_values_list(
 						"ConditionStart"
 					),  # ConditionStart
-					"Fail": self.parent.get_multicolumn_values_list(
+					"Fail": self.state.get_multicolumn_values_list(
 						"ConditionFail"
 					),  # ConditionFail
 				},
@@ -1572,36 +1408,31 @@ class Gui_QuestDlg(QMainWindow):
 				"side": self.ui.box_avail_faction.currentText(),
 				"startedMessageText": quest_id + " startedMessageText",
 				"successMessageText": quest_id + " successMessageText",
-				"traderId": self.parent.traders[self.ui.box_trader.currentText()],
+				"traderId": self.state.traders[self.ui.box_trader.currentText()],
 				"type": self.ui.box_quest_type_label.currentText(),
 			}
 		}
 		log.info(f"Added quest: {self.ui.fld_quest_name.displayText()}, id: {quest_id}")
 		# may or may not be already in (if it was edited, it is)
-		# if quest_id in self.parent.quests:
-		#   old_quest = self.parent.quests.pop(quest_id)
-		# for i in range(self.parent.ui.questList.count()):
-		#   if str(quest_id) in self.parent.ui.questList.item(i).text():
-		#     self.parent.ui.questList.takeItem(i)
+		# if quest_id in self.state.quests:
+		#   old_quest = self.state.quests.pop(quest_id)
+		# for i in range(self.state.ui.questList.count()):
+		#   if str(quest_id) in self.state.ui.questList.item(i).text():
+		#     self.state.ui.questList.takeItem(i)
 		#     break
 
-		self.parent.quests[quest_id] = quest[quest_id]
-		self.parent.clear_table_fields()
-		quest = QListWidgetItem(f"{self.ui.fld_quest_name.displayText()}, {quest_id}")
-		quest.setData(Qt.ItemDataRole.UserRole, quest_id)
-		self.parent.ui.questList.addItem(quest)
+		self.quest_saved.emit(
+			quest_id, self.ui.fld_quest_name.displayText(), quest[quest_id]
+		)
 		self.close()
 
 
 class Gui_AssortDlg(QMainWindow):
-	def __init__(
-		self,
-		parent=None,
-	):
-		super().__init__()
+	def __init__(self, state, parent=None):
+		super().__init__(parent)
 		self.ui = Ui_AssortBuilder()
 		self.ui.setupUi(self)
-		self.parent = parent
+		self.state = state
 		self.on_launch()  # custom Code
 		self.show()
 		self.ui.ab_add_item.released.connect(self.add_item)
@@ -1725,9 +1556,9 @@ class Gui_AssortDlg(QMainWindow):
 		QApplication.clipboard().setText(text)
 
 	def setup_box_selections(self):
-		self.ui.ab_loyalty_combo.addItems(self.parent.controller.ab_box_loyalty_level)
-		self.ui.ab_condition_box.addItems(self.parent.controller.ab_box_condition_req)
-		self.ui.ab_modslot_combo.addItems(self.parent.controller.ab_box_modslot)
+		self.ui.ab_loyalty_combo.addItems(self.state.config.ab_box_loyalty_level)
+		self.ui.ab_condition_box.addItems(self.state.config.ab_box_condition_req)
+		self.ui.ab_modslot_combo.addItems(self.state.config.ab_box_modslot)
 
 	def onImportAssort(
 		self,
@@ -2140,11 +1971,14 @@ class Gui_AssortDlg(QMainWindow):
 
 
 class Gui_TaskDlg(QMainWindow):
-	def __init__(self, parent=None):
-		super().__init__()
+	# (timing, condition_type, condition_id, condition) - sent when the user finalizes a condition
+	condition_ready = Signal(str, str, str, object)
+
+	def __init__(self, state, parent=None):
+		super().__init__(parent)
 		self.ui = Ui_TaskWindow()
 		self.ui.setupUi(self)
-		self.parent = parent
+		self.state = state
 		self.id = new_id()
 		self.cc = []
 		# self.weapons = [] # used for CC/Kills, add ids in as needed
@@ -2159,7 +1993,7 @@ class Gui_TaskDlg(QMainWindow):
 		self.setup_buttons()
 
 	def setup_box_selections(self):
-		ctr = self.parent.parent.controller
+		ctr = self.state.config
 		self.ui.box_targets_cck.addItems(ctr.tb_elim_box_target)
 		self.ui.box_targetrole_cck.addItems(ctr.tb_elim_box_targetrole)
 		self.ui.box_bodypart_cck.addItems(ctr.tb_elim_box_bodypart)
@@ -2173,7 +2007,7 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui.box_target_sk.addItems(ctr.default_skills)
 		self.ui.box_fir_li.addItems(ctr.default_ft)
 		self.ui.box_compare_tl.addItems(ctr.default_compare)
-		self.ui.box_target_tl.addItems(self.parent.parent.traders.keys())
+		self.ui.box_target_tl.addItems(self.state.traders.keys())
 		self.ui.box_compare_lv.addItems(ctr.default_compare)
 		self.ui.box_status_qs.addItems(ctr.tb_queststatus)
 		self.ui.box_timing_qs.addItems(ctr.tb_any)
@@ -2185,7 +2019,7 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui.box_ff_li.addItems(ctr.tb_finishfail)
 		self.ui.box_ff_pb.addItems(ctr.tb_finishfail)
 		self.ui.box_ff_tl.addItems(ctr.tb_finishfail)
-		self.ui.box_trader_ts.addItems(self.parent.parent.traders.keys())
+		self.ui.box_trader_ts.addItems(self.state.traders.keys())
 		self.ui.box_distcomp_sh.addItems(ctr.default_compare)
 		self.ui.box_target_sh.addItems(ctr.tb_elim_box_target)
 		self.ui.box_shbp.addItems(ctr.tb_elim_box_bodypart)
@@ -2230,7 +2064,8 @@ class Gui_TaskDlg(QMainWindow):
 
 		# Kills table add/remove buttons
 		self.ui.pb_addwep_cck.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"KillsWep",
 				self.ui.tb_wep,
 				self.ui.box_weapons_cck.currentText(),
@@ -2239,14 +2074,16 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_removewep_cck.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="KillsWep", table=self.ui.tb_wep
 			)
 		)
-		# self.ui.pb_addtar_cck.released.connect(lambda: self.parent.parent.add_table_field(f"KillsTarget", self.ui.tb_targets, self.ui.box_targets_cck.currentText(), {0: self.ui.box_targets_cck.currentText()}, self.ui.box_targets_cck.currentText()))
-		# self.ui.pb_removetar_cck.released.connect(lambda: self.parent.parent.remove_selected_table_item(type="KillsTarget", table=self.ui.tb_targets))
+		# self.ui.pb_addtar_cck.released.connect(lambda: self.state.add_table_field(f"KillsTarget", self.ui.tb_targets, self.ui.box_targets_cck.currentText(), {0: self.ui.box_targets_cck.currentText()}, self.ui.box_targets_cck.currentText()))
+		# self.ui.pb_removetar_cck.released.connect(lambda: self.state.remove_selected_table_item(type="KillsTarget", table=self.ui.tb_targets))
 		self.ui.pb_addtr_cck.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"KillsTargetRole",
 				self.ui.tb_targetrole,
 				self.ui.box_targetrole_cck.currentText(),
@@ -2255,12 +2092,14 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_removetr_cck.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="KillsTargetRole", table=self.ui.tb_targetrole
 			)
 		)
 		self.ui.pb_addbp_cck.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"KillsBodyPart",
 				self.ui.tb_bodypart,
 				self.ui.box_bodypart_cck.currentText(),
@@ -2269,12 +2108,14 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rembp_cck.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="KillsBodyPart", table=self.ui.tb_bodypart
 			)
 		)
 		self.ui.pb_add_imod.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"KillsModInc",
 				self.ui.tb_incmods,
 				self.ui.fld_incmod_cck.displayText(),
@@ -2283,12 +2124,14 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_imod.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="KillsModInc", table=self.ui.tb_incmods
 			)
 		)
 		self.ui.pb_add_emod.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"KillsModExc",
 				self.ui.tb_excmods,
 				self.ui.fld_excmod_cck.displayText(),
@@ -2297,25 +2140,29 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_emod.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="KillsExc", table=self.ui.tb_excmods
 			)
 		)
 
 		# Other table buttons
 		self.ui.pb_remove_cc.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="CounterCreator", table=self.ui.tb_cc
 			)
 		)
 
 		self.ui.pb_status_rem_cces.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="ExitStatus", table=self.ui.tb_cces
 			)
 		)
 		self.ui.pb_cces_add.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"ExitStatus",
 				self.ui.tb_cces,
 				self.ui.box_status_cces.currentText(),
@@ -2325,7 +2172,8 @@ class Gui_TaskDlg(QMainWindow):
 		)
 
 		self.ui.pb_add_ccl.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"Location",
 				self.ui.tb_ccl,
 				self.ui.box_location_ccl.currentText(),
@@ -2334,13 +2182,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_ccl.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="Location", table=self.ui.tb_ccl
 			)
 		)
 
 		self.ui.pb_addvis.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"VisibilityCond",
 				self.ui.tb_vis,
 				self.ui.fld_visibility_targetid.displayText(),
@@ -2349,13 +2199,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_remvis.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="VisibilityCond", table=self.ui.tb_vis
 			)
 		)
 
 		self.ui.pb_additem_it.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"HFItems",
 				self.ui.tb_items,
 				self.ui.fld_itemid_it.displayText(),
@@ -2364,13 +2216,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_remitem_it.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="HFItems", table=self.ui.tb_items
 			)
 		)
 
 		self.ui.pb_addstatus_qs.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"QStatus",
 				self.ui.tb_status_qs,
 				self.ui.box_status_qs.currentText(),
@@ -2379,13 +2233,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_remstatus_qs.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="QStatus", table=self.ui.tb_status_qs
 			)
 		)
 
 		self.ui.pb_add_li_target.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"LeaveItemTarget",
 				self.ui.tb_li_target,
 				self.ui.fld_li_target.displayText(),
@@ -2394,13 +2250,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_li_target.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="LeaveItemTarget", table=self.ui.tb_li_target
 			)
 		)
 
 		self.ui.pb_add_eqi.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"EquipmentInclusive",
 				self.ui.tb_eq_inc,
 				self.ui.fld_eqi.displayText(),
@@ -2415,13 +2273,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_eqi.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="EquipmentInclusive", table=self.ui.tb_eq_inc
 			)
 		)
 
 		self.ui.pb_add_eqe.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"EquipmentExclusive",
 				self.ui.tb_eq_exc,
 				self.ui.fld_eqi_2.displayText(),
@@ -2436,13 +2296,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_eqe.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="EquipmentExclusive", table=self.ui.tb_eq_exc
 			)
 		)
 
 		self.ui.pb_add_shbp.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"ShotsBodyPart",
 				self.ui.tb_sh_bp,
 				self.ui.box_shbp.currentText(),
@@ -2451,13 +2313,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_shbp.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="ShotsBodyPart", table=self.ui.tb_sh_bp
 			)
 		)
 
 		self.ui.pb_add_shtr.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"ShotsTargetRole",
 				self.ui.tb_sh_tr,
 				self.ui.box_shtr.currentText(),
@@ -2466,13 +2330,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_shtr.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="ShotsTargetRole", table=self.ui.tb_sh_tr
 			)
 		)
 
 		self.ui.pb_add_shw.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"ShotsWeapon",
 				self.ui.tb_sh_wep,
 				self.ui.fld_shw.displayText(),
@@ -2481,13 +2347,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_shw.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="ShotsWeapon", table=self.ui.tb_sh_wep
 			)
 		)
 
 		self.ui.pb_add_shmi.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"ShotsModsInclusive",
 				self.ui.tb_incmod_sh,
 				self.ui.fld_shmi.displayText(),
@@ -2496,13 +2364,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_shmi.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="ShotsModsInclusive", table=self.ui.tb_incmod_sh
 			)
 		)
 
 		self.ui.pb_add_shme.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"ShotsModsExclusive",
 				self.ui.tb_excmod_sh,
 				self.ui.fld_shme.displayText(),
@@ -2511,13 +2381,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_shme.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="ShotsModsExclusive", table=self.ui.tb_excmod_sh
 			)
 		)
 
 		self.ui.pb_add_hebp.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"HealthEffectBodyPart",
 				self.ui.tb_hebp,
 				self.ui.box_hebp.currentText(),
@@ -2526,13 +2398,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_hebp.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="HealthEffectBodyPart", table=self.ui.tb_hebp
 			)
 		)
 
 		self.ui.pb_add_heef.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"HealthEffectEffects",
 				self.ui.tb_heef,
 				self.ui.box_heef.currentText(),
@@ -2541,13 +2415,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_heef.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="HealthEffectEffects", table=self.ui.tb_heef
 			)
 		)
 
 		self.ui.pb_add_hb.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"HealthBuff",
 				self.ui.tb_hb,
 				self.ui.box_hb.currentText(),
@@ -2556,13 +2432,15 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_hb.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="HealthBuff", table=self.ui.tb_hb
 			)
 		)
 
 		self.ui.pb_add_iz.released.connect(
-			lambda: self.parent.parent.add_table_field(
+			lambda: add_table_field(
+				self.state,
 				f"InZone",
 				self.ui.tb_iz,
 				self.ui.fld_iz.displayText(),
@@ -2571,7 +2449,8 @@ class Gui_TaskDlg(QMainWindow):
 			)
 		)
 		self.ui.pb_rem_iz.released.connect(
-			lambda: self.parent.parent.remove_selected_table_item(
+			lambda: remove_selected_table_item(
+				self.state,
 				type="InZone", table=self.ui.tb_iz
 			)
 		)
@@ -2592,28 +2471,28 @@ class Gui_TaskDlg(QMainWindow):
 					"value": 1,
 				}
 			case "Kills":
-				local_weapons = self.parent.parent.get_singlecolumn_field_list(
+				local_weapons = self.state.get_singlecolumn_field_list(
 					"KillsWep"
 				)
 				local_weapons_id = []
 				for wep in local_weapons:
-					local_weapons_id.append(self.parent.parent.weapons[wep])
-				# local_targets = self.parent.parent.get_singlecolumn_field_list("KillsTarget")
+					local_weapons_id.append(self.state.weapons[wep])
+				# local_targets = self.state.get_singlecolumn_field_list("KillsTarget")
 				if self.ui.chk_cck_usetarget.isChecked():
 					local_targets = self.ui.box_targets_cck.currentText()
 				else:
 					local_targets = ""
-				local_targetrole = self.parent.parent.get_singlecolumn_field_list(
+				local_targetrole = self.state.get_singlecolumn_field_list(
 					"KillsTargetRole"
 				)
-				local_bodypart = self.parent.parent.get_singlecolumn_field_list(
+				local_bodypart = self.state.get_singlecolumn_field_list(
 					"KillsBodyPart"
 				)
-				pre_local_incmod = self.parent.parent.get_singlecolumn_field_list(
+				pre_local_incmod = self.state.get_singlecolumn_field_list(
 					"KillsModInc"
 				)
 				local_incmod = [[item] for item in pre_local_incmod]
-				pre_local_excmod = self.parent.parent.get_singlecolumn_field_list(
+				pre_local_excmod = self.state.get_singlecolumn_field_list(
 					"KillsModExc"
 				)
 				local_excmod = [[item] for item in pre_local_excmod]
@@ -2649,7 +2528,7 @@ class Gui_TaskDlg(QMainWindow):
 					"weaponModsInclusive": local_incmod,
 				}
 			case "ExitStatus":
-				local_status = self.parent.parent.get_singlecolumn_field_list(
+				local_status = self.state.get_singlecolumn_field_list(
 					"ExitStatus"
 				)
 				cond = {
@@ -2666,7 +2545,7 @@ class Gui_TaskDlg(QMainWindow):
 					"exitName": self.ui.fld_exitname_ccen.displayText(),
 				}
 			case "Location":
-				local_locations = self.parent.parent.get_singlecolumn_field_list(
+				local_locations = self.state.get_singlecolumn_field_list(
 					"Location"
 				)
 				cond = {
@@ -2678,10 +2557,10 @@ class Gui_TaskDlg(QMainWindow):
 			case "Equipment":
 				# This is all kind of a lot of work, but basically it's grouping the lists by org(or_group) for a list of multiple lists.
 				# So, you can have (this set of 3 equip items) OR  (this other set of 2), etc.
-				local_eqi = self.parent.parent.get_multicolumn_values_list(
+				local_eqi = self.state.get_multicolumn_values_list(
 					"EquipmentInclusive"
 				)
-				local_eqe = self.parent.parent.get_multicolumn_values_list(
+				local_eqe = self.state.get_multicolumn_values_list(
 					"EquipmentExclusive"
 				)
 				local_eqi_dict = {}
@@ -2707,19 +2586,19 @@ class Gui_TaskDlg(QMainWindow):
 					"id": subtask_id,
 				}
 			case "Shots":
-				local_bodypart = self.parent.parent.get_singlecolumn_field_list(
+				local_bodypart = self.state.get_singlecolumn_field_list(
 					"ShotsBodyPart"
 				)
-				local_targetrole = self.parent.parent.get_singlecolumn_field_list(
+				local_targetrole = self.state.get_singlecolumn_field_list(
 					"ShotsTargetRole"
 				)
-				local_weapons = self.parent.parent.get_singlecolumn_field_list(
+				local_weapons = self.state.get_singlecolumn_field_list(
 					"ShotsWeapon"
 				)
-				local_modinc = self.parent.parent.get_singlecolumn_field_list(
+				local_modinc = self.state.get_singlecolumn_field_list(
 					"ShotsModsInclusive"
 				)
-				local_modexc = self.parent.parent.get_singlecolumn_field_list(
+				local_modexc = self.state.get_singlecolumn_field_list(
 					"ShotsModsExclusive"
 				)
 				local_dist = val_field(self.ui.fld_dist_sh.displayText(), "", 0, int)
@@ -2761,10 +2640,10 @@ class Gui_TaskDlg(QMainWindow):
 				local_hydval = val_field(
 					self.ui.fld_hydval_he.displayText(), "", 0, int
 				)
-				local_bodypart = self.parent.parent.get_singlecolumn_field_list(
+				local_bodypart = self.state.get_singlecolumn_field_list(
 					"HealthEffectBodyPart"
 				)
-				local_effect = self.parent.parent.get_singlecolumn_field_list(
+				local_effect = self.state.get_singlecolumn_field_list(
 					"HealthEffectEffects"
 				)
 				cond = {
@@ -2788,7 +2667,7 @@ class Gui_TaskDlg(QMainWindow):
 					},
 				}
 			case "HealthBuff":
-				local_buff = self.parent.parent.get_singlecolumn_field_list(
+				local_buff = self.state.get_singlecolumn_field_list(
 					"HealthBuff"
 				)
 				cond = {
@@ -2805,7 +2684,7 @@ class Gui_TaskDlg(QMainWindow):
 					"target": self.ui.fld_fl_zone.displayText(),
 				}
 			case "InZone":
-				local_zone = self.parent.parent.get_singlecolumn_field_list("InZone")
+				local_zone = self.state.get_singlecolumn_field_list("InZone")
 				cond = {
 					"conditionType": "InZone",
 					"dynamicLocale": False,
@@ -2813,7 +2692,8 @@ class Gui_TaskDlg(QMainWindow):
 					"zoneIds": local_zone,
 				}
 
-		self.parent.parent.add_table_field(
+		add_table_field(
+			self.state,
 			f"CounterCreator",
 			self.ui.tb_cc,
 			subtask_id,
@@ -2830,12 +2710,12 @@ class Gui_TaskDlg(QMainWindow):
 			# three, the top-level CC task/condition has an id
 			# we use number 3 for the id in the internal datastore, and show that id in the task/cond list
 			case "CounterCreator":
-				local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+				local_vis_cond = self.state.get_singlecolumn_field_list(
 					"VisibilityCond"
 				)
 				local_counter = {"conditions": [], "id": new_id()}
 				local_counter["conditions"] = (
-					self.parent.parent.get_multicolumn_values_list("CounterCreator")
+					self.state.get_multicolumn_values_list("CounterCreator")
 				)
 				local_value = val_field(
 					self.ui.fld_quantity_cc.displayText(), "", 0, int
@@ -2861,11 +2741,11 @@ class Gui_TaskDlg(QMainWindow):
 			case "Item":
 				sub_cond_type = self.ui.box_hofind_it.currentText()
 				if sub_cond_type == "FindItem":
-					local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+					local_vis_cond = self.state.get_singlecolumn_field_list(
 						"VisibilityCond"
 					)
 					timing = self.ui.box_ff_it.currentText()
-					local_target = self.parent.parent.get_singlecolumn_field_list(
+					local_target = self.state.get_singlecolumn_field_list(
 						"HFItems"
 					)
 					local_value = val_field(
@@ -2897,11 +2777,11 @@ class Gui_TaskDlg(QMainWindow):
 					}
 
 				if sub_cond_type == "HandoverItem":
-					local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+					local_vis_cond = self.state.get_singlecolumn_field_list(
 						"VisibilityCond"
 					)
 					timing = self.ui.box_ff_it.currentText()
-					local_target = self.parent.parent.get_singlecolumn_field_list(
+					local_target = self.state.get_singlecolumn_field_list(
 						"HFItems"
 					)
 					local_value = val_field(
@@ -2931,7 +2811,7 @@ class Gui_TaskDlg(QMainWindow):
 					}
 
 			case "Skill":
-				local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+				local_vis_cond = self.state.get_singlecolumn_field_list(
 					"VisibilityCond"
 				)
 				timing = self.ui.box_ff_sk.currentText()
@@ -2949,10 +2829,10 @@ class Gui_TaskDlg(QMainWindow):
 					"visibilityConditions": local_vis_cond,
 				}
 			case "LeaveItemAtLocation":
-				local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+				local_vis_cond = self.state.get_singlecolumn_field_list(
 					"VisibilityCond"
 				)
-				local_target_ids = self.parent.parent.get_singlecolumn_field_list(
+				local_target_ids = self.state.get_singlecolumn_field_list(
 					"LeaveItemTarget"
 				)
 				timing = self.ui.box_ff_li.currentText()
@@ -2985,7 +2865,7 @@ class Gui_TaskDlg(QMainWindow):
 					"zoneId": self.ui.fld_zoneid_li.displayText(),
 				}
 			case "PlaceBeacon":
-				local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+				local_vis_cond = self.state.get_singlecolumn_field_list(
 					"VisibilityCond"
 				)
 				timing = self.ui.box_ff_pb.currentText()
@@ -3008,7 +2888,7 @@ class Gui_TaskDlg(QMainWindow):
 				}
 			case "WeaponAssembly":
 				# TODO: implement
-				local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+				local_vis_cond = self.state.get_singlecolumn_field_list(
 					"VisibilityCond"
 				)
 				timing = "Finish"
@@ -3017,7 +2897,7 @@ class Gui_TaskDlg(QMainWindow):
 				}
 				pass
 			case "TraderLoyalty":
-				local_vis_cond = self.parent.parent.get_singlecolumn_field_list(
+				local_vis_cond = self.state.get_singlecolumn_field_list(
 					"VisibilityCond"
 				)
 				timing = self.ui.box_ff_tl.currentText()
@@ -3030,7 +2910,7 @@ class Gui_TaskDlg(QMainWindow):
 					"id": self.id,
 					"index": 0,
 					"parentId": self.ui.fld_parentid_tl.displayText(),  # TODO: this isn't actually in the docs, does it work?? remove if not
-					"target": self.parent.parent.traders[
+					"target": self.state.traders[
 						self.ui.box_target_tl.currentText()
 					],
 					"value": local_value,
@@ -3054,8 +2934,8 @@ class Gui_TaskDlg(QMainWindow):
 				}
 			case "Quest":
 				timing = self.ui.box_timing_qs.currentText()
-				local_status = self.parent.parent.get_singlecolumn_field_list("QStatus")
-				local_status_int = [self.parent.parent.status[s] for s in local_status]
+				local_status = self.state.get_singlecolumn_field_list("QStatus")
+				local_status_int = [self.state.status[s] for s in local_status]
 				local_availafter = val_field(
 					self.ui.fld_avail_qs.displayText(), "", 0, int
 				)
@@ -3085,39 +2965,14 @@ class Gui_TaskDlg(QMainWindow):
 					"id": self.id,
 					"index": 0,
 					"parentId": "",
-					"target": self.parent.parent.traders[
+					"target": self.state.traders[
 						self.ui.box_trader_ts.currentText()
 					],
 					"value": local_value,
 					"visibilityConditions": [],
 				}
 
-		# Add to task list and close self out
-		# remove conditions with the same id, if they already exist in GUI or internal datastructs
-
-		# self.parent.parent.reset_by_id(self.id)
-		# table = self.parent.ui.tb_cond
-		# for i in range(table.rowCount()):
-		#   if str(self.id) in table.item(i, 0).text():#row,column
-		#     table.removeRow(i)
-		#     break
-		# ConditionFinish, ConditionStart, ConditionFail
-
-		self.parent.parent.safe_clear_table_fields()
-		self.parent.parent.add_table_field(
-			f"Condition{timing}",
-			self.parent.ui.tb_cond,
-			self.id,
-			{0: self.id, 1: timing, 2: cond_type},
-			cond,
-		)
-		# clear the list, since we're exported and done with it, if we need to load, we will do it from the JSON object itself
-
-		# self.parent.parent.reset_by_key(cond_type)
-		# if cond_type == "CounterCreator": # we also need to clear all the subfields, if they were used, if it's cc
-		#   for c in ["VisitPlace", "Kills", "ExitStatus", "ExitName", "Location"]:
-		#     self.parent.parent.reset_by_key(c)
-
+		self.condition_ready.emit(timing, cond_type, self.id, cond)
 		self.close()
 
 	# def load_settings_from_dict(self, settings, condition_timing):
@@ -3132,7 +2987,7 @@ class Gui_TaskDlg(QMainWindow):
 	#       print(f"Cond type: {condition_type}, timing: {condition_timing}")
 
 	#       for viscon in settings["visibilityConditions"]:
-	#         self.parent.parent.add_table_field(f"VisibilityCond", self.ui.tb_vis, viscon, {0: viscon}, viscon)
+	#         self.state.add_table_field(f"VisibilityCond", self.ui.tb_vis, viscon, {0: viscon}, viscon)
 
 	#       match condition_type:
 	#         case "CounterCreator":
@@ -3140,7 +2995,7 @@ class Gui_TaskDlg(QMainWindow):
 	#           # TODO: Add edit subtask for CC
 	#           self.ui.tabWidget.setCurrentIndex(0)
 	#           for cc_item in settings["counter"]["conditions"]:
-	#             self.parent.parent.add_table_field(f"CounterCreator", self.ui.tb_cc, cc_item["id"], {0: cc_item["id"], 1: cc_item["conditionType"]}, cc_item)
+	#             self.state.add_table_field(f"CounterCreator", self.ui.tb_cc, cc_item["id"], {0: cc_item["id"], 1: cc_item["conditionType"]}, cc_item)
 	#         case "FindItem" | "HandoverItem":
 	#           self.ui.tabWidget.setCurrentIndex(1)
 	#           self.ui.box_hofind_it.setCurrentText(condition_type)
@@ -3152,7 +3007,7 @@ class Gui_TaskDlg(QMainWindow):
 	#           self.ui.fld_mindur_it.setText(str(settings["minDurability"]))
 	#           self.ui.fld_quantity_it.setText(str(settings["value"]))
 	#           for itemid in settings["target"]:
-	#             self.parent.parent.add_table_field(f"HFItems", self.ui.tb_items, itemid, {0: itemid}, itemid)
+	#             self.state.add_table_field(f"HFItems", self.ui.tb_items, itemid, {0: itemid}, itemid)
 	#         case "Skill":
 	#           self.ui.tabWidget.setCurrentIndex(2)
 	#           self.ui.box_compare_sk.setCurrentText(settings["compareMethod"])
@@ -3172,7 +3027,7 @@ class Gui_TaskDlg(QMainWindow):
 	#           self.ui.fld_quantity_li.setText(str(settings["value"]))
 	#           self.ui.fld_parentid_li.setText(settings["parentId"])
 	#           for tid in settings["target"]:
-	#             self.parent.parent.add_table_field(f"LeaveItemTarget", self.ui.tb_li_target, tid, {0: tid}, tid)
+	#             self.state.add_table_field(f"LeaveItemTarget", self.ui.tb_li_target, tid, {0: tid}, tid)
 	#         case "WeaponAssembly":
 	#           self.ui.tabWidget.setCurrentIndex(5)
 	#           # TODO: Implement WeaponAssembly
@@ -3184,7 +3039,7 @@ class Gui_TaskDlg(QMainWindow):
 	#           self.ui.fld_parentid_pb.setText(settings["parentId"])
 	#           self.ui.box_ff_pb.setCurrentText(settings[condition_timing])
 	#         case "TraderLoyalty":
-	#           target_str = self.parent.parent.traders_invert[settings["target"]]
+	#           target_str = self.state.traders_invert[settings["target"]]
 	#           self.ui.tabWidget.setCurrentIndex(6)
 	#           self.ui.box_compare_tl.setCurrentText(settings["compareMethod"])
 	#           self.ui.box_target_tl.setCurrentText(target_str)
@@ -3202,10 +3057,10 @@ class Gui_TaskDlg(QMainWindow):
 	#           self.ui.fld_avail_qs.setText(str(settings["availableAfter"]))
 	#           self.ui.fld_tid_qs.setText(str(settings["target"]))
 	#           for status in settings["status"]:
-	#             str_status = self.parent.parent.status_invert[status]
-	#             self.parent.parent.add_table_field(f"QStatus", self.ui.tb_status_qs, str_status, {0: str_status}, str_status)
+	#             str_status = self.state.status_invert[status]
+	#             self.state.add_table_field(f"QStatus", self.ui.tb_status_qs, str_status, {0: str_status}, str_status)
 	#         case "TraderStanding":
-	#           trader = self.parent.parent.traders_invert[settings["target"]]
+	#           trader = self.state.traders_invert[settings["target"]]
 	#           self.ui.tabWidget_2.setCurrentIndex(1)
 	#           self.ui.tabWidget_3.setCurrentIndex(2)
 	#           self.ui.box_comparemethod_ts.setCurrentText(settings["compareMethod"])

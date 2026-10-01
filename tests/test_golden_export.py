@@ -4,43 +4,45 @@ build against golden files, so refactors can't silently change the output.
 
 import json
 
+from table_fields import add_table_field
+
 
 def _build_quest(main_window):
 	quest_dlg = main_window.spawnWindow("QuestBuilder")
 	quest_dlg.ui.fld_quest_name.setText("Golden Quest")
 
 	# Start condition: Level
-	task = main_window.spawnWindow("TaskBuilder", _parent=quest_dlg)
+	task = quest_dlg.open_task_window()
 	task.ui.fld_value_lv.setText("15")
 	task.finalize("Level")
 
 	# Finish condition: Skill
-	task = main_window.spawnWindow("TaskBuilder", _parent=quest_dlg)
+	task = quest_dlg.open_task_window()
 	task.ui.fld_level_sk.setText("5")
 	task.finalize("Skill")
 
 	# Finish condition: CounterCreator with a VisitPlace sub-condition
-	task = main_window.spawnWindow("TaskBuilder", _parent=quest_dlg)
+	task = quest_dlg.open_task_window()
 	task.ui.fld_zoneid_ccvp.setText("zone_one")
 	task.cc_add("VisitPlace")
 	task.ui.fld_quantity_cc.setText("2")
 	task.finalize("CounterCreator")
 
 	# Finish condition: HandoverItem with one item
-	task = main_window.spawnWindow("TaskBuilder", _parent=quest_dlg)
-	main_window.add_table_field(
-		"HFItems", task.ui.tb_items, "5449016a4bdc2d6f028b456f", {0: "x"}, "5449016a4bdc2d6f028b456f"
+	task = quest_dlg.open_task_window()
+	add_table_field(
+		main_window.state, "HFItems", task.ui.tb_items, "5449016a4bdc2d6f028b456f", {0: "x"}, "5449016a4bdc2d6f028b456f"
 	)
 	task.ui.box_hofind_it.setCurrentText("HandoverItem")
 	task.ui.fld_quantity_it.setText("3")
 	task.finalize("Item")
 
 	# Rewards: Experience + Item
-	reward = main_window.spawnWindow("RewardBuilder", _parent=quest_dlg)
+	reward = quest_dlg.open_reward_window()
 	reward.ui.box_amount_exp.setText("1500")
 	reward.finalize("Experience")
 
-	reward = main_window.spawnWindow("RewardBuilder", _parent=quest_dlg)
+	reward = quest_dlg.open_reward_window()
 	reward.ui.fld_utpl_item.setText("5449016a4bdc2d6f028b456f")
 	reward.ui.chk_soc_item.setChecked(True)
 	reward.ui.box_soc_item.setValue(50000)
@@ -49,7 +51,7 @@ def _build_quest(main_window):
 	reward.finalize("Item")
 
 	quest_dlg.finalize()
-	return main_window.quests
+	return main_window.state.quests
 
 
 def test_quest_export_matches_golden(main_window, check_golden):

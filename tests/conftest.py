@@ -46,8 +46,9 @@ def fixed_ids(monkeypatch):
 def main_window(qapp, fixed_ids):
 	import gui
 	from config import load_config
+	from state import AppState
 
-	win = gui.Gui_MainWindow(load_config())
+	win = gui.Gui_MainWindow(AppState.load(load_config()))
 	yield win
 	for w in win.windows:
 		w.close()

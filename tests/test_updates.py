@@ -64,7 +64,7 @@ def test_request_has_a_timeout(monkeypatch):
 def test_window_starts_pending_and_updates_from_worker(main_window, monkeypatch):
 	assert main_window.update_status.state == updates.CHECKING
 	monkeypatch.setattr(requests, "get", lambda url, timeout: FakeResponse("99.0.0"))
-	worker = updates.UpdateCheckWorker(main_window.controller)
+	worker = updates.UpdateCheckWorker(main_window.state.config)
 	worker.signals.finished.connect(main_window.set_update_status)
 	worker.run()  # synchronously, instead of via the thread pool
 	assert main_window.update_status.state == updates.OUTDATED
