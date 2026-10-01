@@ -14,4 +14,4 @@ else:
 	APP_DIR = Path(__file__).resolve().parent
 
 DATA_DIR = APP_DIR / "data"
-EXPORT_DIR = APP_DIR / "Exported Files"
+EXPORT_DIR = APP_DIR / "exports"
