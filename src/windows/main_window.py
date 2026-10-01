@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 	QFileDialog,
 	QMainWindow,
 	QListWidgetItem,
+	QMessageBox,
 	QTableWidgetItem,
 )
 
@@ -21,7 +22,7 @@ from builders import locale as locale_builders
 from config import UPDATE_SETTING_NAMES
 from tb_ui.gui_main import Ui_MainGUI
 from updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
-from utils import new_id
+from utils import LOG_FILE, new_id, set_debug_logging
 from windows.about import Gui_AboutDlg
 from windows.assort import Gui_AssortDlg
 from windows.common import safe_file_dialog
@@ -520,10 +521,25 @@ class Gui_MainWindow(QMainWindow):
 		config = self.state.config
 		before = config.settings()
 		dlg = self.spawnWindow("SettingsWindow")
-		if dlg.exec() and any(before[name] != getattr(config, name) for name in UPDATE_SETTING_NAMES):
+		if not dlg.exec():
+			return
+		self.apply_debug_logging()
+		if any(before[name] != getattr(config, name) for name in UPDATE_SETTING_NAMES):
 			# the update settings changed, so check again with the new ones
 			self.update_status = pending_status(config)
 			self.start_update_check()
+
+	def apply_debug_logging(self):
+		"""Turn the debug log file on or off to match the setting, and say so if it can't be created."""
+		try:
+			set_debug_logging(self.state.config.debug_logging)
+		except OSError as e:
+			log.error(f"Could not create the debug log file {LOG_FILE}: {e}")
+			QMessageBox.warning(
+				self,
+				"Debug log",
+				f"Debug logging is turned on, but the log file could not be created at {LOG_FILE}.\n\n{e}",
+			)
 
 	def onAbout(self):
 		dlg = self.spawnWindow("AboutWindow")

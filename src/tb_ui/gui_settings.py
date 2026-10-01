@@ -15,16 +15,17 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractButton, QApplication, QDialog, QDialogButtonBox,
-    QFormLayout, QGroupBox, QLabel, QLineEdit,
-    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QDialog,
+    QDialogButtonBox, QFormLayout, QGroupBox, QLabel,
+    QLineEdit, QSizePolicy, QSpacerItem, QVBoxLayout,
+    QWidget)
 
 class Ui_SettingsMenu(object):
     def setupUi(self, SettingsMenu):
         if not SettingsMenu.objectName():
             SettingsMenu.setObjectName(u"SettingsMenu")
-        SettingsMenu.resize(560, 360)
-        SettingsMenu.setMinimumSize(QSize(480, 340))
+        SettingsMenu.resize(560, 450)
+        SettingsMenu.setMinimumSize(QSize(480, 420))
         icon = QIcon()
         icon.addFile(u"data/icon.ico", QSize(), QIcon.Normal, QIcon.Off)
         SettingsMenu.setWindowIcon(icon)
@@ -90,6 +91,24 @@ class Ui_SettingsMenu(object):
 
         self.verticalLayout.addWidget(self.grp_defaults)
 
+        self.grp_logging = QGroupBox(SettingsMenu)
+        self.grp_logging.setObjectName(u"grp_logging")
+        self.verticalLayout_logging = QVBoxLayout(self.grp_logging)
+        self.verticalLayout_logging.setObjectName(u"verticalLayout_logging")
+        self.chk_debug_logging = QCheckBox(self.grp_logging)
+        self.chk_debug_logging.setObjectName(u"chk_debug_logging")
+
+        self.verticalLayout_logging.addWidget(self.chk_debug_logging)
+
+        self.lbl_debug_logging_help = QLabel(self.grp_logging)
+        self.lbl_debug_logging_help.setObjectName(u"lbl_debug_logging_help")
+        self.lbl_debug_logging_help.setWordWrap(True)
+
+        self.verticalLayout_logging.addWidget(self.lbl_debug_logging_help)
+
+
+        self.verticalLayout.addWidget(self.grp_logging)
+
         self.lbl_error = QLabel(SettingsMenu)
         self.lbl_error.setObjectName(u"lbl_error")
         self.lbl_error.setStyleSheet(u"color: #c00000;")
@@ -134,6 +153,9 @@ class Ui_SettingsMenu(object):
 #if QT_CONFIG(tooltip)
         self.fld_default_questicon.setToolTip("")
 #endif // QT_CONFIG(tooltip)
+        self.grp_logging.setTitle(QCoreApplication.translate("SettingsMenu", u"Troubleshooting", None))
+        self.chk_debug_logging.setText(QCoreApplication.translate("SettingsMenu", u"Write a debug log file", None))
+        self.lbl_debug_logging_help.setText(QCoreApplication.translate("SettingsMenu", u"Saves a detailed log (trader_builder.log, next to the program) that you can send along with a bug report. Off by default.", None))
         self.lbl_error.setText("")
     # retranslateUi
 

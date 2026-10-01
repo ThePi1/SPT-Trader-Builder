@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>560</width>
-    <height>360</height>
+    <height>450</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>480</width>
-    <height>340</height>
+    <height>420</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -102,6 +102,32 @@
        <widget class="QLineEdit" name="fld_default_questicon">
         <property name="toolTip">
          <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="grp_logging">
+     <property name="title">
+      <string>Troubleshooting</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_logging">
+      <item>
+       <widget class="QCheckBox" name="chk_debug_logging">
+        <property name="text">
+         <string>Write a debug log file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lbl_debug_logging_help">
+        <property name="text">
+         <string>Saves a detailed log (trader_builder.log, next to the program) that you can send along with a bug report. Off by default.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

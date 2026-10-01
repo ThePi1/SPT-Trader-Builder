@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from config import ConfigError, load_config
 from paths import APP_DIR
 from state import AppState
-from utils import setup_logging
+from utils import LOG_FILE, set_debug_logging, setup_logging
 from windows.main_window import Gui_MainWindow
 
 setup_logging()
@@ -34,6 +34,10 @@ def main():
 		log.error(str(e))
 		QMessageBox.critical(None, "Trader Builder - settings error", str(e))
 		sys.exit(1)
+	try:
+		set_debug_logging(config.debug_logging)
+	except OSError as e:
+		log.warning(f"Could not open the debug log file {LOG_FILE}: {e}")
 	win = Gui_MainWindow(AppState.load(config))
 
 	# # Set up triggers

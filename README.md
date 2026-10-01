@@ -11,6 +11,10 @@ A tool for building EFT SPT Quests.
 The values in `src/data/settings.ini` (update check URLs and the quest defaults) can be edited from **Settings > Edit Settings...** in the app. Saving only rewrites the lines you changed, so the comments in the file are kept.
 The dropdown lists live in `src/data/box_fields.json` and are not editable from the app.
 
+### Debug log
+Turn on **Write a debug log file** in the Settings dialog (or set `debug_logging = true` in `settings.ini`) to save a detailed log to `trader_builder.log`, for troubleshooting or to attach to a bug report. It is off by default, and no log file is written while it's off.
+The file is created next to the program: in `src/` when running from source, and next to the `.exe` in the packaged build. It rotates at about 500 KB and keeps two older copies (`trader_builder.log.1` and `.2`).
+
 ## GUI
 The GUI is currently created using PySide6 and laid out using the Qt Designer tool.
 

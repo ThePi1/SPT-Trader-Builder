@@ -1,11 +1,18 @@
 """Small helpers shared by the GUI and the entry point."""
 
 import logging
+import os
 import secrets
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 
-LOG_FILE = Path(__file__).parent / "trader_builder.log"
+from paths import APP_DIR
+
+# Next to the program: src/ when running from source, next to the .exe when packaged
+# (APP_DIR knows the difference; the folder this file is in would be a temporary
+# folder in a one-file PyInstaller build).
+LOG_FILE = APP_DIR / "trader_builder.log"
+
+_LOG_FORMAT = "%(asctime)s %(levelname)-7s %(name)s: %(message)s"
 
 
 def new_id():
@@ -44,29 +51,46 @@ def val_field(value, emptyval, defaultval, expectclass):
 			return ""
 
 
-def setup_logging(log_file=LOG_FILE):
-	"""Log INFO and above to the console, and everything (DEBUG+) to a rotating log file.
+def setup_logging():
+	"""Log INFO and above to the console. Safe to call more than once.
 
-	Safe to call more than once.
+	The detailed log file is separate and optional: see set_debug_logging.
 	"""
 	root = logging.getLogger()
 	if getattr(root, "_trader_builder_configured", False):
 		return
 	root.setLevel(logging.DEBUG)
-	fmt = logging.Formatter("%(asctime)s %(levelname)-7s %(name)s: %(message)s")
-
 	console = logging.StreamHandler()
 	console.setLevel(logging.INFO)
-	console.setFormatter(fmt)
+	console.setFormatter(logging.Formatter(_LOG_FORMAT))
 	root.addHandler(console)
-
-	try:
-		file_handler = RotatingFileHandler(
-			log_file, maxBytes=512_000, backupCount=2, encoding="utf-8"
-		)
-		file_handler.setLevel(logging.DEBUG)
-		file_handler.setFormatter(fmt)
-		root.addHandler(file_handler)
-	except OSError as e:
-		root.warning("Could not open log file %s: %s", log_file, e)
 	root._trader_builder_configured = True
+
+
+def set_debug_logging(enabled, log_file=None):
+	"""Turn the detailed (DEBUG and above) log file on or off.
+
+	The file is a rotating log (about 500 KB, 2 older copies kept). Enabling is safe to
+	repeat; if the file can't be opened an OSError is raised and nothing is changed.
+	"""
+	root = logging.getLogger()
+	current = getattr(root, "_trader_builder_file_handler", None)
+	if not enabled:
+		if current is not None:
+			root.removeHandler(current)
+			current.close()
+			root._trader_builder_file_handler = None
+		return
+	log_file = log_file or LOG_FILE
+	if current is not None and current.baseFilename == os.path.abspath(log_file):
+		return  # already writing there
+	root.setLevel(logging.DEBUG)  # (so debug messages reach the file whatever was set up before)
+	handler = RotatingFileHandler(log_file, maxBytes=512_000, backupCount=2, encoding="utf-8")
+	handler.setLevel(logging.DEBUG)
+	handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+	if current is not None:  # (switching to a different file)
+		root.removeHandler(current)
+		current.close()
+	root.addHandler(handler)
+	root._trader_builder_file_handler = handler
+	logging.getLogger(__name__).info(f"Debug logging to {log_file}")

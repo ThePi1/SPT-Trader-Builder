@@ -7,6 +7,7 @@ import pytest
 import config as config_module
 import updates
 from config import (
+	BOOL_SETTING_NAMES,
 	SETTING_NAMES,
 	load_config,
 	save_settings,
@@ -17,6 +18,7 @@ from paths import DATA_DIR
 from windows.settings import ERROR_STYLE, Gui_SettingsDlg
 
 GOOD = {
+	"debug_logging": "false",
 	"version_file": "data/version.txt",
 	"version_url": "https://example.com/version.txt",
 	"project_url": "https://example.com/project",
@@ -24,6 +26,9 @@ GOOD = {
 }
 
 SAMPLE = """# top comment
+
+[general]
+debug_logging = true
 
 [filepaths]
 # comment about the version file
@@ -46,7 +51,7 @@ def test_only_the_changed_lines_are_touched():
 
 def test_all_settings_can_be_changed_and_comments_survive():
 	new = update_ini_text(SAMPLE, GOOD)
-	assert new.startswith("# top comment\n\n[filepaths]\n# comment about the version file\n")
+	assert new.startswith("# top comment\n\n[general]\ndebug_logging = false\n\n[filepaths]\n# comment about the version file\n")
 	assert "old" not in new
 	for name, value in GOOD.items():
 		assert f"{name} = {value}\n" in new
@@ -203,7 +208,10 @@ def test_dialog_shows_the_current_settings(qapp, config):
 def test_saving_valid_values(qapp, config):
 	dlg = Gui_SettingsDlg(config)
 	for name, value in GOOD.items():
-		dlg.field(name).setText(value)
+		if name in BOOL_SETTING_NAMES:
+			dlg.checkbox(name).setChecked(value == "true")
+		else:
+			dlg.field(name).setText(value)
 	dlg.save()
 	assert dlg.result() == dlg.DialogCode.Accepted
 	assert config.settings() == GOOD
@@ -258,7 +266,9 @@ def test_cancel_changes_nothing(qapp, config):
 
 def test_every_setting_has_a_field(qapp, config):
 	dlg = Gui_SettingsDlg(config)
-	assert all(dlg.field(name) is not None for name in SETTING_NAMES)
+	for name in SETTING_NAMES:
+		widget = dlg.checkbox(name) if name in BOOL_SETTING_NAMES else dlg.field(name)
+		assert widget is not None, name
 
 
 # --- the menu -----------------------------------------------------------------------
