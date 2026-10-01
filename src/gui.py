@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PySide6 import QtCore, QtGui
 from PySide6.QtGui import QStandardItemModel, QStandardItem
-from PySide6.QtCore import Qt, QRunnable
+from PySide6.QtCore import Qt, QRunnable, QThreadPool
 from PySide6.QtWidgets import (
 	QApplication,
 	QAbstractItemView,
@@ -34,6 +34,7 @@ from tb_ui.gui_assort import Ui_AssortBuilder
 from tb_ui.gui_rewards import Ui_rewardBuilder
 from tb_ui.gui_datafiles import Ui_DataEditor
 from paths import DATA_DIR, EXPORT_DIR
+from updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
 from utils import is_true, new_id, val_field
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,8 @@ class Gui_MainWindow(QMainWindow):
 		self.setupTreeView()
 		self.controller = controller
 		self.parent = parent
+		self.update_status = pending_status(controller)
+		self._update_worker = None
 		self.setup_box_selections()
 		self.connect_actions()
 		self.import_datafiles()
@@ -717,9 +720,25 @@ class Gui_MainWindow(QMainWindow):
 				self.ui.questList.takeItem(i)
 				break
 
-	def onAbout(self, ver_current, url_text):
+	def start_update_check(self):
+		"""Check for a newer release in the background; the result lands in set_update_status."""
+		worker = UpdateCheckWorker(self.controller)
+		worker.signals.finished.connect(self.set_update_status)
+		self._update_worker = worker  # keep it (and its signals) alive until it finishes
+		QThreadPool.globalInstance().start(worker)
+
+	def set_update_status(self, status):
+		self.update_status = status
+		if status.state == OUTDATED:
+			self.statusBar().showMessage(
+				f"{status.text} Latest version: {status.latest_version}", 15000
+			)
+		elif status.state == UNKNOWN:
+			self.statusBar().showMessage(status.text, 8000)
+
+	def onAbout(self):
 		dlg = self.spawnWindow("AboutWindow")
-		dlg.updateAbout(ver_current, url_text)
+		dlg.updateAbout(self.update_status.local_version, self.update_status.project_url)
 		dlg.exec()
 
 	def editDataFiles(self):
@@ -738,9 +757,12 @@ class Gui_MainWindow(QMainWindow):
 	def onExit(self):
 		sys.exit(0)
 
-	def onUpdateWindow(self, ver_current, ver_latest, url_text, update_text):
+	def onUpdateWindow(self):
+		status = self.update_status
 		dlg = self.spawnWindow("UpdateWindow")
-		dlg.updateVersion(ver_current, ver_latest, url_text, update_text)
+		dlg.updateVersion(
+			status.local_version, status.latest_display, status.project_url, status.text
+		)
 		dlg.exec()
 
 	def onQuestWindow(self):
