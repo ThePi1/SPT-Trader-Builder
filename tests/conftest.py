@@ -45,9 +45,9 @@ def fixed_ids(monkeypatch):
 @pytest.fixture
 def main_window(qapp, fixed_ids):
 	import gui
-	import trader_builder
+	from config import load_config
 
-	win = gui.Gui_MainWindow(trader_builder.Controller())
+	win = gui.Gui_MainWindow(load_config())
 	yield win
 	for w in win.windows:
 		w.close()
