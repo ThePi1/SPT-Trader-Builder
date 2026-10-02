@@ -6,10 +6,10 @@ import sys
 import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton
 
-import error_handling
+from modules import error_handling
 import trader_builder
-from config import ConfigError
-from error_handling import install_excepthook, report_exception
+from modules.config import ConfigError
+from modules.error_handling import install_excepthook, report_exception
 
 
 @pytest.fixture(autouse=True)

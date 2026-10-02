@@ -9,14 +9,14 @@ import json
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
-import state as state_module
-from config import DEFAULT_ITEMS_FILE, load_config, resolve_items_path
-from paths import APP_DIR, DATA_DIR
-from state import AppState
-from windows import main_window as mw
-from windows import settings as settings_module
-from windows.main_window import Gui_MainWindow
-from windows.settings import Gui_SettingsDlg
+from modules import state as state_module
+from modules.config import DEFAULT_ITEMS_FILE, load_config, resolve_items_path
+from modules.paths import APP_DIR, DATA_DIR
+from modules.state import AppState
+from modules.windows import main_window as mw
+from modules.windows import settings as settings_module
+from modules.windows.main_window import Gui_MainWindow
+from modules.windows.settings import Gui_SettingsDlg
 
 ITEMS = {
 	"0123456789abcdef01234567": {"_name": "modded_blaster", "_parent": "root"},
@@ -320,7 +320,7 @@ def test_a_failed_load_from_the_finder_changes_nothing(main_window, monkeypatch,
 
 
 def test_a_settings_file_that_cannot_be_written_warns_but_the_items_still_load(main_window, monkeypatch, boxes, items_file):
-	import config as config_module
+	from modules import config as config_module
 
 	def boom(path, values):
 		raise OSError("read-only")

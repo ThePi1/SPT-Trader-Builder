@@ -1,8 +1,8 @@
 from PySide6 import QtCore
 from PySide6.QtWidgets import QDialog
 
-from tb_ui.gui_about import Ui_AboutMenu
-from windows.common import fill_placeholders
+from modules.gui.compiled.gui_about import Ui_AboutMenu
+from modules.windows.common import fill_placeholders
 
 
 class Gui_AboutDlg(QDialog):

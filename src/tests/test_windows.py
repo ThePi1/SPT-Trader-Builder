@@ -2,12 +2,12 @@
 
 import json
 
-from config import load_config
-from state import AppState
-from windows import data_editor
-from windows.assort import Gui_AssortDlg
-from windows.reward import Gui_RewardDlg
-from windows.task import Gui_TaskDlg
+from modules.config import load_config
+from modules.state import AppState
+from modules.windows import data_editor
+from modules.windows.assort import Gui_AssortDlg
+from modules.windows.reward import Gui_RewardDlg
+from modules.windows.task import Gui_TaskDlg
 
 
 def _state():

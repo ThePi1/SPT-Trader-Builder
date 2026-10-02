@@ -7,11 +7,11 @@ import sys
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
-import config as config_module
-import utils
+from modules import config as config_module
+from modules import utils
 from conftest import SRC
-from config import ConfigError, load_config, update_ini_text, validate_settings
-from windows.settings import Gui_SettingsDlg
+from modules.config import ConfigError, load_config, update_ini_text, validate_settings
+from modules.windows.settings import Gui_SettingsDlg
 
 probe = logging.getLogger("test_debug_logging")
 
@@ -118,7 +118,7 @@ def test_packaged_the_log_is_next_to_the_exe_not_in_the_temp_folder(tmp_path):
 	fake_exe.parent.mkdir()
 	code = (
 		"import sys; sys.frozen = True; sys.executable = sys.argv[1]; "
-		"import paths, utils; print(utils.LOG_FILE); print(paths.APP_DIR)"
+		"from modules import paths, utils; print(utils.LOG_FILE); print(paths.APP_DIR)"
 	)
 	out = subprocess.run(
 		[sys.executable, "-c", code, str(fake_exe)], cwd=SRC, capture_output=True, text=True, check=True

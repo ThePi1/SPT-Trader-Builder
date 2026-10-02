@@ -7,7 +7,7 @@ import secrets
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from paths import APP_DIR
+from modules.paths import APP_DIR
 
 # Next to the program: src/ when running from source, next to the .exe when packaged
 # (APP_DIR knows the difference; the folder this file is in would be a temporary

@@ -3,10 +3,10 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QFileDialog, QMainWindow
 
-from tb_ui.gui_datafiles import Ui_DataEditor
-from paths import DATA_DIR
-from utils import write_json
-from windows.common import safe_file_dialog
+from modules.gui.compiled.gui_datafiles import Ui_DataEditor
+from modules.paths import DATA_DIR
+from modules.utils import write_json
+from modules.windows.common import safe_file_dialog
 
 log = logging.getLogger(__name__)
 

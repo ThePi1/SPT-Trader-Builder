@@ -3,9 +3,9 @@
 import pytest
 from PySide6.QtWidgets import QTableWidget
 
-from config import load_config
-from state import AppState, TableFields
-from table_fields import add_table_field, remove_selected_table_item
+from modules.config import load_config
+from modules.state import AppState, TableFields
+from modules.table_fields import add_table_field, remove_selected_table_item
 
 
 @pytest.fixture(scope="module")

@@ -3,11 +3,11 @@ import logging
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMainWindow
 
-from builders import rewards
-from tb_ui.gui_rewards import Ui_rewardBuilder
-from state import TableFields
-from table_fields import add_table_field, remove_selected_table_item
-from utils import is_true, new_id
+from modules.builders import rewards
+from modules.gui.compiled.gui_rewards import Ui_rewardBuilder
+from modules.state import TableFields
+from modules.table_fields import add_table_field, remove_selected_table_item
+from modules.utils import is_true, new_id
 
 log = logging.getLogger(__name__)
 

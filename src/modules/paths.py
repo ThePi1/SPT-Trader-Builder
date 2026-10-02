@@ -11,6 +11,6 @@ from pathlib import Path
 if getattr(sys, "frozen", False):
 	APP_DIR = Path(sys.executable).resolve().parent
 else:
-	APP_DIR = Path(__file__).resolve().parent
+	APP_DIR = Path(__file__).resolve().parent.parent  # this file is src/modules/paths.py
 
 DATA_DIR = APP_DIR / "data"

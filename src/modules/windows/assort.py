@@ -15,11 +15,11 @@ from PySide6.QtWidgets import (
 	QTableWidgetItem,
 )
 
-from builders import assort as assort_builders
-from tb_ui.gui_assort import Ui_AssortBuilder
-from paths import DATA_DIR
-from utils import new_id, read_json
-from windows.common import safe_file_dialog
+from modules.builders import assort as assort_builders
+from modules.gui.compiled.gui_assort import Ui_AssortBuilder
+from modules.paths import DATA_DIR
+from modules.utils import new_id, read_json
+from modules.windows.common import safe_file_dialog
 
 log = logging.getLogger(__name__)
 

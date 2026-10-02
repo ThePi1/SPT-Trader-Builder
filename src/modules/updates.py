@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import requests
 from PySide6.QtCore import QObject, QRunnable, Signal
 
-from paths import APP_DIR
+from modules.paths import APP_DIR
 
 log = logging.getLogger(__name__)
 

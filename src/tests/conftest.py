@@ -47,8 +47,8 @@ def config(tmp_path):
 	"""A Config loaded from throwaway copies of the settings files, so tests can save settings safely."""
 	import shutil
 
-	from config import load_config
-	from paths import DATA_DIR
+	from modules.config import load_config
+	from modules.paths import DATA_DIR
 
 	settings = tmp_path / "settings.ini"
 	box_fields = tmp_path / "box_fields.json"
@@ -59,8 +59,8 @@ def config(tmp_path):
 
 @pytest.fixture
 def main_window(qapp, fixed_ids, config):
-	from state import AppState
-	from windows.main_window import Gui_MainWindow
+	from modules.state import AppState
+	from modules.windows.main_window import Gui_MainWindow
 
 	win = Gui_MainWindow(AppState.load(config))
 	yield win
