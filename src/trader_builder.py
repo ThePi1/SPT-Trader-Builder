@@ -1,133 +1,14 @@
-import csv, json, os, sys, traceback, datetime, ctypes, time
-import requests
-from os import path
-from pathlib import Path
-from gui import Gui_MainWindow, Gui_QuestDlg
-from configparser import ConfigParser
-from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QHeaderView
+import logging, os, sys, ctypes
+from PySide6.QtWidgets import QApplication, QMessageBox
+from config import ConfigError, load_config
+from error_handling import install_excepthook, report_exception
+from paths import APP_DIR
+from state import AppState
+from utils import LOG_FILE, set_debug_logging, setup_logging
+from windows.main_window import Gui_MainWindow
 
-
-# Parse string to boolean
-def is_true(val):
-	val = val.lower()
-	if val in ("y", "yes", "t", "true", "on", "1"):
-		return True
-	elif val in ("n", "no", "f", "false", "off", "0"):
-		return False
-	else:
-		raise ValueError("invalid truth value %r" % (val,))
-
-
-# Set up config parser and read in the settings file
-parser = ConfigParser()
-base_path = Path(__file__).parent
-parser.read("data/settings.ini")
-
-
-class Controller:
-	# Parse the settings.ini file for the following settings
-	try:
-		version_file = str(parser.get("filepaths", "version_file"))
-		version_url = str(parser.get("filepaths", "version_url"))
-		project_url = str(parser.get("filepaths", "project_url"))
-		# use these for any t/f field
-		default_tf = str(parser.get("box_fields", "default_tf")).split(",")
-		default_ft = str(parser.get("box_fields", "default_ft")).split(",")
-		default_locale = str(parser.get("box_fields", "default_locale"))
-		default_skills = str(parser.get("box_fields", "default_skills")).split(",")
-		default_compare = str(parser.get("box_fields", "default_compare")).split(",")
-		reward_timing = str(parser.get("box_fields", "reward_timing")).split(",")
-		qb_box_avail_faction = str(
-			parser.get("box_fields", "qb_box_avail_faction")
-		).split(",")
-		qb_box_quest_type_label = str(
-			parser.get("box_fields", "qb_box_quest_type_label")
-		).split(",")
-		qb_box_location = str(parser.get("box_fields", "qb_box_location")).split(",")
-		qb_box_reward = str(parser.get("box_fields", "qb_box_reward")).split(",")
-		qb_box_status = str(parser.get("box_fields", "qb_box_status")).split(",")
-		ab_box_loyalty_level = str(
-			parser.get("box_fields", "ab_box_loyalty_level")
-		).split(",")
-		tb_elim_box_target = str(parser.get("box_fields", "tb_elim_box_target")).split(
-			","
-		)
-		tb_elim_box_targetrole = str(
-			parser.get("box_fields", "tb_elim_box_targetrole")
-		).split(",")
-		tb_elim_box_bodypart = str(
-			parser.get("box_fields", "tb_elim_box_bodypart")
-		).split(",")
-		tb_elim_box_weapons = str(
-			parser.get("box_fields", "tb_elim_box_weapons")
-		).split(",")
-		tb_handover_box_cond_type = str(
-			parser.get("box_fields", "tb_handover_box_cond_type")
-		).split(",")
-		ab_box_loyalty_level = str(
-			parser.get("box_fields", "ab_box_loyalty_level")
-		).split(",")
-		ab_box_condition_req = str(
-			parser.get("box_fields", "ab_box_condition_req")
-		).split(",")
-		ab_box_modslot = str(parser.get("box_fields", "ab_box_modslot")).split(",")
-		default_questicon = str(parser.get("box_fields", "default_questicon"))
-		# tb_traderloyalty_level                = str(parser.get('box_fields', 'tb_traderloyalty_level')).split(',')
-		# tb_traderloyalt_target_box            = str(parser.get('box_fields', 'tb_traderloyalt_target_box')).split(',')
-		tb_exitstatus = str(parser.get("box_fields", "tb_exitstatus")).split(",")
-		tb_queststatus = str(parser.get("box_fields", "tb_queststatus")).split(",")
-		tb_finishfail = str(parser.get("box_fields", "tb_finishfail")).split(",")
-		tb_any = str(parser.get("box_fields", "tb_any")).split(",")
-		tb_effect = str(parser.get("box_fields", "tb_effect")).split(",")
-		tb_buff = str(parser.get("box_fields", "tb_buff")).split(",")
-		wb_box_modslot = str(parser.get("box_fields", "ab_box_modslot")).split(",")
-
-	except Exception as e:
-		print(
-			f"Error loading settings.ini file. Please check the exception below and the corresponding entry in the settings file.\nMost likely, the format for your entry is off. Check the top of settings.ini for more info.\n\n{traceback.format_exc()}"
-		)
-		exit()
-
-	def get_version_from_file():
-		with open(Controller.version_file) as local_version_file:
-			local_version = local_version_file.read()
-			return local_version
-
-	def get_version_from_remote():
-		try:
-			latest_version = requests.get(Controller.version_url).text
-			return latest_version
-		except Exception as e:
-			print("Error fetching remote version")
-			return ""
-
-	def check_version():
-		try:
-			print("Checking version...\n")
-			latest_version = Controller.get_version_from_remote()
-			local_version = Controller.get_version_from_file()
-			if local_version != latest_version:
-				print(
-					f"Version {local_version} may be out of date!\nLatest version: {latest_version}\n\nPlease visit {Controller.project_url} to download the latest version."
-				)
-				print(
-					"Or, if running from source, please pull the latest changes via 'git pull'"
-				)
-			else:
-				print(f"Version {local_version} is up to date.")
-		except Exception as e:
-			print(f"Error checking version: {e}")
-
-	# This may get called before everything else gets initialized
-	def get_update_stats():
-		project_url = str(parser.get("filepaths", "project_url"))
-		latest_version = Controller.get_version_from_remote()
-		local_version = Controller.get_version_from_file()
-		if local_version != latest_version:
-			update_text = "Program may be out of date!"
-		else:
-			update_text = "Up to date."
-		return (local_version, latest_version, update_text, project_url)
+setup_logging()
+log = logging.getLogger(__name__)
 
 
 def fix_win_taskbar():
@@ -137,37 +18,45 @@ def fix_win_taskbar():
 
 # Main method
 def main():
+	# The compiled UI files reference the window icon as "data/icon.ico", relative to the
+	# working directory, so make sure we're running from the app folder.
+	os.chdir(APP_DIR)
+
 	# Use this on Windows to add the icon back to the taskbar
 	# No idea how this works on Mac/Linux for now, haha
 	if sys.platform == "win32":
 		fix_win_taskbar()
 
 	# Create the application and main window
-	controller = Controller()
-	app = QApplication(sys.argv)
-	win = Gui_MainWindow(controller)
-	ver_current, ver_latest, update_text, project_url = Controller.get_update_stats()
+	app = QApplication.instance() or QApplication(sys.argv)
+	# From here on, an unexpected error is shown to the user (the packaged program has no console)
+	install_excepthook()
+	try:
+		config = load_config()
+	except ConfigError as e:
+		log.error(str(e))
+		QMessageBox.critical(None, "Trader Builder - settings error", str(e))
+		sys.exit(1)
+	try:
+		set_debug_logging(config.debug_logging)
+	except OSError as e:
+		log.warning(f"Could not open the debug log file {LOG_FILE}: {e}")
+	try:
+		win = Gui_MainWindow(AppState.load(config))
 
-	# # Set up triggers that need specific data
-	win.ui.actionAbout.triggered.connect(
-		lambda: Gui_MainWindow.onAbout(win, ver_current, project_url)
-	)
-	win.ui.actionUpdateCheck.triggered.connect(
-		lambda: Gui_MainWindow.onUpdateWindow(
-			win, ver_current, ver_latest, project_url, update_text
-		)
-	)
-	win.ui.actionQuest_Builder.triggered.connect(
-		lambda: Gui_MainWindow.onQuestWindow(win)
-	)
-	win.ui.actionAssort_Builder.triggered.connect(
-		lambda: Gui_MainWindow.onAssortWindow(win)
-	)
-	win.ui.actionEdit_Tracked_Data_Files_locale_quest.triggered.connect(
-		lambda: Gui_MainWindow.editDataFiles(win)
-	)
+		# # Set up triggers
+		win.ui.actionAbout.triggered.connect(win.onAbout)
+		win.ui.actionUpdateCheck.triggered.connect(win.onUpdateWindow)
+		win.ui.actionQuest_Builder.triggered.connect(win.onQuestWindow)
+		win.ui.actionAssort_Builder.triggered.connect(win.onAssortWindow)
+		win.ui.actionEdit_Tracked_Data_Files_locale_quest.triggered.connect(win.editDataFiles)
 
-	win.show()
+		win.show()
+		win.start_update_check()
+	except Exception:
+		# e.g. a missing or damaged data file
+		report_exception(*sys.exc_info(), title="Trader Builder - could not start")
+		sys.exit(1)
 	# Run the application's main loop
 	sys.exit(app.exec())
 

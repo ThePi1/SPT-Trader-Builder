@@ -1,7 +1,7 @@
 import shutil
 import os
 import PyInstaller.__main__
-# Not tested on non-Windows but it should work... I think?
+# Only tested on Windows but it should work... I think?
 
 
 def clean_folders(folders):
@@ -19,7 +19,6 @@ temp_dir = "temp"
 dist_dir = "dist"
 build_dir = "build"
 data_dir = "data"
-icon_dir = "icon"
 out_filename = "trader-builder-0.1.0"
 
 
@@ -46,9 +45,6 @@ shutil.copy("../LICENSE", temp_full_path)
 
 print("Adding data folder...")
 shutil.copytree(data_dir, os.path.join(temp_dir, data_dir))
-
-print("Adding icon folder...")
-shutil.copytree(icon_dir, os.path.join(temp_dir, icon_dir))
 
 print("Zipping data...")
 shutil.make_archive(out_filename, "zip", temp_dir)
