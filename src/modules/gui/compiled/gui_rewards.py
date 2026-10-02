@@ -425,6 +425,7 @@ class Ui_rewardBuilder(object):
 
         self.box_loyalty_ts = QDoubleSpinBox(self.gridLayoutWidget_5)
         self.box_loyalty_ts.setObjectName(u"box_loyalty_ts")
+        self.box_loyalty_ts.setMinimum(-9999999999.989999771118164)
         self.box_loyalty_ts.setMaximum(9999999999.989999771118164)
 
         self.gridLayout_5.addWidget(self.box_loyalty_ts, 2, 2, 1, 1)

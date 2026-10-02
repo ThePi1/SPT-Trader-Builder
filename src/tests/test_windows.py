@@ -108,3 +108,15 @@ def test_visibility_conditions_are_written_as_objects_like_vanilla_quests(qapp, 
 	assert all(v["conditionType"] == "CompleteCondition" for v in visibility)
 	assert all(set(v) == {"conditionType", "id", "target"} for v in visibility)
 	assert len({v["id"] for v in visibility}) == 2  # each has its own id
+
+
+def test_a_trader_standing_reward_can_be_negative(qapp, fixed_ids):
+	# (failing a quest costs standing: vanilla has rewards like -0.04)
+	dlg = Gui_RewardDlg(_state())
+	received = []
+	dlg.reward_ready.connect(lambda *args: received.append(args))
+	dlg.ui.box_loyalty_ts.setValue(-0.04)
+	dlg.ui.box_rewardtiming_ts.setCurrentText("Fail")
+	dlg.finalize("TraderStanding")
+	(timing, reward_type, _, reward), = received
+	assert (timing, reward_type, reward["value"]) == ("Fail", "TraderStanding", -0.04)
