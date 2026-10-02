@@ -11,6 +11,7 @@ from modules.gui.compiled.gui_quests import Ui_QuestWindow
 from modules.state import TableFields
 from modules.table_fields import add_table_field, find_row, remove_selected_table_item
 from modules.utils import is_true, new_id
+from modules.windows.common import select_id, select_or_add
 from modules.windows.reward import Gui_RewardDlg
 from modules.windows.task import Gui_TaskDlg
 
@@ -22,24 +23,6 @@ TASK_TEXT_COLUMN = 3
 # A quest's condition lists and reward lists, and the timing the Quest Builder calls each one
 CONDITION_LISTS = (("AvailableForStart", "Start"), ("AvailableForFinish", "Finish"), ("Fail", "Fail"))
 REWARD_LISTS = ("Success", "Started", "Fail")
-
-
-def select_or_add(box, text):
-	"""Select text in a combo box, adding it first if the box doesn't offer it (a value from an
-	imported quest, say), so that saving the quest doesn't change it."""
-	if box.findText(text) < 0:
-		box.addItem(text)
-	box.setCurrentText(text)
-
-
-def select_id(box, ids, wanted):
-	"""Select the entry of a box whose id is wanted. ids is {name shown in the box: id}; an id the
-	box doesn't have is added to it (and to ids) under its own text."""
-	name = next((name for name, _id in ids.items() if _id == wanted), None)
-	if name is None:
-		name = str(wanted)
-		ids[name] = wanted
-	select_or_add(box, name)
 
 
 class Gui_QuestDlg(QMainWindow):

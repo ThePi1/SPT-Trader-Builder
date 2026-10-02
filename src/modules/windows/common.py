@@ -31,3 +31,21 @@ def safe_file_dialog(method, window_title, **options):
 	except Exception as e:
 		log.error(f"Error opening file dialog: {e}")
 		return None, False
+
+
+def select_or_add(box, text):
+	"""Select text in a combo box, adding it first if the box doesn't offer it (a value from an
+	imported quest, say), so that saving doesn't change it."""
+	if box.findText(text) < 0:
+		box.addItem(text)
+	box.setCurrentText(text)
+
+
+def select_id(box, ids, wanted):
+	"""Select the entry of a box whose id is wanted. ids is {name shown in the box: id}; an id the
+	box doesn't have is added to it (and to ids) under its own text."""
+	name = next((name for name, _id in ids.items() if _id == wanted), None)
+	if name is None:
+		name = str(wanted)
+		ids[name] = wanted
+	select_or_add(box, name)
