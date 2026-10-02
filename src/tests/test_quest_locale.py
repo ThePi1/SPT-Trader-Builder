@@ -3,8 +3,8 @@
 import json
 
 import pytest
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QMessageBox, QPlainTextEdit
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QApplication, QMessageBox, QPlainTextEdit
 
 from builders import quests
 from builders.quests import LOCALE_FIELDS
@@ -40,15 +40,27 @@ def win(main_window, monkeypatch):
 	monkeypatch.setattr(
 		QMessageBox, "critical", staticmethod(lambda parent, title, text: main_window.errors.append((title, text)))
 	)
-	monkeypatch.setattr(main_window, "popup", lambda message: main_window.popups.append(message))
+	monkeypatch.setattr(main_window, "popup", lambda title, message: main_window.popups.append(message))
 	return main_window
+
+
+def set_merging(window, on):
+	"""Turn "Merge locales on export" on or off (whatever the shipped settings.ini says)."""
+	config = window.state.config
+	config.update_settings({**config.settings(), "merge_locales_on_export": "true" if on else "false"})
+
+
+@pytest.fixture
+def merge(win):
+	"""The main window with "Merge locales on export" turned on."""
+	set_merging(win, True)
+	return win
 
 
 @pytest.fixture
 def no_merge(win):
 	"""The main window with "Merge locales on export" turned off."""
-	config = win.state.config
-	config.update_settings({**config.settings(), "merge_locales_on_export": "false"})
+	set_merging(win, False)
 	return win
 
 
@@ -241,18 +253,18 @@ def test_removing_a_quest_drops_its_text(win):
 	assert quest_id not in win.state.quests and quest_id not in win.state.quest_locales
 
 
-# --- exporting: merging into an existing locale (the default) ---------------------------------------
+# --- exporting, merging into an existing locale ----------------------------------------------------
 
 
-def test_merging_adds_the_entries_the_file_lacks_and_keeps_the_ones_it_has(win, monkeypatch, tmp_path):
+def test_merging_adds_the_entries_the_file_lacks_and_keeps_the_ones_it_has(merge, monkeypatch, tmp_path):
 	quest_id, task_id = build_quest(
-		win, texts={"name": "Typed name", "description": "Typed description"}, task_text="Typed task"
+		merge, texts={"name": "Typed name", "description": "Typed description"}, task_text="Typed task"
 	)
 	existing = {"existing key": "existing value", f"{quest_id} name": "Name in the file"}
 	base = write(tmp_path / "en.json", existing)
 	merged = tmp_path / "merged.json"
 	dialogs = Dialogs(monkeypatch, tmp_path / "quests.json", base, merged)
-	win.onExportQuests()
+	merge.onExportQuests()
 	assert dialogs.titles == ["Export Quest JSON", "Open Locale JSON to merge into", "Export Locale JSON"]
 	locale = read_json(merged)
 	assert locale["existing key"] == "existing value"
@@ -261,53 +273,53 @@ def test_merging_adds_the_entries_the_file_lacks_and_keeps_the_ones_it_has(win, 
 	assert locale[task_id] == "Typed task"
 	assert locale[f"{quest_id} note"] == ""
 	assert read_json(base) == existing  # (saved somewhere else, so the opened file is left alone)
-	assert win.popups[1] == f"The locale export has completed successfully and can be found at {merged}."
+	assert merge.popups[1] == f"The locale export has completed successfully and can be found at {merged}."
 
 
-def test_the_save_dialog_starts_at_the_opened_file_so_it_can_be_saved_over(win, monkeypatch, tmp_path):
-	quest_id, _ = build_quest(win, texts={"name": "Typed name"})
+def test_the_save_dialog_starts_at_the_opened_file_so_it_can_be_saved_over(merge, monkeypatch, tmp_path):
+	quest_id, _ = build_quest(merge, texts={"name": "Typed name"})
 	base = write(tmp_path / "en.json", {"existing key": "existing value"})
 	dialogs = Dialogs(monkeypatch, tmp_path / "quests.json", base, base)
-	win.onExportQuests()
+	merge.onExportQuests()
 	assert dialogs.asked[2] == ("Export Locale JSON", {"dir": str(base)})
 	locale = read_json(base)
 	assert locale["existing key"] == "existing value" and locale[f"{quest_id} name"] == "Typed name"
 
 
-def test_imported_quests_keep_the_text_already_in_the_locale_file(win, monkeypatch, tmp_path):
+def test_imported_quests_keep_the_text_already_in_the_locale_file(merge, monkeypatch, tmp_path):
 	Dialogs(monkeypatch, imported_quest_file(tmp_path / "imported.json"))
-	win.importQuests()
+	merge.importQuests()
 	base = write(tmp_path / "en.json", {"q1 name": "Their name", "c1": "Their task"})
 	Dialogs(monkeypatch, tmp_path / "quests.json", base, base)
-	win.onExportQuests()
+	merge.onExportQuests()
 	locale = read_json(base)
 	assert locale["q1 name"] == "Their name" and locale["c1"] == "Their task"
 	assert locale["q1 description"] == ""  # (added, blank)
 
 
 @pytest.mark.parametrize("cancel_at", ["open", "save"])
-def test_cancelling_a_locale_dialog_saves_no_locale(win, monkeypatch, tmp_path, cancel_at):
-	build_quest(win)
+def test_cancelling_a_locale_dialog_saves_no_locale(merge, monkeypatch, tmp_path, cancel_at):
+	build_quest(merge)
 	base = write(tmp_path / "en.json", {"a": "b"})
 	answers = [None] if cancel_at == "open" else [base, None]
 	Dialogs(monkeypatch, tmp_path / "quests.json", *answers)
-	win.onExportQuests()
+	merge.onExportQuests()
 	assert (tmp_path / "quests.json").exists()
 	assert read_json(base) == {"a": "b"}
-	assert win.popups[1:] == [NOT_SAVED] and win.errors == []
+	assert merge.popups[1:] == [NOT_SAVED] and merge.errors == []
 
 
 @pytest.mark.parametrize("content", ["{ not json", "[1, 2]"], ids=["bad-json", "not-a-dict"])
-def test_a_locale_file_that_cannot_be_used_is_reported_and_nothing_is_saved(win, monkeypatch, tmp_path, content):
-	build_quest(win)
+def test_a_locale_file_that_cannot_be_used_is_reported_and_nothing_is_saved(merge, monkeypatch, tmp_path, content):
+	build_quest(merge)
 	base = tmp_path / "en.json"
 	base.write_text(content, encoding="utf-8")
 	dialogs = Dialogs(monkeypatch, tmp_path / "quests.json", base)
-	win.onExportQuests()
+	merge.onExportQuests()
 	assert dialogs.titles == ["Export Quest JSON", "Open Locale JSON to merge into"]  # (no save dialog)
-	assert len(win.errors) == 1 and "en.json" in win.errors[0][1]
+	assert len(merge.errors) == 1 and "en.json" in merge.errors[0][1]
 	assert base.read_text(encoding="utf-8") == content
-	assert len(win.popups) == 1  # (just the quest file's)
+	assert len(merge.popups) == 1  # (just the quest file's)
 
 
 # --- exporting without merging ---------------------------------------------------------------------
@@ -371,6 +383,46 @@ def test_a_task_without_an_id_is_reported_before_any_locale_dialog(win, monkeypa
 	assert len(win.errors) == 1 and len(win.popups) == 1
 
 
+# --- the export messages ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def press_ok(qapp):
+	"""Press OK on each message as it is shown. Records (title, text, whether it had an OK button)."""
+	shown = []
+
+	def answer():
+		box = QApplication.activeModalWidget()
+		if box is None:
+			return
+		is_message_box = isinstance(box, QMessageBox)
+		ok = box.button(QMessageBox.StandardButton.Ok) if is_message_box else None
+		shown.append((box.windowTitle(), box.text() if is_message_box else "", ok is not None))
+		if ok is not None:
+			ok.click()
+		else:
+			box.done(0)  # (a window without one is closed anyway, so it can't hang the test)
+
+	timer = QTimer()
+	timer.timeout.connect(answer)
+	timer.start(10)
+	yield shown
+	timer.stop()
+
+
+def test_the_quest_and_locale_export_messages_have_an_ok_button(main_window, press_ok, monkeypatch, tmp_path):
+	set_merging(main_window, True)
+	build_quest(main_window)
+	quests_file = tmp_path / "quests.json"
+	locale_file = write(tmp_path / "en.json", {})
+	Dialogs(monkeypatch, quests_file, locale_file, locale_file)
+	main_window.onExportQuests()
+	assert press_ok == [
+		("Export Quest JSON", f"The quest export has completed successfully and can be found at {quests_file}.", True),
+		("Export Locale JSON", f"The locale export has completed successfully and can be found at {locale_file}.", True),
+	]
+
+
 # --- the setting -----------------------------------------------------------------------------------
 
 
@@ -379,13 +431,16 @@ def test_merging_is_on_in_the_shipped_settings():
 
 
 def test_a_settings_file_without_the_entry_merges(config):
-	text = config.settings_path.read_text(encoding="utf-8").replace("merge_locales_on_export = true", "")
+	lines = config.settings_path.read_text(encoding="utf-8").splitlines()
+	text = "\n".join(line for line in lines if not line.startswith("merge_locales_on_export"))
+	assert len(text.splitlines()) == len(lines) - 1
 	config.settings_path.write_text(text, encoding="utf-8")
 	reloaded = load_config(config.settings_path, config.settings_path.with_name("box_fields.json"))
 	assert reloaded.merge_locales_on_export is True
 
 
 def test_the_settings_dialog_turns_merging_off_and_it_is_remembered(qapp, config):
+	config.update_settings({**config.settings(), "merge_locales_on_export": "true"})
 	dlg = Gui_SettingsDlg(config)
 	box = dlg.checkbox("merge_locales_on_export")
 	assert box.isChecked() and box.text() == "Merge locales on export"

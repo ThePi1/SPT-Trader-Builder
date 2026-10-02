@@ -2,7 +2,6 @@ import sys
 import traceback
 import logging
 
-from PySide6 import QtCore
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtCore import Qt, QThreadPool
 from PySide6.QtWidgets import (
@@ -520,7 +519,7 @@ class Gui_MainWindow(QMainWindow):
 	def onCreateLocale(self):
 		"""The Edit > Create locale from Quest JSON menu item."""
 		if self.createLocaleFromJSON() == LOCALE_UPDATED:
-			self.popup(message="The locale has been successfully updated.")
+			self.popup("Create locale from Quest JSON", "The locale has been successfully updated.")
 
 	def remove_selected_quest(self):
 		qlist = self.ui.questList
@@ -591,12 +590,9 @@ class Gui_MainWindow(QMainWindow):
 	def editDataFiles(self):
 		dlg = self.spawnWindow("DataWindow")
 
-	def popup(self, message):
-		dlg = self.spawnWindow("AboutWindow")
-		text = dlg.ui.label.text()
-		text = message
-		dlg.ui.label.setText(QtCore.QCoreApplication.translate("AboutMenu", text))
-		dlg.exec()
+	def popup(self, title, message):
+		"""Show a message, with an OK button to close it."""
+		QMessageBox.information(self, title, message)
 
 	def onExportQuests(self):
 		self.exportAll(self.state.quests)
@@ -639,16 +635,18 @@ class Gui_MainWindow(QMainWindow):
 			)
 			return  # (don't go on to save a locale for a quest file that wasn't written)
 		self.popup(
-			message=f"The quest export has completed successfully and can be found at {qfilename}."
+			"Export Quest JSON",
+			f"The quest export has completed successfully and can be found at {qfilename}.",
 		)
 
 		result, lfilename = self.export_locale(quests)
 		if result == LOCALE_UPDATED:
 			self.popup(
-				message=f"The locale export has completed successfully and can be found at {lfilename}."
+				"Export Locale JSON",
+				f"The locale export has completed successfully and can be found at {lfilename}.",
 			)
 		elif result == LOCALE_CANCELLED:
-			self.popup(message="The locale was not saved, because no locale file was chosen.")
+			self.popup("Export Locale JSON", "The locale was not saved, because no locale file was chosen.")
 		# (LOCALE_FAILED: the error has already been shown)
 
 	def export_locale(self, quests):

@@ -124,7 +124,8 @@
       <item>
        <widget class="QLabel" name="lbl_merge_locales_help">
         <property name="text">
-         <string>On: after saving the quests, choose an existing locale file. The entries it doesn't have yet are added (the ones it has are kept), then you choose where to save it. Off: the quests' locale entries are saved to a file of their own, without merging.</string>
+         <string>On: after saving the quests, choose an existing locale file. The entries it doesn't have yet are added. 
+Off: the quests' locale entries are saved to a file of their own, without merging.</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -143,7 +144,7 @@
       <item>
        <widget class="QLabel" name="lbl_items_help">
         <property name="text">
-         <string>The item database used by the ID Lookup tab and the child-item finder (Debug menu). By default it is the items.json included with the program; load a different one (say, from your SPT install) to use that instead. It is remembered next time.</string>
+         <string>The item database used by the ID Lookup tab and the child-item finder (Debug menu).</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -154,14 +155,14 @@
        <layout class="QHBoxLayout" name="horizontalLayout_items_file">
         <item>
          <widget class="QLineEdit" name="fld_items_file">
+          <property name="toolTip">
+           <string>The items.json used every time the program starts.</string>
+          </property>
           <property name="readOnly">
            <bool>true</bool>
           </property>
           <property name="placeholderText">
            <string>data/items.json</string>
-          </property>
-          <property name="toolTip">
-           <string>The items.json used every time the program starts.</string>
           </property>
          </widget>
         </item>
@@ -210,7 +211,7 @@
       <item>
        <widget class="QLabel" name="lbl_debug_logging_help">
         <property name="text">
-         <string>Saves a detailed log (trader_builder.log, next to the program) that you can send along with a bug report. Off by default.</string>
+         <string>Saves a detailed log (trader_builder.log, next to the program)</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>

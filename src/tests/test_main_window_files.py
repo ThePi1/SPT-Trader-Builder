@@ -41,7 +41,7 @@ def win(main_window, monkeypatch):
 	monkeypatch.setattr(
 		QMessageBox, "critical", staticmethod(lambda parent, title, text: main_window.errors.append((title, text)))
 	)
-	monkeypatch.setattr(main_window, "popup", lambda message: main_window.popups.append(message))
+	monkeypatch.setattr(main_window, "popup", lambda title, message: main_window.popups.append(message))
 	return main_window
 
 
@@ -251,6 +251,7 @@ def test_the_menu_item_only_celebrates_a_real_update(win, monkeypatch, tmp_path)
 
 
 def test_a_good_export_reports_both_steps(win, monkeypatch, tmp_path):
+	win.state.config.merge_locales_on_export = True
 	out = tmp_path / "out.json"
 	locale_file = write(tmp_path / "en.json", {})
 	choose(monkeypatch, out, locale_file, locale_file)  # save the quests; open the locale, save it over itself
@@ -270,6 +271,7 @@ def test_export_without_a_locale_file_does_not_claim_the_locale_was_updated(win,
 
 
 def test_export_with_a_broken_locale_file_shows_the_error_not_a_success(win, monkeypatch, tmp_path):
+	win.state.config.merge_locales_on_export = True
 	out = tmp_path / "out.json"
 	bad_locale = tmp_path / "en.json"
 	bad_locale.write_text("{ nope", encoding="utf-8")
