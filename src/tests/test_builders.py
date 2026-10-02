@@ -161,6 +161,20 @@ def test_find_item_and_handover_item_differ_only_in_type_and_count_in_raid():
 	assert find == handover
 
 
+def test_item_conditions_use_the_key_spt_knows_for_encoded_items():
+	# vanilla SPT quests say "isEncoded"; a misspelled "inEncoded" would be an unknown key
+	leave = conditions.leave_item_at_location(
+		"l1", plant_time=0, zone_id="z", **_ITEM_ARGS
+	)
+	for cond in (
+		conditions.find_item("i1", **_ITEM_ARGS),
+		conditions.handover_item("i1", **_ITEM_ARGS),
+		leave,
+	):
+		assert cond["isEncoded"] is False
+		assert "inEncoded" not in cond
+
+
 def test_place_beacon_always_targets_the_ms2000_marker():
 	cond = conditions.place_beacon(
 		"p1", parent_id="", plant_time=10, value=1, zone_id="z", visibility_conditions=[]
