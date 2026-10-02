@@ -25,6 +25,7 @@ TEXT_SETTING_NAMES = tuple(name for name in SETTING_NAMES if name not in BOOL_SE
 # Setting name -> how it's called in error messages
 LABELS = {
 	"debug_logging": "Debug log",
+	"merge_locales_on_export": "Merge locales on export",
 	"version_file": "Local version file",
 	"version_url": "Latest version URL",
 	"project_url": "Project URL",

@@ -273,11 +273,6 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="locale_tab">
-     <attribute name="title">
-      <string>Locale</string>
-     </attribute>
-    </widget>
     <widget class="QWidget" name="tab">
      <attribute name="title">
       <string>ID Lookup</string>
@@ -464,11 +459,6 @@
   <action name="actionAssort_Builder">
    <property name="text">
     <string>Assort Builder</string>
-   </property>
-  </action>
-  <action name="actionLocale_Builder">
-   <property name="text">
-    <string>Locale Builder</string>
    </property>
   </action>
   <action name="actionExport_Queued_Quests">

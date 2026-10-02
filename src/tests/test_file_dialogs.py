@@ -48,6 +48,12 @@ def test_the_dialog_is_called_with_the_window_title():
 	assert seen == ["Import Quest JSON"]
 
 
+def test_options_are_passed_on_to_the_dialog():
+	seen = []
+	safe_file_dialog(lambda caption, **options: seen.append(options) or ("", ""), "Save", dir="C:/l/en.json")
+	assert seen == [{"dir": "C:/l/en.json"}]
+
+
 def test_a_dialog_that_raises_is_a_cancel():
 	def boom(caption):
 		raise RuntimeError("no display")

@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>560</width>
-    <height>520</height>
+    <height>600</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>480</width>
-    <height>470</height>
+    <height>540</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -102,6 +102,32 @@
        <widget class="QLineEdit" name="fld_default_questicon">
         <property name="toolTip">
          <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="grp_export">
+     <property name="title">
+      <string>Quest export</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_export">
+      <item>
+       <widget class="QCheckBox" name="chk_merge_locales_on_export">
+        <property name="text">
+         <string>Merge locales on export</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lbl_merge_locales_help">
+        <property name="text">
+         <string>On: after saving the quests, choose an existing locale file. The entries it doesn't have yet are added (the ones it has are kept), then you choose where to save it. Off: the quests' locale entries are saved to a file of their own, without merging.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

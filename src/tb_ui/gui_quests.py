@@ -16,22 +16,31 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QGridLayout,
-    QHeaderView, QLabel, QLineEdit, QMainWindow,
-    QMenu, QMenuBar, QPushButton, QSizePolicy,
-    QStatusBar, QTableWidget, QTableWidgetItem, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFormLayout,
+    QGridLayout, QGroupBox, QHBoxLayout, QHeaderView,
+    QLabel, QLineEdit, QMainWindow, QMenu,
+    QMenuBar, QPlainTextEdit, QPushButton, QSizePolicy,
+    QSpacerItem, QStatusBar, QTabWidget, QTableWidget,
+    QTableWidgetItem, QVBoxLayout, QWidget)
 
 class Ui_QuestWindow(object):
     def setupUi(self, QuestWindow):
         if not QuestWindow.objectName():
             QuestWindow.setObjectName(u"QuestWindow")
-        QuestWindow.resize(775, 737)
+        QuestWindow.resize(775, 760)
         self.actionHome = QAction(QuestWindow)
         self.actionHome.setObjectName(u"actionHome")
         self.centralwidget = QWidget(QuestWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.centralwidget.setEnabled(True)
-        self.gridLayoutWidget = QWidget(self.centralwidget)
+        self.verticalLayout = QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.tabs_quest = QTabWidget(self.centralwidget)
+        self.tabs_quest.setObjectName(u"tabs_quest")
+        self.tab_quest = QWidget()
+        self.tab_quest.setObjectName(u"tab_quest")
+        self.tab_quest.setMinimumSize(QSize(720, 630))
+        self.gridLayoutWidget = QWidget(self.tab_quest)
         self.gridLayoutWidget.setObjectName(u"gridLayoutWidget")
         self.gridLayoutWidget.setGeometry(QRect(9, 9, 331, 351))
         self.grd_fields_1 = QGridLayout(self.gridLayoutWidget)
@@ -142,7 +151,7 @@ class Ui_QuestWindow(object):
 
         self.grd_fields_1.addWidget(self.box_restartable, 9, 1, 1, 1)
 
-        self.gridLayoutWidget_3 = QWidget(self.centralwidget)
+        self.gridLayoutWidget_3 = QWidget(self.tab_quest)
         self.gridLayoutWidget_3.setObjectName(u"gridLayoutWidget_3")
         self.gridLayoutWidget_3.setGeometry(QRect(10, 570, 348, 51))
         self.grd_fields_3 = QGridLayout(self.gridLayoutWidget_3)
@@ -158,7 +167,7 @@ class Ui_QuestWindow(object):
 
         self.grd_fields_3.addWidget(self.pb_add_task, 0, 0, 1, 1)
 
-        self.gridLayoutWidget_4 = QWidget(self.centralwidget)
+        self.gridLayoutWidget_4 = QWidget(self.tab_quest)
         self.gridLayoutWidget_4.setObjectName(u"gridLayoutWidget_4")
         self.gridLayoutWidget_4.setGeometry(QRect(370, 190, 341, 51))
         self.grd_fields_4 = QGridLayout(self.gridLayoutWidget_4)
@@ -174,16 +183,13 @@ class Ui_QuestWindow(object):
 
         self.grd_fields_4.addWidget(self.pb_remove_reward, 0, 1, 1, 1)
 
-        self.pb_finalize_quest = QPushButton(self.centralwidget)
-        self.pb_finalize_quest.setObjectName(u"pb_finalize_quest")
-        self.pb_finalize_quest.setGeometry(QRect(10, 640, 101, 24))
-        self.label_2 = QLabel(self.centralwidget)
+        self.label_2 = QLabel(self.tab_quest)
         self.label_2.setObjectName(u"label_2")
         self.label_2.setGeometry(QRect(370, 10, 61, 16))
-        self.label_3 = QLabel(self.centralwidget)
+        self.label_3 = QLabel(self.tab_quest)
         self.label_3.setObjectName(u"label_3")
         self.label_3.setGeometry(QRect(10, 390, 49, 16))
-        self.tb_rewards = QTableWidget(self.centralwidget)
+        self.tb_rewards = QTableWidget(self.tab_quest)
         if (self.tb_rewards.columnCount() < 3):
             self.tb_rewards.setColumnCount(3)
         __qtablewidgetitem = QTableWidgetItem()
@@ -200,7 +206,7 @@ class Ui_QuestWindow(object):
         sizePolicy.setHeightForWidth(self.tb_rewards.sizePolicy().hasHeightForWidth())
         self.tb_rewards.setSizePolicy(sizePolicy)
         self.tb_rewards.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tb_cond = QTableWidget(self.centralwidget)
+        self.tb_cond = QTableWidget(self.tab_quest)
         if (self.tb_cond.columnCount() < 3):
             self.tb_cond.setColumnCount(3)
         __qtablewidgetitem3 = QTableWidgetItem()
@@ -212,6 +218,169 @@ class Ui_QuestWindow(object):
         self.tb_cond.setObjectName(u"tb_cond")
         self.tb_cond.setGeometry(QRect(10, 410, 341, 151))
         self.tb_cond.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tabs_quest.addTab(self.tab_quest, "")
+        self.tab_locale = QWidget()
+        self.tab_locale.setObjectName(u"tab_locale")
+        self.verticalLayout_locale = QVBoxLayout(self.tab_locale)
+        self.verticalLayout_locale.setObjectName(u"verticalLayout_locale")
+        self.grp_quest_text = QGroupBox(self.tab_locale)
+        self.grp_quest_text.setObjectName(u"grp_quest_text")
+        self.form_quest_text = QFormLayout(self.grp_quest_text)
+        self.form_quest_text.setObjectName(u"form_quest_text")
+        self.lb_loc_name = QLabel(self.grp_quest_text)
+        self.lb_loc_name.setObjectName(u"lb_loc_name")
+
+        self.form_quest_text.setWidget(0, QFormLayout.LabelRole, self.lb_loc_name)
+
+        self.fld_loc_name = QLineEdit(self.grp_quest_text)
+        self.fld_loc_name.setObjectName(u"fld_loc_name")
+
+        self.form_quest_text.setWidget(0, QFormLayout.FieldRole, self.fld_loc_name)
+
+        self.lb_loc_note = QLabel(self.grp_quest_text)
+        self.lb_loc_note.setObjectName(u"lb_loc_note")
+
+        self.form_quest_text.setWidget(1, QFormLayout.LabelRole, self.lb_loc_note)
+
+        self.fld_loc_note = QLineEdit(self.grp_quest_text)
+        self.fld_loc_note.setObjectName(u"fld_loc_note")
+
+        self.form_quest_text.setWidget(1, QFormLayout.FieldRole, self.fld_loc_note)
+
+        self.lb_loc_acceptPlayerMessage = QLabel(self.grp_quest_text)
+        self.lb_loc_acceptPlayerMessage.setObjectName(u"lb_loc_acceptPlayerMessage")
+
+        self.form_quest_text.setWidget(2, QFormLayout.LabelRole, self.lb_loc_acceptPlayerMessage)
+
+        self.fld_loc_acceptPlayerMessage = QLineEdit(self.grp_quest_text)
+        self.fld_loc_acceptPlayerMessage.setObjectName(u"fld_loc_acceptPlayerMessage")
+
+        self.form_quest_text.setWidget(2, QFormLayout.FieldRole, self.fld_loc_acceptPlayerMessage)
+
+        self.lb_loc_changeQuestMessageText = QLabel(self.grp_quest_text)
+        self.lb_loc_changeQuestMessageText.setObjectName(u"lb_loc_changeQuestMessageText")
+
+        self.form_quest_text.setWidget(3, QFormLayout.LabelRole, self.lb_loc_changeQuestMessageText)
+
+        self.fld_loc_changeQuestMessageText = QLineEdit(self.grp_quest_text)
+        self.fld_loc_changeQuestMessageText.setObjectName(u"fld_loc_changeQuestMessageText")
+
+        self.form_quest_text.setWidget(3, QFormLayout.FieldRole, self.fld_loc_changeQuestMessageText)
+
+        self.lb_loc_completePlayerMessage = QLabel(self.grp_quest_text)
+        self.lb_loc_completePlayerMessage.setObjectName(u"lb_loc_completePlayerMessage")
+
+        self.form_quest_text.setWidget(4, QFormLayout.LabelRole, self.lb_loc_completePlayerMessage)
+
+        self.fld_loc_completePlayerMessage = QLineEdit(self.grp_quest_text)
+        self.fld_loc_completePlayerMessage.setObjectName(u"fld_loc_completePlayerMessage")
+
+        self.form_quest_text.setWidget(4, QFormLayout.FieldRole, self.fld_loc_completePlayerMessage)
+
+        self.lb_loc_declinePlayerMessage = QLabel(self.grp_quest_text)
+        self.lb_loc_declinePlayerMessage.setObjectName(u"lb_loc_declinePlayerMessage")
+
+        self.form_quest_text.setWidget(5, QFormLayout.LabelRole, self.lb_loc_declinePlayerMessage)
+
+        self.fld_loc_declinePlayerMessage = QLineEdit(self.grp_quest_text)
+        self.fld_loc_declinePlayerMessage.setObjectName(u"fld_loc_declinePlayerMessage")
+
+        self.form_quest_text.setWidget(5, QFormLayout.FieldRole, self.fld_loc_declinePlayerMessage)
+
+        self.lb_loc_description = QLabel(self.grp_quest_text)
+        self.lb_loc_description.setObjectName(u"lb_loc_description")
+
+        self.form_quest_text.setWidget(6, QFormLayout.LabelRole, self.lb_loc_description)
+
+        self.fld_loc_description = QPlainTextEdit(self.grp_quest_text)
+        self.fld_loc_description.setObjectName(u"fld_loc_description")
+        self.fld_loc_description.setMinimumSize(QSize(0, 80))
+        self.fld_loc_description.setMaximumSize(QSize(16777215, 80))
+        self.fld_loc_description.setTabChangesFocus(True)
+
+        self.form_quest_text.setWidget(6, QFormLayout.FieldRole, self.fld_loc_description)
+
+        self.lb_loc_failMessageText = QLabel(self.grp_quest_text)
+        self.lb_loc_failMessageText.setObjectName(u"lb_loc_failMessageText")
+
+        self.form_quest_text.setWidget(7, QFormLayout.LabelRole, self.lb_loc_failMessageText)
+
+        self.fld_loc_failMessageText = QLineEdit(self.grp_quest_text)
+        self.fld_loc_failMessageText.setObjectName(u"fld_loc_failMessageText")
+
+        self.form_quest_text.setWidget(7, QFormLayout.FieldRole, self.fld_loc_failMessageText)
+
+        self.lb_loc_startedMessageText = QLabel(self.grp_quest_text)
+        self.lb_loc_startedMessageText.setObjectName(u"lb_loc_startedMessageText")
+
+        self.form_quest_text.setWidget(8, QFormLayout.LabelRole, self.lb_loc_startedMessageText)
+
+        self.fld_loc_startedMessageText = QLineEdit(self.grp_quest_text)
+        self.fld_loc_startedMessageText.setObjectName(u"fld_loc_startedMessageText")
+
+        self.form_quest_text.setWidget(8, QFormLayout.FieldRole, self.fld_loc_startedMessageText)
+
+        self.lb_loc_successMessageText = QLabel(self.grp_quest_text)
+        self.lb_loc_successMessageText.setObjectName(u"lb_loc_successMessageText")
+
+        self.form_quest_text.setWidget(9, QFormLayout.LabelRole, self.lb_loc_successMessageText)
+
+        self.fld_loc_successMessageText = QLineEdit(self.grp_quest_text)
+        self.fld_loc_successMessageText.setObjectName(u"fld_loc_successMessageText")
+
+        self.form_quest_text.setWidget(9, QFormLayout.FieldRole, self.fld_loc_successMessageText)
+
+
+        self.verticalLayout_locale.addWidget(self.grp_quest_text)
+
+        self.grp_task_text = QGroupBox(self.tab_locale)
+        self.grp_task_text.setObjectName(u"grp_task_text")
+        self.verticalLayout_task_text = QVBoxLayout(self.grp_task_text)
+        self.verticalLayout_task_text.setObjectName(u"verticalLayout_task_text")
+        self.lb_task_text_help = QLabel(self.grp_task_text)
+        self.lb_task_text_help.setObjectName(u"lb_task_text_help")
+        self.lb_task_text_help.setWordWrap(True)
+
+        self.verticalLayout_task_text.addWidget(self.lb_task_text_help)
+
+        self.tb_cond_locale = QTableWidget(self.grp_task_text)
+        if (self.tb_cond_locale.columnCount() < 4):
+            self.tb_cond_locale.setColumnCount(4)
+        __qtablewidgetitem6 = QTableWidgetItem()
+        self.tb_cond_locale.setHorizontalHeaderItem(0, __qtablewidgetitem6)
+        __qtablewidgetitem7 = QTableWidgetItem()
+        self.tb_cond_locale.setHorizontalHeaderItem(1, __qtablewidgetitem7)
+        __qtablewidgetitem8 = QTableWidgetItem()
+        self.tb_cond_locale.setHorizontalHeaderItem(2, __qtablewidgetitem8)
+        __qtablewidgetitem9 = QTableWidgetItem()
+        self.tb_cond_locale.setHorizontalHeaderItem(3, __qtablewidgetitem9)
+        self.tb_cond_locale.setObjectName(u"tb_cond_locale")
+        self.tb_cond_locale.horizontalHeader().setStretchLastSection(True)
+        self.tb_cond_locale.verticalHeader().setVisible(False)
+
+        self.verticalLayout_task_text.addWidget(self.tb_cond_locale)
+
+
+        self.verticalLayout_locale.addWidget(self.grp_task_text)
+
+        self.tabs_quest.addTab(self.tab_locale, "")
+
+        self.verticalLayout.addWidget(self.tabs_quest)
+
+        self.horizontalLayout_finalize = QHBoxLayout()
+        self.horizontalLayout_finalize.setObjectName(u"horizontalLayout_finalize")
+        self.pb_finalize_quest = QPushButton(self.centralwidget)
+        self.pb_finalize_quest.setObjectName(u"pb_finalize_quest")
+
+        self.horizontalLayout_finalize.addWidget(self.pb_finalize_quest)
+
+        self.horizontalSpacer_finalize = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_finalize.addItem(self.horizontalSpacer_finalize)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_finalize)
+
         QuestWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(QuestWindow)
         self.menubar.setObjectName(u"menubar")
@@ -222,10 +391,25 @@ class Ui_QuestWindow(object):
         self.statusbar = QStatusBar(QuestWindow)
         self.statusbar.setObjectName(u"statusbar")
         QuestWindow.setStatusBar(self.statusbar)
+#if QT_CONFIG(shortcut)
+        self.lb_loc_name.setBuddy(self.fld_loc_name)
+        self.lb_loc_note.setBuddy(self.fld_loc_note)
+        self.lb_loc_acceptPlayerMessage.setBuddy(self.fld_loc_acceptPlayerMessage)
+        self.lb_loc_changeQuestMessageText.setBuddy(self.fld_loc_changeQuestMessageText)
+        self.lb_loc_completePlayerMessage.setBuddy(self.fld_loc_completePlayerMessage)
+        self.lb_loc_declinePlayerMessage.setBuddy(self.fld_loc_declinePlayerMessage)
+        self.lb_loc_description.setBuddy(self.fld_loc_description)
+        self.lb_loc_failMessageText.setBuddy(self.fld_loc_failMessageText)
+        self.lb_loc_startedMessageText.setBuddy(self.fld_loc_startedMessageText)
+        self.lb_loc_successMessageText.setBuddy(self.fld_loc_successMessageText)
+#endif // QT_CONFIG(shortcut)
 
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(QuestWindow)
+
+        self.tabs_quest.setCurrentIndex(0)
+
 
         QMetaObject.connectSlotsByName(QuestWindow)
     # setupUi
@@ -249,7 +433,6 @@ class Ui_QuestWindow(object):
         self.pb_add_task.setText(QCoreApplication.translate("QuestWindow", u"Add Task (launch menu)", None))
         self.pb_add_reward.setText(QCoreApplication.translate("QuestWindow", u" Add Reward (launch menu)", None))
         self.pb_remove_reward.setText(QCoreApplication.translate("QuestWindow", u"Remove Reward", None))
-        self.pb_finalize_quest.setText(QCoreApplication.translate("QuestWindow", u"Finalize Quest", None))
         self.label_2.setText(QCoreApplication.translate("QuestWindow", u"Rewards:", None))
         self.label_3.setText(QCoreApplication.translate("QuestWindow", u"Tasks:", None))
         ___qtablewidgetitem = self.tb_rewards.horizontalHeaderItem(0)
@@ -264,6 +447,30 @@ class Ui_QuestWindow(object):
         ___qtablewidgetitem4.setText(QCoreApplication.translate("QuestWindow", u"timing", None));
         ___qtablewidgetitem5 = self.tb_cond.horizontalHeaderItem(2)
         ___qtablewidgetitem5.setText(QCoreApplication.translate("QuestWindow", u"type", None));
+        self.tabs_quest.setTabText(self.tabs_quest.indexOf(self.tab_quest), QCoreApplication.translate("QuestWindow", u"Quest", None))
+        self.grp_quest_text.setTitle(QCoreApplication.translate("QuestWindow", u"Quest text", None))
+        self.lb_loc_name.setText(QCoreApplication.translate("QuestWindow", u"Name", None))
+        self.lb_loc_note.setText(QCoreApplication.translate("QuestWindow", u"Note", None))
+        self.lb_loc_acceptPlayerMessage.setText(QCoreApplication.translate("QuestWindow", u"Accept Player Message", None))
+        self.lb_loc_changeQuestMessageText.setText(QCoreApplication.translate("QuestWindow", u"Change Quest Message Text", None))
+        self.lb_loc_completePlayerMessage.setText(QCoreApplication.translate("QuestWindow", u"Complete Player Message", None))
+        self.lb_loc_declinePlayerMessage.setText(QCoreApplication.translate("QuestWindow", u"Decline Player Message", None))
+        self.lb_loc_description.setText(QCoreApplication.translate("QuestWindow", u"Description", None))
+        self.lb_loc_failMessageText.setText(QCoreApplication.translate("QuestWindow", u"Fail Message Text", None))
+        self.lb_loc_startedMessageText.setText(QCoreApplication.translate("QuestWindow", u"Started Message Text", None))
+        self.lb_loc_successMessageText.setText(QCoreApplication.translate("QuestWindow", u"Success Message Text", None))
+        self.grp_task_text.setTitle(QCoreApplication.translate("QuestWindow", u"Task text", None))
+        self.lb_task_text_help.setText(QCoreApplication.translate("QuestWindow", u"The text shown in game for each task. Double-click a task's text to edit it.", None))
+        ___qtablewidgetitem6 = self.tb_cond_locale.horizontalHeaderItem(0)
+        ___qtablewidgetitem6.setText(QCoreApplication.translate("QuestWindow", u"id", None));
+        ___qtablewidgetitem7 = self.tb_cond_locale.horizontalHeaderItem(1)
+        ___qtablewidgetitem7.setText(QCoreApplication.translate("QuestWindow", u"timing", None));
+        ___qtablewidgetitem8 = self.tb_cond_locale.horizontalHeaderItem(2)
+        ___qtablewidgetitem8.setText(QCoreApplication.translate("QuestWindow", u"type", None));
+        ___qtablewidgetitem9 = self.tb_cond_locale.horizontalHeaderItem(3)
+        ___qtablewidgetitem9.setText(QCoreApplication.translate("QuestWindow", u"text", None));
+        self.tabs_quest.setTabText(self.tabs_quest.indexOf(self.tab_locale), QCoreApplication.translate("QuestWindow", u"Locale", None))
+        self.pb_finalize_quest.setText(QCoreApplication.translate("QuestWindow", u"Finalize Quest", None))
         self.menuFile.setTitle(QCoreApplication.translate("QuestWindow", u"File", None))
     # retranslateUi
 

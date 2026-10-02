@@ -34,7 +34,7 @@ from windows.update_dialog import Gui_UpdatesDlg
 
 log = logging.getLogger(__name__)
 
-# What createLocaleFromJSON returns
+# What createLocaleFromJSON and export_locale report
 LOCALE_UPDATED = "updated"
 LOCALE_CANCELLED = "cancelled"  # a file wasn't chosen
 LOCALE_FAILED = "failed"  # an error was shown
@@ -164,8 +164,9 @@ class Gui_MainWindow(QMainWindow):
 		self.windows.append(dlg)
 		return dlg
 
-	def on_quest_saved(self, quest_id, quest_name, quest):
+	def on_quest_saved(self, quest_id, quest_name, quest, locale):
 		self.state.quests[quest_id] = quest
+		self.state.quest_locales[quest_id] = locale
 		item = QListWidgetItem(f"{quest_name}, {quest_id}")
 		item.setData(Qt.ItemDataRole.UserRole, quest_id)
 		self.ui.questList.addItem(item)
@@ -342,6 +343,23 @@ class Gui_MainWindow(QMainWindow):
 			return None
 		return quests
 
+	def load_locale_file(self, filename):
+		"""Read a locale JSON file ({key: text}). If it can't be used, shows why and returns None."""
+		try:
+			locale = read_json(filename)
+		except (OSError, ValueError) as e:  # (a bad JSON file is a ValueError)
+			log.error(f"Could not read {filename}: {e}")
+			self.show_error("Locale file", f"Could not read {filename}.\n\n{e}")
+			return None
+		if not isinstance(locale, dict):
+			log.error(f"{filename} is not a locale file")
+			self.show_error(
+				"Locale file",
+				f"{filename} doesn't look like a locale file.\n\nExpected a dictionary of text entries.",
+			)
+			return None
+		return locale
+
 	def analyze_cc(self):
 		log.info(f"Analyzing CC subtypes, opening dialogue...")
 
@@ -482,12 +500,12 @@ class Gui_MainWindow(QMainWindow):
 			return LOCALE_FAILED
 		for quest_id, quest in quests_import.items():
 			log.info(f"Found quest: {quest['QuestName']} ({quest_id})")
+		base_locale = self.load_locale_file(lfilename)
+		if base_locale is None:
+			return LOCALE_FAILED
 		try:
 			locales = locale_builders.locale_keys(quests_import)
 			log.debug(locales)
-			base_locale = read_json(lfilename)
-			if not isinstance(base_locale, dict):
-				raise ValueError("expected a locale file: a dictionary of text entries")
 			final_locale = locale_builders.merge_locale(base_locale, locales)
 			log.debug(final_locale)
 			write_json(lfilename, final_locale, indent=4)
@@ -517,6 +535,7 @@ class Gui_MainWindow(QMainWindow):
 		# remove the quest-to-be-edited from the lists
 		if quest_id in self.state.quests:
 			old_quest = self.state.quests.pop(quest_id)
+		self.state.quest_locales.pop(quest_id, None)
 		for i in range(self.ui.questList.count()):
 			if str(quest_id) in self.ui.questList.item(i).text():
 				self.ui.questList.takeItem(i)
@@ -603,7 +622,7 @@ class Gui_MainWindow(QMainWindow):
 	def onAssortWindow(self):
 		dlg = self.spawnWindow("AssortBuilder")
 
-	def exportAll(self, quest):
+	def exportAll(self, quests):
 		qfilename, ok = safe_file_dialog(
 			QFileDialog.getSaveFileName, "Export Quest JSON"
 		)
@@ -611,21 +630,73 @@ class Gui_MainWindow(QMainWindow):
 			log.info("No file selected for quest export, aborting export.")
 			return
 		try:
-			write_json(qfilename, quest, indent=4)
+			write_json(qfilename, quests, indent=4)
 		except (OSError, ValueError, TypeError) as e:
 			log.error(f"Error: {e}")
 			self.show_error(
 				"Export Quest JSON",
 				f"An error has occurred while exporting the final quest JSON file.\n\n{e}",
 			)
-			return  # (don't go on to update a locale for a quest file that wasn't written)
+			return  # (don't go on to save a locale for a quest file that wasn't written)
 		self.popup(
 			message=f"The quest export has completed successfully and can be found at {qfilename}."
 		)
 
-		result = self.createLocaleFromJSON(q_file=qfilename)
+		result, lfilename = self.export_locale(quests)
 		if result == LOCALE_UPDATED:
-			self.popup(message="The locale has been successfully updated.")
+			self.popup(
+				message=f"The locale export has completed successfully and can be found at {lfilename}."
+			)
 		elif result == LOCALE_CANCELLED:
-			self.popup(message="The locale was not updated, because no locale file was chosen.")
+			self.popup(message="The locale was not saved, because no locale file was chosen.")
 		# (LOCALE_FAILED: the error has already been shown)
+
+	def export_locale(self, quests):
+		"""Save the locale entries of quests that have just been exported.
+
+		Each entry gets the text typed for it in the Quest Builder, or is blank. With "Merge
+		locales on export" on, asks for an existing locale file, adds the entries it doesn't have
+		yet (the ones it has are kept as they are), and asks where to save the result, starting at
+		the file that was opened. With it off, asks where to save a locale file of just these entries.
+
+		Returns (result, the file saved): result is "updated", "cancelled" (a file wasn't chosen)
+		or "failed" (an error was shown).
+		"""
+		try:
+			keys = locale_builders.locale_keys(quests)
+		except (KeyError, TypeError) as e:  # (e.g. a condition without an id)
+			log.error(f"Error working out the locale entries: {traceback.format_exc()}")
+			self.show_error(
+				"Export Locale JSON",
+				f"The locale entries for these quests could not be worked out.\n\n{type(e).__name__}: {e}",
+			)
+			return LOCALE_FAILED, None
+		texts = self.state.locale_texts()
+		if self.state.config.merge_locales_on_export:
+			base_filename, ok = safe_file_dialog(
+				QFileDialog.getOpenFileName, "Open Locale JSON to merge into"
+			)
+			if not ok or base_filename is None:
+				log.info("No locale file selected to merge into, skipping the locale export.")
+				return LOCALE_CANCELLED, None
+			base_locale = self.load_locale_file(base_filename)
+			if base_locale is None:
+				return LOCALE_FAILED, None
+			locale = locale_builders.merge_locale(base_locale, keys, texts)
+			lfilename, ok = safe_file_dialog(
+				QFileDialog.getSaveFileName, "Export Locale JSON", dir=base_filename
+			)
+		else:
+			locale = locale_builders.new_locale(keys, texts)
+			lfilename, ok = safe_file_dialog(QFileDialog.getSaveFileName, "Export Locale JSON")
+		if not ok or lfilename is None:
+			log.info("No file selected for the locale export, skipping it.")
+			return LOCALE_CANCELLED, None
+		try:
+			write_json(lfilename, locale, indent=4)
+		except (OSError, ValueError, TypeError) as e:
+			log.error(f"Could not save the locale to {lfilename}: {e}")
+			self.show_error("Export Locale JSON", f"The locale could not be saved to {lfilename}.\n\n{e}")
+			return LOCALE_FAILED, None
+		log.info(f"Saved {len(locale)} locale entries to {lfilename}")
+		return LOCALE_UPDATED, lfilename

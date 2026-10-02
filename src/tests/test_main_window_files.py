@@ -49,7 +49,7 @@ def choose(monkeypatch, *paths):
 	"""Successive answers from the main window's file dialogs (None = the user cancelled)."""
 	queue = list(paths)
 
-	def fake(method, title):
+	def fake(method, title, **options):
 		path = queue.pop(0)
 		return (str(path), True) if path is not None else (None, False)
 
@@ -253,11 +253,11 @@ def test_the_menu_item_only_celebrates_a_real_update(win, monkeypatch, tmp_path)
 def test_a_good_export_reports_both_steps(win, monkeypatch, tmp_path):
 	out = tmp_path / "out.json"
 	locale_file = write(tmp_path / "en.json", {})
-	choose(monkeypatch, out, locale_file)
+	choose(monkeypatch, out, locale_file, locale_file)  # save the quests; open the locale, save it over itself
 	win.exportAll(make_quest("q1"))
 	assert len(win.popups) == 2
 	assert str(out) in win.popups[0] and "successfully" in win.popups[0]
-	assert win.popups[1] == "The locale has been successfully updated."
+	assert str(locale_file) in win.popups[1] and "successfully" in win.popups[1]
 	assert "q1 name" in read_json(locale_file)
 
 
@@ -266,8 +266,7 @@ def test_export_without_a_locale_file_does_not_claim_the_locale_was_updated(win,
 	choose(monkeypatch, out, None)
 	win.exportAll(make_quest("q1"))
 	assert out.exists()
-	assert not any("successfully updated" in p for p in win.popups)
-	assert any("not updated" in p for p in win.popups)
+	assert win.popups[1:] == ["The locale was not saved, because no locale file was chosen."]
 
 
 def test_export_with_a_broken_locale_file_shows_the_error_not_a_success(win, monkeypatch, tmp_path):
@@ -276,7 +275,7 @@ def test_export_with_a_broken_locale_file_shows_the_error_not_a_success(win, mon
 	bad_locale.write_text("{ nope", encoding="utf-8")
 	choose(monkeypatch, out, bad_locale)
 	win.exportAll(make_quest("q1"))
-	assert not any("successfully updated" in p for p in win.popups)
+	assert len(win.popups) == 1  # (just the quest file's)
 	assert len(win.errors) == 1 and "en.json" in win.errors[0][1]
 
 

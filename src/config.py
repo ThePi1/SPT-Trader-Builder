@@ -18,6 +18,7 @@ from utils import read_json
 # so a settings dict is just {key: value}.
 SETTINGS_KEYS = (
 	("general", "debug_logging"),
+	("general", "merge_locales_on_export"),
 	("filepaths", "version_file"),
 	("filepaths", "version_url"),
 	("filepaths", "project_url"),
@@ -28,7 +29,7 @@ SETTING_NAMES = tuple(key for _, key in SETTINGS_KEYS)
 
 # Settings that are true/false. In a settings dict they are the text "true" / "false";
 # on the Config object they are real booleans.
-BOOL_SETTING_NAMES = ("debug_logging",)
+BOOL_SETTING_NAMES = ("debug_logging", "merge_locales_on_export")
 
 _TRUE_WORDS = ("1", "yes", "true", "on")
 _FALSE_WORDS = ("0", "no", "false", "off")
@@ -105,10 +106,12 @@ class Config:
 		settings_path=None,
 		debug_logging=False,
 		items_file=DEFAULT_ITEMS_FILE,
+		merge_locales_on_export=True,
 	):
 		self.settings_path = settings_path
 		self.items_file = items_file
 		self.debug_logging = debug_logging
+		self.merge_locales_on_export = merge_locales_on_export
 		self.version_file = version_file
 		self.version_url = version_url
 		self.project_url = project_url
@@ -165,6 +168,8 @@ def load_config(settings_path=None, box_fields_path=None):
 		default_questicon = parser.get("defaults", "default_questicon")
 		# (optional: a settings file from before this existed simply has it off)
 		debug_logging = parser.getboolean("general", "debug_logging", fallback=False)
+		# (optional too: missing means on, which is what exporting quests always did)
+		merge_locales_on_export = parser.getboolean("general", "merge_locales_on_export", fallback=True)
 		# (optional too: which items.json to use; missing or empty means the included one)
 		items_file = parser.get("filepaths", "items_file", fallback="").strip() or DEFAULT_ITEMS_FILE
 	except (ConfigParserError, ValueError) as e:
@@ -202,6 +207,7 @@ def load_config(settings_path=None, box_fields_path=None):
 		settings_path=settings_path,
 		debug_logging=debug_logging,
 		items_file=items_file,
+		merge_locales_on_export=merge_locales_on_export,
 	)
 
 
