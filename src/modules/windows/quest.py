@@ -1,3 +1,4 @@
+import copy
 import logging
 
 from PySide6.QtCore import Qt, Signal
@@ -18,20 +19,53 @@ log = logging.getLogger(__name__)
 # The Locale tab's task table: id, timing, type, and the task's text (the only column that can be edited)
 TASK_TEXT_COLUMN = 3
 
+# A quest's condition lists and reward lists, and the timing the Quest Builder calls each one
+CONDITION_LISTS = (("AvailableForStart", "Start"), ("AvailableForFinish", "Finish"), ("Fail", "Fail"))
+REWARD_LISTS = ("Success", "Started", "Fail")
+
+
+def select_or_add(box, text):
+	"""Select text in a combo box, adding it first if the box doesn't offer it (a value from an
+	imported quest, say), so that saving the quest doesn't change it."""
+	if box.findText(text) < 0:
+		box.addItem(text)
+	box.setCurrentText(text)
+
+
+def select_id(box, ids, wanted):
+	"""Select the entry of a box whose id is wanted. ids is {name shown in the box: id}; an id the
+	box doesn't have is added to it (and to ids) under its own text."""
+	name = next((name for name, _id in ids.items() if _id == wanted), None)
+	if name is None:
+		name = str(wanted)
+		ids[name] = wanted
+	select_or_add(box, name)
+
 
 class Gui_QuestDlg(QMainWindow):
 	# (quest_id, quest_name, quest, locale) - sent when the user finalizes the quest.
 	# locale is the quest's locale entries from the Locale tab, {key: text} (blank if left empty).
 	quest_saved = Signal(str, str, object, object)
 
-	def __init__(self, state, parent=None):
+	def __init__(self, state, parent=None, quest=None, locale=None):
+		"""A new quest, or (if quest is given) an existing one to edit.
+
+		quest is the quest dict and locale its locale entries ({key: text}, as sent in quest_saved).
+		The dialog works on copies: nothing changes until the quest is saved.
+		"""
 		super().__init__(parent)
 		self.ui = Ui_QuestWindow()
 		self.ui.setupUi(self)
 		self.state = state
 		self.fields = TableFields()  # this quest's conditions and rewards
 		self.windows = []
+		self.original = copy.deepcopy(quest) if quest is not None else None  # None for a new quest
+		# name shown in the box -> id, for the boxes that show a name for an id
+		self.trader_ids = dict(state.traders)
+		self.location_ids = {"any": "any", **state.locations}
 		self.on_launch()  # Custom code in this one
+		if self.original is not None:
+			self.load_quest(self.original, locale or {})
 		self.show()
 
 	def on_launch(self):
@@ -42,8 +76,7 @@ class Gui_QuestDlg(QMainWindow):
 		self.ui.pb_remove_reward.released.connect(self.remove_selected_reward)
 		self.setup_box_selections()
 		self.setup_text_edit()
-		# can be edited later if needed
-		self.quest_id = new_id()
+		self.quest_id = self.original["_id"] if self.original is not None else new_id()
 		self.setup_locale_tab()
 
 	def open_task_window(self):
@@ -113,6 +146,56 @@ class Gui_QuestDlg(QMainWindow):
 		)
 		log.debug(self.fields.data)
 
+	# --- editing an existing quest ---------------------------------------------------------
+
+	@property
+	def editing(self):
+		"""Whether this dialog edits an existing quest (rather than making a new one)."""
+		return self.original is not None
+
+	def load_quest(self, quest, locale):
+		"""Fill the whole dialog from an existing quest and its locale entries."""
+		ui = self.ui
+		name = quest.get("QuestName", "")
+		self.setWindowTitle(f"Edit Quest - {name}" if name else "Edit Quest")
+		ui.pb_finalize_quest.setText("Save Changes")
+		ui.fld_quest_name.setText(name)
+		ui.fld_image_name.setText(quest.get("image", ui.fld_image_name.text()))
+		if "side" in quest:
+			select_or_add(ui.box_avail_faction, quest["side"])
+		if "type" in quest:
+			select_or_add(ui.box_quest_type_label, quest["type"])
+		if "traderId" in quest:
+			select_id(ui.box_trader, self.trader_ids, quest["traderId"])
+		if "location" in quest:
+			select_id(ui.box_location, self.location_ids, quest["location"])
+		for key, box in (
+			("canShowNotificationsInGame", ui.box_can_show_notif),
+			("instantComplete", ui.box_insta_complete),
+			("restartable", ui.box_restartable),
+			("secretQuest", ui.box_secret_quest),
+		):
+			if key in quest:
+				select_or_add(box, str(bool(quest[key])).lower())
+
+		# the tasks and rewards, as copies of the stored dicts (so nothing is lost on the way through)
+		conditions = quest.get("conditions", {})
+		for list_name, timing in CONDITION_LISTS:
+			for cond in copy.deepcopy(conditions.get(list_name, [])):
+				self.add_condition(timing, cond.get("conditionType", ""), cond["id"], cond)
+		rewards = quest.get("rewards", {})
+		for timing in REWARD_LISTS:
+			for reward in copy.deepcopy(rewards.get(timing, [])):
+				self.add_reward(timing, reward.get("type", ""), reward["id"], reward)
+
+		# the Locale tab
+		for field in LOCALE_FIELDS:
+			self.set_locale_text(field, locale.get(f"{self.quest_id} {field}", ""))
+		table = self.ui.tb_cond_locale
+		for row in range(table.rowCount()):
+			cond_id = table.item(row, 0).text()
+			table.item(row, TASK_TEXT_COLUMN).setText(locale.get(cond_id, ""))
+
 	# --- the Locale tab ----------------------------------------------------------------
 
 	def setup_locale_tab(self):
@@ -129,6 +212,13 @@ class Gui_QuestDlg(QMainWindow):
 	def locale_text(self, field):
 		box = self.locale_field(field)
 		return box.toPlainText() if isinstance(box, QPlainTextEdit) else box.text()
+
+	def set_locale_text(self, field, text):
+		box = self.locale_field(field)
+		if isinstance(box, QPlainTextEdit):
+			box.setPlainText(text)
+		else:
+			box.setText(text)
 
 	def add_task_text_row(self, cond_id, timing, cond_type):
 		"""Give a task a row on the Locale tab, or update its row (keeping its text)."""
@@ -156,11 +246,7 @@ class Gui_QuestDlg(QMainWindow):
 		state = self.state
 		quest_id = self.quest_id
 		quest_name = ui.fld_quest_name.displayText()
-		location = (
-			"any"
-			if ui.box_location.currentText() == "any"
-			else state.locations[ui.box_location.currentText()]
-		)
+		location = self.location_ids[ui.box_location.currentText()]
 		quest = quests.quest(
 			quest_id,
 			name=quest_name,
@@ -178,14 +264,16 @@ class Gui_QuestDlg(QMainWindow):
 			},
 			secret_quest=is_true(ui.box_secret_quest.currentText()),
 			side=ui.box_avail_faction.currentText(),
-			trader_id=state.traders[ui.box_trader.currentText()],
+			trader_id=self.trader_ids[ui.box_trader.currentText()],
 			quest_type=ui.box_quest_type_label.currentText(),
 		)
+		if self.editing:
+			quest = quests.edited_quest(self.original, quest)
 		locale = locale_builders.quest_locale(
 			quest_id,
 			{field: self.locale_text(field) for field in LOCALE_FIELDS},
 			self.task_texts(),
 		)
-		log.info(f"Added quest: {quest_name}, id: {quest_id}")
+		log.info(f"{'Saved changes to' if self.editing else 'Added'} quest: {quest_name}, id: {quest_id}")
 		self.quest_saved.emit(quest_id, quest_name, quest, locale)
 		self.close()
