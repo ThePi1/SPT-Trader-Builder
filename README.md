@@ -7,6 +7,10 @@ A tool for building SPT Quests/Assorts.
     cd src
     python .\trader_builder.py
 
+## Editing quests
+Double-click a quest in the Quests list (or select it and use **Edit > Edit Selected Quest**) to open it in the Quest Builder. This works for quests you built and for imported ones. Its tasks and rewards are listed in the tables, where they can be removed or added to (a task or reward itself can't be edited yet, only replaced).
+Only what you change is changed: anything in the quest that the Quest Builder has no control for is kept exactly as it was. The changes only take effect when you press **Save Changes**; closing the window leaves the quest as it was.
+
 ## Settings
 Settings can be edited from **Settings > Edit Settings...** in the app. Changes are saved and loaded to/from the `settings.ini` file.
 

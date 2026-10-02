@@ -59,6 +59,7 @@ class Gui_MainWindow(QMainWindow):
 	def setup_vars(self):
 		self.weaponlist = []
 		self.windows = []
+		self.quest_editors = {}  # quest id -> the dialog editing that quest
 		self.weapon_preset_filename = None
 
 	def connect_actions(self):
@@ -79,6 +80,10 @@ class Gui_MainWindow(QMainWindow):
 		self.ui.actionAnalyze_CC_subtypes.triggered.connect(self.analyze_cc)
 		self.ui.actionRemove_Selected_Quest.triggered.connect(
 			self.remove_selected_quest
+		)
+		self.ui.actionEdit_Selected_Quest.triggered.connect(self.edit_selected_quest)
+		self.ui.questList.itemDoubleClicked.connect(
+			lambda item: self.edit_quest(item.data(Qt.ItemDataRole.UserRole))
 		)
 		self.ui.fld_idlookup.textChanged.connect(self.update_idlookup)
 		# self.ui.wb_treeview.itemSelectionChanged.connect(self.onWeaponSelected)
@@ -164,11 +169,54 @@ class Gui_MainWindow(QMainWindow):
 		return dlg
 
 	def on_quest_saved(self, quest_id, quest_name, quest, locale):
+		"""A quest was made (or an existing one edited): store it, and show it in the quest list."""
 		self.state.quests[quest_id] = quest
 		self.state.quest_locales[quest_id] = locale
-		item = QListWidgetItem(f"{quest_name}, {quest_id}")
-		item.setData(Qt.ItemDataRole.UserRole, quest_id)
-		self.ui.questList.addItem(item)
+		text = f"{quest_name}, {quest_id}"
+		item = self.quest_list_item(quest_id)
+		if item is not None:
+			item.setText(text)  # (an edited quest keeps its place in the list)
+		else:
+			item = QListWidgetItem(text)
+			item.setData(Qt.ItemDataRole.UserRole, quest_id)
+			self.ui.questList.addItem(item)
+		if self.ui.fld_idlookup.text() or self.ui.id_table.rowCount():
+			self.update_idlookup()  # (it lists the quests' names)
+
+	def quest_list_item(self, quest_id):
+		"""The quest list's entry for a quest, or None."""
+		for i in range(self.ui.questList.count()):
+			item = self.ui.questList.item(i)
+			if item.data(Qt.ItemDataRole.UserRole) == quest_id:
+				return item
+		return None
+
+	def edit_selected_quest(self):
+		"""The Edit > Edit Selected Quest menu item."""
+		select = self.ui.questList.selectedItems()
+		if select:
+			self.edit_quest(select[0].data(Qt.ItemDataRole.UserRole))
+
+	def edit_quest(self, quest_id):
+		"""Open a quest in the Quest Builder to edit it (or bring its window forward if it is already open).
+
+		Returns the dialog, or None if there is no such quest.
+		"""
+		quest = self.state.quests.get(quest_id)
+		if quest is None:
+			return None
+		open_dlg = self.quest_editors.get(quest_id)
+		if open_dlg is not None and open_dlg.isVisible():
+			open_dlg.raise_()
+			open_dlg.activateWindow()
+			return open_dlg
+		dlg = Gui_QuestDlg(
+			self.state, parent=self, quest=quest, locale=self.state.quest_locales.get(quest_id)
+		)
+		dlg.quest_saved.connect(self.on_quest_saved)
+		self.quest_editors[quest_id] = dlg
+		self.windows.append(dlg)
+		return dlg
 
 	def on_launch(self):
 		self.ui.main_tab.setCurrentIndex(0)
@@ -531,6 +579,9 @@ class Gui_MainWindow(QMainWindow):
 
 		# hacky but easier than setting up a bunch of tables in qt6
 		quest_id = quest_text.split(" ")[-1]
+		editor = self.quest_editors.pop(quest_id, None)
+		if editor is not None:
+			editor.close()  # (saving it would bring the removed quest back)
 		# remove the quest-to-be-edited from the lists
 		if quest_id in self.state.quests:
 			old_quest = self.state.quests.pop(quest_id)

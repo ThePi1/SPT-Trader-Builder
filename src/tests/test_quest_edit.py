@@ -281,3 +281,164 @@ def test_a_new_quest_is_unaffected(main_window):
 	assert not dlg.editing
 	assert dlg.windowTitle() == "Quest Builder" and dlg.ui.pb_finalize_quest.text() == "Finalize Quest"
 	assert dlg.ui.tb_cond.rowCount() == 0
+
+
+# --- from the main window ----------------------------------------------------------------
+
+
+def add_to_main_window(main_window, quest, locale=None):
+	main_window.on_quest_saved(quest["_id"], quest["QuestName"], quest, locale or {})
+
+
+def select(main_window, quest_id):
+	lst = main_window.ui.questList
+	item = main_window.quest_list_item(quest_id)
+	lst.setCurrentItem(item)
+	return item
+
+
+def make_second_quest():
+	quest = make_vanilla_like_quest()
+	quest.update(_id="60000000000000000000bbbb", QuestName="Second Quest")
+	return quest
+
+
+def test_the_edit_menu_item_opens_the_selected_quest(main_window):
+	quest = make_vanilla_like_quest()
+	add_to_main_window(main_window, quest)
+	select(main_window, quest["_id"])
+	main_window.ui.actionEdit_Selected_Quest.trigger()
+	(dlg,) = [w for w in main_window.windows if isinstance(w, Gui_QuestDlg)]
+	assert dlg.editing and dlg.quest_id == quest["_id"]
+	assert dlg.ui.fld_quest_name.text() == "Vanilla Style"
+	assert dlg.parent() is main_window
+
+
+def test_double_clicking_a_quest_opens_it(main_window):
+	quest = make_vanilla_like_quest()
+	add_to_main_window(main_window, quest)
+	item = select(main_window, quest["_id"])
+	main_window.ui.questList.itemDoubleClicked.emit(item)
+	assert main_window.quest_editors[quest["_id"]].isVisible()
+
+
+def test_the_edit_menu_item_does_nothing_without_a_selection(main_window):
+	add_to_main_window(main_window, make_vanilla_like_quest())
+	main_window.ui.questList.clearSelection()
+	main_window.ui.questList.setCurrentItem(None)
+	main_window.ui.actionEdit_Selected_Quest.trigger()
+	assert main_window.quest_editors == {}
+
+
+def test_editing_a_quest_that_is_not_there_does_nothing(main_window):
+	assert main_window.edit_quest("nope") is None
+	assert main_window.edit_quest(None) is None
+
+
+def test_saving_an_edit_replaces_the_quest_instead_of_adding_another(main_window):
+	first, second = make_vanilla_like_quest(), make_second_quest()
+	add_to_main_window(main_window, first, make_locale(first))
+	add_to_main_window(main_window, second)
+	dlg = main_window.edit_quest(first["_id"])
+	dlg.ui.fld_quest_name.setText("Renamed")
+	dlg.set_locale_text("name", "A new name")
+	dlg.finalize()
+
+	lst = main_window.ui.questList
+	assert [lst.item(i).text() for i in range(lst.count())] == [
+		f"Renamed, {first['_id']}",
+		f"Second Quest, {second['_id']}",
+	]  # (same place in the list)
+	state = main_window.state
+	assert list(state.quests) == [first["_id"], second["_id"]]
+	assert state.quests[first["_id"]]["QuestName"] == "Renamed"
+	assert state.quests[second["_id"]] == second  # the other quest is untouched
+	assert state.quest_locales[first["_id"]][f"{first['_id']} name"] == "A new name"
+	assert not dlg.isVisible()  # (saving closes the dialog, as for a new quest)
+
+
+def test_cancelling_an_edit_changes_nothing(main_window):
+	quest = make_vanilla_like_quest()
+	snapshot = copy.deepcopy(quest)
+	add_to_main_window(main_window, quest)
+	dlg = main_window.edit_quest(quest["_id"])
+	dlg.ui.fld_quest_name.setText("Renamed")
+	dlg.close()
+	assert main_window.state.quests[quest["_id"]] == snapshot
+	assert main_window.quest_list_item(quest["_id"]).text().startswith("Vanilla Style")
+
+
+def test_a_quest_already_being_edited_is_not_opened_twice(main_window):
+	quest = make_vanilla_like_quest()
+	add_to_main_window(main_window, quest)
+	first = main_window.edit_quest(quest["_id"])
+	assert main_window.edit_quest(quest["_id"]) is first
+	first.close()
+	assert main_window.edit_quest(quest["_id"]) is not first  # (once closed, a new one opens)
+
+
+def test_two_different_quests_can_be_edited_at_once(main_window):
+	first, second = make_vanilla_like_quest(), make_second_quest()
+	add_to_main_window(main_window, first)
+	add_to_main_window(main_window, second)
+	a, b = main_window.edit_quest(first["_id"]), main_window.edit_quest(second["_id"])
+	assert a is not b and a.isVisible() and b.isVisible()
+	a.finalize()
+	b.ui.fld_quest_name.setText("Second, renamed")
+	b.finalize()
+	assert main_window.state.quests[second["_id"]]["QuestName"] == "Second, renamed"
+	assert main_window.state.quests[first["_id"]] == first
+
+
+def test_removing_a_quest_closes_its_editor_so_it_cannot_come_back(main_window):
+	quest = make_vanilla_like_quest()
+	add_to_main_window(main_window, quest)
+	dlg = main_window.edit_quest(quest["_id"])
+	select(main_window, quest["_id"])
+	main_window.remove_selected_quest()
+	assert not dlg.isVisible()
+	assert quest["_id"] not in main_window.state.quests
+	assert main_window.ui.questList.count() == 0
+
+
+def test_the_id_lookup_shows_the_new_name_after_an_edit(main_window):
+	quest = make_vanilla_like_quest()
+	add_to_main_window(main_window, quest)
+	main_window.ui.fld_idlookup.setText(quest["_id"])
+	table = main_window.ui.id_table
+	assert any("Vanilla Style" in (table.item(r, 1).text() or "") for r in range(table.rowCount()))
+	dlg = main_window.edit_quest(quest["_id"])
+	dlg.ui.fld_quest_name.setText("Renamed Quest")
+	dlg.finalize()
+	assert any("Renamed Quest" in (table.item(r, 1).text() or "") for r in range(table.rowCount()))
+	assert not any("Vanilla Style" in (table.item(r, 1).text() or "") for r in range(table.rowCount()))
+
+
+def test_a_new_quest_still_adds_one_entry_each_time(main_window):
+	for name in ("One", "Two"):
+		dlg = main_window.spawnWindow("QuestBuilder")
+		dlg.ui.fld_quest_name.setText(name)
+		dlg.finalize()
+	assert main_window.ui.questList.count() == 2
+	assert len(main_window.state.quests) == 2
+
+
+def test_a_quest_made_in_the_builder_can_be_edited_and_saved_unchanged(main_window):
+	dlg = main_window.spawnWindow("QuestBuilder")
+	dlg.ui.fld_quest_name.setText("Made here")
+	task = dlg.open_task_window()
+	task.ui.fld_value_lv.setText("15")
+	task.finalize("Level")
+	reward = dlg.open_reward_window()
+	reward.ui.box_amount_exp.setText("1500")
+	reward.finalize("Experience")
+	dlg.set_locale_text("description", "About this quest")
+	dlg.finalize()
+	(quest_id, quest), = main_window.state.quests.items()
+	before = copy.deepcopy(quest)
+	locale_before = copy.deepcopy(main_window.state.quest_locales[quest_id])
+	editor = main_window.edit_quest(quest_id)
+	editor.finalize()
+	assert main_window.state.quests[quest_id] == before
+	assert main_window.state.quest_locales[quest_id] == locale_before
+	assert main_window.ui.questList.count() == 1

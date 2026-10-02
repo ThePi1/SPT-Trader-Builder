@@ -410,6 +410,7 @@
     </property>
     <addaction name="actionEdit_Tracked_Data_Files_locale_quest"/>
     <addaction name="separator"/>
+    <addaction name="actionEdit_Selected_Quest"/>
     <addaction name="actionRemove_Selected_Quest"/>
     <addaction name="actionCreate_locale_from_Quest_JSON"/>
    </widget>
@@ -479,6 +480,11 @@
   <action name="actionImport_Quests">
    <property name="text">
     <string>Import Quests</string>
+   </property>
+  </action>
+  <action name="actionEdit_Selected_Quest">
+   <property name="text">
+    <string>Edit Selected Quest</string>
    </property>
   </action>
   <action name="actionRemove_Selected_Quest">
