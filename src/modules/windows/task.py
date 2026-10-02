@@ -1,3 +1,5 @@
+import copy
+
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMainWindow
 
@@ -6,24 +8,84 @@ from modules.gui.compiled.gui_tasks import Ui_TaskWindow
 from modules.state import TableFields
 from modules.table_fields import add_table_field, remove_selected_table_item
 from modules.utils import is_true, new_id, val_field
+from modules.windows.common import select_id, select_or_add
+
+
+# Where the form of each kind of top-level task is: the tab widgets down to it, as (tab widget, page)
+# attribute names of the UI, and the button that finishes it. (FindItem and HandoverItem share a form.)
+TASK_TABS = {
+	"CounterCreator": (("tabWidget_2", "tab"), ("tabWidget", "tab_6")),
+	"Item": (("tabWidget_2", "tab"), ("tabWidget", "tab_handover_item")),
+	"Skill": (("tabWidget_2", "tab"), ("tabWidget", "tb_Skill")),
+	"LeaveItemAtLocation": (("tabWidget_2", "tab"), ("tabWidget", "tab_leave_item")),
+	"PlaceBeacon": (("tabWidget_2", "tab"), ("tabWidget", "tab_7")),
+	"TraderLoyalty": (("tabWidget_2", "tab"), ("tabWidget", "tab_trader_loyalty")),
+	"Level": (("tabWidget_2", "tab_2"), ("tabWidget_3", "tab_3")),
+	"TraderStanding": (("tabWidget_2", "tab_2"), ("tabWidget_3", "tab_5")),
+	"Quest": (("tabWidget_2", "tab_17"), ("tabWidget_8", "tab_33")),
+}
+FINISH_BUTTONS = {
+	"CounterCreator": "pb_finalize_cc",
+	"Item": "pb_finalize_it",
+	"Skill": "pb_finalize_sk",
+	"LeaveItemAtLocation": "pb_finalize_li",
+	"PlaceBeacon": "pb_finalize_pb",
+	"TraderLoyalty": "pb_finalize_tl",
+	"Level": "pb_finalize_lv",
+	"Quest": "pb_finalize_qs",
+	"TraderStanding": "pb_finalize_ts",
+}
+
+
+def can_edit(condition):
+	"""Whether the Task Builder can open this condition (it can't, for kinds it can't make)."""
+	return condition.get("conditionType") in conditions.EDITABLE_KEYS
+
+
+def dialog_type(condition):
+	"""The name the dialog uses for a condition's kind ("Item" covers FindItem and HandoverItem)."""
+	kind = condition["conditionType"]
+	return "Item" if kind in ("FindItem", "HandoverItem") else kind
+
+
+def visibility_target(entry):
+	"""The task a visibility condition points at (older exports wrote just the id)."""
+	return entry["target"] if isinstance(entry, dict) else str(entry)
 
 
 class Gui_TaskDlg(QMainWindow):
 	# (timing, condition_type, condition_id, condition) - sent when the user finalizes a condition
 	condition_ready = Signal(str, str, str, object)
 
-	def __init__(self, state, parent=None):
+	def __init__(self, state, parent=None, condition=None, timing=None):
+		"""A new task, or (if condition is given) an existing one to edit.
+
+		condition is the condition dict and timing the list it is in (Start, Finish or Fail). The
+		dialog works on a copy: nothing changes until the task is saved. ValueError if the condition
+		is of a kind the dialog can't make.
+		"""
 		super().__init__(parent)
+		if condition is not None and not can_edit(condition):
+			raise ValueError(f"The Task Builder can't edit tasks of type {condition.get('conditionType')!r}")
 		self.ui = Ui_TaskWindow()
 		self.ui.setupUi(self)
 		self.state = state
 		self.fields = TableFields()  # this dialog's own table rows
-		self.id = new_id()
+		self.original = copy.deepcopy(condition) if condition is not None else None  # None for a new task
+		self.baseline = None  # what the form built straight after it was filled from the original
+		self.visibility_objects = {}  # target -> its visibility condition (see visibility_object)
+		self.fixed_timing = timing if condition is not None and timing else "Start"  # (for the start-only kinds)
+		# name shown in the boxes -> what is written, for the boxes that show a name
+		self.trader_ids = dict(state.traders)
+		self.status_ids = dict(state.status)
+		self.id = self.original["id"] if self.original is not None else new_id()
 		self.cc = []
 		# self.weapons = [] # used for CC/Kills, add ids in as needed
 		# self.status = [] # used for CC/exitstatus
 		# self.location = [] # used for cc/location
 		self.on_launch()  # Custom code in this one
+		if self.original is not None:
+			self.load_condition(self.original, timing)
 		self.show()
 
 	def on_launch(self):
@@ -594,12 +656,17 @@ class Gui_TaskDlg(QMainWindow):
 
 	def finalize(self, cond_type):
 		"""Build the top-level condition from the form and hand it to the quest window."""
+		timing, cond = self.build_condition(cond_type)
+		if self.editing:
+			cond = conditions.edited_condition(self.original, self.baseline, cond)
+		self.condition_ready.emit(timing, cond_type, self.id, cond)
+		self.close()
+
+	def build_condition(self, cond_type):
+		"""What the form describes, as (timing, condition)."""
 		ui = self.ui
 		state = self.state
-		vis = [
-			conditions.visibility_condition(new_id(), target)
-			for target in self.fields.get_singlecolumn_field_list("VisibilityCond")
-		]
+		vis = [self.visibility_object(target) for target in self.fields.get_singlecolumn_field_list("VisibilityCond")]
 		match cond_type:
 			case "CounterCreator":
 				timing = ui.box_ff.currentText()
@@ -674,14 +741,14 @@ class Gui_TaskDlg(QMainWindow):
 					self.id,
 					compare_method=ui.box_compare_tl.currentText(),
 					parent_id=ui.fld_parentid_tl.displayText(),
-					trader_id=state.traders[ui.box_target_tl.currentText()],
+					trader_id=self.trader_ids[ui.box_target_tl.currentText()],
 					value=val_field(ui.fld_level_tl.displayText(), "", 0, int),
 					visibility_conditions=vis,
 				)
 
 			# These 3 next are start-only
 			case "Level":
-				timing = "Start"
+				timing = self.fixed_timing
 				cond = conditions.level(
 					self.id,
 					compare_method=ui.box_compare_lv.currentText(),
@@ -693,18 +760,161 @@ class Gui_TaskDlg(QMainWindow):
 					self.id,
 					available_after=val_field(ui.fld_avail_qs.displayText(), "", 0, int),
 					status_ids=[
-						state.status[s] for s in self.fields.get_singlecolumn_field_list("QStatus")
+						self.status_ids[s] for s in self.fields.get_singlecolumn_field_list("QStatus")
 					],
 					target=ui.fld_tid_qs.displayText(),
 				)
 			case "TraderStanding":
-				timing = "Start"
+				timing = self.fixed_timing
 				cond = conditions.trader_standing(
 					self.id,
 					compare_method=ui.box_comparemethod_ts.currentText(),
-					trader_id=state.traders[ui.box_trader_ts.currentText()],
+					trader_id=self.trader_ids[ui.box_trader_ts.currentText()],
 					value=val_field(ui.fld_value_ts.displayText(), "", 0, int),
 				)
 
-		self.condition_ready.emit(timing, cond_type, self.id, cond)
-		self.close()
+		return timing, cond
+
+	def visibility_object(self, target):
+		"""The visibility condition for a target: the one the task already had, or else one with a new
+		id (made once, so building the task again gives the same one)."""
+		if target not in self.visibility_objects:
+			for entry in (self.original or {}).get("visibilityConditions", []):
+				if isinstance(entry, dict) and entry.get("target") == target:
+					self.visibility_objects[target] = copy.deepcopy(entry)
+					break
+			else:
+				self.visibility_objects[target] = conditions.visibility_condition(new_id(), target)
+		return copy.deepcopy(self.visibility_objects[target])
+
+	# --- editing an existing task -----------------------------------------------------------
+
+	@property
+	def editing(self):
+		"""Whether this dialog edits an existing task (rather than making a new one)."""
+		return self.original is not None
+
+	def load_condition(self, cond, timing):
+		"""Fill the form of the task's kind from the condition, and leave only that kind's tab usable."""
+		ui = self.ui
+		kind = dialog_type(cond)
+		self.setWindowTitle("Edit Task")
+		for tabs_name, page_name in TASK_TABS[kind]:
+			tabs, page = getattr(ui, tabs_name), getattr(ui, page_name)
+			for index in range(tabs.count()):
+				tabs.setTabEnabled(index, tabs.widget(index) is page)
+			tabs.setCurrentWidget(page)
+		getattr(ui, FINISH_BUTTONS[kind]).setText("Save Changes")
+		getattr(self, f"load_{cond['conditionType']}")(cond, timing)
+		if cond["conditionType"] in ("FindItem", "HandoverItem", "LeaveItemAtLocation", "Skill", "CounterCreator", "PlaceBeacon", "TraderLoyalty"):
+			for entry in cond.get("visibilityConditions", []):
+				target = visibility_target(entry)
+				add_table_field(self.fields, "VisibilityCond", ui.tb_vis, target, {0: target}, target)
+		self.baseline = self.build_condition(kind)[1]
+
+	def set_text(self, field, value):
+		field.setText("" if value is None else str(value))
+
+	def load_targets(self, field_type, table, values):
+		for value in values:
+			add_table_field(self.fields, field_type, table, value, {0: value}, value)
+
+	def load_CounterCreator(self, cond, timing):
+		ui = self.ui
+		self.set_text(ui.fld_parentid_cc, cond.get("parentId", ""))
+		select_or_add(ui.box_cc_qtlab, str(cond.get("type", "")))
+		self.set_text(ui.fld_quantity_cc, cond.get("value", 0))
+		select_or_add(ui.box_ff, timing or "Finish")
+		for sub in copy.deepcopy(cond.get("counter", {}).get("conditions", [])):
+			add_table_field(
+				self.fields, "CounterCreator", ui.tb_cc, sub["id"], {0: sub["id"], 1: sub.get("conditionType", "")}, sub
+			)
+
+	def load_item_condition(self, cond, timing):
+		ui = self.ui
+		select_or_add(ui.box_hofind_it, cond["conditionType"])
+		ui.box_hofind_it.setEnabled(False)  # (turning one into the other would change what the task is)
+		self.set_text(ui.fld_parentid_it, cond.get("parentId", ""))
+		self.load_targets("HFItems", ui.tb_items, cond.get("target", []))
+		self.set_text(ui.fld_quantity_it, cond.get("value", 0))
+		self.set_text(ui.fld_mindur_it, cond.get("minDurability", 0))
+		self.set_text(ui.fld_maxdur_it, cond.get("maxDurability", 100))
+		select_or_add(ui.box_only_fir_it, str(bool(cond.get("onlyFoundInRaid", False))).lower())
+		select_or_add(ui.box_ff_it, timing or "Finish")
+
+	def load_FindItem(self, cond, timing):
+		self.load_item_condition(cond, timing)
+
+	def load_HandoverItem(self, cond, timing):
+		self.load_item_condition(cond, timing)
+
+	def load_Skill(self, cond, timing):
+		ui = self.ui
+		select_or_add(ui.box_compare_sk, cond.get("compareMethod", ">="))
+		self.set_text(ui.fld_parentid_sk_2, cond.get("parentId", ""))
+		select_or_add(ui.box_target_sk, str(cond.get("target", "")))
+		self.set_text(ui.fld_level_sk, cond.get("value", 0))
+		select_or_add(ui.box_ff_sk, timing or "Finish")
+
+	def load_LeaveItemAtLocation(self, cond, timing):
+		ui = self.ui
+		self.set_text(ui.fld_parentid_li, cond.get("parentId", ""))
+		self.load_targets("LeaveItemTarget", ui.tb_li_target, cond.get("target", []))
+		self.set_text(ui.fld_quantity_li, cond.get("value", 0))
+		self.set_text(ui.fld_plant_time_li, cond.get("plantTime", 0))
+		self.set_text(ui.fld_mindur_li, cond.get("minDurability", 0))
+		self.set_text(ui.fld_maxdur_li, cond.get("maxDurability", 100))
+		select_or_add(ui.box_fir_li, str(bool(cond.get("onlyFoundInRaid", False))).lower())
+		self.set_text(ui.fld_zoneid_li, cond.get("zoneId", ""))
+		select_or_add(ui.box_ff_li, timing or "Finish")
+
+	def load_PlaceBeacon(self, cond, timing):
+		ui = self.ui
+		self.set_text(ui.fld_parentid_pb, cond.get("parentId", ""))
+		ui.sb_time_pb.setValue(self.whole_number(cond.get("plantTime", 10)))
+		ui.sb_value_pb.setValue(self.whole_number(cond.get("value", 1)))
+		self.set_text(ui.fld_zoneid_pb, cond.get("zoneId", ""))
+		select_or_add(ui.box_ff_pb, timing or "Finish")
+
+	def load_TraderLoyalty(self, cond, timing):
+		ui = self.ui
+		select_or_add(ui.box_compare_tl, cond.get("compareMethod", ">="))
+		self.set_text(ui.fld_parentid_tl, cond.get("parentId", ""))
+		select_id(ui.box_target_tl, self.trader_ids, cond.get("target", ""))
+		self.set_text(ui.fld_level_tl, cond.get("value", 0))
+		select_or_add(ui.box_ff_tl, timing or "Finish")  # (some vanilla ones are Start conditions)
+
+	def load_Level(self, cond, timing):
+		ui = self.ui
+		select_or_add(ui.box_compare_lv, cond.get("compareMethod", ">="))
+		self.set_text(ui.fld_value_lv, cond.get("value", 0))
+
+	def load_Quest(self, cond, timing):
+		ui = self.ui
+		self.set_text(ui.fld_tid_qs, cond.get("target", ""))
+		self.set_text(ui.fld_avail_qs, cond.get("availableAfter", 0))
+		select_or_add(ui.box_timing_qs, timing or "Start")
+		names = {code: name for name, code in self.status_ids.items()}
+		for code in cond.get("status", []):
+			try:
+				name = names.get(int(code))
+			except (TypeError, ValueError):
+				name = None
+			if name is None:
+				name = str(code)
+				self.status_ids[name] = code
+			self.load_targets("QStatus", ui.tb_status_qs, [name])
+
+	def load_TraderStanding(self, cond, timing):
+		ui = self.ui
+		select_or_add(ui.box_comparemethod_ts, cond.get("compareMethod", ">="))
+		select_id(ui.box_trader_ts, self.trader_ids, cond.get("target", ""))
+		self.set_text(ui.fld_value_ts, cond.get("value", 0))
+
+	@staticmethod
+	def whole_number(value):
+		"""A number for a spin box (a number written as text works too)."""
+		try:
+			return int(float(value))
+		except (TypeError, ValueError):
+			return 0
