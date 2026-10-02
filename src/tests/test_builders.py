@@ -1,5 +1,6 @@
 """The builders are plain functions: no Qt, no windows, no files."""
 
+import copy
 import json
 import subprocess
 import sys
@@ -473,3 +474,62 @@ def test_weapon_preset_parts():
 	assert base["parentId"] == "hideout" and base["upd"] == {}
 	mod = assort.weapon_preset_part("i", "tpl", "parent", "mod_stock", is_base=False)
 	assert mod == {"_id": "i", "_tpl": "tpl", "parentId": "parent", "slotId": "mod_stock"}
+
+
+# --- editing a quest ------------------------------------------------------------------
+
+
+def _built_quest(**overrides):
+	args = dict(
+		name="New name",
+		can_show_notifications=False,
+		finish_conditions=[{"id": "c1"}],
+		start_conditions=[],
+		fail_conditions=[],
+		image="/files/quest/icon/new.jpg",
+		instant_complete=True,
+		location="any",
+		restartable=True,
+		rewards={"Fail": [], "Started": [], "Success": [{"id": "r1"}]},
+		secret_quest=True,
+		side="usec",
+		trader_id="trader",
+		quest_type="Completion",
+	)
+	args.update(overrides)
+	return quests.quest("q1", **args)
+
+
+def test_edited_quest_takes_the_edited_fields_from_the_form():
+	original = _built_quest(name="Old name", side="pmc", quest_type="Elimination")
+	edited = quests.edited_quest(original, _built_quest())
+	for key in quests.EDITABLE_KEYS:
+		assert edited[key] == _built_quest()[key]
+
+
+def test_edited_quest_keeps_everything_the_form_has_no_control_for():
+	original = _built_quest(name="Old name")
+	original["status"] = 0  # a key only imported quests have
+	original["gameModes"] = []
+	original["acceptanceAndFinishingSource"] = "somewhere else"
+	original["isKey"] = True
+	original["name"] = "custom locale key"
+	edited = quests.edited_quest(original, _built_quest())
+	assert edited["status"] == 0 and edited["gameModes"] == []
+	assert edited["acceptanceAndFinishingSource"] == "somewhere else"
+	assert edited["isKey"] is True and edited["name"] == "custom locale key"
+	assert edited["QuestName"] == "New name"
+	assert list(edited)[:3] == list(original)[:3]  # (and the key order)
+
+
+def test_edited_quest_does_not_change_or_share_the_original():
+	original = _built_quest()
+	snapshot = copy.deepcopy(original)
+	edited = quests.edited_quest(original, _built_quest(name="Other"))
+	assert original == snapshot
+	edited["conditions"]["AvailableForFinish"].append("x")
+	assert original == snapshot
+
+
+def test_every_editable_key_is_one_the_builder_writes():
+	assert set(quests.EDITABLE_KEYS) <= set(_built_quest())
