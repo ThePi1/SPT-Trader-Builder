@@ -43,7 +43,7 @@ def kills(
 		"compareMethod": ">=",  # hard code for kill quest
 		"conditionType": "Kills",
 		"daytime": {"from": time_from, "to": time_to},
-		"distance": {"compareMethod": distance_compare, "distance": distance},
+		"distance": {"compareMethod": distance_compare, "value": distance},
 		"dynamicLocale": False,
 		"enemyEquipmentExclusive": [],
 		"enemyEquipmentInclusive": [],

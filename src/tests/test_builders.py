@@ -55,9 +55,14 @@ def test_kills_wraps_each_mod_in_its_own_list():
 	cond = _kills()
 	assert cond["weaponModsInclusive"] == [["m1"], ["m2"]]
 	assert cond["weaponModsExclusive"] == [["m3"]]
-	assert cond["distance"] == {"compareMethod": ">=", "distance": 50}
 	assert cond["daytime"] == {"from": 1, "to": 2}
 	assert cond["weapon"] == ["w1"] and cond["savageRole"] == ["bossBully"]
+
+
+def test_kills_distance_uses_the_value_key_like_vanilla_quests_and_shots():
+	kills = _kills()["distance"]
+	assert kills == {"compareMethod": ">=", "value": 50}
+	assert "distance" not in kills
 
 
 def test_shots_uses_value_for_distance_and_does_not_wrap_mods():
