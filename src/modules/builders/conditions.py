@@ -1,5 +1,7 @@
 """Quest conditions (tasks), and the sub-conditions inside a CounterCreator."""
 
+import copy
+
 
 def _group_by_org(entries):
 	"""[{"id", "org"}, ...] -> [[ids of org A], [ids of org B]]: (these items) OR (those items)."""
@@ -430,3 +432,79 @@ def trader_standing(cond_id, *, compare_method, trader_id, value):
 		"value": value,
 		"visibilityConditions": [],
 	}
+
+
+# --- editing a condition -----------------------------------------------------------------
+# The keys of each kind of condition that the Task Builder has a control for (see windows/task.py)
+
+_ITEM_KEYS = ("parentId", "target", "value", "minDurability", "maxDurability", "onlyFoundInRaid", "visibilityConditions")
+EDITABLE_KEYS = {
+	"CounterCreator": ("parentId", "type", "value", "visibilityConditions"),  # (and the counter's conditions)
+	"FindItem": _ITEM_KEYS,
+	"HandoverItem": _ITEM_KEYS,
+	"Skill": ("compareMethod", "parentId", "target", "value", "visibilityConditions"),
+	"LeaveItemAtLocation": _ITEM_KEYS + ("plantTime", "zoneId"),
+	"PlaceBeacon": ("parentId", "plantTime", "value", "zoneId", "visibilityConditions"),
+	"TraderLoyalty": ("compareMethod", "parentId", "target", "value", "visibilityConditions"),
+	"Level": ("compareMethod", "value"),
+	"Quest": ("availableAfter", "status", "target"),
+	"TraderStanding": ("compareMethod", "target", "value"),
+}
+
+_SHOTS_AND_KILLS_KEYS = (
+	"weapon",
+	"bodyPart",
+	"savageRole",
+	"weaponModsInclusive",
+	"weaponModsExclusive",
+	"distance",
+	"daytime",
+	"target",
+	"resetOnSessionEnd",
+)
+SUBCONDITION_EDITABLE_KEYS = {
+	"VisitPlace": ("target",),
+	"Kills": _SHOTS_AND_KILLS_KEYS,
+	"ExitStatus": ("status",),
+	"ExitName": ("exitName",),
+	"Location": ("target",),
+	"Equipment": ("IncludeNotEquippedItems", "equipmentExclusive", "equipmentInclusive"),
+	"Shots": _SHOTS_AND_KILLS_KEYS + ("value",),
+	"HealthEffect": ("bodyPartsWithEffects", "energy", "hydration", "time"),
+	"HealthBuff": ("target",),
+	"LaunchFlare": ("target",),
+	"InZone": ("zoneIds",),
+}
+
+
+def _edited(original, baseline, built, keys):
+	"""original with each of keys replaced by its value in built, if the form changed it.
+
+	baseline is what the form built straight after it was filled from original, so a key where
+	built still equals baseline wasn't touched, and keeps the original's value - even where the form
+	couldn't show that value exactly (a number written as text, a mod group, a key that isn't there).
+	"""
+	merged = copy.deepcopy(original)
+	for key in keys:
+		if built.get(key) != baseline.get(key):
+			merged[key] = copy.deepcopy(built[key])
+	return merged
+
+
+def edited_condition(original, baseline, built):
+	"""A condition edited in the Task Builder: the original, with the fields the user changed replaced.
+
+	built is what the form builds now, baseline what it built straight after it was filled from
+	original. Everything the user didn't change (including keys the form has no control for) stays
+	as the original had it.
+	"""
+	kind = original["conditionType"]
+	merged = _edited(original, baseline, built, EDITABLE_KEYS[kind])
+	if kind == "CounterCreator" and built["counter"]["conditions"] != baseline["counter"]["conditions"]:
+		merged.setdefault("counter", {})["conditions"] = copy.deepcopy(built["counter"]["conditions"])
+	return merged
+
+
+def edited_subcondition(original, baseline, built):
+	"""The same for a CounterCreator's sub-condition."""
+	return _edited(original, baseline, built, SUBCONDITION_EDITABLE_KEYS[original["conditionType"]])

@@ -606,3 +606,131 @@ def test_an_edited_reward_does_not_change_or_share_the_original():
 	assert original == snapshot
 	edited["items"].append("x")
 	assert original == snapshot
+
+
+# --- editing a condition ----------------------------------------------------------------
+
+
+def _built_conditions():
+	"""One condition of every kind the Task Builder makes (top-level), as it builds them."""
+	item_args = dict(_ITEM_ARGS)
+	return {
+		"CounterCreator": conditions.counter_creator(
+			"c", counter_id="cn", sub_conditions=[conditions.visit_place("s1", "zone")], parent_id="", quest_type="Exploration", value=2, visibility_conditions=[]
+		),
+		"FindItem": conditions.find_item("c", **item_args),
+		"HandoverItem": conditions.handover_item("c", **item_args),
+		"Skill": conditions.skill("c", compare_method=">=", parent_id="", target="Strength", value=3, visibility_conditions=[]),
+		"LeaveItemAtLocation": conditions.leave_item_at_location("c", plant_time=5, zone_id="z", **item_args),
+		"PlaceBeacon": conditions.place_beacon("c", parent_id="", plant_time=10, value=1, zone_id="z", visibility_conditions=[]),
+		"TraderLoyalty": conditions.trader_loyalty("c", compare_method=">=", parent_id="", trader_id="t", value=2, visibility_conditions=[]),
+		"Level": conditions.level("c", compare_method=">=", value=10),
+		"Quest": conditions.quest_status("c", available_after=0, status_ids=[4], target="q"),
+		"TraderStanding": conditions.trader_standing("c", compare_method=">=", trader_id="t", value=1),
+	}
+
+
+def test_every_editable_condition_key_is_one_the_builder_writes():
+	built = _built_conditions()
+	assert set(conditions.EDITABLE_KEYS) == set(built)
+	for kind, keys in conditions.EDITABLE_KEYS.items():
+		assert set(keys) <= set(built[kind]), kind
+
+
+def test_an_untouched_condition_of_every_kind_is_unchanged():
+	for kind, built in _built_conditions().items():
+		original = copy.deepcopy(built)
+		original["index"] = 4  # (and keys the form has no control for)
+		original["somethingNew"] = 1
+		assert conditions.edited_condition(original, built, copy.deepcopy(built)) == original, kind
+
+
+def test_only_the_fields_the_user_changed_are_replaced():
+	baseline = conditions.skill("c", compare_method=">=", parent_id="", target="Strength", value=3, visibility_conditions=[])
+	original = copy.deepcopy(baseline)
+	original["value"] = "3"  # (a number written as text: the form shows 3 but must not turn it into a number)
+	original["index"] = 2
+	built = conditions.skill("c", compare_method="<=", parent_id="", target="Strength", value=3, visibility_conditions=[])
+	edited = conditions.edited_condition(original, baseline, built)
+	assert edited["compareMethod"] == "<="
+	assert edited["value"] == "3" and edited["index"] == 2
+
+
+def test_a_key_the_original_lacks_stays_absent_until_it_is_changed():
+	baseline = conditions.handover_item("c", **_ITEM_ARGS)
+	original = copy.deepcopy(baseline)
+	del original["minDurability"]
+	assert "minDurability" not in conditions.edited_condition(original, baseline, copy.deepcopy(baseline))
+	changed = conditions.handover_item("c", **{**_ITEM_ARGS, "min_durability": 50})
+	assert conditions.edited_condition(original, baseline, changed)["minDurability"] == 50
+
+
+def test_the_hard_coded_values_of_vanilla_conditions_survive_an_edit():
+	baseline = _built_conditions()["CounterCreator"]
+	original = copy.deepcopy(baseline)
+	original["oneSessionOnly"] = True
+	original["doNotResetIfCounterCompleted"] = True
+	original["globalQuestCounterId"] = "gq"
+	built = copy.deepcopy(baseline)
+	built["value"] = 9
+	edited = conditions.edited_condition(original, baseline, built)
+	assert edited["value"] == 9
+	assert (edited["oneSessionOnly"], edited["doNotResetIfCounterCompleted"], edited["globalQuestCounterId"]) == (True, True, "gq")
+
+
+def test_a_counter_keeps_its_id_and_takes_changed_sub_conditions():
+	baseline = _built_conditions()["CounterCreator"]
+	original = copy.deepcopy(baseline)
+	original["counter"]["id"] = "original-counter-id"
+	original["counter"]["extra"] = 1
+	untouched = conditions.edited_condition(original, baseline, copy.deepcopy(baseline))
+	assert untouched["counter"] == original["counter"]
+	built = copy.deepcopy(baseline)
+	built["counter"] = {"id": "a-new-id", "conditions": [conditions.visit_place("s2", "other")]}
+	edited = conditions.edited_condition(original, baseline, built)
+	assert edited["counter"] == {"id": "original-counter-id", "extra": 1, "conditions": [conditions.visit_place("s2", "other")]}
+
+
+def test_an_edited_condition_does_not_change_or_share_the_original():
+	baseline = _built_conditions()["CounterCreator"]
+	original = copy.deepcopy(baseline)
+	snapshot = copy.deepcopy(original)
+	built = copy.deepcopy(baseline)
+	built["counter"]["conditions"] = [conditions.visit_place("s2", "other")]
+	edited = conditions.edited_condition(original, baseline, built)
+	assert original == snapshot
+	edited["counter"]["conditions"].append("x")
+	assert built["counter"]["conditions"] == [conditions.visit_place("s2", "other")]
+
+
+def test_every_editable_subcondition_key_is_one_the_builder_writes():
+	kills = conditions.kills("k", weapon_ids=[], target="Any", target_roles=[], body_parts=[], mods_inclusive=[], mods_exclusive=[], distance=0, distance_compare=">=", time_from=0, time_to=0, reset_on_session_end=False)
+	shots = conditions.shots("s", weapon_ids=[], body_parts=[], target_roles=[], mods_inclusive=[], mods_exclusive=[], distance=0, distance_compare=">=", time_from=0, time_to=0, value=1, target="Any", reset_on_session_end=False)
+	built = {
+		"VisitPlace": conditions.visit_place("v", "z"),
+		"Kills": kills,
+		"ExitStatus": conditions.exit_status("e", []),
+		"ExitName": conditions.exit_name("n", "x"),
+		"Location": conditions.location("l", []),
+		"Equipment": conditions.equipment("q", inclusive=[], exclusive=[], include_not_equipped=False),
+		"Shots": shots,
+		"HealthEffect": conditions.health_effect("h", body_parts=[], effects=[], energy=0, energy_compare=">=", hydration=0, hydration_compare=">=", time=0, time_compare=">="),
+		"HealthBuff": conditions.health_buff("b", []),
+		"LaunchFlare": conditions.launch_flare("f", "z"),
+		"InZone": conditions.in_zone("i", []),
+	}
+	assert set(conditions.SUBCONDITION_EDITABLE_KEYS) == set(built)
+	for kind, keys in conditions.SUBCONDITION_EDITABLE_KEYS.items():
+		assert set(keys) <= set(built[kind]), kind
+
+
+def test_a_mod_group_with_several_mods_survives_until_the_mods_are_changed():
+	args = dict(weapon_ids=[], target="Any", target_roles=[], body_parts=[], mods_exclusive=[], distance=0, distance_compare=">=", time_from=0, time_to=0, reset_on_session_end=False)
+	baseline = conditions.kills("k", mods_inclusive=["m1", "m2"], **args)  # (the form can only show one mod per group)
+	original = copy.deepcopy(baseline)
+	original["weaponModsInclusive"] = [["m1", "m2"]]  # one group: m1 OR m2
+	original["weaponCaliber"] = ["5.56x45"]
+	assert conditions.edited_subcondition(original, baseline, copy.deepcopy(baseline)) == original
+	built = conditions.kills("k", mods_inclusive=["m1", "m2", "m3"], **args)
+	edited = conditions.edited_subcondition(original, baseline, built)
+	assert edited["weaponModsInclusive"] == [["m1"], ["m2"], ["m3"]] and edited["weaponCaliber"] == ["5.56x45"]
