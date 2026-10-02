@@ -442,3 +442,135 @@ def test_a_quest_made_in_the_builder_can_be_edited_and_saved_unchanged(main_wind
 	assert main_window.state.quests[quest_id] == before
 	assert main_window.state.quest_locales[quest_id] == locale_before
 	assert main_window.ui.questList.count() == 1
+
+
+# --- editing a reward from the Quest Builder ----------------------------------------------------
+
+EXP_ID = "ex00000000000000000000aa"
+ITEM_ID = "it00000000000000000000aa"
+
+
+def reward_table(dlg):
+	table = dlg.ui.tb_rewards
+	return [(table.item(r, 0).text(), table.item(r, 1).text(), table.item(r, 2).text()) for r in range(table.rowCount())]
+
+
+def row_of(dlg, reward_id):
+	for row in range(dlg.ui.tb_rewards.rowCount()):
+		if dlg.ui.tb_rewards.item(row, 0).text() == reward_id:
+			return row
+
+
+def test_the_edit_button_opens_the_selected_reward(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	dlg.ui.tb_rewards.selectRow(row_of(dlg, EXP_ID))
+	dlg.ui.pb_edit_reward.click()
+	editor = dlg.reward_editors[EXP_ID]
+	assert editor.editing and editor.id == EXP_ID and editor.parent() is dlg
+	assert editor.ui.box_amount_exp.text() == "5000"
+	assert editor in dlg.windows
+
+
+def test_double_clicking_a_reward_opens_it_without_editing_the_cell(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	row = row_of(dlg, ITEM_ID)
+	dlg.ui.tb_rewards.cellDoubleClicked.emit(row, 0)
+	assert dlg.reward_editors[ITEM_ID].isVisible()
+	assert not dlg.ui.tb_rewards.editTriggers() & dlg.ui.tb_rewards.EditTrigger.DoubleClicked  # (no typing over the id)
+
+
+def test_the_edit_button_does_nothing_without_a_selection(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	dlg.ui.tb_rewards.clearSelection()
+	dlg.ui.pb_edit_reward.click()
+	assert dlg.reward_editors == {}
+
+
+def test_a_saved_reward_edit_replaces_the_reward_in_place(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest)
+	before = reward_table(dlg)
+	editor = dlg.edit_reward(row_of(dlg, EXP_ID))
+	editor.ui.box_amount_exp.setText("9000")
+	editor.finalize("Experience")
+	assert reward_table(dlg) == before  # (same rows, same order)
+	dlg.finalize()
+	(_, _, edited, _), = saved
+	exp, item = edited["rewards"]["Success"]
+	assert exp["id"] == EXP_ID and exp["value"] == 9000 and exp["index"] == 2  # (index kept)
+	assert item == quest["rewards"]["Success"][1]  # (the other reward is untouched)
+	assert edited["rewards"]["Started"] == [] and edited["rewards"]["Fail"] == []
+
+
+def test_changing_a_rewards_timing_moves_it_to_that_list(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest)
+	editor = dlg.edit_reward(row_of(dlg, ITEM_ID))
+	editor.ui.box_rewardtiming_item.setCurrentText("Started")
+	editor.finalize("Item")
+	assert (ITEM_ID, "Started", "Item") in reward_table(dlg)
+	assert len(reward_table(dlg)) == 2
+	dlg.finalize()
+	(_, _, edited, _), = saved
+	assert [r["id"] for r in edited["rewards"]["Success"]] == [EXP_ID]
+	assert [r["id"] for r in edited["rewards"]["Started"]] == [ITEM_ID]
+	assert edited["rewards"]["Started"][0]["items"] == quest["rewards"]["Success"][1]["items"]
+
+
+def test_a_reward_of_a_kind_the_builder_cannot_make_says_so(main_window, monkeypatch):
+	quest = make_vanilla_like_quest()
+	quest["rewards"]["Success"].append({"id": "pk0000000000000000000000", "type": "Pockets", "index": 0, "target": "x"})
+	dlg, saved = open_editor(main_window, quest)
+	messages = []
+	monkeypatch.setattr(
+		"modules.windows.quest.QMessageBox.information", lambda *args: messages.append(args[2])
+	)
+	assert dlg.edit_reward(row_of(dlg, "pk0000000000000000000000")) is None
+	assert dlg.reward_editors == {}
+	assert "Pockets" in messages[0]
+	dlg.finalize()  # (and it is kept when the quest is saved)
+	assert saved[0][2] == quest
+
+
+def test_a_reward_already_being_edited_is_not_opened_twice(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	row = row_of(dlg, EXP_ID)
+	first = dlg.edit_reward(row)
+	assert dlg.edit_reward(row) is first
+	first.close()
+	assert dlg.edit_reward(row) is not first
+
+
+def test_removing_a_reward_closes_its_editor_so_it_cannot_come_back(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest)
+	editor = dlg.edit_reward(row_of(dlg, EXP_ID))
+	dlg.ui.tb_rewards.selectRow(row_of(dlg, EXP_ID))
+	dlg.remove_selected_reward()
+	assert not editor.isVisible()
+	assert [r[0] for r in reward_table(dlg)] == [ITEM_ID]
+	dlg.finalize()
+	assert [r["id"] for r in saved[0][2]["rewards"]["Success"]] == [ITEM_ID]
+
+
+def test_cancelling_a_reward_edit_changes_nothing(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest)
+	editor = dlg.edit_reward(row_of(dlg, EXP_ID))
+	editor.ui.box_amount_exp.setText("1")
+	editor.close()
+	dlg.finalize()
+	assert saved[0][2] == quest
+
+
+def test_a_reward_just_added_to_a_new_quest_can_be_edited(main_window):
+	dlg = main_window.spawnWindow("QuestBuilder")
+	reward = dlg.open_reward_window()
+	reward.ui.box_amount_exp.setText("100")
+	reward.finalize("Experience")
+	editor = dlg.edit_reward(0)
+	assert editor.ui.box_amount_exp.text() == "100"
+	editor.ui.box_amount_exp.setText("250")
+	editor.finalize("Experience")
+	assert dlg.ui.tb_rewards.rowCount() == 1
+	assert dlg.fields.get_multicolumn_values_list("RewardSuccess")[0]["value"] == 250

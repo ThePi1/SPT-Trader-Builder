@@ -188,7 +188,7 @@
           <x>370</x>
           <y>190</y>
           <width>341</width>
-          <height>51</height>
+          <height>81</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="grd_fields_4">
@@ -203,6 +203,13 @@
           <widget class="QPushButton" name="pb_remove_reward">
            <property name="text">
             <string>Remove Reward</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QPushButton" name="pb_edit_reward">
+           <property name="text">
+            <string>Edit Selected Reward</string>
            </property>
           </widget>
          </item>
@@ -248,6 +255,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
         </property>
         <property name="selectionBehavior">
          <enum>QAbstractItemView::SelectRows</enum>

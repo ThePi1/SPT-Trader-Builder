@@ -2,7 +2,7 @@ import copy
 import logging
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QHeaderView, QMainWindow, QPlainTextEdit, QTableWidgetItem
+from PySide6.QtWidgets import QHeaderView, QMainWindow, QMessageBox, QPlainTextEdit, QTableWidgetItem
 
 from modules.builders import locale as locale_builders
 from modules.builders import quests
@@ -12,7 +12,7 @@ from modules.state import TableFields
 from modules.table_fields import add_table_field, find_row, remove_selected_table_item
 from modules.utils import is_true, new_id
 from modules.windows.common import select_id, select_or_add
-from modules.windows.reward import Gui_RewardDlg
+from modules.windows.reward import Gui_RewardDlg, can_edit
 from modules.windows.task import Gui_TaskDlg
 
 log = logging.getLogger(__name__)
@@ -42,6 +42,7 @@ class Gui_QuestDlg(QMainWindow):
 		self.state = state
 		self.fields = TableFields()  # this quest's conditions and rewards
 		self.windows = []
+		self.reward_editors = {}  # reward id -> the dialog editing that reward
 		self.original = copy.deepcopy(quest) if quest is not None else None  # None for a new quest
 		# name shown in the box -> id, for the boxes that show a name for an id
 		self.trader_ids = dict(state.traders)
@@ -57,6 +58,8 @@ class Gui_QuestDlg(QMainWindow):
 		self.ui.pb_finalize_quest.released.connect(self.finalize)
 		self.ui.pb_add_reward.released.connect(self.open_reward_window)
 		self.ui.pb_remove_reward.released.connect(self.remove_selected_reward)
+		self.ui.pb_edit_reward.released.connect(self.edit_selected_reward)
+		self.ui.tb_rewards.cellDoubleClicked.connect(lambda row, _column: self.edit_reward(row))
 		self.setup_box_selections()
 		self.setup_text_edit()
 		self.quest_id = self.original["_id"] if self.original is not None else new_id()
@@ -122,7 +125,57 @@ class Gui_QuestDlg(QMainWindow):
 	def setup_text_edit(self):
 		pass
 
+	def edit_selected_reward(self):
+		"""The Edit Selected Reward button."""
+		selected = self.ui.tb_rewards.selectedItems()
+		if selected:
+			self.edit_reward(selected[0].row())
+
+	def edit_reward(self, row):
+		"""Open the reward in a table row in the Reward Builder to edit it (or bring its window forward
+		if it is already open). Returns the dialog, or None if it can't be opened."""
+		table = self.ui.tb_rewards
+		if table.item(row, 0) is None:
+			return None
+		reward_id, timing = table.item(row, 0).text(), table.item(row, 1).text()
+		reward = self.fields.data.get(f"Reward{timing}", {}).get(reward_id)
+		if reward is None:
+			return None
+		if not can_edit(reward):
+			QMessageBox.information(
+				self,
+				"Edit Reward",
+				f"The Reward Builder can't make rewards of type {reward.get('type')}, so it can't edit "
+				"this one either.\n\nYou can remove it, or leave it as it is.",
+			)
+			return None
+		open_dlg = self.reward_editors.get(reward_id)
+		if open_dlg is not None and open_dlg.isVisible():
+			open_dlg.raise_()
+			open_dlg.activateWindow()
+			return open_dlg
+		dlg = Gui_RewardDlg(self.state, parent=self, reward=reward, timing=timing)
+		dlg.reward_ready.connect(
+			lambda new_timing, kind, rid, edited, old_timing=timing: self.reward_edited(
+				old_timing, new_timing, kind, rid, edited
+			)
+		)
+		self.reward_editors[reward_id] = dlg
+		self.windows.append(dlg)
+		return dlg
+
+	def reward_edited(self, old_timing, timing, reward_type, reward_id, reward):
+		"""A reward was edited and saved: it replaces the old one (moving to another list if its timing changed)."""
+		if timing != old_timing:
+			self.fields.data.get(f"Reward{old_timing}", {}).pop(reward_id, None)
+		self.add_reward(timing, reward_type, reward_id, reward)
+
 	def remove_selected_reward(self):
+		selected = self.ui.tb_rewards.selectedItems()
+		if selected:
+			editor = self.reward_editors.pop(self.ui.tb_rewards.item(selected[0].row(), 0).text(), None)
+			if editor is not None:
+				editor.close()  # (saving it would bring the removed reward back)
 		remove_selected_table_item(
 			self.fields,
 			type="RewardAny", table=self.ui.tb_rewards

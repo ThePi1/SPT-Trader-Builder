@@ -169,7 +169,7 @@ class Ui_QuestWindow(object):
 
         self.gridLayoutWidget_4 = QWidget(self.tab_quest)
         self.gridLayoutWidget_4.setObjectName(u"gridLayoutWidget_4")
-        self.gridLayoutWidget_4.setGeometry(QRect(370, 190, 341, 51))
+        self.gridLayoutWidget_4.setGeometry(QRect(370, 190, 341, 81))
         self.grd_fields_4 = QGridLayout(self.gridLayoutWidget_4)
         self.grd_fields_4.setObjectName(u"grd_fields_4")
         self.grd_fields_4.setContentsMargins(0, 0, 0, 0)
@@ -182,6 +182,11 @@ class Ui_QuestWindow(object):
         self.pb_remove_reward.setObjectName(u"pb_remove_reward")
 
         self.grd_fields_4.addWidget(self.pb_remove_reward, 0, 1, 1, 1)
+
+        self.pb_edit_reward = QPushButton(self.gridLayoutWidget_4)
+        self.pb_edit_reward.setObjectName(u"pb_edit_reward")
+
+        self.grd_fields_4.addWidget(self.pb_edit_reward, 1, 0, 1, 2)
 
         self.label_2 = QLabel(self.tab_quest)
         self.label_2.setObjectName(u"label_2")
@@ -205,6 +210,7 @@ class Ui_QuestWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tb_rewards.sizePolicy().hasHeightForWidth())
         self.tb_rewards.setSizePolicy(sizePolicy)
+        self.tb_rewards.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tb_rewards.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tb_cond = QTableWidget(self.tab_quest)
         if (self.tb_cond.columnCount() < 3):
@@ -433,6 +439,7 @@ class Ui_QuestWindow(object):
         self.pb_add_task.setText(QCoreApplication.translate("QuestWindow", u"Add Task (launch menu)", None))
         self.pb_add_reward.setText(QCoreApplication.translate("QuestWindow", u" Add Reward (launch menu)", None))
         self.pb_remove_reward.setText(QCoreApplication.translate("QuestWindow", u"Remove Reward", None))
+        self.pb_edit_reward.setText(QCoreApplication.translate("QuestWindow", u"Edit Selected Reward", None))
         self.label_2.setText(QCoreApplication.translate("QuestWindow", u"Rewards:", None))
         self.label_3.setText(QCoreApplication.translate("QuestWindow", u"Tasks:", None))
         ___qtablewidgetitem = self.tb_rewards.horizontalHeaderItem(0)
