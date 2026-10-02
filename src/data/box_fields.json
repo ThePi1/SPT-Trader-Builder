@@ -87,17 +87,6 @@
 		"Sandbox_high",
 		"Labyrinth"
 	],
-	"qb_box_reward": [
-		"Experience",
-		"TraderStanding",
-		"Item",
-		"AssortmentUnlock"
-	],
-	"qb_box_status": [
-		"Success",
-		"Fail",
-		"Started"
-	],
 	"ab_box_loyalty_level": [
 		"1",
 		"2",

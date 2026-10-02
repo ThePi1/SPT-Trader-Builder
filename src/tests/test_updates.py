@@ -69,3 +69,12 @@ def test_window_starts_pending_and_updates_from_worker(main_window, monkeypatch)
 	worker.run()  # synchronously, instead of via the thread pool
 	assert main_window.update_status.state == updates.OUTDATED
 	assert "99.0.0" in main_window.statusBar().currentMessage()
+
+
+def test_a_check_that_finishes_after_the_window_is_gone_does_not_raise(qapp, config, monkeypatch):
+	import shiboken6
+
+	monkeypatch.setattr(updates, "check_for_updates", lambda c: "result")
+	worker = updates.UpdateCheckWorker(config)
+	shiboken6.delete(worker.signals)  # what happens to it when the window closes first
+	worker.run()  # must not raise

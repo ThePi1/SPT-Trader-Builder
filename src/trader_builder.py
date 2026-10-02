@@ -1,6 +1,7 @@
 import logging, os, sys, ctypes
 from PySide6.QtWidgets import QApplication, QMessageBox
 from config import ConfigError, load_config
+from error_handling import install_excepthook, report_exception
 from paths import APP_DIR
 from state import AppState
 from utils import LOG_FILE, set_debug_logging, setup_logging
@@ -27,7 +28,9 @@ def main():
 		fix_win_taskbar()
 
 	# Create the application and main window
-	app = QApplication(sys.argv)
+	app = QApplication.instance() or QApplication(sys.argv)
+	# From here on, an unexpected error is shown to the user (the packaged program has no console)
+	install_excepthook()
 	try:
 		config = load_config()
 	except ConfigError as e:
@@ -38,17 +41,22 @@ def main():
 		set_debug_logging(config.debug_logging)
 	except OSError as e:
 		log.warning(f"Could not open the debug log file {LOG_FILE}: {e}")
-	win = Gui_MainWindow(AppState.load(config))
+	try:
+		win = Gui_MainWindow(AppState.load(config))
 
-	# # Set up triggers
-	win.ui.actionAbout.triggered.connect(win.onAbout)
-	win.ui.actionUpdateCheck.triggered.connect(win.onUpdateWindow)
-	win.ui.actionQuest_Builder.triggered.connect(win.onQuestWindow)
-	win.ui.actionAssort_Builder.triggered.connect(win.onAssortWindow)
-	win.ui.actionEdit_Tracked_Data_Files_locale_quest.triggered.connect(win.editDataFiles)
+		# # Set up triggers
+		win.ui.actionAbout.triggered.connect(win.onAbout)
+		win.ui.actionUpdateCheck.triggered.connect(win.onUpdateWindow)
+		win.ui.actionQuest_Builder.triggered.connect(win.onQuestWindow)
+		win.ui.actionAssort_Builder.triggered.connect(win.onAssortWindow)
+		win.ui.actionEdit_Tracked_Data_Files_locale_quest.triggered.connect(win.editDataFiles)
 
-	win.show()
-	win.start_update_check()
+		win.show()
+		win.start_update_check()
+	except Exception:
+		# e.g. a missing or damaged data file
+		report_exception(*sys.exc_info(), title="Trader Builder - could not start")
+		sys.exit(1)
 	# Run the application's main loop
 	sys.exit(app.exec())
 

@@ -11,7 +11,8 @@ import re
 from configparser import ConfigParser, Error as ConfigParserError
 from pathlib import Path
 
-from paths import DATA_DIR
+from paths import APP_DIR, DATA_DIR
+from utils import read_json
 
 # Every value in settings.ini, in file order, as (section, key). Key names are unique,
 # so a settings dict is just {key: value}.
@@ -20,6 +21,7 @@ SETTINGS_KEYS = (
 	("filepaths", "version_file"),
 	("filepaths", "version_url"),
 	("filepaths", "project_url"),
+	("filepaths", "items_file"),
 	("defaults", "default_questicon"),
 )
 SETTING_NAMES = tuple(key for _, key in SETTINGS_KEYS)
@@ -41,6 +43,18 @@ def parse_bool(text):
 		return False
 	raise ValueError(f"not a true/false value: {text!r}")
 
+# The item database the program uses unless another one is chosen in Settings: the items.json
+# that ships with the program (relative paths are relative to the program folder).
+DEFAULT_ITEMS_FILE = "data/items.json"
+
+
+def resolve_items_path(text):
+	"""The full path of an items_file setting. Empty means the included file; relative paths are
+	relative to the program folder."""
+	path = Path((text or "").strip() or DEFAULT_ITEMS_FILE)
+	return path if path.is_absolute() else APP_DIR / path
+
+
 # Changing any of these means the update check should be run again
 UPDATE_SETTING_NAMES = ("version_file", "version_url", "project_url")
 
@@ -54,8 +68,6 @@ BOX_FIELD_KEYS = (
 	"qb_box_avail_faction",
 	"qb_box_quest_type_label",
 	"qb_box_location",
-	"qb_box_reward",
-	"qb_box_status",
 	"ab_box_loyalty_level",
 	"ab_box_condition_req",
 	"ab_box_modslot",
@@ -92,14 +104,20 @@ class Config:
 		box_fields,
 		settings_path=None,
 		debug_logging=False,
+		items_file=DEFAULT_ITEMS_FILE,
 	):
 		self.settings_path = settings_path
+		self.items_file = items_file
 		self.debug_logging = debug_logging
 		self.version_file = version_file
 		self.version_url = version_url
 		self.project_url = project_url
 		self.default_questicon = default_questicon
 		self.box_fields = box_fields
+
+	def items_path(self):
+		"""Where the item database is: the file chosen in Settings, or the included data/items.json."""
+		return resolve_items_path(self.items_file)
 
 	def settings(self):
 		"""The current value of everything in settings.ini, as {key: text}."""
@@ -147,14 +165,15 @@ def load_config(settings_path=None, box_fields_path=None):
 		default_questicon = parser.get("defaults", "default_questicon")
 		# (optional: a settings file from before this existed simply has it off)
 		debug_logging = parser.getboolean("general", "debug_logging", fallback=False)
+		# (optional too: which items.json to use; missing or empty means the included one)
+		items_file = parser.get("filepaths", "items_file", fallback="").strip() or DEFAULT_ITEMS_FILE
 	except (ConfigParserError, ValueError) as e:
 		raise ConfigError(
 			f"There is a problem with the settings file:\n{settings_path}\n\n{e}"
 		) from e
 
 	try:
-		with open(box_fields_path, encoding="utf-8") as f:
-			box_fields = json.load(f)
+		box_fields = read_json(box_fields_path)
 	except OSError as e:
 		raise ConfigError(f"Could not read the dropdown lists file:\n{box_fields_path}\n\n{e}") from e
 	except json.JSONDecodeError as e:
@@ -182,6 +201,7 @@ def load_config(settings_path=None, box_fields_path=None):
 		box_fields=box_fields,
 		settings_path=settings_path,
 		debug_logging=debug_logging,
+		items_file=items_file,
 	)
 
 

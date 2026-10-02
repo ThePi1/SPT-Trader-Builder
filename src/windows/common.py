@@ -1,6 +1,18 @@
+import html
 import logging
+import re
 
 log = logging.getLogger(__name__)
+
+
+def fill_placeholders(template, values):
+	"""Replace placeholder words in an HTML template ({placeholder: value}) with their values.
+
+	Values are inserted as plain text (HTML-escaped, nothing in them is treated as markup or
+	as a replacement pattern), and in a single pass so a value can't be substituted again.
+	"""
+	pattern = re.compile("|".join(re.escape(name) for name in values))
+	return pattern.sub(lambda m: html.escape(str(values[m.group(0)]), quote=True), template)
 
 
 def safe_file_dialog(method, window_title):

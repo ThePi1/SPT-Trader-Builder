@@ -1,9 +1,11 @@
 """Small helpers shared by the GUI and the entry point."""
 
+import json
 import logging
 import os
 import secrets
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 from paths import APP_DIR
 
@@ -18,6 +20,35 @@ _LOG_FORMAT = "%(asctime)s %(levelname)-7s %(name)s: %(message)s"
 def new_id():
 	"""A new 24-character hex ID, the same shape as a Mongo ObjectId (what SPT expects)."""
 	return secrets.token_hex(12)
+
+
+# JSON files are read as UTF-8 (what SPT and the mods write). Files with Russian text have
+# also turned up in the legacy DOS code page, so that is tried if UTF-8 doesn't fit; it can
+# decode any byte, so it always works as a last resort.
+_JSON_ENCODINGS = ("utf-8-sig", "cp866")
+
+
+def read_json(path):
+	"""Load a JSON file, whatever (UTF-8 or Russian code page) encoding it was saved in.
+
+	Raises OSError if it can't be read and json.JSONDecodeError if it isn't valid JSON.
+	"""
+	data = Path(path).read_bytes()
+	for encoding in _JSON_ENCODINGS:
+		try:
+			text = data.decode(encoding)
+		except UnicodeDecodeError:
+			continue
+		if encoding != _JSON_ENCODINGS[0]:
+			logging.getLogger(__name__).warning(f"{path} is not UTF-8; read it as {encoding}")
+		return json.loads(text)  # (a decode that worked but isn't valid JSON is just bad JSON)
+
+
+def write_json(path, data, indent=2):
+	"""Save data as UTF-8 JSON, keeping non-English text (e.g. Russian) readable in the file."""
+	text = json.dumps(data, indent=indent, ensure_ascii=False)  # (before opening, so an error can't leave a half-written file)
+	with open(path, "w", encoding="utf-8") as f:
+		f.write(text)
 
 
 def is_true(val):

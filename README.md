@@ -11,6 +11,13 @@ A tool for building EFT SPT Quests.
 The values in `src/data/settings.ini` (update check URLs and the quest defaults) can be edited from **Settings > Edit Settings...** in the app. Saving only rewrites the lines you changed, so the comments in the file are kept.
 The dropdown lists live in `src/data/box_fields.json` and are not editable from the app.
 
+### items.json
+The program uses one item database (an `items.json`), loaded when it starts and used everywhere it is needed: the **ID Lookup** tab, the child-item finder (Debug > Get all children of parent ID) and the Settings dialog. By default this is the `data/items.json` included with the program, so you don't need to do anything.
+To use a different one (say, from your SPT install, to include modded items), choose it with **Load items.json...** in the Settings dialog (or in the child-item finder). It is remembered in `settings.ini` (`items_file`) and loaded every time the program starts. **Use included file** in Settings goes back to the default.
+If the file you chose can't be loaded at startup, the included one is used instead and the status bar says why. The line at the bottom of the ID Lookup tab says whether an items.json is loaded; "No items.json loaded" should only appear if even the included file is missing.
+
+The ID Lookup search matches any column (the id, the data, or the type) and understands regular expressions (case-insensitive). For example, `^trader$` lists every trader.
+
 ### Debug log
 Turn on **Write a debug log file** in the Settings dialog (or set `debug_logging = true` in `settings.ini`) to save a detailed log to `trader_builder.log`, for troubleshooting or to attach to a bug report. It is off by default, and no log file is written while it's off.
 The file is created next to the program: in `src/` when running from source, and next to the `.exe` in the packaged build. It rotates at about 500 KB and keeps two older copies (`trader_builder.log.1` and `.2`).
@@ -31,6 +38,7 @@ If you're not developing on Windows feel free to skip this (or make an analogue 
     src/windows/            one module per window (quest, task, reward, assort, ...)
     src/tb_ui/              generated from the .ui files, don't edit by hand
     src/tests/              the test suite (see below)
+    src/error_handling.py   shows unexpected errors in a dialog (the packaged program has no console)
     src/paths.py, utils.py, updates.py, table_fields.py   small shared helpers
 
 ## Tests

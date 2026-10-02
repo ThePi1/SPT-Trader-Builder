@@ -47,7 +47,7 @@ class UpdateStatus:
 
 def read_local_version(config):
 	try:
-		with open(APP_DIR / config.version_file) as f:
+		with open(APP_DIR / config.version_file, encoding="utf-8") as f:
 			return f.read().strip()
 	except OSError as e:
 		log.error(f"Could not read the local version file: {e}")
@@ -106,4 +106,9 @@ class UpdateCheckWorker(QRunnable):
 				read_local_version(self.config), "", UNKNOWN, self.config.project_url
 			)
 		if not self.stale:
-			self.signals.finished.emit(status)
+			try:
+				self.signals.finished.emit(status)
+			except RuntimeError:
+				# the window (and with it the signal object) was closed before the check finished;
+				# there is nobody left to tell
+				log.debug("Update check finished after the window was closed")

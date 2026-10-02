@@ -22,6 +22,7 @@ GOOD = {
 	"version_file": "data/version.txt",
 	"version_url": "https://example.com/version.txt",
 	"project_url": "https://example.com/project",
+	"items_file": "C:/games/SPT/items.json",
 	"default_questicon": "/files/quest/icon/abc.jpg",
 }
 
@@ -35,6 +36,7 @@ debug_logging = true
 version_file = data/version.txt
 version_url = https://old.example/version.txt
 project_url = https://old.example/project
+items_file = /old/items.json
 
 [defaults]
 default_questicon = /old.jpg

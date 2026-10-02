@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 from builders import assort as assort_builders
 from tb_ui.gui_assort import Ui_AssortBuilder
 from paths import DATA_DIR
-from utils import new_id
+from utils import new_id, read_json
 from windows.common import safe_file_dialog
 
 log = logging.getLogger(__name__)
@@ -34,8 +34,7 @@ def _is_whole_number(text):
 @functools.lru_cache(maxsize=None)
 def _load_item_names(path):
 	"""{item id: display name} from the reference file. Read once per run (keyed by path)."""
-	with open(path, "r", encoding="utf-8") as file:
-		reference = json.load(file)
+	reference = read_json(path)
 	names = {}
 	for item in reference.get("items", []):
 		# if an id is listed twice, the first entry wins
@@ -159,30 +158,53 @@ class Gui_AssortDlg(QMainWindow):
 		self.ui.ab_condition_box.addItems(self.state.config.ab_box_condition_req)
 		self.ui.ab_modslot_combo.addItems(self.state.config.ab_box_modslot)
 
-	def onImportAssort(
-		self,
-	):  # AI WRITTEN function purely for ease. I will be coming back to this.
-		table = self.ui.ab_table
+	def onImportAssort(self):
 		filename, _ = QFileDialog.getOpenFileName(
 			self, "Import Assort JSON", "", "JSON Files (*.json);;All Files (*)"
 		)
 		if not filename:
 			return
 
-		with open(filename, "r", encoding="utf-8") as f:
-			assort = json.load(f)
+		try:
+			assort = read_json(filename)
+		except (OSError, ValueError) as e:  # (a bad JSON file is a ValueError)
+			log.error(f"Could not read {filename}: {e}")
+			QMessageBox.critical(self, "Import Assort JSON", f"Could not read {filename}.\n\n{e}")
+			return
+		if not (
+			isinstance(assort, dict)
+			and isinstance(assort.get("items", []), list)
+			and isinstance(assort.get("barter_scheme", {}), dict)
+			and isinstance(assort.get("loyal_level_items", {}), dict)
+		):
+			QMessageBox.critical(
+				self,
+				"Import Assort JSON",
+				f"{filename} doesn't look like an assort file.\n\n"
+				"Expected items, barter_scheme and loyal_level_items.",
+			)
+			return
+
+		# An import replaces the assort being built (the table is rebuilt from the file), so
+		# check before throwing away anything that is in it.
+		if self.itemlist:
+			answer = QMessageBox.question(
+				self,
+				"Import Assort JSON",
+				f"Importing will replace the {len(self.itemlist)} item(s) currently in the assort. Continue?",
+			)
+			if answer != QMessageBox.StandardButton.Yes:
+				return
 
 		items = assort.get("items", [])
-		for item in assort.get("items", []):
-			self.itemlist.append(item)
-
 		barter_scheme = assort.get("barter_scheme", {})
-		self.barterlist.update(assort.get("barter_scheme", {}))
-
 		loyal_levels = assort.get("loyal_level_items", {})
-		self.loyaltylist.update(assort.get("loyal_level_items", {}))
+		self.itemlist = list(items)
+		self.barterlist = dict(barter_scheme)
+		self.loyaltylist = dict(loyal_levels)
 
 		table = self.ui.ab_table
+		table.setSortingEnabled(False)  # (so rows can't move while their cells are being filled in)
 		table.clear()
 		table.setColumnCount(6)
 		table.setHorizontalHeaderLabels(
@@ -190,8 +212,6 @@ class Gui_AssortDlg(QMainWindow):
 		)
 		table.setRowCount(0)
 		table.setAlternatingRowColors(True)
-		table.setSortingEnabled(True)
-		table.horizontalHeader().setSortIndicatorShown(True)
 
 		for item in items:
 			item_id = item.get("_id", "")
@@ -210,7 +230,6 @@ class Gui_AssortDlg(QMainWindow):
 
 			# Quest locked?
 			quest_id = item.get("questID", "")
-			unlocked_on = item.get("unlockedOn", "")
 			# show questID if present, otherwise blank
 			quest_display = quest_id if quest_id else ""
 
@@ -226,15 +245,12 @@ class Gui_AssortDlg(QMainWindow):
 					payment0 = group0[0]
 					if isinstance(payment0, dict):
 						cost_display = str(payment0.get("count", ""))
-						currency_display = str(payment0.get("_tpl", ""))
-
-						currency_display = assort_builders.currency_name(currency_display)
+						currency_display = assort_builders.currency_name(str(payment0.get("_tpl", "")))
 
 			# Insert row
 			row = table.rowCount()
 			table.insertRow(row)
 
-			tpl = item.get("_tpl", "")
 			slot = item.get("slotId", "")
 			parent = item.get("parentId", "")
 
@@ -246,16 +262,23 @@ class Gui_AssortDlg(QMainWindow):
 			):
 				display_name = f"{parent}+{slot}"
 
+			# The same cell data as a row added by hand: the name cell holds the parent's id
+			# (None for a root item) and the quantity cell holds the item's own id.
 			name_item = QTableWidgetItem(display_name)
-			name_item.setData(Qt.ItemDataRole.UserRole, item.get("_id", ""))
+			name_item.setData(
+				Qt.ItemDataRole.UserRole, None if parent in ("", "hideout", None) else parent
+			)
 
 			table.setItem(row, 0, name_item)
 			table.setItem(row, 1, QTableWidgetItem(qty_display))
-			table.item(row, 1).setData(Qt.ItemDataRole.UserRole, item.get("_id", ""))
+			table.item(row, 1).setData(Qt.ItemDataRole.UserRole, item_id)
 			table.setItem(row, 2, QTableWidgetItem(cost_display))
 			table.setItem(row, 3, QTableWidgetItem(loyalty_display))
 			table.setItem(row, 4, QTableWidgetItem(quest_display))
 			table.setItem(row, 5, QTableWidgetItem(currency_display))
+
+		table.setSortingEnabled(True)
+		table.horizontalHeader().setSortIndicatorShown(True)
 
 	def onWeaponSelected(
 		self,
@@ -276,7 +299,8 @@ class Gui_AssortDlg(QMainWindow):
 		for row in range(table.rowCount()):
 			item = table.item(row, 0)  # display name col
 			text = item.text().lower() if item else ""
-			mongo = item.data(Qt.ItemDataRole.UserRole)
+			id_cell = table.item(row, 1)  # the quantity cell holds the item's own id
+			mongo = id_cell.data(Qt.ItemDataRole.UserRole) if id_cell else None
 			mongo = str(mongo).lower() if mongo else ""
 			match = (q in text) or (
 				q in mongo
@@ -350,45 +374,42 @@ class Gui_AssortDlg(QMainWindow):
 			self.questLockedChecked(self.ui.ab_quest_check.isChecked())
 			self.itemBarterChecked(self.ui.ab_itembarter_check.isChecked())
 
-	def remove_children(self, mongosaved):
-		children = [
-			item for item in self.itemlist if item.get("parentId") == mongosaved
-		]
-		self.itemlist = [
-			item for item in self.itemlist if item.get("_id") != mongosaved
-		]
-		for child in children:
-			self.remove_children(child.get("_id"))
-
-	def removeTableChildren(self, parent_id):
-		rows_to_remove = []
-		for row in range(self.ui.ab_table.rowCount()):
-			item = self.ui.ab_table.item(row, 0)
-			if item and item.data(Qt.ItemDataRole.UserRole) == parent_id:
-				rows_to_remove.append(row)
-
-		for row in reversed(rows_to_remove):
-			child_id = self.ui.ab_table.item(row, 1).data(Qt.ItemDataRole.UserRole)
-			self.removeTableChildren(child_id)  # recurse before removing
-			self.ui.ab_table.removeRow(row)
+	def with_descendants(self, item_id):
+		"""The ids of an item and everything attached below it (mods on mods, and so on)."""
+		children = {}
+		for item in self.itemlist:
+			children.setdefault(item.get("parentId"), []).append(item.get("_id"))
+		found = set()
+		pending = [item_id]
+		while pending:
+			current = pending.pop()
+			if current in found:  # (a loop in the data must not loop forever)
+				continue
+			found.add(current)
+			pending.extend(children.get(current, []))
+		return found
 
 	def remove_Item(
 		self,
-	):  # remove selected item from lists/dicts and remove from table.
+	):  # remove selected item (and anything attached to it) from lists/dicts and from the table.
 		row = self.ui.ab_table.currentRow()
 		if row < 0:
 			return
 
 		mongosaved = self.ui.ab_table.item(row, 1).data(Qt.ItemDataRole.UserRole)
-		self.remove_children(mongosaved)
-		if (
-			mongosaved in self.barterlist
-		):  # checks if weapon part and skips barterlist and loyaltylist
-			self.barterlist.pop(mongosaved)
-			self.loyaltylist.pop(mongosaved)
+		doomed = self.with_descendants(mongosaved)
 
-		self.removeTableChildren(mongosaved)
-		self.ui.ab_table.removeRow(row)
+		self.itemlist = [item for item in self.itemlist if item.get("_id") not in doomed]
+		for item_id in doomed:  # (only root items for sale have a price and a loyalty level)
+			self.barterlist.pop(item_id, None)
+			self.loyaltylist.pop(item_id, None)
+
+		# go from the bottom up so removing a row doesn't move the ones still to check
+		table = self.ui.ab_table
+		for r in reversed(range(table.rowCount())):
+			id_cell = table.item(r, 1)
+			if id_cell is not None and id_cell.data(Qt.ItemDataRole.UserRole) in doomed:
+				table.removeRow(r)
 
 	def add_item(self):  # The basic assort add function
 

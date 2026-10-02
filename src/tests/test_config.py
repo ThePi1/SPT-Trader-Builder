@@ -50,3 +50,23 @@ def test_missing_ini_entry_is_reported(tmp_path):
 	settings.write_text("[filepaths]\nversion_file = x\n", encoding="utf-8")
 	with pytest.raises(ConfigError, match="problem with the settings file"):
 		load_config(settings, fields)
+
+
+def test_the_dropdown_lists_file_has_nothing_the_program_does_not_use():
+	import json
+
+	shipped = json.loads((DATA_DIR / "box_fields.json").read_text(encoding="utf-8"))
+	assert sorted(shipped) == sorted(BOX_FIELD_KEYS)
+
+
+def test_every_required_dropdown_list_is_used_by_the_program():
+	from pathlib import Path
+
+	src = Path(DATA_DIR).parent
+	code = "\n".join(
+		"\n".join(line.split("#")[0] for line in path.read_text(encoding="utf-8").splitlines())
+		for path in list(src.glob("*.py")) + list((src / "windows").glob("*.py"))
+		if path.name != "config.py"
+	)
+	unused = [key for key in BOX_FIELD_KEYS if key not in code]
+	assert unused == []

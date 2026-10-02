@@ -1,9 +1,8 @@
-import re
-
 from PySide6 import QtCore
 from PySide6.QtWidgets import QDialog
 
 from tb_ui.gui_about import Ui_AboutMenu
+from windows.common import fill_placeholders
 
 
 class Gui_AboutDlg(QDialog):
@@ -13,7 +12,7 @@ class Gui_AboutDlg(QDialog):
 		self.ui.setupUi(self)
 
 	def updateAbout(self, ver_current, url_text):
-		text = self.ui.label.text()
-		text = re.sub("V_CUR", ver_current, text)
-		text = re.sub("SRC_URL", url_text, text)
+		text = fill_placeholders(
+			self.ui.label.text(), {"V_CUR": ver_current, "SRC_URL": url_text}
+		)
 		self.ui.label.setText(QtCore.QCoreApplication.translate("AboutMenu", text))

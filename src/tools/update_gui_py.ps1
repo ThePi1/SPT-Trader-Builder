@@ -7,3 +7,4 @@ pyside6-uic -o tb_ui\gui_assort.py tb_ui\gui_assort.ui
 pyside6-uic -o tb_ui\gui_rewards.py tb_ui\gui_rewards.ui
 pyside6-uic -o tb_ui\gui_datafiles.py tb_ui\gui_datafiles.ui
 pyside6-uic -o tb_ui\gui_settings.py tb_ui\gui_settings.ui
+pyside6-uic -o tb_ui\gui_children.py tb_ui\gui_children.ui

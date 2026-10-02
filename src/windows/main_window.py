@@ -1,6 +1,4 @@
 import sys
-import re
-import json
 import traceback
 import logging
 
@@ -19,12 +17,15 @@ from PySide6.QtWidgets import (
 
 from builders import assort as assort_builders
 from builders import locale as locale_builders
+from builders.lookup import filter_rows, lookup_rows
 from config import UPDATE_SETTING_NAMES
+from state import load_items_file
 from tb_ui.gui_main import Ui_MainGUI
 from updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
-from utils import LOG_FILE, new_id, set_debug_logging
+from utils import LOG_FILE, new_id, read_json, set_debug_logging, write_json
 from windows.about import Gui_AboutDlg
 from windows.assort import Gui_AssortDlg
+from windows.children_dialog import Gui_ChildrenDlg
 from windows.common import safe_file_dialog
 from windows.data_editor import Gui_DataEditor
 from windows.quest import Gui_QuestDlg
@@ -32,6 +33,11 @@ from windows.settings import Gui_SettingsDlg
 from windows.update_dialog import Gui_UpdatesDlg
 
 log = logging.getLogger(__name__)
+
+# What createLocaleFromJSON returns
+LOCALE_UPDATED = "updated"
+LOCALE_CANCELLED = "cancelled"  # a file wasn't chosen
+LOCALE_FAILED = "failed"  # an error was shown
 
 
 class Gui_MainWindow(QMainWindow):
@@ -47,23 +53,24 @@ class Gui_MainWindow(QMainWindow):
 		self.setup_box_selections()
 		self.connect_actions()
 		self.setup_vars()
+		self.refresh_items_status()
+		if state.items_error:  # (the file chosen in Settings couldn't be used at startup)
+			self.statusBar().showMessage(f"Could not load items.json: {state.items_error}", 20000)
 
 	def setup_vars(self):
 		self.weaponlist = []
 		self.windows = []
-		self.itemsJSON = None
 		self.weapon_preset_filename = None
 
 	def connect_actions(self):
 		self.ui.actionExit.triggered.connect(self.onExit)
 		self.ui.actionSettingsMenu.triggered.connect(self.onSettings)
 		self.ui.actionExport_Queued_Quests.triggered.connect(self.onExportQuests)
-		self.ui.actionLoad_items_json_for_below.triggered.connect(self.loadItemsJSON)
 		self.ui.actionGet_all_children_of_parent_ID.triggered.connect(
 			self.getAllChildrenCalc
 		)
 		self.ui.actionCreate_locale_from_Quest_JSON.triggered.connect(
-			self.createLocaleFromJSON
+			self.onCreateLocale
 		)
 		self.ui.actionImport_Quests.triggered.connect(self.importQuests)
 		self.ui.wb_addpart_button.released.connect(self.addpart)
@@ -78,76 +85,53 @@ class Gui_MainWindow(QMainWindow):
 		# self.ui.wb_treeview.itemSelectionChanged.connect(self.onWeaponSelected)
 
 	def update_idlookup(self):
-		self.ui.id_table.setRowCount(0)
-		search_str = self.ui.fld_idlookup.displayText()
+		"""Fill the ID Lookup table with every row where the search text matches any column."""
+		rows = lookup_rows(
+			self.state.id_search,
+			self.state.quests,
+			self.state.items,
+			self.state.locations,
+			self.state.traders,
+		)
+		matches = filter_rows(rows, self.ui.fld_idlookup.text())
+		table = self.ui.id_table
+		table.setUpdatesEnabled(False)  # (thousands of rows: repaint once at the end)
 		try:
-			search_re = re.compile(search_str, re.IGNORECASE)
-		except Exception as e:
-			search_re = re.compile("")
-		keys_to_search = list(self.state.id_search.keys())
-		local_quest_ids = {}
+			table.setRowCount(len(matches))
+			for row, (item_id, data, kind) in enumerate(matches):
+				table.setItem(row, 0, Gui_MainWindow.table_widget(item_id))
+				table.setItem(row, 1, Gui_MainWindow.table_widget(data, hover=True))
+				table.setItem(row, 2, Gui_MainWindow.table_widget(kind))
+		finally:
+			table.setUpdatesEnabled(True)
 
-		# add newly created quests
-		for _id, _data in self.state.quests.items():
-			keys_to_search.append(_data["QuestName"])
-			local_quest_ids[_data["QuestName"]] = _id
-
-		# add item keys
-		for _id, _data in self.state.items.items():
-			keys_to_search.append(_data["_name"])
-
-		# add locations
-		for _location, _id in self.state.locations.items():
-			keys_to_search.append(_location)
-
-		# add traders
-		for _trader, _id in self.state.traders.items():
-			keys_to_search.append(_trader)
-
-		# do the filtered search and inserts
-		filtered_keys = [item for item in keys_to_search if re.search(search_re, item)]
-		for key in filtered_keys:
-			row_position = self.ui.id_table.rowCount()
-			self.ui.id_table.insertRow(row_position)
-			if key in self.state.id_search:
-				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.state.id_search[key])
-				)
-				self.ui.id_table.setItem(
-					row_position, 2, Gui_MainWindow.table_widget("wtt_custom")
-				)
-			elif key in local_quest_ids:
-				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(local_quest_ids[key])
-				)
-				self.ui.id_table.setItem(
-					row_position, 2, Gui_MainWindow.table_widget("new_quest")
-				)
-			elif key in self.state.item_id_name:
-				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.state.item_id_name[key])
-				)
-				self.ui.id_table.setItem(
-					row_position, 2, Gui_MainWindow.table_widget("eft_item")
-				)
-			elif key in self.state.locations.keys():
-				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.state.locations[key])
-				)
-				self.ui.id_table.setItem(
-					row_position, 2, Gui_MainWindow.table_widget("location")
-				)
-			elif key in self.state.traders.keys():
-				self.ui.id_table.setItem(
-					row_position, 0, Gui_MainWindow.table_widget(self.state.traders[key])
-				)
-				self.ui.id_table.setItem(
-					row_position, 2, Gui_MainWindow.table_widget("trader")
-				)
-
-			self.ui.id_table.setItem(
-				row_position, 1, Gui_MainWindow.table_widget(key, hover=True)
+	def refresh_items_status(self):
+		"""The line on the ID Lookup tab saying whether an items.json is loaded."""
+		state = self.state
+		label = self.ui.lbl_items_status
+		if state.loaded_items is None:
+			label.setText("No items.json loaded - import items in Settings.")
+			label.setToolTip(state.items_error or "")
+		elif state.items_error:
+			label.setText(
+				f"items.json loaded ({len(state.items)} items): the one chosen in Settings "
+				"could not be used, so the included file is in use."
 			)
+			label.setToolTip(state.items_error)
+		else:
+			label.setText(f"items.json loaded ({len(state.items)} items).")
+			label.setToolTip(str(state.items_path))
+
+	def apply_items(self, items, path=None, error=None):
+		"""Use this items.json as the item database from now on (None for none), and update
+		everything that shows it."""
+		if items is None:
+			self.state.set_items({}, None, error)
+		else:
+			self.state.set_items(items, path, error)
+		self.refresh_items_status()
+		if self.ui.fld_idlookup.text() or self.ui.id_table.rowCount():
+			self.update_idlookup()  # (the rows come from the items)
 
 	@staticmethod
 	def table_widget(text, hover=False):
@@ -170,7 +154,12 @@ class Gui_MainWindow(QMainWindow):
 			case "AssortBuilder":
 				dlg = Gui_AssortDlg(self.state, parent=self)
 			case "SettingsWindow":
-				dlg = Gui_SettingsDlg(self.state.config, parent=self)
+				dlg = Gui_SettingsDlg(
+					self.state.config,
+					parent=self,
+					state=self.state,
+					apply_items=self.apply_items,
+				)
 
 		self.windows.append(dlg)
 		return dlg
@@ -313,14 +302,45 @@ class Gui_MainWindow(QMainWindow):
 			if self.weapon_preset_filename is None or not ok:
 				log.info("No file selected for weapon presets, skipping export.")
 				return
-		with open(self.weapon_preset_filename, "w") as f:
-			json.dump(weaponlist, f, indent=2)
+		try:
+			write_json(self.weapon_preset_filename, weaponlist, indent=2)
+		except OSError as e:
+			log.error(f"Could not save the weapon preset to {self.weapon_preset_filename}: {e}")
+			self.show_error(
+				"Export Weapon Preset",
+				f"The weapon preset could not be saved to {self.weapon_preset_filename}.\n\n{e}",
+			)
+			self.weapon_preset_filename = None  # ask again next time
 
 	def copy_clicked_cell(self, item):
 		# if self.ui.ab_weappart_check.isChecked():
 		# return
 		text = item.data(Qt.ItemDataRole.UserRole)
 		QApplication.clipboard().setText(text)
+
+	def show_error(self, title, message):
+		QMessageBox.critical(self, title, message)
+
+	def load_quests_file(self, filename):
+		"""Read a quest JSON file. If it can't be used, shows why and returns None."""
+		try:
+			quests = read_json(filename)
+		except (OSError, ValueError) as e:  # (a bad JSON file is a ValueError)
+			log.error(f"Could not read {filename}: {e}")
+			self.show_error("Quest file", f"Could not read {filename}.\n\n{e}")
+			return None
+		looks_right = isinstance(quests, dict) and all(
+			isinstance(quest, dict) and "QuestName" in quest for quest in quests.values()
+		)
+		if not looks_right:
+			log.error(f"{filename} is not a quest file")
+			self.show_error(
+				"Quest file",
+				f"{filename} doesn't look like a quest file.\n\n"
+				"Expected quests keyed by their id, each with a QuestName.",
+			)
+			return None
+		return quests
 
 	def analyze_cc(self):
 		log.info(f"Analyzing CC subtypes, opening dialogue...")
@@ -333,36 +353,31 @@ class Gui_MainWindow(QMainWindow):
 			return
 
 		log.info(filename)
+		quests_import = self.load_quests_file(filename)
+		if quests_import is None:
+			return
 		cc_keeptrack = {}
 		non_cc_keeptrack = {}
-		with open(filename, "r", encoding="utf-8") as f:
-			try:
-				quests_import = json.load(f)
-			except Exception as e:
-				log.error(f"Error loading quest file: {e}")
-			for quest_id in quests_import.keys():
-				# print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
-				log.info(f"{quests_import[quest_id]['QuestName']}")
-				if (
-					"conditions" in quests_import[quest_id]
-					and "AvailableForFinish" in quests_import[quest_id]["conditions"]
-					and len(quests_import[quest_id]["conditions"]["AvailableForFinish"])
-					> 0
-				):
-					for avf_c in quests_import[quest_id]["conditions"][
-						"AvailableForFinish"
-					]:
-						if avf_c["conditionType"] not in non_cc_keeptrack:
-							non_cc_keeptrack[avf_c["conditionType"]] = 1
-						else:
-							non_cc_keeptrack[avf_c["conditionType"]] += 1
-						if avf_c["conditionType"] == "CounterCreator":
-							for cond in avf_c["counter"]["conditions"]:
-								log.info(f"Inner conditionType: {cond['conditionType']}")
-								if cond["conditionType"] not in cc_keeptrack:
-									cc_keeptrack[cond["conditionType"]] = 1
-								else:
-									cc_keeptrack[cond["conditionType"]] += 1
+		for quest_id in quests_import.keys():
+			# print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
+			log.info(f"{quests_import[quest_id]['QuestName']}")
+			if (
+				"conditions" in quests_import[quest_id]
+				and "AvailableForFinish" in quests_import[quest_id]["conditions"]
+				and len(quests_import[quest_id]["conditions"]["AvailableForFinish"]) > 0
+			):
+				for avf_c in quests_import[quest_id]["conditions"]["AvailableForFinish"]:
+					if avf_c["conditionType"] not in non_cc_keeptrack:
+						non_cc_keeptrack[avf_c["conditionType"]] = 1
+					else:
+						non_cc_keeptrack[avf_c["conditionType"]] += 1
+					if avf_c["conditionType"] == "CounterCreator":
+						for cond in avf_c["counter"]["conditions"]:
+							log.info(f"Inner conditionType: {cond['conditionType']}")
+							if cond["conditionType"] not in cc_keeptrack:
+								cc_keeptrack[cond["conditionType"]] = 1
+							else:
+								cc_keeptrack[cond["conditionType"]] += 1
 
 		log.info(cc_keeptrack)
 		log.info(non_cc_keeptrack)
@@ -375,111 +390,119 @@ class Gui_MainWindow(QMainWindow):
 			log.info("No file selected, aborting quest import.")
 			return
 		log.info(filename)
-		with open(filename, "r") as f:
-			try:
-				quests_import = json.load(f)
-			except Exception as e:
-				log.error(f"Error loading quest file: {e}")
-			for quest_id in quests_import.keys():
-				# print(f"Found quest {quests_import[quest_id]['QuestName']} ({quest_id})")
-				log.info(f"{quests_import[quest_id]['QuestName']}")
-				self.state.quests[quest_id] = quests_import[quest_id]
-				quest = QListWidgetItem(
-					f"{quests_import[quest_id]['QuestName']}, {quest_id}"
-				)
-				quest.setData(Qt.ItemDataRole.UserRole, quest_id)
-				self.ui.questList.addItem(quest)
-				log.info(quest.data(Qt.ItemDataRole.UserRole))
+		quests_import = self.load_quests_file(filename)
+		if quests_import is None:
+			return
+		for quest_id, quest_data in quests_import.items():
+			log.info(f"{quest_data['QuestName']}")
+			if quest_id in self.state.quests:
+				self.remove_quest_list_item(quest_id)  # (importing it again replaces it)
+			self.state.quests[quest_id] = quest_data
+			quest = QListWidgetItem(f"{quest_data['QuestName']}, {quest_id}")
+			quest.setData(Qt.ItemDataRole.UserRole, quest_id)
+			self.ui.questList.addItem(quest)
+
+	def remove_quest_list_item(self, quest_id):
+		"""Take a quest's entry out of the quest list (not out of state.quests)."""
+		for i in range(self.ui.questList.count()):
+			if self.ui.questList.item(i).data(Qt.ItemDataRole.UserRole) == quest_id:
+				self.ui.questList.takeItem(i)
+				return
 
 	def loadItemsJSON(self):
-		if self.itemsJSON is not None:
-			self.itemsJSON = None
-			log.info(f"Items.json detected, wiping and re-importing.")
+		"""Ask for an items.json, load it, and remember it as the one to load at startup.
+
+		Returns True if one was loaded.
+		"""
 		filename, ok = safe_file_dialog(
 			QFileDialog.getOpenFileName, "Import items.json"
 		)
 		if not ok or filename is None:
 			log.info("No file selected, aborting items import.")
-			return
-		with open(filename, "r", encoding="cp866") as f:
-			self.itemsJSON = json.load(f)
+			return False
+		try:
+			items = load_items_file(filename)
+		except (OSError, ValueError) as e:  # (a bad JSON file is a ValueError)
+			log.error(f"Could not read {filename}: {e}")
+			self.show_error("items.json", f"Could not read {filename}.\n\n{e}")
+			return False
+		if self.state.loaded_items is not None:
+			log.info("Items.json detected, replacing it.")
+		self.apply_items(items, filename)  # (only replaced once the new file has loaded)
+		log.info(f"Loaded {len(items)} items from {filename}")
+		self.remember_items_file(filename)
+		return True
+
+	def remember_items_file(self, path):
+		"""Save path as the items.json to load at startup."""
+		config = self.state.config
+		try:
+			config.update_settings({**config.settings(), "items_file": path})
+		except (OSError, ValueError) as e:
+			log.warning(f"Could not save the items.json setting: {e}")
+			QMessageBox.warning(
+				self,
+				"items.json",
+				f"The items.json was loaded, but it could not be remembered for next time.\n\n{e}",
+			)
 
 	def getAllChildrenCalc(self):
-		if self.itemsJSON is None:
-			print(f"No items.json loaded, cannot calculate children.")
-			return
-		print(f"Enter via console the parent ID that you wish to use:")
-		parent_id = input()
-		found_ids = []
-		for item_id in self.itemsJSON.keys():
-			chain_top = False
-			current_id = item_id
-			while not chain_top:
-				current_parent = self.itemsJSON[current_id]["_parent"]
-				if current_parent == parent_id:
-					chain_top = True
-					found_ids.append(item_id)
-				if current_id == "54009119af1c881c07000029":
-					chain_top = True
-				current_id = current_parent
-		print(f"[")
-		for _id in found_ids:
-			print(f'"{_id}",')
-		print(f"]")
+		"""Open the child-item finder (it can load an items.json itself if none is loaded yet)."""
+		dlg = Gui_ChildrenDlg(lambda: self.state.loaded_items, self.loadItemsJSON, parent=self)
+		self.windows.append(dlg)
+		dlg.show()
+		return dlg
 
 	def createLocaleFromJSON(self, q_file=None, l_file=None):
+		"""Add blank locale entries for a quest file's text to a locale file.
 
+		Asks for whichever files aren't given. Returns "updated", "cancelled" (a file
+		wasn't chosen) or "failed" (an error was shown).
+		"""
 		if q_file:
 			qfilename = q_file
 		else:
-			try:
-				qfilename, ok = safe_file_dialog(
-					QFileDialog.getOpenFileName, "Open Quest JSON"
-				)
-				if not ok or qfilename is None:
-					log.info(
-						"No file selected for quest JSON, aborting locale generation."
-					)
-					return
-			except:
-				return
+			qfilename, ok = safe_file_dialog(QFileDialog.getOpenFileName, "Open Quest JSON")
+			if not ok or qfilename is None:
+				log.info("No file selected for quest JSON, aborting locale generation.")
+				return LOCALE_CANCELLED
 		log.info(qfilename)
 
 		if l_file:
 			lfilename = l_file
 		else:
-			try:
-				lfilename, ok = safe_file_dialog(
-					QFileDialog.getOpenFileName, "Open Locale JSON"
-				)
-				if not ok or lfilename is None:
-					log.info(
-						"No file selected for locale JSON, aborting locale generation."
-					)
-					return
-			except:
-				return
+			lfilename, ok = safe_file_dialog(QFileDialog.getOpenFileName, "Open Locale JSON")
+			if not ok or lfilename is None:
+				log.info("No file selected for locale JSON, aborting locale generation.")
+				return LOCALE_CANCELLED
 		log.info(lfilename)
 
-		with open(qfilename, "r", encoding="utf-8") as f:
-			try:
-				quests_import = json.load(f)
-				for quest_id, quest in quests_import.items():
-					log.info(f"Found quest: {quest['QuestName']} ({quest_id})")
-				locales = locale_builders.locale_keys(quests_import)
-				log.debug(locales)
+		quests_import = self.load_quests_file(qfilename)
+		if quests_import is None:
+			return LOCALE_FAILED
+		for quest_id, quest in quests_import.items():
+			log.info(f"Found quest: {quest['QuestName']} ({quest_id})")
+		try:
+			locales = locale_builders.locale_keys(quests_import)
+			log.debug(locales)
+			base_locale = read_json(lfilename)
+			if not isinstance(base_locale, dict):
+				raise ValueError("expected a locale file: a dictionary of text entries")
+			final_locale = locale_builders.merge_locale(base_locale, locales)
+			log.debug(final_locale)
+			write_json(lfilename, final_locale, indent=4)
+		except (OSError, ValueError, KeyError, TypeError) as e:
+			log.error(f"Error generating locale for quest file: {traceback.format_exc()}")
+			self.show_error(
+				"Locale file", f"The locale file {lfilename} could not be updated.\n\n{type(e).__name__}: {e}"
+			)
+			return LOCALE_FAILED
+		return LOCALE_UPDATED
 
-				with open(lfilename, "r") as baselocale_f:
-					base_locale = json.load(baselocale_f)
-				final_locale = locale_builders.merge_locale(base_locale, locales)
-				log.debug(final_locale)
-				with open(lfilename, "w") as savelocale_f:
-					json.dump(final_locale, savelocale_f, indent=4)
-
-			except Exception as e:
-				log.error(
-					f"Error generating locale for quest file: {traceback.format_exc()}"
-				)
+	def onCreateLocale(self):
+		"""The Edit > Create locale from Quest JSON menu item."""
+		if self.createLocaleFromJSON() == LOCALE_UPDATED:
+			self.popup(message="The locale has been successfully updated.")
 
 	def remove_selected_quest(self):
 		qlist = self.ui.questList
@@ -587,29 +610,22 @@ class Gui_MainWindow(QMainWindow):
 		if not ok or qfilename is None:
 			log.info("No file selected for quest export, aborting export.")
 			return
-		with open(qfilename, "w") as f:
-			try:
-				out = json.dumps(quest, indent=4).strip("[]\n")
-				f.write(out)
-				f.close()
-				self.popup(
-					message=f"The quest export has completed successfully and can be found at {qfilename}."
-				)
-			except Exception as e:
-				log.error(f"Error: {e}")
-				self.popup(
-					message=f"An error has occurred while exporting the final quest JSON file."
-				)
-			finally:
-				f.close()
-
 		try:
-			self.createLocaleFromJSON(q_file=qfilename)
-			self.popup(message=f"The locale has been successfully updated.")
-		except Exception as e:
+			write_json(qfilename, quest, indent=4)
+		except (OSError, ValueError, TypeError) as e:
 			log.error(f"Error: {e}")
-			self.popup(
-				message=f"An error has occurred while updating the locale JSON file."
+			self.show_error(
+				"Export Quest JSON",
+				f"An error has occurred while exporting the final quest JSON file.\n\n{e}",
 			)
-		finally:
-			f.close()
+			return  # (don't go on to update a locale for a quest file that wasn't written)
+		self.popup(
+			message=f"The quest export has completed successfully and can be found at {qfilename}."
+		)
+
+		result = self.createLocaleFromJSON(q_file=qfilename)
+		if result == LOCALE_UPDATED:
+			self.popup(message="The locale has been successfully updated.")
+		elif result == LOCALE_CANCELLED:
+			self.popup(message="The locale was not updated, because no locale file was chosen.")
+		# (LOCALE_FAILED: the error has already been shown)

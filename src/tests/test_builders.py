@@ -394,10 +394,28 @@ def test_barter_scheme_for_an_item_trade():
 	assert scheme == {"i1": [[{"count": 2, "_tpl": "someitem"}]]}
 
 
-def test_currency_name_defaults_to_euro():
+def test_currency_names_match_the_ones_the_form_uses():
 	assert assort.currency_name(assort.ROUBLES_TPL) == "Roubles"
 	assert assort.currency_name(assort.USD_TPL) == "USD"
-	assert assort.currency_name("anything else") == "Euro"
+	assert assort.currency_name(assort.EUROS_TPL) == "Euros"
+
+
+def test_paying_with_another_item_is_called_item():
+	assert assort.currency_name("5449016a4bdc2d6f028b4570") == "Item"
+	assert assort.currency_name("anything else") == "Item"
+
+
+def test_no_payment_chosen_is_undefined():
+	assert assort.currency_name("cash") == "Undefined"
+	assert assort.currency_name("") == "Undefined"
+
+
+def test_every_currency_name_round_trips_through_barter_scheme():
+	for name in ("Roubles", "USD", "Euros"):
+		scheme = assort.barter_scheme("x", 5, currency=name)
+		assert assort.currency_name(scheme["x"][0][0]["_tpl"]) == name
+	scheme = assort.barter_scheme("x", 5, currency="Item", barter_item_tpl="some_item")
+	assert assort.currency_name(scheme["x"][0][0]["_tpl"]) == "Item"
 
 
 def test_weapon_preset_parts():

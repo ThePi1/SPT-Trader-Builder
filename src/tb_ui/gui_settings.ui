@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>560</width>
-    <height>450</height>
+    <height>520</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>480</width>
-    <height>420</height>
+    <height>470</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -102,6 +102,66 @@
        <widget class="QLineEdit" name="fld_default_questicon">
         <property name="toolTip">
          <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="grp_items">
+     <property name="title">
+      <string>Item database (items.json)</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_items">
+      <item>
+       <widget class="QLabel" name="lbl_items_help">
+        <property name="text">
+         <string>The item database used by the ID Lookup tab and the child-item finder (Debug menu). By default it is the items.json included with the program; load a different one (say, from your SPT install) to use that instead. It is remembered next time.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_items_file">
+        <item>
+         <widget class="QLineEdit" name="fld_items_file">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="placeholderText">
+           <string>data/items.json</string>
+          </property>
+          <property name="toolTip">
+           <string>The items.json used every time the program starts.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pb_load_items">
+          <property name="text">
+           <string>Load items.json...</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pb_default_items">
+          <property name="text">
+           <string>Use included file</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QLabel" name="lbl_items_status">
+        <property name="text">
+         <string>No items.json loaded.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

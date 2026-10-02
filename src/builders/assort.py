@@ -8,12 +8,18 @@ CURRENCY_TPL = {"Roubles": ROUBLES_TPL, "USD": USD_TPL, "Euros": EUROS_TPL}
 
 
 def currency_name(tpl):
-	"""Display name for a payment item (anything that is not roubles or USD is shown as Euro)."""
-	if tpl == ROUBLES_TPL:
-		return "Roubles"
-	elif tpl == USD_TPL:
-		return "USD"
-	return "Euro"
+	"""Display name for what an item is paid with, matching the names the assort form uses.
+
+	"Roubles", "USD" and "Euros" for the three currencies; "Item" when it is paid for with
+	another item (a barter); "Undefined" when no payment was ever chosen ("cash" is the
+	placeholder barter_scheme writes in that case).
+	"""
+	for name, currency_tpl in CURRENCY_TPL.items():
+		if tpl == currency_tpl:
+			return name
+	if tpl in ("", "cash"):
+		return "Undefined"
+	return "Item"
 
 
 def weapon_part_item(item_id, tpl, parent_id, slot_id, *, ammo_count=None):

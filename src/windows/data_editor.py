@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 
@@ -6,6 +5,7 @@ from PySide6.QtWidgets import QFileDialog, QMainWindow
 
 from tb_ui.gui_datafiles import Ui_DataEditor
 from paths import DATA_DIR
+from utils import write_json
 from windows.common import safe_file_dialog
 
 log = logging.getLogger(__name__)
@@ -37,8 +37,9 @@ class Gui_DataEditor(QMainWindow):
 			list(allfiles), root_folder=root_folder
 		)
 
-		with open(DATA_DIR / "datafiles.json", "w") as f:
-			json.dump(datafiles_to_disk, f)
+		write_json(DATA_DIR / "datafiles.json", datafiles_to_disk, indent=None)
+		# (a file is counted once even if its path matches more than one category)
+		file_count = len({path for paths in datafiles_to_disk.values() for path in paths})
 		self.ui.statusbar.showMessage(
-			f"Loaded {sum(len(sublist) for sublist in datafiles)} data files."
+			f"Loaded {file_count} data file{'' if file_count == 1 else 's'}."
 		)

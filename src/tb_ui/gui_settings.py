@@ -16,16 +16,16 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QDialog,
-    QDialogButtonBox, QFormLayout, QGroupBox, QLabel,
-    QLineEdit, QSizePolicy, QSpacerItem, QVBoxLayout,
-    QWidget)
+    QDialogButtonBox, QFormLayout, QGroupBox, QHBoxLayout,
+    QLabel, QLineEdit, QPushButton, QSizePolicy,
+    QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_SettingsMenu(object):
     def setupUi(self, SettingsMenu):
         if not SettingsMenu.objectName():
             SettingsMenu.setObjectName(u"SettingsMenu")
-        SettingsMenu.resize(560, 450)
-        SettingsMenu.setMinimumSize(QSize(480, 420))
+        SettingsMenu.resize(560, 520)
+        SettingsMenu.setMinimumSize(QSize(480, 470))
         icon = QIcon()
         icon.addFile(u"data/icon.ico", QSize(), QIcon.Normal, QIcon.Off)
         SettingsMenu.setWindowIcon(icon)
@@ -91,6 +91,46 @@ class Ui_SettingsMenu(object):
 
         self.verticalLayout.addWidget(self.grp_defaults)
 
+        self.grp_items = QGroupBox(SettingsMenu)
+        self.grp_items.setObjectName(u"grp_items")
+        self.verticalLayout_items = QVBoxLayout(self.grp_items)
+        self.verticalLayout_items.setObjectName(u"verticalLayout_items")
+        self.lbl_items_help = QLabel(self.grp_items)
+        self.lbl_items_help.setObjectName(u"lbl_items_help")
+        self.lbl_items_help.setWordWrap(True)
+
+        self.verticalLayout_items.addWidget(self.lbl_items_help)
+
+        self.horizontalLayout_items_file = QHBoxLayout()
+        self.horizontalLayout_items_file.setObjectName(u"horizontalLayout_items_file")
+        self.fld_items_file = QLineEdit(self.grp_items)
+        self.fld_items_file.setObjectName(u"fld_items_file")
+        self.fld_items_file.setReadOnly(True)
+
+        self.horizontalLayout_items_file.addWidget(self.fld_items_file)
+
+        self.pb_load_items = QPushButton(self.grp_items)
+        self.pb_load_items.setObjectName(u"pb_load_items")
+
+        self.horizontalLayout_items_file.addWidget(self.pb_load_items)
+
+        self.pb_default_items = QPushButton(self.grp_items)
+        self.pb_default_items.setObjectName(u"pb_default_items")
+
+        self.horizontalLayout_items_file.addWidget(self.pb_default_items)
+
+
+        self.verticalLayout_items.addLayout(self.horizontalLayout_items_file)
+
+        self.lbl_items_status = QLabel(self.grp_items)
+        self.lbl_items_status.setObjectName(u"lbl_items_status")
+        self.lbl_items_status.setWordWrap(True)
+
+        self.verticalLayout_items.addWidget(self.lbl_items_status)
+
+
+        self.verticalLayout.addWidget(self.grp_items)
+
         self.grp_logging = QGroupBox(SettingsMenu)
         self.grp_logging.setObjectName(u"grp_logging")
         self.verticalLayout_logging = QVBoxLayout(self.grp_logging)
@@ -153,6 +193,15 @@ class Ui_SettingsMenu(object):
 #if QT_CONFIG(tooltip)
         self.fld_default_questicon.setToolTip("")
 #endif // QT_CONFIG(tooltip)
+        self.grp_items.setTitle(QCoreApplication.translate("SettingsMenu", u"Item database (items.json)", None))
+        self.lbl_items_help.setText(QCoreApplication.translate("SettingsMenu", u"The item database used by the ID Lookup tab and the child-item finder (Debug menu). By default it is the items.json included with the program; load a different one (say, from your SPT install) to use that instead. It is remembered next time.", None))
+        self.fld_items_file.setPlaceholderText(QCoreApplication.translate("SettingsMenu", u"data/items.json", None))
+#if QT_CONFIG(tooltip)
+        self.fld_items_file.setToolTip(QCoreApplication.translate("SettingsMenu", u"The items.json used every time the program starts.", None))
+#endif // QT_CONFIG(tooltip)
+        self.pb_load_items.setText(QCoreApplication.translate("SettingsMenu", u"Load items.json...", None))
+        self.pb_default_items.setText(QCoreApplication.translate("SettingsMenu", u"Use included file", None))
+        self.lbl_items_status.setText(QCoreApplication.translate("SettingsMenu", u"No items.json loaded.", None))
         self.grp_logging.setTitle(QCoreApplication.translate("SettingsMenu", u"Troubleshooting", None))
         self.chk_debug_logging.setText(QCoreApplication.translate("SettingsMenu", u"Write a debug log file", None))
         self.lbl_debug_logging_help.setText(QCoreApplication.translate("SettingsMenu", u"Saves a detailed log (trader_builder.log, next to the program) that you can send along with a bug report. Off by default.", None))
