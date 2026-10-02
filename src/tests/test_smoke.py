@@ -19,6 +19,9 @@ def test_all_windows_open(main_window):
 	assert len(quest.windows) == 2
 
 
-def test_edit_selected_quest_is_gone(main_window):
-	assert not hasattr(main_window.ui, "actionEdit_Selected_Quest")
+def test_the_old_edit_selected_quest_is_gone_and_the_new_one_is_in_its_place(main_window):
+	# the old feature (editSelectedQuest, built on load_settings_from_dict) was removed...
 	assert not hasattr(main_window, "editSelectedQuest")
+	# ...and Edit Selected Quest was added back, reopening a quest in the Quest Builder
+	assert main_window.ui.actionEdit_Selected_Quest.text() == "Edit Selected Quest"
+	assert main_window.ui.actionEdit_Selected_Quest in main_window.ui.menuEdit.actions()
