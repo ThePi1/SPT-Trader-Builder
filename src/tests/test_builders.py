@@ -329,6 +329,29 @@ def test_merge_locale_does_not_modify_its_input():
 	assert base == {"a": "1"}
 
 
+def test_merge_locale_gives_new_entries_their_text_but_never_changes_existing_ones():
+	merged = locale.merge_locale({"a": "kept", "b": ""}, ["a", "b", "c", "d"], {"a": "x", "b": "y", "c": "typed"})
+	assert merged == {"a": "kept", "b": "", "c": "typed", "d": ""}
+
+
+def test_new_locale_holds_just_the_keys_asked_for():
+	assert locale.new_locale(["b", "c"], {"b": "typed", "other": "not wanted"}) == {"b": "typed", "c": ""}
+
+
+def test_quest_locale_has_every_text_field_and_each_condition():
+	entries = locale.quest_locale("q1", {"name": "Debut", "description": "two\nlines"}, {"f1": "Kill 5 Scavs"})
+	assert list(entries) == [f"q1 {field}" for field in quests.LOCALE_FIELDS] + ["f1"]
+	assert entries["q1 name"] == "Debut" and entries["q1 description"] == "two\nlines"
+	assert entries["f1"] == "Kill 5 Scavs"
+	assert entries["q1 note"] == ""  # (a field with no text is blank)
+
+
+def test_quest_locale_covers_exactly_the_keys_the_export_looks_up():
+	quest = _quest("q1", finish_conditions=[{"id": "f1"}], start_conditions=[{"id": "s1"}], fail_conditions=[{"id": "x1"}])
+	entries = locale.quest_locale("q1", {}, {"f1": "", "s1": "", "x1": ""})
+	assert sorted(entries) == sorted(locale.locale_keys({"q1": quest}))
+
+
 def test_locale_keys_match_the_golden_export():
 	exported_quests = json.loads((GOLDEN / "quest_export.json").read_text(encoding="utf-8"))
 	exported_locale = json.loads((GOLDEN / "locale_export.json").read_text(encoding="utf-8"))

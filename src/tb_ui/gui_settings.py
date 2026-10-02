@@ -24,8 +24,8 @@ class Ui_SettingsMenu(object):
     def setupUi(self, SettingsMenu):
         if not SettingsMenu.objectName():
             SettingsMenu.setObjectName(u"SettingsMenu")
-        SettingsMenu.resize(560, 520)
-        SettingsMenu.setMinimumSize(QSize(480, 470))
+        SettingsMenu.resize(560, 600)
+        SettingsMenu.setMinimumSize(QSize(480, 540))
         icon = QIcon()
         icon.addFile(u"data/icon.ico", QSize(), QIcon.Normal, QIcon.Off)
         SettingsMenu.setWindowIcon(icon)
@@ -90,6 +90,24 @@ class Ui_SettingsMenu(object):
 
 
         self.verticalLayout.addWidget(self.grp_defaults)
+
+        self.grp_export = QGroupBox(SettingsMenu)
+        self.grp_export.setObjectName(u"grp_export")
+        self.verticalLayout_export = QVBoxLayout(self.grp_export)
+        self.verticalLayout_export.setObjectName(u"verticalLayout_export")
+        self.chk_merge_locales_on_export = QCheckBox(self.grp_export)
+        self.chk_merge_locales_on_export.setObjectName(u"chk_merge_locales_on_export")
+
+        self.verticalLayout_export.addWidget(self.chk_merge_locales_on_export)
+
+        self.lbl_merge_locales_help = QLabel(self.grp_export)
+        self.lbl_merge_locales_help.setObjectName(u"lbl_merge_locales_help")
+        self.lbl_merge_locales_help.setWordWrap(True)
+
+        self.verticalLayout_export.addWidget(self.lbl_merge_locales_help)
+
+
+        self.verticalLayout.addWidget(self.grp_export)
 
         self.grp_items = QGroupBox(SettingsMenu)
         self.grp_items.setObjectName(u"grp_items")
@@ -193,18 +211,22 @@ class Ui_SettingsMenu(object):
 #if QT_CONFIG(tooltip)
         self.fld_default_questicon.setToolTip("")
 #endif // QT_CONFIG(tooltip)
+        self.grp_export.setTitle(QCoreApplication.translate("SettingsMenu", u"Quest export", None))
+        self.chk_merge_locales_on_export.setText(QCoreApplication.translate("SettingsMenu", u"Merge locales on export", None))
+        self.lbl_merge_locales_help.setText(QCoreApplication.translate("SettingsMenu", u"On: after saving the quests, choose an existing locale file. The entries it doesn't have yet are added. \n"
+"Off: the quests' locale entries are saved to a file of their own, without merging.", None))
         self.grp_items.setTitle(QCoreApplication.translate("SettingsMenu", u"Item database (items.json)", None))
-        self.lbl_items_help.setText(QCoreApplication.translate("SettingsMenu", u"The item database used by the ID Lookup tab and the child-item finder (Debug menu). By default it is the items.json included with the program; load a different one (say, from your SPT install) to use that instead. It is remembered next time.", None))
-        self.fld_items_file.setPlaceholderText(QCoreApplication.translate("SettingsMenu", u"data/items.json", None))
+        self.lbl_items_help.setText(QCoreApplication.translate("SettingsMenu", u"The item database used by the ID Lookup tab and the child-item finder (Debug menu).", None))
 #if QT_CONFIG(tooltip)
         self.fld_items_file.setToolTip(QCoreApplication.translate("SettingsMenu", u"The items.json used every time the program starts.", None))
 #endif // QT_CONFIG(tooltip)
+        self.fld_items_file.setPlaceholderText(QCoreApplication.translate("SettingsMenu", u"data/items.json", None))
         self.pb_load_items.setText(QCoreApplication.translate("SettingsMenu", u"Load items.json...", None))
         self.pb_default_items.setText(QCoreApplication.translate("SettingsMenu", u"Use included file", None))
         self.lbl_items_status.setText(QCoreApplication.translate("SettingsMenu", u"No items.json loaded.", None))
         self.grp_logging.setTitle(QCoreApplication.translate("SettingsMenu", u"Troubleshooting", None))
         self.chk_debug_logging.setText(QCoreApplication.translate("SettingsMenu", u"Write a debug log file", None))
-        self.lbl_debug_logging_help.setText(QCoreApplication.translate("SettingsMenu", u"Saves a detailed log (trader_builder.log, next to the program) that you can send along with a bug report. Off by default.", None))
+        self.lbl_debug_logging_help.setText(QCoreApplication.translate("SettingsMenu", u"Saves a detailed log (trader_builder.log, next to the program)", None))
         self.lbl_error.setText("")
     # retranslateUi
 

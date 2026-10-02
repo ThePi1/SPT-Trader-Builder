@@ -18,7 +18,7 @@ _TYPE_GROUPS = {
 }
 
 
-def _find_row(table, _id, id_col=0):
+def find_row(table, _id, id_col=0):
 	"""The row whose id column shows _id, or None."""
 	for row in range(table.rowCount()):
 		item = table.item(row, id_col)
@@ -38,7 +38,7 @@ def add_table_field(fields, type, table, _id, values, dataobj):
 	fields.data.setdefault(type, {})[_id] = dataobj  # (a repeated id replaces the old data)
 
 	# update the existing row for this id in place, or add a new one
-	row = _find_row(table, _id)
+	row = find_row(table, _id)
 	if row is None:
 		row = table.rowCount()
 		table.insertRow(row)

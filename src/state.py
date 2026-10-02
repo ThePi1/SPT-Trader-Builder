@@ -113,6 +113,16 @@ class AppState:
 
 		# Quests built so far, by quest id
 		self.quests = {}
+		# The locale text typed in the Quest Builder for those quests: {quest id: {locale key: text}}.
+		# (Imported quests have none.)
+		self.quest_locales = {}
+
+	def locale_texts(self):
+		"""All the locale text typed in the Quest Builder, as one {locale key: text}."""
+		texts = {}
+		for entries in self.quest_locales.values():
+			texts.update(entries)
+		return texts
 
 	def set_items(self, items, path=None, error=None):
 		"""Use this as the item database ({} and no path for none)."""

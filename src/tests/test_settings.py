@@ -19,6 +19,7 @@ from windows.settings import ERROR_STYLE, Gui_SettingsDlg
 
 GOOD = {
 	"debug_logging": "false",
+	"merge_locales_on_export": "false",
 	"version_file": "data/version.txt",
 	"version_url": "https://example.com/version.txt",
 	"project_url": "https://example.com/project",
@@ -30,6 +31,7 @@ SAMPLE = """# top comment
 
 [general]
 debug_logging = true
+merge_locales_on_export = true
 
 [filepaths]
 # comment about the version file
@@ -53,7 +55,10 @@ def test_only_the_changed_lines_are_touched():
 
 def test_all_settings_can_be_changed_and_comments_survive():
 	new = update_ini_text(SAMPLE, GOOD)
-	assert new.startswith("# top comment\n\n[general]\ndebug_logging = false\n\n[filepaths]\n# comment about the version file\n")
+	assert new.startswith(
+		"# top comment\n\n[general]\ndebug_logging = false\nmerge_locales_on_export = false\n\n"
+		"[filepaths]\n# comment about the version file\n"
+	)
 	assert "old" not in new
 	for name, value in GOOD.items():
 		assert f"{name} = {value}\n" in new
