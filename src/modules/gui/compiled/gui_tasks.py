@@ -1130,8 +1130,12 @@ class Ui_TaskWindow(object):
         __qtablewidgetitem21 = QTableWidgetItem()
         self.tb_cc.setHorizontalHeaderItem(1, __qtablewidgetitem21)
         self.tb_cc.setObjectName(u"tb_cc")
-        self.tb_cc.setGeometry(QRect(10, 40, 301, 131))
+        self.tb_cc.setGeometry(QRect(10, 40, 301, 101))
+        self.tb_cc.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tb_cc.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.pb_edit_cc = QPushButton(self.tab_6)
+        self.pb_edit_cc.setObjectName(u"pb_edit_cc")
+        self.pb_edit_cc.setGeometry(QRect(10, 146, 301, 26))
         self.tabWidget.addTab(self.tab_6, "")
         self.tab_handover_item = QWidget()
         self.tab_handover_item.setObjectName(u"tab_handover_item")
@@ -2031,6 +2035,7 @@ class Ui_TaskWindow(object):
         ___qtablewidgetitem20.setText(QCoreApplication.translate("TaskWindow", u"id", None));
         ___qtablewidgetitem21 = self.tb_cc.horizontalHeaderItem(1)
         ___qtablewidgetitem21.setText(QCoreApplication.translate("TaskWindow", u"type", None));
+        self.pb_edit_cc.setText(QCoreApplication.translate("TaskWindow", u"Edit Selected Subtask", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_6), QCoreApplication.translate("TaskWindow", u"CounterCreator", None))
         self.lb_quantity_2.setText(QCoreApplication.translate("TaskWindow", u"Quantity:", None))
         self.label_6.setText(QCoreApplication.translate("TaskWindow", u"HandOver or Find:", None))

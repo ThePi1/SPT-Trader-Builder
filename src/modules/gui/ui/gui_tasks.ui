@@ -2104,8 +2104,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <x>10</x>
           <y>40</y>
           <width>301</width>
-          <height>131</height>
+          <height>101</height>
          </rect>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
         </property>
         <property name="selectionBehavior">
          <enum>QAbstractItemView::SelectRows</enum>
@@ -2120,6 +2123,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <string>type</string>
          </property>
         </column>
+       </widget>
+       <widget class="QPushButton" name="pb_edit_cc">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>146</y>
+          <width>301</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Edit Selected Subtask</string>
+        </property>
        </widget>
       </widget>
       <widget class="QWidget" name="tab_handover_item">

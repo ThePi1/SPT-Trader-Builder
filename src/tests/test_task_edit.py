@@ -340,3 +340,264 @@ def test_a_new_task_is_unaffected(state, fixed_ids):
 	assert dlg.ui.tabWidget_2.isTabEnabled(0) and dlg.ui.tabWidget_2.isTabEnabled(1) and dlg.ui.tabWidget_2.isTabEnabled(2)
 	assert dlg.ui.box_hofind_it.isEnabled() and dlg.windowTitle() != "Edit Task"
 	assert dlg.ui.pb_finalize_lv.text() != "Save Changes"
+
+
+# --- a Counter's sub-conditions --------------------------------------------------------------------
+
+
+def make_subs(state):
+	"""One sub-condition of every kind, like the ones SPT ships: with values the Task Builder can't make."""
+	weapon_name, weapon_id = next(iter(state.weapons.items()))
+	kills = conditions.kills(
+		"k0000000000000000000a001",
+		weapon_ids=[weapon_id, "ffffffffffffffffffffff01"],  # (the second isn't one the Builder knows)
+		target="Savage",
+		target_roles=["bossBully", "infectedAssault"],
+		body_parts=["Head", "Chest"],
+		mods_inclusive=["m1", "m2"],
+		mods_exclusive=["m3"],
+		distance=40,
+		distance_compare="<=",
+		time_from=22,
+		time_to=10,
+		reset_on_session_end=True,
+	)
+	kills.update(
+		value=0,
+		weaponCaliber=["5.56x45"],
+		weaponModsInclusive=[["m1", "m2"]],
+		enemyEquipmentInclusive=[["e1"]],
+		enemyHealthEffects=[{"bodyParts": ["Head"], "effects": ["Pain"]}],
+	)
+	shots = conditions.shots(
+		"sh000000000000000000a001",
+		weapon_ids=["w1", "w2"],
+		body_parts=["Head"],
+		target_roles=["bossBoar"],
+		mods_inclusive=["m1"],
+		mods_exclusive=[],
+		distance=25,
+		distance_compare=">=",
+		time_from=1,
+		time_to=2,
+		value=3,
+		target="Savage",
+		reset_on_session_end=True,
+	)
+	equipment = conditions.equipment(
+		"eq000000000000000000a001",
+		inclusive=[{"id": "i1", "org": "1"}, {"id": "i2", "org": "1"}, {"id": "i3", "org": "2"}],
+		exclusive=[{"id": "x1", "org": "1"}],
+		include_not_equipped=True,
+	)
+	health = conditions.health_effect(
+		"he000000000000000000a001",
+		body_parts=["Head", "Chest"],
+		effects=["Pain", "Tremor"],
+		energy=10,
+		energy_compare="<=",
+		hydration=20,
+		hydration_compare=">=",
+		time=300,
+		time_compare=">=",
+	)
+	return {
+		"VisitPlace": conditions.visit_place("vp000000000000000000a001", "zone_one"),
+		"Kills": kills,
+		"ExitStatus": conditions.exit_status("es000000000000000000a001", ["Survived", "Runner"]),
+		"ExitName": conditions.exit_name("en000000000000000000a001", "E7_car"),
+		"Location": conditions.location("lo000000000000000000a001", ["Woods", "Shoreline"]),
+		"Equipment": equipment,
+		"Shots": shots,
+		"HealthEffect": health,
+		"HealthBuff": conditions.health_buff("hb000000000000000000a001", ["Buffs_Frostbite", "Buffs_Obdolbos"]),
+		"LaunchFlare": conditions.launch_flare("lf000000000000000000a001", "flare_zone"),
+		"InZone": conditions.in_zone("iz000000000000000000a001", ["huntsman_013", "huntsman_020"]),
+	}
+
+
+SUB_KINDS = [
+	"VisitPlace", "Kills", "ExitStatus", "ExitName", "Location", "Equipment", "Shots", "HealthEffect", "HealthBuff", "LaunchFlare", "InZone",
+]
+
+
+def counter_of(state, *kinds):
+	subs = make_subs(state)
+	cond = vanilla_like("CounterCreator", state)
+	cond["counter"]["conditions"] = [copy.deepcopy(subs[kind]) for kind in kinds]
+	return cond
+
+
+def sub_row(dlg, sub_id):
+	for row in range(dlg.ui.tb_cc.rowCount()):
+		if dlg.ui.tb_cc.item(row, 0).text() == sub_id:
+			return row
+
+
+@pytest.mark.parametrize("kind", SUB_KINDS)
+def test_a_sub_condition_opened_and_saved_untouched_is_unchanged(state, kind):
+	cond = counter_of(state, kind)
+	original = cond["counter"]["conditions"][0]
+	dlg, received = open_task(state, cond)
+	assert dlg.edit_subtask(0)
+	dlg.cc_add(kind)
+	assert dlg.fields.get_multicolumn_values_list("CounterCreator") == [original]
+	assert save(dlg, received)[1] == cond
+	assert dlg.sub_edit is None
+
+
+def test_the_kills_form_is_filled_from_the_sub_condition(state):
+	cond = counter_of(state, "Kills")
+	dlg, _ = open_task(state, cond)
+	dlg.edit_subtask(0)
+	ui = dlg.ui
+	weapon_name = next(iter(state.weapons))
+	assert table_ids(ui.tb_wep) == [weapon_name, "ffffffffffffffffffffff01"]
+	assert table_ids(ui.tb_targetrole) == ["bossBully", "infectedAssault"]
+	assert table_ids(ui.tb_bodypart) == ["Head", "Chest"]
+	assert table_ids(ui.tb_incmods) == ["m1", "m2"] and table_ids(ui.tb_excmods) == ["m3"]
+	assert ui.chk_cck_usetarget.isChecked() and ui.box_targets_cck.currentText() == "Savage"
+	assert (ui.fld_dist_cck.text(), ui.box_dist_compare_cck.currentText()) == ("40", "<=")
+	assert (ui.fld_time_from_cck.text(), ui.fld_time_to_cck.text()) == ("22", "10")
+	assert ui.chk_cck_reset_sessionend.isChecked()
+	assert ui.tabWidget_4.currentWidget() is ui.tab_12
+	assert ui.pb_finalize_cck.text() == "Save Subtask"
+
+
+def test_the_other_sub_condition_forms(state):
+	subs = make_subs(state)
+	dlg, _ = open_task(state, counter_of(state, *SUB_KINDS))
+	for kind in SUB_KINDS:
+		assert dlg.edit_subtask(sub_row(dlg, subs[kind]["id"]))
+	ui = dlg.ui
+	assert ui.fld_zoneid_ccvp.text() == "zone_one" and ui.fld_exitname_ccen.text() == "E7_car" and ui.fld_fl_zone.text() == "flare_zone"
+	assert table_ids(ui.tb_cces) == ["Survived", "Runner"] and table_ids(ui.tb_ccl) == ["Woods", "Shoreline"]
+	assert table_ids(ui.tb_iz) == ["huntsman_013", "huntsman_020"]
+	assert table_ids(ui.tb_hb) == ["Buffs_Frostbite", "Buffs_Obdolbos"]
+	assert table_ids(ui.tb_eq_inc) == ["i1", "i2", "i3"] and table_ids(ui.tb_eq_exc) == ["x1"] and ui.cb_eq_uneq.isChecked()
+	assert [ui.tb_eq_inc.item(r, 1).text() for r in range(3)] == ["1", "1", "2"]
+	assert table_ids(ui.tb_sh_wep) == ["w1", "w2"] and table_ids(ui.tb_sh_bp) == ["Head"] and table_ids(ui.tb_incmod_sh) == ["m1"]
+	assert (ui.fld_dist_sh.text(), ui.fld_value_sh.text(), ui.box_target_sh.currentText()) == ("25", "3", "Savage")
+	assert table_ids(ui.tb_hebp) == ["Head", "Chest"] and table_ids(ui.tb_heef) == ["Pain", "Tremor"]
+	assert (ui.fld_enval_he.text(), ui.box_encomp_he.currentText(), ui.fld_timeval_he.text()) == ("10", "<=", "300")
+
+
+def test_a_changed_field_is_replaced_and_the_rest_is_kept(state):
+	cond = counter_of(state, "Kills")
+	original = cond["counter"]["conditions"][0]
+	dlg, received = open_task(state, cond)
+	dlg.edit_subtask(0)
+	dlg.ui.fld_dist_cck.setText("100")
+	dlg.cc_add("Kills")
+	_, saved = save(dlg, received)
+	edited = saved["counter"]["conditions"][0]
+	expected = copy.deepcopy(original)
+	expected["distance"] = {"compareMethod": "<=", "value": 100}
+	assert edited == expected  # (value 0, the OR-group of mods, the caliber, ... are all as they were)
+
+
+def test_changing_the_mods_replaces_the_groups(state):
+	cond = counter_of(state, "Kills")
+	dlg, received = open_task(state, cond)
+	dlg.edit_subtask(0)
+	dlg.ui.fld_incmod_cck.setText("m9")
+	dlg.ui.pb_add_imod.click()
+	dlg.cc_add("Kills")
+	edited = save(dlg, received)[1]["counter"]["conditions"][0]
+	assert edited["weaponModsInclusive"] == [["m1"], ["m2"], ["m9"]]
+	assert edited["weaponModsExclusive"] == [["m3"]] and edited["weaponCaliber"] == ["5.56x45"]
+
+
+def test_a_weapon_the_builder_does_not_know_is_kept(state):
+	cond = counter_of(state, "Kills")
+	dlg, received = open_task(state, cond)
+	dlg.edit_subtask(0)
+	dlg.ui.tb_wep.selectRow(0)
+	remove_selected_table_item(dlg.fields, type="KillsWep", table=dlg.ui.tb_wep)
+	dlg.cc_add("Kills")
+	assert save(dlg, received)[1]["counter"]["conditions"][0]["weapon"] == ["ffffffffffffffffffffff01"]
+
+
+def test_the_save_button_goes_back_and_the_edit_ends_when_saved(state):
+	dlg, _ = open_task(state, counter_of(state, "ExitName", "VisitPlace"))
+	original_text = dlg.ui.pb_finalize_ccen.text()
+	dlg.edit_subtask(0)
+	assert dlg.ui.pb_finalize_ccen.text() == "Save Subtask" and dlg.sub_edit is not None
+	dlg.cc_add("ExitName")
+	assert dlg.ui.pb_finalize_ccen.text() == original_text and dlg.sub_edit is None
+	dlg.cc_add("ExitName")  # (pressing it again makes a new subtask, it doesn't edit the old one again)
+	assert dlg.ui.tb_cc.rowCount() == 3
+
+
+def test_a_sub_condition_of_another_kind_can_be_added_while_one_is_being_edited(state):
+	dlg, _ = open_task(state, counter_of(state, "ExitName"))
+	dlg.edit_subtask(0)
+	dlg.ui.fld_zoneid_ccvp.setText("a new zone")
+	dlg.cc_add("VisitPlace")  # (a different kind: this adds a new subtask, and the edit stays open)
+	assert dlg.ui.tb_cc.rowCount() == 2 and dlg.sub_edit is not None
+
+
+def test_opening_another_sub_condition_drops_the_first_edit(state):
+	dlg, received = open_task(state, counter_of(state, "ExitName", "VisitPlace"))
+	dlg.edit_subtask(0)
+	dlg.ui.fld_exitname_ccen.setText("changed but never saved")
+	dlg.edit_subtask(1)
+	assert dlg.sub_edit["type"] == "VisitPlace" and dlg.ui.pb_finalize_ccen.text() != "Save Subtask"
+	assert save(dlg, received)[1]["counter"]["conditions"][0]["exitName"] == "E7_car"
+
+
+def test_the_forms_tables_are_replaced_not_added_to(state):
+	cond = counter_of(state, "Location")
+	cond["counter"]["conditions"].append(conditions.location("lo000000000000000000a002", ["Interchange"]))
+	dlg, _ = open_task(state, cond)
+	dlg.edit_subtask(0)
+	assert table_ids(dlg.ui.tb_ccl) == ["Woods", "Shoreline"]
+	dlg.edit_subtask(1)
+	assert table_ids(dlg.ui.tb_ccl) == ["Interchange"]
+
+
+def test_removing_the_sub_condition_being_edited_ends_the_edit(state):
+	dlg, _ = open_task(state, counter_of(state, "ExitName", "VisitPlace"))
+	dlg.edit_subtask(0)
+	dlg.ui.tb_cc.selectRow(0)
+	dlg.remove_selected_subtask()
+	assert dlg.sub_edit is None and dlg.ui.pb_finalize_ccen.text() != "Save Subtask"
+	dlg.cc_add("ExitName")  # (a new one, not the removed one back)
+	assert [s["conditionType"] for s in dlg.fields.get_multicolumn_values_list("CounterCreator")] == ["VisitPlace", "ExitName"]
+
+
+def test_the_edit_button_and_double_click_open_a_sub_condition(state):
+	dlg, _ = open_task(state, counter_of(state, "ExitName", "VisitPlace"))
+	dlg.ui.tb_cc.selectRow(1)
+	dlg.ui.pb_edit_cc.click()
+	assert dlg.sub_edit["type"] == "VisitPlace"
+	dlg.ui.tb_cc.cellDoubleClicked.emit(0, 0)
+	assert dlg.sub_edit["type"] == "ExitName"
+	assert not dlg.ui.tb_cc.editTriggers() & dlg.ui.tb_cc.EditTrigger.DoubleClicked
+	dlg.finish_sub_edit()
+	dlg.ui.tb_cc.clearSelection()
+	dlg.ui.pb_edit_cc.click()
+	assert dlg.sub_edit is None
+
+
+def test_a_sub_condition_of_a_kind_the_builder_cannot_make_says_so(state, monkeypatch):
+	cond = counter_of(state, "VisitPlace")
+	arena = {"id": "ar000000000000000000a001", "conditionType": "ArenaMatchPlace", "compareMethod": "==", "value": 1, "dynamicLocale": False}
+	cond["counter"]["conditions"].append(arena)
+	dlg, received = open_task(state, cond)
+	messages = []
+	monkeypatch.setattr("modules.windows.task.QMessageBox.information", lambda *args: messages.append(args[2]))
+	assert not dlg.edit_subtask(1)
+	assert "ArenaMatchPlace" in messages[0] and dlg.sub_edit is None
+	assert save(dlg, received)[1] == cond  # (and it is kept)
+
+
+def test_a_sub_condition_just_added_can_be_edited(state):
+	dlg = Gui_TaskDlg(state)
+	dlg.ui.fld_exitname_ccen.setText("first")
+	dlg.cc_add("ExitName")
+	dlg.edit_subtask(0)
+	dlg.ui.fld_exitname_ccen.setText("second")
+	dlg.cc_add("ExitName")
+	subs = dlg.fields.get_multicolumn_values_list("CounterCreator")
+	assert len(subs) == 1 and subs[0]["exitName"] == "second"

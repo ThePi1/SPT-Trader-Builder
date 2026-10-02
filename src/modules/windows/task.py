@@ -1,7 +1,7 @@
 import copy
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QMainWindow
+from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from modules.builders import conditions
 from modules.gui.compiled.gui_tasks import Ui_TaskWindow
@@ -35,6 +35,48 @@ FINISH_BUTTONS = {
 	"Quest": "pb_finalize_qs",
 	"TraderStanding": "pb_finalize_ts",
 }
+
+
+# The page of the Counter's sub-condition tabs that holds each kind of sub-condition's form, and the button that finishes it
+SUB_TABS = {
+	"VisitPlace": "tab_11",
+	"Kills": "tab_12",
+	"ExitStatus": "tab_20",
+	"ExitName": "tab_21",
+	"Location": "tab_22",
+	"Equipment": "tab_9",
+	"Shots": "tab_10",
+	"HealthEffect": "tab_13",
+	"HealthBuff": "tab_14",
+	"LaunchFlare": "tab_23",
+	"InZone": "tab_24",
+}
+SUB_BUTTONS = {
+	"VisitPlace": "pb_finalize_ccvp",
+	"Kills": "pb_finalize_cck",
+	"ExitStatus": "pb_finalize_cces",
+	"ExitName": "pb_finalize_ccen",
+	"Location": "pb_finalize_ccl",
+	"Equipment": "pb_finalize_cc_eq",
+	"Shots": "pb_finalize_shtr",
+	"HealthEffect": "pb_finalize_he",
+	"HealthBuff": "pb_finalize_hb",
+	"LaunchFlare": "pb_finalize_fl",
+	"InZone": "pb_finalize_iz",
+}
+
+
+def can_edit_subcondition(sub):
+	"""Whether the Task Builder can open this sub-condition of a Counter (not Arena ones, UseItem, ...)."""
+	return sub.get("conditionType") in conditions.SUBCONDITION_EDITABLE_KEYS
+
+
+def flat(groups):
+	"""A list of mods, or of groups of mods (several mods in one inner list), as one flat list."""
+	out = []
+	for entry in groups or []:
+		out.extend(entry if isinstance(entry, list) else [entry])
+	return out
 
 
 def can_edit(condition):
@@ -78,6 +120,8 @@ class Gui_TaskDlg(QMainWindow):
 		# name shown in the boxes -> what is written, for the boxes that show a name
 		self.trader_ids = dict(state.traders)
 		self.status_ids = dict(state.status)
+		self.weapon_ids = dict(state.weapons)
+		self.sub_edit = None  # the Counter's sub-condition being edited: {original, baseline, type, button text}
 		self.id = self.original["id"] if self.original is not None else new_id()
 		self.cc = []
 		# self.weapons = [] # used for CC/Kills, add ids in as needed
@@ -248,12 +292,9 @@ class Gui_TaskDlg(QMainWindow):
 		)
 
 		# Other table buttons
-		self.ui.pb_remove_cc.released.connect(
-			lambda: remove_selected_table_item(
-				self.fields,
-				type="CounterCreator", table=self.ui.tb_cc
-			)
-		)
+		self.ui.pb_remove_cc.released.connect(self.remove_selected_subtask)
+		self.ui.pb_edit_cc.released.connect(self.edit_selected_subtask)
+		self.ui.tb_cc.cellDoubleClicked.connect(lambda row, _column: self.edit_subtask(row))
 
 		self.ui.pb_status_rem_cces.released.connect(
 			lambda: remove_selected_table_item(
@@ -560,10 +601,28 @@ class Gui_TaskDlg(QMainWindow):
 		self.ui.fld_taskid_gen.setText(self.id)
 
 	def cc_add(self, cond_type):
-		"""Build one CounterCreator sub-condition from the form and add it to the CC table."""
+		"""Build one CounterCreator sub-condition from the form and add it to the CC table (or, if one of
+		this kind is being edited, save the edit)."""
+		ui = self.ui
+		edit = self.sub_edit if self.sub_edit and self.sub_edit["type"] == cond_type else None
+		subtask_id = edit["original"]["id"] if edit else new_id()
+		cond = self.build_subcondition(cond_type, subtask_id)
+		if edit:
+			cond = conditions.edited_subcondition(edit["original"], edit["baseline"], cond)
+			self.finish_sub_edit()
+		add_table_field(
+			self.fields,
+			f"CounterCreator",
+			ui.tb_cc,
+			subtask_id,
+			{0: subtask_id, 1: cond_type},
+			cond,
+		)
+
+	def build_subcondition(self, cond_type, subtask_id):
+		"""What the form of a kind of sub-condition describes."""
 		ui = self.ui
 		state = self.state
-		subtask_id = new_id()
 		match cond_type:
 			case "VisitPlace":
 				cond = conditions.visit_place(subtask_id, ui.fld_zoneid_ccvp.displayText())
@@ -571,7 +630,7 @@ class Gui_TaskDlg(QMainWindow):
 				cond = conditions.kills(
 					subtask_id,
 					weapon_ids=[
-						state.weapons[wep]
+						self.weapon_ids[wep]
 						for wep in self.fields.get_singlecolumn_field_list("KillsWep")
 					],
 					target=(
@@ -645,14 +704,7 @@ class Gui_TaskDlg(QMainWindow):
 					subtask_id, self.fields.get_singlecolumn_field_list("InZone")
 				)
 
-		add_table_field(
-			self.fields,
-			f"CounterCreator",
-			ui.tb_cc,
-			subtask_id,
-			{0: subtask_id, 1: cond_type},
-			cond,
-		)
+		return cond
 
 	def finalize(self, cond_type):
 		"""Build the top-level condition from the form and hand it to the quest window."""
@@ -811,6 +863,158 @@ class Gui_TaskDlg(QMainWindow):
 				target = visibility_target(entry)
 				add_table_field(self.fields, "VisibilityCond", ui.tb_vis, target, {0: target}, target)
 		self.baseline = self.build_condition(kind)[1]
+
+	# --- editing a Counter's sub-conditions ---------------------------------------------------
+
+	def edit_selected_subtask(self):
+		"""The Edit Selected Subtask button."""
+		selected = self.ui.tb_cc.selectedItems()
+		if selected:
+			self.edit_subtask(selected[0].row())
+
+	def edit_subtask(self, row):
+		"""Load the sub-condition in a row of the Counter's table into its form, to edit it there; pressing
+		the form's button (now "Save Subtask") saves it. Returns whether it was loaded."""
+		table = self.ui.tb_cc
+		if table.item(row, 0) is None:
+			return False
+		sub = self.fields.data.get("CounterCreator", {}).get(table.item(row, 0).text())
+		if sub is None:
+			return False
+		if not can_edit_subcondition(sub):
+			QMessageBox.information(
+				self,
+				"Edit Subtask",
+				f"The Task Builder can't make subtasks of type {sub.get('conditionType')}, so it can't edit "
+				"this one either.\n\nYou can remove it, or leave it as it is.",
+			)
+			return False
+		self.finish_sub_edit()  # (an edit that was started and never saved is dropped)
+		kind = sub["conditionType"]
+		sub = copy.deepcopy(sub)
+		getattr(self, f"load_sub_{kind}")(sub)
+		self.ui.tabWidget_4.setCurrentWidget(getattr(self.ui, SUB_TABS[kind]))
+		button = getattr(self.ui, SUB_BUTTONS[kind])
+		self.sub_edit = {"original": sub, "type": kind, "text": button.text(), "baseline": self.build_subcondition(kind, sub["id"])}
+		button.setText("Save Subtask")
+		return True
+
+	def finish_sub_edit(self):
+		"""Stop editing a sub-condition (its button goes back to what it said)."""
+		if self.sub_edit is not None:
+			getattr(self.ui, SUB_BUTTONS[self.sub_edit["type"]]).setText(self.sub_edit["text"])
+			self.sub_edit = None
+
+	def remove_selected_subtask(self):
+		selected = self.ui.tb_cc.selectedItems()
+		if selected and self.sub_edit is not None:
+			if self.ui.tb_cc.item(selected[0].row(), 0).text() == self.sub_edit["original"]["id"]:
+				self.finish_sub_edit()  # (saving it would bring the removed subtask back)
+		remove_selected_table_item(self.fields, type="CounterCreator", table=self.ui.tb_cc)
+
+	def refill(self, field_type, table, values):
+		"""Replace the rows of one of the form's tables with these values."""
+		self.fields.data.pop(field_type, None)
+		table.setRowCount(0)
+		for value in values:
+			add_table_field(self.fields, field_type, table, value, {0: value}, value)
+
+	def refill_equipment(self, field_type, table, groups):
+		self.fields.data.pop(field_type, None)
+		table.setRowCount(0)
+		for number, group in enumerate(groups or [], 1):
+			for item_id in group:
+				add_table_field(
+					self.fields, field_type, table, item_id, {0: item_id, 1: str(number)}, {"id": item_id, "org": str(number)}
+				)
+
+	def weapon_names(self, ids):
+		"""The names the Kills form shows for weapon ids (an id it has no name for is shown as itself)."""
+		names = {weapon_id: name for name, weapon_id in self.weapon_ids.items()}
+		out = []
+		for weapon_id in ids:
+			if weapon_id not in names:
+				names[weapon_id] = weapon_id
+				self.weapon_ids[weapon_id] = weapon_id
+			out.append(names[weapon_id])
+		return out
+
+	def load_sub_VisitPlace(self, sub):
+		self.set_text(self.ui.fld_zoneid_ccvp, sub.get("target", ""))
+
+	def load_sub_ExitStatus(self, sub):
+		self.refill("ExitStatus", self.ui.tb_cces, sub.get("status", []))
+
+	def load_sub_ExitName(self, sub):
+		self.set_text(self.ui.fld_exitname_ccen, sub.get("exitName", ""))
+
+	def load_sub_Location(self, sub):
+		self.refill("Location", self.ui.tb_ccl, sub.get("target", []))
+
+	def load_sub_LaunchFlare(self, sub):
+		self.set_text(self.ui.fld_fl_zone, sub.get("target", ""))
+
+	def load_sub_InZone(self, sub):
+		self.refill("InZone", self.ui.tb_iz, sub.get("zoneIds", []))
+
+	def load_sub_HealthBuff(self, sub):
+		self.refill("HealthBuff", self.ui.tb_hb, sub.get("target", []))
+
+	def load_sub_Equipment(self, sub):
+		ui = self.ui
+		ui.cb_eq_uneq.setChecked(bool(sub.get("IncludeNotEquippedItems", False)))
+		self.refill_equipment("EquipmentInclusive", ui.tb_eq_inc, sub.get("equipmentInclusive", []))
+		self.refill_equipment("EquipmentExclusive", ui.tb_eq_exc, sub.get("equipmentExclusive", []))
+
+	def load_sub_HealthEffect(self, sub):
+		ui = self.ui
+		group = (sub.get("bodyPartsWithEffects") or [{}])[0]  # (the form holds one group of body parts and effects)
+		self.refill("HealthEffectBodyPart", ui.tb_hebp, group.get("bodyParts", []))
+		self.refill("HealthEffectEffects", ui.tb_heef, group.get("effects", []))
+		for key, field, box in (
+			("energy", ui.fld_enval_he, ui.box_encomp_he),
+			("hydration", ui.fld_hydval_he, ui.box_hydcomp_he),
+			("time", ui.fld_timeval_he, ui.box_timecomp_he),
+		):
+			setting = sub.get(key, {})
+			self.set_text(field, setting.get("value", 0))
+			select_or_add(box, setting.get("compareMethod", ">="))
+
+	def load_sub_Kills(self, sub):
+		ui = self.ui
+		self.refill("KillsWep", ui.tb_wep, self.weapon_names(sub.get("weapon", [])))
+		self.refill("KillsTargetRole", ui.tb_targetrole, sub.get("savageRole", []))
+		self.refill("KillsBodyPart", ui.tb_bodypart, sub.get("bodyPart", []))
+		self.refill("KillsModInc", ui.tb_incmods, flat(sub.get("weaponModsInclusive")))
+		self.refill("KillsModExc", ui.tb_excmods, flat(sub.get("weaponModsExclusive")))
+		target = sub.get("target", "")
+		ui.chk_cck_usetarget.setChecked(bool(target))
+		if target:
+			select_or_add(ui.box_targets_cck, str(target))
+		distance = sub.get("distance", {})
+		self.set_text(ui.fld_dist_cck, distance.get("value", 0))
+		select_or_add(ui.box_dist_compare_cck, distance.get("compareMethod", ">="))
+		daytime = sub.get("daytime", {})
+		self.set_text(ui.fld_time_from_cck, daytime.get("from", 0))
+		self.set_text(ui.fld_time_to_cck, daytime.get("to", 0))
+		ui.chk_cck_reset_sessionend.setChecked(bool(sub.get("resetOnSessionEnd", False)))
+
+	def load_sub_Shots(self, sub):
+		ui = self.ui
+		self.refill("ShotsWeapon", ui.tb_sh_wep, sub.get("weapon", []))
+		self.refill("ShotsTargetRole", ui.tb_sh_tr, sub.get("savageRole", []))
+		self.refill("ShotsBodyPart", ui.tb_sh_bp, sub.get("bodyPart", []))
+		self.refill("ShotsModsInclusive", ui.tb_incmod_sh, flat(sub.get("weaponModsInclusive")))
+		self.refill("ShotsModsExclusive", ui.tb_excmod_sh, flat(sub.get("weaponModsExclusive")))
+		select_or_add(ui.box_target_sh, str(sub.get("target", "Any")))
+		distance = sub.get("distance", {})
+		self.set_text(ui.fld_dist_sh, distance.get("value", 0))
+		select_or_add(ui.box_distcomp_sh, distance.get("compareMethod", ">="))
+		daytime = sub.get("daytime", {})
+		self.set_text(ui.fld_timefrom_sh, daytime.get("from", 0))
+		self.set_text(ui.fld_timeto_sh, daytime.get("to", 0))
+		self.set_text(ui.fld_value_sh, sub.get("value", 0))
+		ui.chk_cck_reset_sessionend_2.setChecked(bool(sub.get("resetOnSessionEnd", False)))
 
 	def set_text(self, field, value):
 		field.setText("" if value is None else str(value))
