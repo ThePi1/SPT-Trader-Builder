@@ -180,6 +180,14 @@ def test_item_conditions_use_the_key_spt_knows_for_encoded_items():
 		assert "inEncoded" not in cond
 
 
+def test_visibility_condition_has_the_shape_vanilla_quests_use():
+	assert conditions.visibility_condition("v1", "task1") == {
+		"conditionType": "CompleteCondition",
+		"id": "v1",
+		"target": "task1",
+	}
+
+
 def test_place_beacon_always_targets_the_ms2000_marker():
 	cond = conditions.place_beacon(
 		"p1", parent_id="", plant_time=10, value=1, zone_id="z", visibility_conditions=[]

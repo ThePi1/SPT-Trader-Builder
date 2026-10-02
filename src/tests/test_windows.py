@@ -89,3 +89,22 @@ def test_trader_standing_task_can_be_finalized(qapp, fixed_ids):
 	(timing, cond_type, _, cond), = received
 	assert (timing, cond_type) == ("Start", "TraderStanding")
 	assert cond["value"] == 3
+
+
+def test_visibility_conditions_are_written_as_objects_like_vanilla_quests(qapp, fixed_ids):
+	dlg = Gui_TaskDlg(_state())
+	received = []
+	dlg.condition_ready.connect(lambda *args: received.append(args))
+	dlg.ui.fld_visibility_targetid.setText("63ac22351b5c95746621ddc4")
+	dlg.ui.pb_addvis.click()
+	dlg.ui.fld_visibility_targetid.setText("63ac2151972364554162a27c")
+	dlg.ui.pb_addvis.click()
+	dlg.ui.fld_itemid_it.setText("5449016a4bdc2d6f028b456f")
+	dlg.ui.pb_additem_it.click()
+	dlg.finalize("Item")
+	(_, _, _, cond), = received
+	visibility = cond["visibilityConditions"]
+	assert [v["target"] for v in visibility] == ["63ac22351b5c95746621ddc4", "63ac2151972364554162a27c"]
+	assert all(v["conditionType"] == "CompleteCondition" for v in visibility)
+	assert all(set(v) == {"conditionType", "id", "target"} for v in visibility)
+	assert len({v["id"] for v in visibility}) == 2  # each has its own id

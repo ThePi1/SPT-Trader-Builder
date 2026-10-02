@@ -9,6 +9,11 @@ def _group_by_org(entries):
 	return list(groups.values())
 
 
+def visibility_condition(cond_id, target):
+	"""Only show a task once the task whose id is target has been completed (vanilla's "CompleteCondition")."""
+	return {"conditionType": "CompleteCondition", "id": cond_id, "target": target}
+
+
 # --- CounterCreator sub-conditions ------------------------------------------------
 
 

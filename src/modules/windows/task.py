@@ -596,7 +596,10 @@ class Gui_TaskDlg(QMainWindow):
 		"""Build the top-level condition from the form and hand it to the quest window."""
 		ui = self.ui
 		state = self.state
-		vis = self.fields.get_singlecolumn_field_list("VisibilityCond")
+		vis = [
+			conditions.visibility_condition(new_id(), target)
+			for target in self.fields.get_singlecolumn_field_list("VisibilityCond")
+		]
 		match cond_type:
 			case "CounterCreator":
 				timing = ui.box_ff.currentText()
