@@ -6,14 +6,14 @@ import sys
 
 import pytest
 
-from builders import assort, conditions, locale, quests, rewards
+from modules.builders import assort, conditions, locale, quests, rewards
 from conftest import GOLDEN, SRC
 
 
 def test_builders_do_not_import_qt():
 	code = (
-		"import builders.assort, builders.conditions, builders.locale, "
-		"builders.quests, builders.rewards, sys; "
+		"import modules.builders.assort, modules.builders.conditions, modules.builders.locale, "
+		"modules.builders.quests, modules.builders.rewards, sys; "
 		"assert not any(m.startswith('PySide6') for m in sys.modules)"
 	)
 	subprocess.run([sys.executable, "-c", code], cwd=SRC, check=True)

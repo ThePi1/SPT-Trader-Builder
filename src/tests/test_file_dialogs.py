@@ -5,8 +5,8 @@ import json
 import pytest
 from PySide6.QtWidgets import QFileDialog
 
-from windows import data_editor
-from windows.common import safe_file_dialog
+from modules.windows import data_editor
+from modules.windows.common import safe_file_dialog
 
 
 def test_a_cancelled_folder_dialog_is_a_cancel():

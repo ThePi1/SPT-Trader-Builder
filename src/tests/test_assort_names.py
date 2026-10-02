@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from paths import DATA_DIR
-from windows import assort
-from windows.assort import Gui_AssortDlg
+from modules.paths import DATA_DIR
+from modules.windows import assort
+from modules.windows.assort import Gui_AssortDlg
 
 
 @pytest.fixture

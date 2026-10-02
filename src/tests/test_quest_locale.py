@@ -6,14 +6,14 @@ import pytest
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox, QPlainTextEdit
 
-from builders import quests
-from builders.quests import LOCALE_FIELDS
-from config import load_config
-from table_fields import find_row
-from utils import read_json
-from windows import main_window as mw
-from windows.quest import TASK_TEXT_COLUMN
-from windows.settings import Gui_SettingsDlg
+from modules.builders import quests
+from modules.builders.quests import LOCALE_FIELDS
+from modules.config import load_config
+from modules.table_fields import find_row
+from modules.utils import read_json
+from modules.windows import main_window as mw
+from modules.windows.quest import TASK_TEXT_COLUMN
+from modules.windows.settings import Gui_SettingsDlg
 
 # What each of LOCALE_FIELDS is called on the Locale tab
 LABELS = {

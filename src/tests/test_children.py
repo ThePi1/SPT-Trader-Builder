@@ -6,10 +6,10 @@ import json
 import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from builders.items import ROOT_ITEM_ID, find_descendants, format_id_list
-from utils import read_json
-from windows import main_window as mw
-from windows.children_dialog import Gui_ChildrenDlg
+from modules.builders.items import ROOT_ITEM_ID, find_descendants, format_id_list
+from modules.utils import read_json
+from modules.windows import main_window as mw
+from modules.windows.children_dialog import Gui_ChildrenDlg
 
 # A small item tree:   root
 #                       ├── weapon ── rifle ── ak
@@ -69,7 +69,7 @@ def test_an_item_with_no_parent_entry_is_fine():
 
 
 def test_matches_the_old_console_tool_on_the_real_items_file():
-	from paths import DATA_DIR
+	from modules.paths import DATA_DIR
 
 	items = read_json(DATA_DIR / "items.json")
 

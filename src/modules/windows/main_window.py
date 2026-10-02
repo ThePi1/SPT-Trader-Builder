@@ -14,22 +14,22 @@ from PySide6.QtWidgets import (
 	QTableWidgetItem,
 )
 
-from builders import assort as assort_builders
-from builders import locale as locale_builders
-from builders.lookup import filter_rows, lookup_rows
-from config import UPDATE_SETTING_NAMES
-from state import load_items_file
-from tb_ui.gui_main import Ui_MainGUI
-from updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
-from utils import LOG_FILE, new_id, read_json, set_debug_logging, write_json
-from windows.about import Gui_AboutDlg
-from windows.assort import Gui_AssortDlg
-from windows.children_dialog import Gui_ChildrenDlg
-from windows.common import safe_file_dialog
-from windows.data_editor import Gui_DataEditor
-from windows.quest import Gui_QuestDlg
-from windows.settings import Gui_SettingsDlg
-from windows.update_dialog import Gui_UpdatesDlg
+from modules.builders import assort as assort_builders
+from modules.builders import locale as locale_builders
+from modules.builders.lookup import filter_rows, lookup_rows
+from modules.config import UPDATE_SETTING_NAMES
+from modules.state import load_items_file
+from modules.gui.compiled.gui_main import Ui_MainGUI
+from modules.updates import OUTDATED, UNKNOWN, UpdateCheckWorker, pending_status
+from modules.utils import LOG_FILE, new_id, read_json, set_debug_logging, write_json
+from modules.windows.about import Gui_AboutDlg
+from modules.windows.assort import Gui_AssortDlg
+from modules.windows.children_dialog import Gui_ChildrenDlg
+from modules.windows.common import safe_file_dialog
+from modules.windows.data_editor import Gui_DataEditor
+from modules.windows.quest import Gui_QuestDlg
+from modules.windows.settings import Gui_SettingsDlg
+from modules.windows.update_dialog import Gui_UpdatesDlg
 
 log = logging.getLogger(__name__)
 

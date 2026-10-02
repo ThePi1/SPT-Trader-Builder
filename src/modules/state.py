@@ -8,9 +8,9 @@ It deliberately knows nothing about Qt.
 
 import logging
 
-from config import DEFAULT_ITEMS_FILE, resolve_items_path
-from paths import DATA_DIR
-from utils import read_json
+from modules.config import DEFAULT_ITEMS_FILE, resolve_items_path
+from modules.paths import DATA_DIR
+from modules.utils import read_json
 
 log = logging.getLogger(__name__)
 

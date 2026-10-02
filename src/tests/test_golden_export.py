@@ -4,7 +4,7 @@ build against golden files, so refactors can't silently change the output.
 
 import json
 
-from table_fields import add_table_field
+from modules.table_fields import add_table_field
 
 
 def _build_quest(main_window):

@@ -2,17 +2,17 @@ import logging
 
 from PySide6.QtWidgets import QDialog, QFileDialog
 
-from config import (
+from modules.config import (
 	BOOL_SETTING_NAMES,
 	DEFAULT_ITEMS_FILE,
 	SETTING_NAMES,
 	resolve_items_path,
 	validate_settings,
 )
-from state import load_items_file
-from tb_ui.gui_settings import Ui_SettingsMenu
-from utils import LOG_FILE
-from windows.common import safe_file_dialog
+from modules.state import load_items_file
+from modules.gui.compiled.gui_settings import Ui_SettingsMenu
+from modules.utils import LOG_FILE
+from modules.windows.common import safe_file_dialog
 
 log = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
-from builders import assort as assort_builders
+from modules.builders import assort as assort_builders
 
 ROUBLES, USD, EUROS = assort_builders.ROUBLES_TPL, assort_builders.USD_TPL, assort_builders.EUROS_TPL
 USER_ROLE = Qt.ItemDataRole.UserRole

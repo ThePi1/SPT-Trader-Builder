@@ -15,19 +15,22 @@ The GUI is currently created using PySide6 and laid out using the Qt Designer to
 
 This is included with PySide6 (`pip install -r requirements.txt`) and launched with `pyside6-designer`.
 
-`..\tools\update_gui_py.ps1` is ran from the `src\tb_ui` folder to compile the `.ui` files into their `.py` counterparts.
+The Designer files are in `src\modules\gui\ui`. `src\tools\update_gui_py.ps1` compiles them into the `.py` files in `src\modules\gui\compiled` (run it from anywhere: `.\src\tools\update_gui_py.ps1`).
 If you're not developing on Windows feel free to skip this (or make an analogue to it), and just run the commands yourself in that file as needed.
 
 ## Project layout
-    src/trader_builder.py   entry point
-    src/config.py           settings.ini + data/box_fields.json (dropdown lists)
-    src/state.py            AppState: data shared by all windows
-    src/builders/           plain functions that build the exported JSON (no Qt)
-    src/windows/            one module per window (quest, task, reward, assort, ...)
-    src/tb_ui/              generated from the .ui files, don't edit by hand
-    src/tests/              the test suite (see below)
-    src/error_handling.py   shows unexpected errors in a dialog (the packaged program has no console)
-    src/paths.py, utils.py, updates.py, table_fields.py   small shared helpers
+    src/trader_builder.py          entry point
+    src/modules/                   everything else, imported as `modules.<name>`
+    src/modules/config.py          settings.ini + data/box_fields.json (dropdown lists)
+    src/modules/state.py           AppState: data shared by all windows
+    src/modules/builders/          plain functions that build the exported JSON (no Qt)
+    src/modules/windows/           one module per window (quest, task, reward, assort, ...)
+    src/modules/gui/ui/            the Qt Designer .ui files
+    src/modules/gui/compiled/      generated from the .ui files, don't edit by hand
+    src/modules/error_handling.py  shows unexpected errors in a dialog (the packaged program has no console)
+    src/modules/paths.py, utils.py, updates.py, table_fields.py   small shared helpers
+    src/data/                      settings.ini, dropdown lists, items.json, ...
+    src/tests/                     the test suite (see below)
 
 ## Tests
 From the repository root:

@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-import utils
-from utils import read_json, write_json
+from modules import utils
+from modules.utils import read_json, write_json
 
 RUSSIAN = "Привет, Прапор! Задание №1"
 
@@ -110,8 +110,9 @@ def test_data_that_cannot_be_saved_does_not_create_a_file(tmp_path):
 def _source_lines():
 	from pathlib import Path
 
-	src = Path(utils.__file__).parent
-	for path in sorted(list(src.glob("*.py")) + list((src / "windows").glob("*.py"))):
+	modules = Path(utils.__file__).parent
+	entry_point = modules.parent / "trader_builder.py"
+	for path in sorted([entry_point] + list(modules.glob("*.py")) + list((modules / "windows").glob("*.py"))):
 		for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
 			yield path, number, line.split("#")[0]
 

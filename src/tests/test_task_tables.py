@@ -3,7 +3,7 @@
 import pytest
 from PySide6.QtWidgets import QLineEdit
 
-from windows.task import Gui_TaskDlg
+from modules.windows.task import Gui_TaskDlg
 
 # (add button, remove button, table, input fields to fill in)
 PAIRS = [

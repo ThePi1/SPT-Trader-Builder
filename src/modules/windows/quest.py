@@ -3,15 +3,15 @@ import logging
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QHeaderView, QMainWindow, QPlainTextEdit, QTableWidgetItem
 
-from builders import locale as locale_builders
-from builders import quests
-from builders.quests import LOCALE_FIELDS
-from tb_ui.gui_quests import Ui_QuestWindow
-from state import TableFields
-from table_fields import add_table_field, find_row, remove_selected_table_item
-from utils import is_true, new_id
-from windows.reward import Gui_RewardDlg
-from windows.task import Gui_TaskDlg
+from modules.builders import locale as locale_builders
+from modules.builders import quests
+from modules.builders.quests import LOCALE_FIELDS
+from modules.gui.compiled.gui_quests import Ui_QuestWindow
+from modules.state import TableFields
+from modules.table_fields import add_table_field, find_row, remove_selected_table_item
+from modules.utils import is_true, new_id
+from modules.windows.reward import Gui_RewardDlg
+from modules.windows.task import Gui_TaskDlg
 
 log = logging.getLogger(__name__)
 

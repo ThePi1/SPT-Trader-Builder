@@ -1,7 +1,7 @@
 import requests
 
-import updates
-from config import load_config
+from modules import updates
+from modules.config import load_config
 
 
 class FakeResponse:

@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from config import BOX_FIELD_KEYS, ConfigError, load_config
-from paths import DATA_DIR
+from modules.config import BOX_FIELD_KEYS, ConfigError, load_config
+from modules.paths import DATA_DIR
 
 
 def test_real_config_loads():
@@ -63,9 +63,10 @@ def test_every_required_dropdown_list_is_used_by_the_program():
 	from pathlib import Path
 
 	src = Path(DATA_DIR).parent
+	modules = src / "modules"
 	code = "\n".join(
 		"\n".join(line.split("#")[0] for line in path.read_text(encoding="utf-8").splitlines())
-		for path in list(src.glob("*.py")) + list((src / "windows").glob("*.py"))
+		for path in [src / "trader_builder.py"] + list(modules.glob("*.py")) + list((modules / "windows").glob("*.py"))
 		if path.name != "config.py"
 	)
 	unused = [key for key in BOX_FIELD_KEYS if key not in code]

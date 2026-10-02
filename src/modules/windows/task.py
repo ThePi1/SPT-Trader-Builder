@@ -1,11 +1,11 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMainWindow
 
-from builders import conditions
-from tb_ui.gui_tasks import Ui_TaskWindow
-from state import TableFields
-from table_fields import add_table_field, remove_selected_table_item
-from utils import is_true, new_id, val_field
+from modules.builders import conditions
+from modules.gui.compiled.gui_tasks import Ui_TaskWindow
+from modules.state import TableFields
+from modules.table_fields import add_table_field, remove_selected_table_item
+from modules.utils import is_true, new_id, val_field
 
 
 class Gui_TaskDlg(QMainWindow):

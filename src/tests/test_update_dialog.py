@@ -4,9 +4,9 @@ import html
 
 import pytest
 
-from windows.about import Gui_AboutDlg
-from windows.common import fill_placeholders
-from windows.update_dialog import Gui_UpdatesDlg
+from modules.windows.about import Gui_AboutDlg
+from modules.windows.common import fill_placeholders
+from modules.windows.update_dialog import Gui_UpdatesDlg
 
 
 @pytest.fixture(autouse=True)

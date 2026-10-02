@@ -5,8 +5,8 @@ import json
 import pytest
 from PySide6.QtWidgets import QFileDialog
 
-from utils import read_json
-from windows import data_editor
+from modules.utils import read_json
+from modules.windows import data_editor
 
 ITEM = {"locales": {"en": {"name": "N", "shortName": "S", "description": "D"}}}
 

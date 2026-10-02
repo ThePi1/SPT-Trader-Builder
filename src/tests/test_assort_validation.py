@@ -2,8 +2,8 @@
 
 import pytest
 
-from windows import assort
-from windows.assort import ERROR_STYLE
+from modules.windows import assort
+from modules.windows.assort import ERROR_STYLE
 
 
 @pytest.fixture

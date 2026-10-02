@@ -5,8 +5,8 @@ import json
 import pytest
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
-import paths
-from windows import assort
+from modules import paths
+from modules.windows import assort
 
 
 @pytest.fixture

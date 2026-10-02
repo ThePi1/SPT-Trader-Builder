@@ -1,6 +1,6 @@
 """Working out which locale entries a set of quests needs."""
 
-from builders.quests import LOCALE_FIELDS
+from modules.builders.quests import LOCALE_FIELDS
 
 CONDITION_LISTS = ("AvailableForFinish", "AvailableForStart", "Fail")
 

@@ -5,9 +5,9 @@ import json
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
-from builders import quests as quest_builder
-from utils import read_json
-from windows import main_window as mw
+from modules.builders import quests as quest_builder
+from modules.utils import read_json
+from modules.windows import main_window as mw
 
 RUSSIAN = "Привет, Прапор! Задание №1"
 

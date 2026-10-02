@@ -11,8 +11,8 @@ import re
 from configparser import ConfigParser, Error as ConfigParserError
 from pathlib import Path
 
-from paths import APP_DIR, DATA_DIR
-from utils import read_json
+from modules.paths import APP_DIR, DATA_DIR
+from modules.utils import read_json
 
 # Every value in settings.ini, in file order, as (section, key). Key names are unique,
 # so a settings dict is just {key: value}.

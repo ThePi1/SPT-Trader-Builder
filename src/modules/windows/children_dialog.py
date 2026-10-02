@@ -2,8 +2,8 @@ import logging
 
 from PySide6.QtWidgets import QApplication, QDialog
 
-from builders.items import find_descendants, format_id_list
-from tb_ui.gui_children import Ui_ChildrenMenu
+from modules.builders.items import find_descendants, format_id_list
+from modules.gui.compiled.gui_children import Ui_ChildrenMenu
 
 log = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from builders.lookup import COLUMNS, compile_search, filter_rows, lookup_rows
+from modules.builders.lookup import COLUMNS, compile_search, filter_rows, lookup_rows
 
 # --- the rows and the search (no windows needed) ---------------------------------------------------
 

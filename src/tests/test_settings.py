@@ -4,9 +4,9 @@ import os
 
 import pytest
 
-import config as config_module
-import updates
-from config import (
+from modules import config as config_module
+from modules import updates
+from modules.config import (
 	BOOL_SETTING_NAMES,
 	SETTING_NAMES,
 	load_config,
@@ -14,8 +14,8 @@ from config import (
 	update_ini_text,
 	validate_settings,
 )
-from paths import DATA_DIR
-from windows.settings import ERROR_STYLE, Gui_SettingsDlg
+from modules.paths import DATA_DIR
+from modules.windows.settings import ERROR_STYLE, Gui_SettingsDlg
 
 GOOD = {
 	"debug_logging": "false",
