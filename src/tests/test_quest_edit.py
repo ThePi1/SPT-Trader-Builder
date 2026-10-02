@@ -574,3 +574,161 @@ def test_a_reward_just_added_to_a_new_quest_can_be_edited(main_window):
 	editor.finalize("Experience")
 	assert dlg.ui.tb_rewards.rowCount() == 1
 	assert dlg.fields.get_multicolumn_values_list("RewardSuccess")[0]["value"] == 250
+
+
+# --- editing a task from the Quest Builder ------------------------------------------------------
+
+LEVEL_ID = "lv00000000000000000000aa"
+COUNTER_ID = "cc00000000000000000000aa"
+
+
+def task_table(dlg):
+	table = dlg.ui.tb_cond
+	return [(table.item(r, 0).text(), table.item(r, 1).text(), table.item(r, 2).text()) for r in range(table.rowCount())]
+
+
+def task_row(dlg, cond_id):
+	for row in range(dlg.ui.tb_cond.rowCount()):
+		if dlg.ui.tb_cond.item(row, 0).text() == cond_id:
+			return row
+
+
+def test_the_edit_task_button_opens_the_selected_task(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	dlg.ui.tb_cond.selectRow(task_row(dlg, LEVEL_ID))
+	dlg.ui.pb_edit_task.click()
+	editor = dlg.task_editors[LEVEL_ID]
+	assert editor.editing and editor.id == LEVEL_ID and editor.parent() is dlg
+	assert editor.ui.fld_value_lv.text() == "15"
+	assert editor in dlg.windows
+
+
+def test_double_clicking_a_task_opens_it_without_editing_the_cell(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	dlg.ui.tb_cond.cellDoubleClicked.emit(task_row(dlg, COUNTER_ID), 0)
+	assert dlg.task_editors[COUNTER_ID].isVisible()
+	assert not dlg.ui.tb_cond.editTriggers() & dlg.ui.tb_cond.EditTrigger.DoubleClicked
+
+
+def test_the_edit_task_button_does_nothing_without_a_selection(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	dlg.ui.tb_cond.clearSelection()
+	dlg.ui.pb_edit_task.click()
+	assert dlg.task_editors == {}
+
+
+def test_a_saved_task_edit_replaces_the_task_in_place_and_keeps_its_locale_text(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest, make_locale(quest))
+	before = task_table(dlg)
+	editor = dlg.edit_task(task_row(dlg, LEVEL_ID))
+	editor.ui.fld_value_lv.setText("30")
+	editor.finalize("Level")
+	assert task_table(dlg) == before
+	assert dlg.task_texts()[LEVEL_ID] == "task lv"  # (the text typed for it on the Locale tab)
+	dlg.finalize()
+	(_, _, edited, new_locale), = saved
+	level = edited["conditions"]["AvailableForStart"][0]
+	assert level["id"] == LEVEL_ID and level["value"] == 30 and level["index"] == 1  # (index kept)
+	assert edited["conditions"]["AvailableForFinish"] == quest["conditions"]["AvailableForFinish"]
+	assert new_locale[LEVEL_ID] == "task lv"
+
+
+def test_changing_a_tasks_timing_moves_it_to_that_list(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest, make_locale(quest))
+	editor = dlg.edit_task(task_row(dlg, COUNTER_ID))
+	editor.ui.box_ff.setCurrentText("Fail")
+	editor.finalize("CounterCreator")
+	assert (COUNTER_ID, "Fail", "CounterCreator") in task_table(dlg) and len(task_table(dlg)) == 2
+	locale_table = dlg.ui.tb_cond_locale
+	row = [locale_table.item(r, 0).text() for r in range(locale_table.rowCount())].index(COUNTER_ID)
+	assert locale_table.item(row, 1).text() == "Fail" and locale_table.item(row, 3).text() == "task cc"
+	dlg.finalize()
+	(_, _, edited, _), = saved
+	assert edited["conditions"]["AvailableForFinish"] == []
+	assert [c["id"] for c in edited["conditions"]["Fail"]] == [COUNTER_ID]
+	assert edited["conditions"]["Fail"][0]["counter"] == quest["conditions"]["AvailableForFinish"][0]["counter"]
+
+
+def test_a_start_only_task_stays_a_start_task(main_window):
+	dlg, saved = open_editor(main_window, make_vanilla_like_quest())
+	dlg.edit_task(task_row(dlg, LEVEL_ID)).finalize("Level")
+	assert (LEVEL_ID, "Start", "Level") in task_table(dlg)
+	dlg.finalize()
+	assert [c["id"] for c in saved[0][2]["conditions"]["AvailableForStart"]] == [LEVEL_ID]
+
+
+def test_a_task_of_a_kind_the_builder_cannot_make_says_so(main_window, monkeypatch):
+	quest = make_vanilla_like_quest()
+	quest["conditions"]["AvailableForFinish"].append(
+		{"id": "wa0000000000000000000000", "conditionType": "WeaponAssembly", "index": 1, "value": 1}
+	)
+	dlg, saved = open_editor(main_window, quest)
+	messages = []
+	monkeypatch.setattr("modules.windows.quest.QMessageBox.information", lambda *args: messages.append(args[2]))
+	assert dlg.edit_task(task_row(dlg, "wa0000000000000000000000")) is None
+	assert dlg.task_editors == {} and "WeaponAssembly" in messages[0]
+	dlg.finalize()  # (and it is kept when the quest is saved)
+	assert saved[0][2] == quest
+
+
+def test_a_task_already_being_edited_is_not_opened_twice(main_window):
+	dlg, _ = open_editor(main_window, make_vanilla_like_quest())
+	row = task_row(dlg, LEVEL_ID)
+	first = dlg.edit_task(row)
+	assert dlg.edit_task(row) is first
+	first.close()
+	assert dlg.edit_task(row) is not first
+
+
+def test_removing_a_task_closes_its_editor_so_it_cannot_come_back(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest)
+	editor = dlg.edit_task(task_row(dlg, LEVEL_ID))
+	dlg.ui.tb_cond.selectRow(task_row(dlg, LEVEL_ID))
+	dlg.remove_selected_task()
+	assert not editor.isVisible()
+	assert [t[0] for t in task_table(dlg)] == [COUNTER_ID]
+	assert LEVEL_ID not in dlg.task_texts()
+	dlg.finalize()
+	assert saved[0][2]["conditions"]["AvailableForStart"] == []
+
+
+def test_cancelling_a_task_edit_changes_nothing(main_window):
+	quest = make_vanilla_like_quest()
+	dlg, saved = open_editor(main_window, quest)
+	editor = dlg.edit_task(task_row(dlg, LEVEL_ID))
+	editor.ui.fld_value_lv.setText("99")
+	editor.close()
+	dlg.finalize()
+	assert saved[0][2] == quest
+
+
+def test_a_task_just_added_to_a_new_quest_can_be_edited(main_window):
+	dlg = main_window.spawnWindow("QuestBuilder")
+	task = dlg.open_task_window()
+	task.ui.fld_value_lv.setText("20")
+	task.finalize("Level")
+	editor = dlg.edit_task(0)
+	assert editor.ui.fld_value_lv.text() == "20"
+	editor.ui.fld_value_lv.setText("25")
+	editor.finalize("Level")
+	assert dlg.ui.tb_cond.rowCount() == 1 and dlg.ui.tb_cond_locale.rowCount() == 1
+	assert dlg.fields.get_multicolumn_values_list("ConditionStart")[0]["value"] == 25
+
+
+def test_a_task_edit_shows_the_real_type_of_a_find_or_hand_over_task(main_window):
+	quest = make_vanilla_like_quest()
+	item = conditions.handover_item(
+		"hi00000000000000000000aa", parent_id="", targets=["5449016a4bdc2d6f028b456f"], value=2,
+		min_durability=0, max_durability=100, only_found_in_raid=False, visibility_conditions=[],
+	)
+	quest["conditions"]["AvailableForFinish"].append(item)
+	dlg, saved = open_editor(main_window, quest)
+	editor = dlg.edit_task(task_row(dlg, item["id"]))
+	editor.ui.fld_quantity_it.setText("5")
+	editor.finalize("Item")
+	assert (item["id"], "Finish", "HandoverItem") in task_table(dlg)
+	dlg.finalize()
+	assert saved[0][2]["conditions"]["AvailableForFinish"][1]["value"] == 5

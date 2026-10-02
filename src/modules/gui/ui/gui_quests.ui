@@ -162,7 +162,7 @@
           <x>10</x>
           <y>570</y>
           <width>348</width>
-          <height>51</height>
+          <height>81</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="grd_fields_3">
@@ -177,6 +177,13 @@
           <widget class="QPushButton" name="pb_add_task">
            <property name="text">
             <string>Add Task (launch menu)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QPushButton" name="pb_edit_task">
+           <property name="text">
+            <string>Edit Selected Task</string>
            </property>
           </widget>
          </item>
@@ -286,6 +293,9 @@
           <width>341</width>
           <height>151</height>
          </rect>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
         </property>
         <property name="selectionBehavior">
          <enum>QAbstractItemView::SelectRows</enum>

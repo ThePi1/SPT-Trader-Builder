@@ -153,7 +153,7 @@ class Ui_QuestWindow(object):
 
         self.gridLayoutWidget_3 = QWidget(self.tab_quest)
         self.gridLayoutWidget_3.setObjectName(u"gridLayoutWidget_3")
-        self.gridLayoutWidget_3.setGeometry(QRect(10, 570, 348, 51))
+        self.gridLayoutWidget_3.setGeometry(QRect(10, 570, 348, 81))
         self.grd_fields_3 = QGridLayout(self.gridLayoutWidget_3)
         self.grd_fields_3.setObjectName(u"grd_fields_3")
         self.grd_fields_3.setContentsMargins(0, 0, 0, 0)
@@ -166,6 +166,11 @@ class Ui_QuestWindow(object):
         self.pb_add_task.setObjectName(u"pb_add_task")
 
         self.grd_fields_3.addWidget(self.pb_add_task, 0, 0, 1, 1)
+
+        self.pb_edit_task = QPushButton(self.gridLayoutWidget_3)
+        self.pb_edit_task.setObjectName(u"pb_edit_task")
+
+        self.grd_fields_3.addWidget(self.pb_edit_task, 1, 0, 1, 2)
 
         self.gridLayoutWidget_4 = QWidget(self.tab_quest)
         self.gridLayoutWidget_4.setObjectName(u"gridLayoutWidget_4")
@@ -223,6 +228,7 @@ class Ui_QuestWindow(object):
         self.tb_cond.setHorizontalHeaderItem(2, __qtablewidgetitem5)
         self.tb_cond.setObjectName(u"tb_cond")
         self.tb_cond.setGeometry(QRect(10, 410, 341, 151))
+        self.tb_cond.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tb_cond.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tabs_quest.addTab(self.tab_quest, "")
         self.tab_locale = QWidget()
@@ -437,6 +443,7 @@ class Ui_QuestWindow(object):
         self.lb_restartable.setText(QCoreApplication.translate("QuestWindow", u"Restartable", None))
         self.pb_rem_task.setText(QCoreApplication.translate("QuestWindow", u"Remove Task", None))
         self.pb_add_task.setText(QCoreApplication.translate("QuestWindow", u"Add Task (launch menu)", None))
+        self.pb_edit_task.setText(QCoreApplication.translate("QuestWindow", u"Edit Selected Task", None))
         self.pb_add_reward.setText(QCoreApplication.translate("QuestWindow", u" Add Reward (launch menu)", None))
         self.pb_remove_reward.setText(QCoreApplication.translate("QuestWindow", u"Remove Reward", None))
         self.pb_edit_reward.setText(QCoreApplication.translate("QuestWindow", u"Edit Selected Reward", None))

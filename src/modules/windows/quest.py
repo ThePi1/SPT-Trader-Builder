@@ -14,6 +14,7 @@ from modules.utils import is_true, new_id
 from modules.windows.common import select_id, select_or_add
 from modules.windows.reward import Gui_RewardDlg, can_edit
 from modules.windows.task import Gui_TaskDlg
+from modules.windows.task import can_edit as can_edit_task
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class Gui_QuestDlg(QMainWindow):
 		self.fields = TableFields()  # this quest's conditions and rewards
 		self.windows = []
 		self.reward_editors = {}  # reward id -> the dialog editing that reward
+		self.task_editors = {}  # task (condition) id -> the dialog editing that task
 		self.original = copy.deepcopy(quest) if quest is not None else None  # None for a new quest
 		# name shown in the box -> id, for the boxes that show a name for an id
 		self.trader_ids = dict(state.traders)
@@ -55,6 +57,8 @@ class Gui_QuestDlg(QMainWindow):
 	def on_launch(self):
 		self.ui.pb_add_task.released.connect(self.open_task_window)
 		self.ui.pb_rem_task.released.connect(self.remove_selected_task)
+		self.ui.pb_edit_task.released.connect(self.edit_selected_task)
+		self.ui.tb_cond.cellDoubleClicked.connect(lambda row, _column: self.edit_task(row))
 		self.ui.pb_finalize_quest.released.connect(self.finalize)
 		self.ui.pb_add_reward.released.connect(self.open_reward_window)
 		self.ui.pb_remove_reward.released.connect(self.remove_selected_reward)
@@ -88,12 +92,60 @@ class Gui_QuestDlg(QMainWindow):
 		)
 		self.add_task_text_row(cond_id, timing, cond_type)
 
+	def edit_selected_task(self):
+		"""The Edit Selected Task button."""
+		selected = self.ui.tb_cond.selectedItems()
+		if selected:
+			self.edit_task(selected[0].row())
+
+	def edit_task(self, row):
+		"""Open the task in a table row in the Task Builder to edit it (or bring its window forward if it
+		is already open). Returns the dialog, or None if it can't be opened."""
+		table = self.ui.tb_cond
+		if table.item(row, 0) is None:
+			return None
+		cond_id, timing = table.item(row, 0).text(), table.item(row, 1).text()
+		cond = self.fields.data.get(f"Condition{timing}", {}).get(cond_id)
+		if cond is None:
+			return None
+		if not can_edit_task(cond):
+			QMessageBox.information(
+				self,
+				"Edit Task",
+				f"The Task Builder can't make tasks of type {cond.get('conditionType')}, so it can't edit "
+				"this one either.\n\nYou can remove it, or leave it as it is.",
+			)
+			return None
+		open_dlg = self.task_editors.get(cond_id)
+		if open_dlg is not None and open_dlg.isVisible():
+			open_dlg.raise_()
+			open_dlg.activateWindow()
+			return open_dlg
+		dlg = Gui_TaskDlg(self.state, parent=self, condition=cond, timing=timing)
+		dlg.condition_ready.connect(
+			lambda new_timing, kind, cid, edited, old_timing=timing: self.task_edited(
+				old_timing, new_timing, cid, edited
+			)
+		)
+		self.task_editors[cond_id] = dlg
+		self.windows.append(dlg)
+		return dlg
+
+	def task_edited(self, old_timing, timing, cond_id, cond):
+		"""A task was edited and saved: it replaces the old one (moving to another list if its timing changed)."""
+		if timing != old_timing:
+			self.fields.data.get(f"Condition{old_timing}", {}).pop(cond_id, None)
+		self.add_condition(timing, cond["conditionType"], cond_id, cond)
+
 	def remove_selected_task(self):
 		"""Remove the task selected in the Tasks table, and its row on the Locale tab."""
 		selected = self.ui.tb_cond.selectedItems()
 		if not selected:
 			return
 		cond_id = self.ui.tb_cond.item(selected[0].row(), 0).text()
+		editor = self.task_editors.pop(cond_id, None)
+		if editor is not None:
+			editor.close()  # (saving it would bring the removed task back)
 		remove_selected_table_item(self.fields, type="ConditionAny", table=self.ui.tb_cond)
 		row = find_row(self.ui.tb_cond_locale, cond_id)
 		if row is not None:

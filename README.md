@@ -8,7 +8,7 @@ A tool for building SPT Quests/Assorts.
     python .\trader_builder.py
 
 ## Editing quests
-Double-click a quest in the Quests list (or select it and use **Edit > Edit Selected Quest**) to open it in the Quest Builder. This works for quests you built and for imported ones. Its tasks and rewards are listed in the tables. Tasks can be removed or added to (a task itself can't be edited yet, only replaced). A reward can be edited: double-click it, or select it and press **Edit Selected Reward**. That opens it in the Reward Builder, and changing its timing moves it to the other list. A few kinds of reward the Reward Builder can't make (ProductionScheme, CustomizationDirect, TraderStandingRestore, Pockets) can't be opened; they can still be removed.
+Double-click a quest in the Quests list (or select it and use **Edit > Edit Selected Quest**) to open it in the Quest Builder. This works for quests you built and for imported ones. Its tasks and rewards are listed in the tables. A task or a reward can be edited: double-click it, or select it and press **Edit Selected Task** / **Edit Selected Reward**. That opens it in the Task Builder or Reward Builder, and changing its timing moves it to another list. A few kinds the builders can't make (the WeaponAssembly, SellItemToTrader and HideoutArea tasks; the ProductionScheme, CustomizationDirect, TraderStandingRestore and Pockets rewards) can't be opened; they can still be removed.
 Only what you change is changed: anything in the quest that the Quest Builder has no control for is kept exactly as it was. The changes only take effect when you press **Save Changes**; closing the window leaves the quest as it was.
 
 ## Settings
