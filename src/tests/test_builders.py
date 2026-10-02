@@ -533,3 +533,76 @@ def test_edited_quest_does_not_change_or_share_the_original():
 
 def test_every_editable_key_is_one_the_builder_writes():
 	assert set(quests.EDITABLE_KEYS) <= set(_built_quest())
+
+
+# --- editing a reward -----------------------------------------------------------------
+
+
+def _built_rewards():
+	"""One reward of every kind, as the Reward Builder makes them."""
+	items = [rewards.reward_item("i1", "tpl", stack_count=2)]
+	return {
+		"Achievement": rewards.achievement("r", target="a", unknown=False),
+		"AssortmentUnlock": rewards.assortment_unlock("r", items=items, loyalty_level=2, target="i1", trader_id="t", unknown=False),
+		"Experience": rewards.experience("r", unknown=False, value=100),
+		"Item": rewards.item("r", find_in_raid=True, items=items, target="i1", unknown=False, value=2),
+		"Skill": rewards.skill("r", target="Strength", unknown=False, value=100),
+		"StashRows": rewards.stash_rows("r", unknown=False, value=2),
+		"TraderStanding": rewards.trader_standing("r", target="t", unknown=False, value=0.05),
+		"TraderUnlock": rewards.trader_unlock("r", target="t", unknown=False),
+	}
+
+
+def test_every_editable_reward_key_is_one_the_builder_writes():
+	built = _built_rewards()
+	assert set(rewards.EDITABLE_KEYS) == set(built)
+	for kind, keys in rewards.EDITABLE_KEYS.items():
+		assert set(keys) <= set(built[kind]), kind
+
+
+def test_an_edited_reward_takes_the_edited_fields_and_keeps_the_rest():
+	original = rewards.experience("r", unknown=False, value=100)
+	original["index"] = 3
+	original["availableInGameEditions"] = ["standard"]
+	original["somethingNew"] = {"a": 1}
+	edited = rewards.edited_reward(original, rewards.experience("r", unknown=True, value=250))
+	assert edited["value"] == 250 and edited["unknown"] is True
+	assert edited["index"] == 3 and edited["availableInGameEditions"] == ["standard"]
+	assert edited["somethingNew"] == {"a": 1}
+	assert edited["id"] == "r" and edited["type"] == "Experience"
+
+
+def test_a_number_written_as_text_stays_text_unless_it_changes():
+	original = rewards.experience("r", unknown=False, value="5000")
+	assert rewards.edited_reward(original, rewards.experience("r", unknown=False, value=5000))["value"] == "5000"
+	assert rewards.edited_reward(original, rewards.experience("r", unknown=False, value=6000))["value"] == 6000
+	standing = rewards.trader_standing("r", target="t", unknown=False, value="0.15")
+	assert rewards.edited_reward(standing, rewards.trader_standing("r", target="t", unknown=False, value=0.15))["value"] == "0.15"
+	# (only for numbers: a word that isn't one is replaced)
+	assert rewards.edited_reward(
+		rewards.experience("r", unknown=False, value="lots"), rewards.experience("r", unknown=False, value=0)
+	)["value"] == 0
+
+
+def test_a_key_the_original_does_not_have_is_not_added_just_to_say_false():
+	original = rewards.experience("r", unknown=False, value=100)
+	del original["unknown"]
+	assert "unknown" not in rewards.edited_reward(original, rewards.experience("r", unknown=False, value=100))
+	assert rewards.edited_reward(original, rewards.experience("r", unknown=True, value=100))["unknown"] is True
+	item = rewards.item("r", find_in_raid=False, items=[], target="", unknown=False, value=1)
+	del item["findInRaid"]
+	assert "findInRaid" not in rewards.edited_reward(item, rewards.item("r", find_in_raid=False, items=[], target="", unknown=False, value=1))
+
+
+def test_an_untouched_reward_of_every_kind_is_unchanged():
+	for kind, built in _built_rewards().items():
+		assert rewards.edited_reward(built, copy.deepcopy(built)) == built, kind
+
+
+def test_an_edited_reward_does_not_change_or_share_the_original():
+	original = _built_rewards()["Item"]
+	snapshot = copy.deepcopy(original)
+	edited = rewards.edited_reward(original, rewards.item("r", find_in_raid=False, items=[], target="", unknown=True, value=9))
+	assert original == snapshot
+	edited["items"].append("x")
+	assert original == snapshot

@@ -1,5 +1,7 @@
 """Quest rewards, and the item entries used by Item / AssortmentUnlock rewards."""
 
+import copy
+
 
 def reward_item(
 	item_id,
@@ -131,3 +133,46 @@ def trader_unlock(reward_id, *, target, unknown):
 		"type": "TraderUnlock",
 		"unknown": unknown,
 	}
+
+
+# The keys of each kind of reward that the Reward Builder has a control for (see windows/reward.py)
+EDITABLE_KEYS = {
+	"Achievement": ("target", "unknown"),
+	"AssortmentUnlock": ("items", "loyaltyLevel", "target", "traderId", "unknown"),
+	"Experience": ("unknown", "value"),
+	"Item": ("findInRaid", "items", "target", "unknown", "value"),
+	"Skill": ("target", "unknown", "value"),
+	"StashRows": ("unknown", "value"),
+	"TraderStanding": ("target", "unknown", "value"),
+	"TraderUnlock": ("target", "unknown"),
+}
+
+
+def _same_number(original, new):
+	"""Whether original is a number written as text ("5000") that is the number new."""
+	if not isinstance(original, str) or isinstance(new, bool) or not isinstance(new, (int, float)):
+		return False
+	try:
+		return float(original) == new
+	except ValueError:
+		return False
+
+
+def edited_reward(original, built):
+	"""A reward that was edited in the Reward Builder: the original, with the edited fields replaced.
+
+	built is what the builder made from the form. Only the keys the form has a control for are taken
+	from it; the rest (id, index, availableInGameEditions, anything unknown) stays as the original
+	had it. Two details keep an untouched reward exactly as it was: a number that the original wrote
+	as text ("5000") stays text if the form still has that number, and a key the original doesn't
+	have is not added just to say "false" or 0.
+	"""
+	merged = copy.deepcopy(original)
+	for key in EDITABLE_KEYS[original["type"]]:
+		new = built[key]
+		if _same_number(original.get(key), new):
+			continue
+		if key not in original and not new:
+			continue
+		merged[key] = new
+	return merged
