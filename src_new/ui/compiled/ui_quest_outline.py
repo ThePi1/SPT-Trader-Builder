@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QHeaderView, QPlainTextEdit,
-    QPushButton, QScrollArea, QSizePolicy, QSplitter,
-    QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QHBoxLayout, QHeaderView,
+    QPlainTextEdit, QPushButton, QScrollArea, QSizePolicy,
+    QSplitter, QToolButton, QTreeWidget, QTreeWidgetItem,
+    QVBoxLayout, QWidget)
 
 class Ui_OutlineForm(object):
     def setupUi(self, OutlineForm):
@@ -90,6 +90,7 @@ class Ui_OutlineForm(object):
         __qtreewidgetitem.setText(0, u"1");
         self.tree.setHeaderItem(__qtreewidgetitem)
         self.tree.setObjectName(u"tree")
+        self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree.setIndentation(16)
         self.tree.header().setVisible(False)
 

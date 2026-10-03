@@ -11,7 +11,9 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 
 from core import lookup
+from core import jsonio
 from core import merge as M
+from core.export import export_selection
 from core.locale_copy import copy_to_other_languages
 from core.documents import Document
 from core.paths import ICON_FILE
@@ -23,6 +25,7 @@ from ui.assort_tab import AssortTab
 from ui.compiled.ui_main_window import Ui_MainWindowForm
 from ui.composite_tab import CompositeTab
 from ui.explorer_tab import ExplorerTab
+from ui.export_dialog import ExportDialog
 from ui.files_strip import FilesStrip
 from ui.import_dialog import ImportDialog
 from ui.locale_tab import LocaleTab
@@ -146,7 +149,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			(self.actionUpdates, self.show_updates),
 		):
 			action.triggered.connect(lambda _checked=False, slot=slot: slot())
-		self.actionExportQuests.setVisible(False)  # (the export window comes with the next change)
+		self.actionExportQuests.triggered.connect(lambda _checked=False: self.export_quests())
+		self.quest_outline.export_requested.connect(self.export_quests)
 		self.undo_action, self.redo_action = self.actionUndo, self.actionRedo
 		self.menuEdit.aboutToShow.connect(self._update_edit_menu)
 
@@ -391,6 +395,31 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			text += f" {len(bare)} imported quest{'' if len(bare) == 1 else 's'} {'has' if len(bare) == 1 else 'have'} no text yet: import a locale file."
 		self.statusBar().showMessage(text, 15000)
 		return plan
+
+	# --- exporting ---------------------------------------------------------------------------
+	def export_quests(self):
+		"""Write the selected quests (and, if wanted, their text, trader offers and locks) as files of their own."""
+		ids = self.quest_outline.selected_quest_ids()
+		if not ids:
+			QMessageBox.information(self, "Export quests", "Select one or more quests in the outline first (Ctrl-click to pick several).")
+			return None
+		result = export_selection(ids, self.quests.data, self.locale.data, self.assort.data, self.locks.data)
+		names = [q.get("QuestName") or qid for qid, q in result.quests.items()]
+		folder = str(self.quests.path.parent) if self.quests.path else ""
+		dialog = ExportDialog(names, result, folder, self)
+		if not dialog.exec():
+			return None
+		data = {"quests": result.quests, "locale": result.locale, "assort": result.assort, "locks": result.locks}
+		written = []
+		try:
+			for kind, path in dialog.paths().items():
+				jsonio.write_json(path, data[kind])
+				written.append(Path(path).name)
+		except OSError as e:
+			QMessageBox.warning(self, "Export quests", f"A file could not be written.\n\n{e}")
+			return None
+		self.statusBar().showMessage(f"Exported {len(result.quests)} quest{'' if len(result.quests) == 1 else 's'} to {', '.join(written)}.", 12000)
+		return written
 
 	@staticmethod
 	def _droppable(mime):

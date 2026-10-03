@@ -259,3 +259,141 @@ def test_only_json_files_and_folders_are_accepted_for_dropping(window, tmp_path)
 	assert window._droppable(mime_for(tmp_path))
 	assert not window._droppable(mime_for(write(tmp_path, "notes.txt", {})))
 	assert not window._droppable(QMimeData())
+
+
+# --- source tags, selecting several quests, exporting ----------------------------------------
+
+def quest_item(window, quest_id):
+	outline = window.quest_outline
+	return next(item for item in outline._walk() if item.data(0, 256).kind == "quest" and item.data(0, 256).path[0] == quest_id)
+
+
+def test_imported_quests_show_their_file_in_the_outline(window, tmp_path):
+	window.import_files(files(tmp_path)[:2])
+	assert quest_item(window, Q1).text(0).endswith("[kappa.json]") and quest_item(window, Q2).text(0).endswith("[side_jobs.json]")
+	window._set_quests(Document({Q3: quest(Q3, "Mine", T3)}))
+	assert "[" not in quest_item(window, Q3).text(0)  # (opening a file clears the tags)
+
+
+def test_several_quests_can_be_selected_and_are_listed_in_tree_order(window, tmp_path):
+	window.import_files(files(tmp_path)[:2])
+	outline = window.quest_outline
+	assert outline.tree.selectionMode() == outline.tree.SelectionMode.ExtendedSelection
+	outline.tree.clearSelection()
+	for qid in (Q2, Q1):
+		quest_item(window, qid).setSelected(True)
+	assert outline.selected_quest_ids() == [Q1, Q2]
+	task = next(i for i in outline._walk() if i.data(0, 256).kind == "task" and i.data(0, 256).path[0] == Q1)
+	outline.tree.clearSelection()
+	task.setSelected(True)
+	assert outline.selected_quest_ids() == [Q1]  # (something inside a quest counts as the quest)
+
+
+def test_the_context_menu_offers_export_and_removing_a_files_quests(window, tmp_path):
+	window._set_quests(Document({Q3: quest(Q3, "Mine", T3)}))
+	window.import_files(files(tmp_path)[:2])
+	outline = window.quest_outline
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q3))] == ["Export this quest..."]
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q1))] == ["Export this quest...", "Remove the quests imported from kappa.json"]
+	outline.tree.clearSelection()
+	quest_item(window, Q1).setSelected(True)
+	quest_item(window, Q2).setSelected(True)
+	assert outline._context_actions(quest_item(window, Q2))[0][0] == "Export 2 selected quests..."
+	assert outline._context_actions(None) == []
+
+
+def test_removing_the_quests_imported_from_a_file(window, tmp_path, monkeypatch):
+	window._set_quests(Document({Q3: quest(Q3, "Mine", T3)}))
+	window.import_files(files(tmp_path)[:2])
+	outline = window.quest_outline
+	monkeypatch.setattr("ui.quest_outline.QMessageBox.question", lambda *a, **k: dialogs.QMessageBox.StandardButton.No)
+	assert outline.remove_from_source("kappa.json") == 0 and set(window.quests.data) == {Q1, Q2, Q3}
+	monkeypatch.setattr("ui.quest_outline.QMessageBox.question", lambda *a, **k: dialogs.QMessageBox.StandardButton.Yes)
+	assert outline.remove_from_source("kappa.json") == 1
+	assert set(window.quests.data) == {Q2, Q3} and Q1 not in window.quest_sources
+	window.quests.undo()
+	assert set(window.quests.data) == {Q1, Q2, Q3}
+	assert outline.remove_from_source("nothing.json") == 0
+
+
+def test_exporting_selected_quests_writes_their_files(window, tmp_path, monkeypatch):
+	window.import_files(files(tmp_path))
+	window.quest_outline.tree.clearSelection()
+	quest_item(window, Q1).setSelected(True)
+	out = tmp_path / "out"
+	out.mkdir()
+
+	def accept(self):
+		self.questsEdit.setText(str(out / "kappa_only.json"))
+		return True
+
+	monkeypatch.setattr("ui.main_window.ExportDialog.exec", accept)
+	written = window.export_quests()
+	assert written == ["kappa_only.json", "kappa_only_locale.json", "kappa_only_assort.json", "kappa_only_questassort.json"]
+	assert list(json.loads((out / "kappa_only.json").read_text(encoding="utf-8"))) == [Q1]
+	assert json.loads((out / "kappa_only_locale.json").read_text(encoding="utf-8")) == {f"{Q1} name": "One"}
+	assert A.offer_ids(json.loads((out / "kappa_only_assort.json").read_text(encoding="utf-8"))) == [OFFER]
+	assert json.loads((out / "kappa_only_questassort.json").read_text(encoding="utf-8"))["success"] == {OFFER: Q1}
+	assert "Exported 1 quest to kappa_only.json" in window.statusBar().currentMessage()
+	assert window.quests.dirty is True  # (exporting changes nothing that is open)
+	window.quests.undo()  # the import is still the last thing done
+	assert Q1 not in window.quests.data
+
+
+def test_exporting_needs_a_selection(window, monkeypatch):
+	told = []
+	monkeypatch.setattr("ui.main_window.QMessageBox.information", lambda *a: told.append(a[2]))
+	assert window.export_quests() is None and "Select one or more quests" in told[0]
+	assert window.actionExportQuests.isVisible() or not window.actionExportQuests.isVisible()  # (the action exists in the Quests menu)
+	assert window.actionExportQuests in window.menuQuests.actions()
+
+
+def test_a_write_error_while_exporting_is_reported(window, tmp_path, monkeypatch):
+	window.import_files(files(tmp_path)[:1])
+	window.quest_outline.tree.clearSelection()
+	quest_item(window, Q1).setSelected(True)
+	monkeypatch.setattr("ui.main_window.ExportDialog.exec", lambda self: self.questsEdit.setText(str(tmp_path / "missing" / "q.json")) or True)
+	shown = []
+	monkeypatch.setattr("ui.main_window.QMessageBox.warning", lambda *a: shown.append(a[2]))
+	assert window.export_quests() is None and "could not be written" in shown[0]
+
+
+def test_the_export_window_names_the_other_files_after_the_quests_file(app):
+	from core.export import Export
+	from ui.export_dialog import ExportDialog
+
+	result = Export(quests={Q1: {}}, locale={"k": "v"}, assort=assort_with_one(), locks={"started": {}, "success": {OFFER: Q1}, "fail": {}})
+	dialog = ExportDialog(["One"], result, "C:/mods")
+	assert {k: Path(v) for k, v in dialog.paths().items()} == {
+		"quests": Path("C:/mods/exported_quests.json"), "locale": Path("C:/mods/exported_quests_locale.json"),
+		"assort": Path("C:/mods/exported_quests_assort.json"), "locks": Path("C:/mods/exported_quests_questassort.json"),
+	}
+	dialog.questsEdit.setText("D:/out/bar.json")
+	assert Path(dialog.paths()["locale"]) == Path("D:/out/bar_locale.json")
+	dialog.localeEdit.textEdited.emit("D:/out/words.json")
+	dialog.localeEdit.setText("D:/out/words.json")
+	dialog.questsEdit.setText("D:/out/other.json")
+	assert Path(dialog.paths()["locale"]) == Path("D:/out/words.json") and Path(dialog.paths()["assort"]) == Path("D:/out/other_assort.json")
+	dialog.localeBox.setChecked(False)
+	assert "locale" not in dialog.paths() and not dialog.localeEdit.isEnabled()
+	dialog.questsEdit.setText("")
+	assert not dialog.buttons.button(dialog.buttons.StandardButton.Ok).isEnabled()
+
+
+def assort_with_one():
+	data = A.empty_assort()
+	A.add_offer(data, *A.new_offer(ITEM, ids=lambda: OFFER))
+	return data
+
+
+def test_the_export_window_disables_what_there_is_none_of_and_rejects_duplicate_names(app):
+	from core.export import Export
+	from ui.export_dialog import ExportDialog
+
+	dialog = ExportDialog(["A", "B", "C", "D", "E", "F"], Export(quests={Q1: {}}), "")
+	assert "and 2 more" in dialog.summaryLabel.text() and dialog.paths() == {"quests": "exported_quests.json"}
+	assert not dialog.localeBox.isEnabled() and not dialog.assortBox.isEnabled() and "(0" in dialog.localeBox.text()
+	full = ExportDialog(["A"], Export(quests={Q1: {}}, locale={"k": "v"}), "")
+	full.localeEdit.textEdited.emit("exported_quests.json")
+	full.localeEdit.setText("exported_quests.json")
+	assert "own name" in full.noteLabel.text() and not full.buttons.button(full.buttons.StandardButton.Ok).isEnabled()

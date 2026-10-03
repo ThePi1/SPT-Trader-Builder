@@ -7,7 +7,7 @@ changes under it (add, delete, undo); it only refreshes its labels while a form 
 
 import json
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtWidgets import (
 	QComboBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMenu, QMessageBox, QPlainTextEdit, QPushButton,
 	QTreeWidgetItem, QVBoxLayout, QWidget,
@@ -57,6 +57,8 @@ def reward_path(qid, timing):
 
 
 class QuestOutline(QWidget, Ui_OutlineForm):
+	export_requested = Signal()  # the context menu's "Export selected quests..."
+
 	def __init__(self, gamedata=None, settings=None, parent=None):
 		super().__init__(parent)
 		self.gamedata, self.settings, self.doc = gamedata, settings, None
@@ -76,6 +78,8 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.tree.currentItemChanged.connect(self._selected)
+		self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+		self.tree.customContextMenuRequested.connect(self._context_menu)
 		self.problems = ProblemsPanel(settings)  # (under the tree)
 		self.problems.activated.connect(self._jump)
 		self.leftLayout.addWidget(self.problems)
@@ -269,6 +273,53 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			for i in range(len(rewards[timing] or [])):
 				node = self._add_item(group, "", Address("reward", path + (i,), "reward", timing))
 				node.setText(0, self._label(node.data(0, ROLE)))
+
+	def selected_quest_ids(self):
+		"""The ids of the quests that are selected, or that have something selected inside them, in tree order."""
+		chosen = {item.data(0, ROLE).path[0] for item in self.tree.selectedItems()}
+		return [q for q in (self.doc.data if self.doc else {}) if q in chosen]
+
+	def _context_actions(self, item):
+		"""[(text, what to do)] for the right-click menu on this tree item."""
+		actions = []
+		if item is not None:
+			quest_id = item.data(0, ROLE).path[0]
+			if quest_id not in self.selected_quest_ids():
+				self.tree.setCurrentItem(item)
+				self.tree.clearSelection()
+				item.setSelected(True)
+			count = len(self.selected_quest_ids())
+			actions.append((f"Export {count} selected quests..." if count > 1 else "Export this quest...", self.export_requested.emit))
+			source = self.sources.get(quest_id)
+			if source:
+				actions.append((f"Remove the quests imported from {source}", lambda source=source: self.remove_from_source(source)))
+		return actions
+
+	def _context_menu(self, pos):
+		actions = self._context_actions(self.tree.itemAt(pos))
+		if not actions:
+			return
+		menu = QMenu(self.tree)
+		for text, slot in actions:
+			menu.addAction(text).triggered.connect(lambda _checked=False, slot=slot: slot())
+		menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+	def remove_from_source(self, source):
+		"""Delete the quests that were imported from this file (after asking). Their text stays in the locale."""
+		ids = [q for q, file in self.sources.items() if file == source and self.doc and q in self.doc.data]
+		if not ids:
+			return 0
+		answer = QMessageBox.question(
+			self, "Remove quests",
+			f"Remove the {len(ids)} quest{'' if len(ids) == 1 else 's'} imported from {source}?\n\nTheir text stays in the locale file.",
+		)
+		if answer != QMessageBox.StandardButton.Yes:
+			return 0
+		self.doc.change(f"Remove quests from {source}", lambda data: [data.pop(q, None) for q in ids])
+		for q in ids:
+			self.sources.pop(q, None)
+		self.set_sources(self.sources)
+		return len(ids)
 
 	def set_sources(self, sources):
 		"""Show which file each imported quest came from (quest id -> file name)."""

@@ -31,6 +31,11 @@ for its menu (the same entries are under File).
 - Save writes to the linked file, or asks for a name when there is none. Settings > General > "Always ask for a file name
   when saving" makes it ask every time. Importing five quest files and saving gives one file.
 - The window title is the program's name, with * when anything is unsaved.
+- Imported quests show the file they came from in the outline, in brackets, until the quests are opened afresh. Right-click
+  a quest to remove all the quests imported from that file (their text stays in the locale).
+- Export: select quests in the outline (Ctrl-click for several), then File > Quests > Export selected quests... or the
+  right-click menu. It writes just those quests, and optionally their text, the trader offers locked to them, and
+  those locks, each as a file of its own; what is open is not changed.
 
 ## Version and update check
 
