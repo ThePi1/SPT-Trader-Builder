@@ -1,0 +1,492 @@
+{
+  "source": "sp-tarkov/server-csharp",
+  "records": {
+    "BarterScheme": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Trader.cs",
+      "properties": {
+        "count": {"type": "double?", "required": false},
+        "_tpl": {"type": "MongoId", "required": false},
+        "onlyFunctional": {"type": "bool?", "required": false},
+        "sptQuestLocked": {"type": "bool?", "required": false},
+        "level": {"type": "int?", "required": false},
+        "side": {"type": "DogtagExchangeSide?", "required": false, "converter": "JsonStringEnumConverter"}
+      }
+    },
+    "CounterConditionDistance": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "value": {"type": "double?", "required": false},
+        "compareMethod": {"type": "string?", "required": false}
+      }
+    },
+    "DaytimeCounter": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "from": {"type": "int?", "required": false},
+        "to": {"type": "int?", "required": false}
+      }
+    },
+    "EnemyHealthEffect": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "bodyParts": {"type": "List<string>?", "required": false},
+        "effects": {"type": "List<string>?", "required": false}
+      }
+    },
+    "IllustrationConfig": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Reward.cs",
+      "properties": {
+        "image": {"type": "string", "required": false},
+        "bigImage": {"type": "string", "required": false},
+        "isBigImage": {"type": "bool", "required": false}
+      }
+    },
+    "Item": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "_id": {"type": "MongoId", "required": true},
+        "_tpl": {"type": "MongoId", "required": false},
+        "parentId": {"type": "string?", "required": false},
+        "slotId": {"type": "string?", "required": false},
+        "location": {"type": "object?", "required": false},
+        "desc": {"type": "string?", "required": false},
+        "upd": {"type": "Upd?", "required": false}
+      }
+    },
+    "LockableComponent": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "KeyIds": {"type": "IEnumerable<string>?", "required": false},
+        "Locked": {"type": "bool?", "required": false},
+        "KeyComponent": {"type": "LockableKeyComponent?", "required": false}
+      }
+    },
+    "LockableKeyComponent": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "RelativeValue": {"type": "float?", "required": false},
+        "NumberOfUsages": {"type": "int?", "required": false}
+      }
+    },
+    "MapMarker": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Type": {"type": "string?", "required": false},
+        "X": {"type": "double?", "required": false},
+        "Y": {"type": "double?", "required": false},
+        "Note": {"type": "string?", "required": false}
+      }
+    },
+    "Quest": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "QuestName": {"type": "string?", "required": false},
+        "_id": {"type": "MongoId", "required": true},
+        "canShowNotificationsInGame": {"type": "bool", "required": true},
+        "conditions": {"type": "QuestConditionTypes", "required": true},
+        "description": {"type": "string", "required": true},
+        "failMessageText": {"type": "string?", "required": false},
+        "name": {"type": "string", "required": true},
+        "note": {"type": "string?", "required": false},
+        "traderId": {"type": "MongoId", "required": true},
+        "location": {"type": "string", "required": true},
+        "image": {"type": "string", "required": true},
+        "type": {"type": "QuestTypeEnum", "required": true, "converter": "JsonStringEnumConverter"},
+        "isKey": {"type": "bool?", "required": false},
+        "restartable": {"type": "bool", "required": true},
+        "instantComplete": {"type": "bool?", "required": false},
+        "secretQuest": {"type": "bool?", "required": false},
+        "startedMessageText": {"type": "string?", "required": false},
+        "successMessageText": {"type": "string?", "required": false},
+        "acceptPlayerMessage": {"type": "string", "required": false},
+        "acceptanceAndFinishingSource": {"type": "string", "required": false},
+        "declinePlayerMessage": {"type": "string?", "required": false},
+        "completePlayerMessage": {"type": "string?", "required": false},
+        "templateId": {"type": "string?", "required": false},
+        "rewards": {"type": "Dictionary<string, List<Reward>>?", "required": false},
+        "status": {"type": "int?", "required": false},
+        "KeyQuest": {"type": "bool?", "required": false},
+        "changeQuestMessageText": {"type": "string?", "required": false},
+        "side": {"type": "string", "required": true},
+        "progressSource": {"type": "string?", "required": false},
+        "rankingModes": {"type": "List<string>?", "required": false},
+        "gameModes": {"type": "List<string>?", "required": false},
+        "arenaLocations": {"type": "List<string>?", "required": false},
+        "dialogueId": {"type": "MongoId?", "required": false},
+        "sptStatus": {"type": "QuestStatusEnum?", "required": false}
+      }
+    },
+    "QuestAssortFile": {
+      "file": "(Trader.QuestAssort)",
+      "kind": "dictionary",
+      "type": "Dictionary<string, Dictionary<MongoId, MongoId>>",
+      "properties": {
+      }
+    },
+    "QuestCondition": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "id": {"type": "MongoId", "required": true},
+        "index": {"type": "int?", "required": false},
+        "compareMethod": {"type": "string?", "required": false},
+        "dynamicLocale": {"type": "bool", "required": true},
+        "globalQuestCounterId": {"type": "string?", "required": false},
+        "visibilityConditions": {"type": "List<VisibilityCondition>?", "required": false},
+        "parentId": {"type": "string?", "required": false},
+        "target": {"type": "ListOrT<string>?", "required": false},
+        "value": {"type": "double?", "required": false, "converter": "StringToNumberFactoryConverter"},
+        "type": {"type": "string?", "required": false},
+        "status": {"type": "HashSet<QuestStatusEnum>?", "required": false},
+        "availableAfter": {"type": "int?", "required": false},
+        "dispersion": {"type": "double?", "required": false},
+        "onlyFoundInRaid": {"type": "bool?", "required": false},
+        "oneSessionOnly": {"type": "bool?", "required": false},
+        "isResetOnConditionFailed": {"type": "bool?", "required": false},
+        "isNecessary": {"type": "bool?", "required": false},
+        "doNotResetIfCounterCompleted": {"type": "bool?", "required": false},
+        "dogtagLevel": {"type": "int?", "required": false, "converter": "StringToNumberFactoryConverter"},
+        "traderId": {"type": "string?", "required": false},
+        "maxDurability": {"type": "double?", "required": false},
+        "minDurability": {"type": "double?", "required": false},
+        "counter": {"type": "QuestConditionCounter?", "required": false},
+        "plantTime": {"type": "double?", "required": false},
+        "zoneId": {"type": "string?", "required": false},
+        "countInRaid": {"type": "bool?", "required": false},
+        "completeInSeconds": {"type": "double?", "required": false},
+        "isEncoded": {"type": "bool?", "required": false},
+        "conditionType": {"type": "string", "required": true},
+        "areaType": {"type": "HideoutAreas?", "required": false},
+        "baseAccuracy": {"type": "ValueCompare?", "required": false},
+        "containsItems": {"type": "List<string>?", "required": false},
+        "durability": {"type": "ValueCompare?", "required": false},
+        "effectiveDistance": {"type": "ValueCompare?", "required": false},
+        "emptyTacticalSlot": {"type": "ValueCompare?", "required": false},
+        "ergonomics": {"type": "ValueCompare?", "required": false},
+        "height": {"type": "ValueCompare?", "required": false},
+        "hasItemFromCategory": {"type": "List<string>?", "required": false},
+        "magazineCapacity": {"type": "ValueCompare?", "required": false},
+        "muzzleVelocity": {"type": "ValueCompare?", "required": false},
+        "recoil": {"type": "ValueCompare?", "required": false},
+        "weight": {"type": "ValueCompare?", "required": false},
+        "width": {"type": "ValueCompare?", "required": false}
+      }
+    },
+    "QuestConditionCounter": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "id": {"type": "string?", "required": false},
+        "conditions": {"type": "List<QuestConditionCounterCondition>?", "required": false}
+      }
+    },
+    "QuestConditionCounterCondition": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "id": {"type": "MongoId?", "required": false},
+        "dynamicLocale": {"type": "bool?", "required": false},
+        "target": {"type": "ListOrT<string>?", "required": false},
+        "completeInSeconds": {"type": "int?", "required": false},
+        "energy": {"type": "ValueCompare?", "required": false},
+        "exitName": {"type": "string?", "required": false},
+        "hydration": {"type": "ValueCompare?", "required": false},
+        "time": {"type": "ValueCompare?", "required": false},
+        "compareMethod": {"type": "string?", "required": false},
+        "value": {"type": "object?", "required": false},
+        "weapon": {"type": "HashSet<string>?", "required": false},
+        "distance": {"type": "CounterConditionDistance?", "required": false},
+        "equipmentInclusive": {"type": "IEnumerable<List<string>>?", "required": false},
+        "weaponModsInclusive": {"type": "IEnumerable<List<string>>?", "required": false},
+        "weaponModsExclusive": {"type": "IEnumerable<List<string>>?", "required": false},
+        "enemyEquipmentInclusive": {"type": "IEnumerable<List<string>>?", "required": false},
+        "enemyEquipmentExclusive": {"type": "IEnumerable<List<string>>?", "required": false},
+        "weaponCaliber": {"type": "List<string>?", "required": false},
+        "savageRole": {"type": "List<string>?", "required": false},
+        "status": {"type": "List<string>?", "required": false},
+        "bodyPart": {"type": "List<string>?", "required": false},
+        "daytime": {"type": "DaytimeCounter?", "required": false},
+        "conditionType": {"type": "string", "required": true},
+        "enemyHealthEffects": {"type": "List<EnemyHealthEffect>?", "required": false},
+        "resetOnSessionEnd": {"type": "bool?", "required": false},
+        "bodyPartsWithEffects": {"type": "List<EnemyHealthEffect>?", "required": false},
+        "IncludeNotEquippedItems": {"type": "bool?", "required": false},
+        "equipmentExclusive": {"type": "List<List<string>>?", "required": false},
+        "zoneIds": {"type": "List<string>?", "required": false}
+      }
+    },
+    "QuestConditionTypes": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "Started": {"type": "List<QuestCondition>?", "required": false},
+        "AvailableForFinish": {"type": "List<QuestCondition>?", "required": false},
+        "AvailableForStart": {"type": "List<QuestCondition>?", "required": false},
+        "Success": {"type": "List<QuestCondition>?", "required": false},
+        "Fail": {"type": "List<QuestCondition>?", "required": false}
+      }
+    },
+    "Reward": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Reward.cs",
+      "properties": {
+        "value": {"type": "double?", "required": false, "converter": "StringToNumberFactoryConverter"},
+        "id": {"type": "MongoId", "required": false},
+        "type": {"type": "RewardType?", "required": false, "converter": "JsonStringEnumConverter"},
+        "index": {"type": "int?", "required": false},
+        "target": {"type": "string?", "required": false},
+        "items": {"type": "List<Item>?", "required": false},
+        "loyaltyLevel": {"type": "int?", "required": false},
+        "traderId": {"type": "object?", "required": false},
+        "isEncoded": {"type": "bool?", "required": false},
+        "unknown": {"type": "bool?", "required": false},
+        "findInRaid": {"type": "bool?", "required": false},
+        "gameMode": {"type": "IEnumerable<string>?", "required": false},
+        "availableInGameEditions": {"type": "HashSet<string>?", "required": false},
+        "notAvailableInGameEditions": {"type": "HashSet<string>?", "required": false},
+        "illustrationConfig": {"type": "IllustrationConfig?", "required": false},
+        "isHidden": {"type": "bool?", "required": false},
+        "message": {"type": "MongoId?", "required": false}
+      }
+    },
+    "TraderAssort": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Trader.cs",
+      "properties": {
+        "nextResupply": {"type": "double?", "required": false},
+        "items": {"type": "List<Item>", "required": false},
+        "barter_scheme": {"type": "Dictionary<MongoId, List<List<BarterScheme>>>", "required": false},
+        "loyal_level_items": {"type": "Dictionary<MongoId, int>", "required": false}
+      }
+    },
+    "Upd": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Buff": {"type": "UpdBuff?", "required": false},
+        "OriginalStackObjectsCount": {"type": "double?", "required": false},
+        "Togglable": {"type": "UpdTogglable?", "required": false},
+        "Map": {"type": "UpdMap?", "required": false},
+        "Tag": {"type": "UpdTag?", "required": false},
+        "sptPresetId": {"type": "MongoId?", "required": false},
+        "FaceShield": {"type": "UpdFaceShield?", "required": false},
+        "StackObjectsCount": {"type": "double?", "required": false, "converter": "StringToNumberFactoryConverter"},
+        "UnlimitedCount": {"type": "bool?", "required": false},
+        "Repairable": {"type": "UpdRepairable?", "required": false},
+        "RecodableComponent": {"type": "UpdRecodableComponent?", "required": false},
+        "FireMode": {"type": "UpdFireMode?", "required": false},
+        "SpawnedInSession": {"type": "bool?", "required": false},
+        "Light": {"type": "UpdLight?", "required": false},
+        "Key": {"type": "UpdKey?", "required": false},
+        "Resource": {"type": "UpdResource?", "required": false},
+        "Sight": {"type": "UpdSight?", "required": false},
+        "MedKit": {"type": "UpdMedKit?", "required": false},
+        "FoodDrink": {"type": "UpdFoodDrink?", "required": false},
+        "Dogtag": {"type": "UpdDogtag?", "required": false},
+        "BuyRestrictionMax": {"type": "int?", "required": false},
+        "BuyRestrictionCurrent": {"type": "int?", "required": false},
+        "Foldable": {"type": "UpdFoldable?", "required": false},
+        "SideEffect": {"type": "UpdSideEffect?", "required": false},
+        "RepairKit": {"type": "UpdRepairKit?", "required": false},
+        "CultistAmulet": {"type": "UpdCultistAmulet?", "required": false},
+        "PinLockState": {"type": "PinLockState?", "required": false},
+        "Lockable": {"type": "LockableComponent?", "required": false}
+      }
+    },
+    "UpdBuff": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Rarity": {"type": "string?", "required": false},
+        "BuffType": {"type": "RepairBuffType?", "required": false, "converter": "JsonStringEnumConverter"},
+        "Value": {"type": "double?", "required": false},
+        "ThresholdDurability": {"type": "double?", "required": false}
+      }
+    },
+    "UpdCultistAmulet": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "NumberOfUsages": {"type": "double?", "required": false}
+      }
+    },
+    "UpdDogtag": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "AccountId": {"type": "string?", "required": false},
+        "ProfileId": {"type": "string?", "required": false},
+        "Nickname": {"type": "string?", "required": false},
+        "Side": {"type": "DogtagSide?", "required": false, "converter": "DogtagSideConverter"},
+        "Level": {"type": "double?", "required": false},
+        "Time": {"type": "string?", "required": false},
+        "Status": {"type": "string?", "required": false},
+        "KillerAccountId": {"type": "string?", "required": false},
+        "KillerProfileId": {"type": "string?", "required": false},
+        "KillerName": {"type": "string?", "required": false},
+        "WeaponName": {"type": "string?", "required": false},
+        "CarriedByGroupMember": {"type": "bool?", "required": false}
+      }
+    },
+    "UpdFaceShield": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Hits": {"type": "int?", "required": false},
+        "HitSeed": {"type": "int?", "required": false}
+      }
+    },
+    "UpdFireMode": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "FireMode": {"type": "string?", "required": false}
+      }
+    },
+    "UpdFoldable": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Folded": {"type": "bool?", "required": false}
+      }
+    },
+    "UpdFoodDrink": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "HpPercent": {"type": "double?", "required": false}
+      }
+    },
+    "UpdKey": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "NumberOfUsages": {"type": "int?", "required": false}
+      }
+    },
+    "UpdLight": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "IsActive": {"type": "bool?", "required": false},
+        "SelectedMode": {"type": "int?", "required": false}
+      }
+    },
+    "UpdMap": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Markers": {"type": "List<MapMarker>?", "required": false}
+      }
+    },
+    "UpdMedKit": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "HpResource": {"type": "double?", "required": false}
+      }
+    },
+    "UpdRecodableComponent": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "IsEncoded": {"type": "bool?", "required": false}
+      }
+    },
+    "UpdRepairKit": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Resource": {"type": "double?", "required": false}
+      }
+    },
+    "UpdRepairable": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Durability": {"type": "double?", "required": false},
+        "MaxDurability": {"type": "double?", "required": false}
+      }
+    },
+    "UpdResource": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Value": {"type": "double?", "required": false},
+        "UnitsConsumed": {"type": "double?", "required": false}
+      }
+    },
+    "UpdSideEffect": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Value": {"type": "double?", "required": false}
+      }
+    },
+    "UpdSight": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "ScopesCurrentCalibPointIndexes": {"type": "IEnumerable<int>?", "required": false},
+        "ScopesSelectedModes": {"type": "IEnumerable<int>?", "required": false},
+        "SelectedScope": {"type": "int?", "required": false},
+        "ScopeZoomValue": {"type": "double?", "required": false}
+      }
+    },
+    "UpdTag": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "Color": {"type": "int?", "required": false},
+        "Name": {"type": "string?", "required": false}
+      }
+    },
+    "UpdTogglable": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Item.cs",
+      "properties": {
+        "On": {"type": "bool?", "required": false}
+      }
+    },
+    "ValueCompare": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "compareMethod": {"type": "string?", "required": false},
+        "value": {"type": "double?", "required": false}
+      }
+    },
+    "VisibilityCondition": {
+      "kind": "record",
+      "file": "Eft/Common/Tables/Quest.cs",
+      "properties": {
+        "id": {"type": "string?", "required": false},
+        "target": {"type": "string?", "required": false},
+        "value": {"type": "int?", "required": false},
+        "dynamicLocale": {"type": "bool?", "required": false},
+        "oneSessionOnly": {"type": "bool?", "required": false},
+        "conditionType": {"type": "string", "required": true}
+      }
+    }
+  },
+  "enums": {
+    "DogtagExchangeSide": {"Usec": 1, "Bear": 2, "Any": 4},
+    "DogtagSide": {"NotApplicable": 0, "Usec": 1, "Bear": 2},
+    "HideoutAreas": {"NotSet": -1, "Vents": 0, "Security": 1, "WaterCloset": 2, "Stash": 3, "Generator": 4, "Heating": 5, "WaterCollector": 6, "MedStation": 7, "Kitchen": 8, "RestSpace": 9, "Workbench": 10, "IntelligenceCenter": 11, "ShootingRange": 12, "Library": 13, "ScavCase": 14, "Illumination": 15, "PlaceOfFame": 16, "AirFilteringUnit": 17, "SolarPower": 18, "BoozeGenerator": 19, "BitcoinFarm": 20, "ChristmasIllumination": 21, "EmergencyWall": 22, "Gym": 23, "WeaponStand": 24, "WeaponStandSecondary": 25, "EquipmentPresetsStand": 26, "CircleOfCultists": 27},
+    "PinLockState": {"Free": 0, "Pinned": 1, "Locked": 2},
+    "QuestStatusEnum": {"Locked": 0, "AvailableForStart": 1, "Started": 2, "AvailableForFinish": 3, "Success": 4, "Fail": 5, "FailRestartable": 6, "MarkedAsFailed": 7, "Expired": 8, "AvailableAfter": 9},
+    "QuestTypeEnum": {"PickUp": 0, "Elimination": 1, "Discover": 2, "Completion": 3, "Exploration": 4, "Levelling": 5, "Experience": 6, "Standing": 7, "Loyalty": 8, "Merchant": 9, "Skill": 10, "Multi": 11, "WeaponAssembly": 12, "ArenaWinMatch": 13, "ArenaWinRound": 14},
+    "RepairBuffType": {"WeaponSpread": 0, "DamageReduction": 1, "MalfunctionProtections": 2, "WeaponDamage": 3, "ArmorEfficiency": 4, "DurabilityImprovement": 5},
+    "RewardType": {"Experience": 0, "Skill": 1, "Item": 2, "TraderStanding": 3, "TraderUnlock": 4, "Location": 5, "Counter": 6, "AssortmentUnlock": 7, "ProductionScheme": 8, "TraderStandingReset": 9, "TraderStandingRestore": 10, "StashRows": 11, "Achievement": 12, "Pockets": 13, "Quest": 14, "CustomizationOffer": 15, "ExtraDailyQuest": 16, "CustomizationDirect": 17, "Stub": 18, "WebPromoCode": 19, "NotificationPopup": 20, "Customization": 116, "BattlePassExperience": 117, "BattlePassCurrency": 118, "ArenaArmoryItem": 100}
+  }
+}

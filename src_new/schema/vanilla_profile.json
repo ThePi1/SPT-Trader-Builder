@@ -1,0 +1,5805 @@
+{
+ "kinds": {
+  "assort_part": {
+   "count": 2446,
+   "where": {},
+   "keys": {
+    "_id": {
+     "count": 2446,
+     "types": {
+      "string": 2446
+     },
+     "example": "686e34616c2a18ed6b0eabfc"
+    },
+    "_tpl": {
+     "count": 2446,
+     "types": {
+      "string": 2446
+     },
+     "example": "5448c12b4bdc2d02308b456f"
+    },
+    "location": {
+     "count": 51,
+     "types": {
+      "int": 51
+     },
+     "values": {
+      "0": 27,
+      "1": 6,
+      "2": 1,
+      "3": 1,
+      "4": 1,
+      "5": 1,
+      "6": 1,
+      "7": 1,
+      "8": 1,
+      "9": 1,
+      "10": 1,
+      "11": 1,
+      "12": 1,
+      "13": 1,
+      "14": 1,
+      "15": 1,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "19": 1
+     },
+     "example": 0
+    },
+    "parentId": {
+     "count": 2446,
+     "types": {
+      "string": 2446
+     },
+     "example": "686e34616c2a18ed6b0eabfb"
+    },
+    "slotId": {
+     "count": 2446,
+     "types": {
+      "string": 2446
+     },
+     "example": "mod_magazine"
+    }
+   }
+  },
+  "assort_part_upd": {
+   "count": 37,
+   "where": {},
+   "keys": {
+    "Foldable": {
+     "count": 6,
+     "types": {
+      "object": 6
+     },
+     "example": {
+      "Folded": false
+     }
+    },
+    "StackObjectsCount": {
+     "count": 31,
+     "types": {
+      "int": 31
+     },
+     "values": {
+      "20": 12,
+      "30": 4,
+      "5": 4,
+      "50": 4,
+      "60": 3,
+      "10": 2,
+      "8": 1,
+      "40": 1
+     },
+     "example": 8
+    }
+   }
+  },
+  "assort_root": {
+   "count": 2265,
+   "where": {},
+   "keys": {
+    "_id": {
+     "count": 2265,
+     "types": {
+      "string": 2265
+     },
+     "example": "686e34606c2a18ed6b0eabe7"
+    },
+    "_tpl": {
+     "count": 2265,
+     "types": {
+      "string": 2265
+     },
+     "example": "57d14e1724597714010c3f4b"
+    },
+    "parentId": {
+     "count": 2265,
+     "types": {
+      "string": 2265
+     },
+     "values": {
+      "hideout": 2265
+     },
+     "example": "hideout"
+    },
+    "slotId": {
+     "count": 2265,
+     "types": {
+      "string": 2265
+     },
+     "values": {
+      "hideout": 2265
+     },
+     "example": "hideout"
+    }
+   }
+  },
+  "assort_root_upd": {
+   "count": 2265,
+   "where": {},
+   "keys": {
+    "BuyRestrictionCurrent": {
+     "count": 2247,
+     "types": {
+      "int": 2247
+     },
+     "values": {
+      "0": 2247
+     },
+     "example": 0
+    },
+    "BuyRestrictionMax": {
+     "count": 2262,
+     "types": {
+      "int": 2262
+     },
+     "values": {
+      "5": 691,
+      "3": 555,
+      "1": 244,
+      "2": 215,
+      "4": 187,
+      "10": 142,
+      "1000": 42,
+      "6": 21,
+      "7": 18,
+      "200": 18,
+      "8": 17,
+      "20": 14,
+      "12": 12,
+      "120": 10,
+      "150": 10,
+      "400": 9,
+      "300": 7,
+      "60": 6,
+      "15": 5,
+      "30": 5,
+      "50": 4,
+      "180": 4,
+      "100": 4,
+      "80": 4,
+      "90": 3,
+      "220": 2,
+      "450": 2,
+      "210": 2,
+      "500": 2,
+      "70": 2,
+      "600": 1,
+      "350": 1,
+      "25": 1,
+      "40": 1,
+      "32": 1
+     },
+     "example": 10
+    },
+    "FireMode": {
+     "count": 102,
+     "types": {
+      "object": 102
+     },
+     "example": {
+      "FireMode": "single"
+     }
+    },
+    "Foldable": {
+     "count": 33,
+     "types": {
+      "object": 33
+     },
+     "example": {
+      "Folded": false
+     }
+    },
+    "Repairable": {
+     "count": 90,
+     "types": {
+      "object": 90
+     },
+     "example": {
+      "Durability": 100,
+      "MaxDurability": 100
+     }
+    },
+    "StackObjectsCount": {
+     "count": 2265,
+     "types": {
+      "int": 2265
+     },
+     "values": {
+      "9999999": 2073,
+      "2885000": 114,
+      "2880000": 51,
+      "20000": 15,
+      "20": 4,
+      "2000": 2,
+      "865000": 1,
+      "245000": 1,
+      "20200": 1,
+      "10": 1,
+      "650000": 1,
+      "1999": 1
+     },
+     "example": 9999999
+    },
+    "UnlimitedCount": {
+     "count": 2240,
+     "types": {
+      "bool": 2240
+     },
+     "values": {
+      "true": 2238,
+      "false": 2
+     },
+     "example": true
+    }
+   }
+  },
+  "barter_price": {
+   "count": 2447,
+   "where": {},
+   "keys": {
+    "_tpl": {
+     "count": 2447,
+     "types": {
+      "string": 2447
+     },
+     "example": "5449016a4bdc2d6f028b456f"
+    },
+    "count": {
+     "count": 2447,
+     "types": {
+      "int": 1709,
+      "float": 738
+     },
+     "example": 1638
+    },
+    "level": {
+     "count": 14,
+     "types": {
+      "int": 14
+     },
+     "values": {
+      "15": 5,
+      "20": 4,
+      "30": 1,
+      "39": 1,
+      "10": 1,
+      "8": 1,
+      "25": 1
+     },
+     "example": 30
+    },
+    "onlyFunctional": {
+     "count": 2,
+     "types": {
+      "bool": 2
+     },
+     "values": {
+      "true": 2
+     },
+     "example": true
+    },
+    "side": {
+     "count": 14,
+     "types": {
+      "string": 14
+     },
+     "values": {
+      "Any": 7,
+      "Usec": 4,
+      "Bear": 3
+     },
+     "example": "Usec"
+    }
+   }
+  },
+  "counter": {
+   "count": 626,
+   "where": {},
+   "keys": {
+    "id": {
+     "count": 626,
+     "types": {
+      "string": 626
+     },
+     "example": "5967379186f77463860dadd5"
+    }
+   }
+  },
+  "loyal_level": {
+   "count": 2277,
+   "where": {},
+   "keys": {
+    "level": {
+     "count": 2277,
+     "types": {
+      "int": 2277
+     },
+     "values": {
+      "3": 639,
+      "2": 588,
+      "1": 548,
+      "4": 502
+     }
+    }
+   }
+  },
+  "quest": {
+   "count": 558,
+   "where": {},
+   "keys": {
+    "QuestName": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "Debut"
+    },
+    "_id": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b"
+    },
+    "acceptPlayerMessage": {
+     "count": 556,
+     "types": {
+      "string": 556
+     },
+     "example": "5936d90786f7742b1420ba5b acceptPlayerMessage"
+    },
+    "acceptanceAndFinishingSource": {
+     "count": 508,
+     "types": {
+      "string": 508
+     },
+     "values": {
+      "eft": 508
+     },
+     "example": "eft"
+    },
+    "arenaLocations": {
+     "count": 508,
+     "types": {
+      "list": 508
+     },
+     "values": {
+      "any": 6
+     },
+     "example": [
+      "any"
+     ]
+    },
+    "canShowNotificationsInGame": {
+     "count": 558,
+     "types": {
+      "bool": 558
+     },
+     "values": {
+      "true": 555,
+      "false": 3
+     },
+     "example": true
+    },
+    "changeQuestMessageText": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b changeQuestMessageText"
+    },
+    "completePlayerMessage": {
+     "count": 556,
+     "types": {
+      "string": 556
+     },
+     "example": "5936d90786f7742b1420ba5b completePlayerMessage"
+    },
+    "declinePlayerMessage": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b declinePlayerMessage"
+    },
+    "description": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b description"
+    },
+    "dialogueId": {
+     "count": 29,
+     "types": {
+      "string": 29
+     },
+     "values": {
+      "6878c68e43cd7ef3f0525f36": 1,
+      "687f6d99f7e291d9267ac1fe": 1,
+      "687f7286b28ece09a9b23c7f": 1,
+      "687f89974770930da8381200": 1,
+      "687f85737af0a7e8cf9b49ff": 1,
+      "687faa3af96c38d1f66429a4": 1,
+      "687fab9520a9bbc07da9fa97": 1,
+      "687fad950aaf0202e62802a2": 1,
+      "687faf6d3b563aae5de79392": 1,
+      "687fb2706a496b097c94f99a": 1,
+      "6836fc643d85a73df67f72fe": 1,
+      "68370a7a5498e3c7e067e18f": 1,
+      "68371f4d1a96af6258a19c44": 1,
+      "683d6caae040bc311c1549e3": 1,
+      "6880af5c1e1365fe70d3c7b1": 1,
+      "683daa38b8bb7eea226abc52": 1,
+      "683dafc7a7c0a468ac8a9b05": 1,
+      "683dafd4ba96e22c0663ee17": 1,
+      "683dafd887296f968d1e8c98": 1,
+      "683dafdb0d820900d072f6f5": 1,
+      "683dafdf8d72d665e6bf875f": 1,
+      "683dafe2151d3c383e1faddb": 1,
+      "683dafe9a203c0cb374f417e": 1,
+      "683dafe5bf903da3bd58113a": 1,
+      "6839dde8b55926e672ffa89a": 1,
+      "6880ae707c0efbdd19e74f2a": 1,
+      "683dafec5c39404c014a7d11": 1,
+      "6880ab75f10e0c8167c7862c": 1,
+      "68a348cd982f31a1f87626e5": 1
+     },
+     "example": "6878c68e43cd7ef3f0525f36"
+    },
+    "failMessageText": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b failMessageText"
+    },
+    "gameModes": {
+     "count": 508,
+     "types": {
+      "list": 508
+     },
+     "values": {
+      "TeamFight": 2,
+      "BlastGang": 1
+     },
+     "example": [
+      "TeamFight"
+     ]
+    },
+    "image": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "/files/quest/icon/596b465486f77457ca186188.jpg"
+    },
+    "instantComplete": {
+     "count": 558,
+     "types": {
+      "bool": 558
+     },
+     "values": {
+      "false": 558
+     },
+     "example": false
+    },
+    "isKey": {
+     "count": 558,
+     "types": {
+      "bool": 558
+     },
+     "values": {
+      "false": 558
+     },
+     "example": false
+    },
+    "location": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "values": {
+      "any": 281,
+      "5714dc692459777137212e12": 48,
+      "5704e554d2720bac5b8b456e": 41,
+      "56f40101d2720b2a4d8b45d6": 38,
+      "5704e3c2d2720bac5b8b4567": 31,
+      "5704e4dad2720bb55b8b4567": 31,
+      "55f2d3fd4bdc2d5f408b4567": 22,
+      "5704e5fad2720bc05b8b4567": 21,
+      "5714dbc024597771384a510d": 16,
+      "5b0fc42d86f7744a585f9105": 8,
+      "653e6760052c01c1c805532f": 8,
+      "marathon": 6,
+      "6733700029c367a3d40b02af": 6,
+      "59fc81d786f774390775787e": 1
+     },
+     "example": "any"
+    },
+    "name": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b name"
+    },
+    "note": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b note"
+    },
+    "progressSource": {
+     "count": 508,
+     "types": {
+      "string": 508
+     },
+     "values": {
+      "eft": 502,
+      "arena": 6
+     },
+     "example": "eft"
+    },
+    "rankingModes": {
+     "count": 508,
+     "types": {
+      "list": 508
+     }
+    },
+    "restartable": {
+     "count": 558,
+     "types": {
+      "bool": 558
+     },
+     "values": {
+      "false": 538,
+      "true": 20
+     },
+     "example": false
+    },
+    "secretQuest": {
+     "count": 558,
+     "types": {
+      "bool": 558
+     },
+     "values": {
+      "false": 558
+     },
+     "example": false
+    },
+    "side": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "values": {
+      "Pmc": 558
+     },
+     "example": "Pmc"
+    },
+    "startedMessageText": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b startedMessageText"
+    },
+    "status": {
+     "count": 508,
+     "types": {
+      "int": 508
+     },
+     "values": {
+      "0": 508
+     },
+     "example": 0
+    },
+    "successMessageText": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "example": "5936d90786f7742b1420ba5b successMessageText"
+    },
+    "traderId": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "values": {
+      "5a7c2eca46aef81a7ca2145d": 105,
+      "5c0647fdd443bc2504c2d371": 78,
+      "54cb50c76803fa8b248b4571": 77,
+      "58330581ace78e27b8b10cee": 70,
+      "5ac3b934156ae10c4430e83c": 58,
+      "54cb57776803fa99248b456e": 57,
+      "5935c25fb3acc3127c3d8cd9": 52,
+      "579dc571d53a0658a154fbec": 16,
+      "638f541a29ffd1183d187f57": 15,
+      "656f0f98d80a697f855d34b1": 15,
+      "6617beeaa9cfa777ca915b7c": 15
+     },
+     "example": "54cb50c76803fa8b248b4571"
+    },
+    "type": {
+     "count": 558,
+     "types": {
+      "string": 558
+     },
+     "values": {
+      "PickUp": 136,
+      "Elimination": 132,
+      "Completion": 119,
+      "Exploration": 59,
+      "Discover": 48,
+      "WeaponAssembly": 28,
+      "Multi": 12,
+      "Skill": 9,
+      "Loyalty": 7,
+      "Merchant": 6,
+      "Standing": 1,
+      "Experience": 1
+     },
+     "example": "Elimination"
+    }
+   }
+  },
+  "reward:Achievement": {
+   "count": 10,
+   "where": {
+    "Success": 10
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 8,
+     "types": {
+      "list": 8
+     }
+    },
+    "gameMode": {
+     "count": 7,
+     "types": {
+      "list": 7
+     },
+     "values": {
+      "regular": 7,
+      "pve": 7
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "664f249468508d74604bf55f": 1,
+      "664f24f152d0b8783f39de45": 1,
+      "667583234ec1b906ff1b19ac": 1,
+      "66e2acbbe9f28213e00a9c12": 1,
+      "671016febbbceb6e220f2136": 1,
+      "67596dcd24cbfb1e6ce28a2c": 1,
+      "67596dfcfe832453c86e4141": 1,
+      "67596df264c308743a084f16": 1,
+      "67599a1a40e1edf970106b48": 1,
+      "689741e4ae275e17c57ed4b6": 1
+     },
+     "example": "664f249468508d74604bf55f"
+    },
+    "illustrationConfig": {
+     "count": 1,
+     "types": {
+      "object": 1
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "index": {
+     "count": 3,
+     "types": {
+      "int": 3
+     },
+     "values": {
+      "7": 1,
+      "5": 1,
+      "0": 1
+     },
+     "example": 7
+    },
+    "isHidden": {
+     "count": 7,
+     "types": {
+      "bool": 7
+     },
+     "values": {
+      "false": 7
+     },
+     "example": false
+    },
+    "target": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "675709bef4e2a2ce0f058f56": 3,
+      "664f1f8768508d74604bf556": 1,
+      "664f23e44702fd5db50ee732": 1,
+      "66742c003a67b164a300fcbf": 1,
+      "66e2a7e5919bad697104f4b3": 1,
+      "670febed5ee0fc738a0965a4": 1,
+      "675998a894008342eb04e47f": 1,
+      "68936a7a672ffe94a509446b": 1
+     },
+     "example": "664f1f8768508d74604bf556"
+    },
+    "type": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "Achievement": 10
+     },
+     "example": "Achievement"
+    },
+    "unknown": {
+     "count": 8,
+     "types": {
+      "bool": 8
+     },
+     "values": {
+      "false": 8
+     },
+     "example": false
+    }
+   }
+  },
+  "reward:AssortmentUnlock": {
+   "count": 236,
+   "where": {
+    "Success": 231,
+    "Started": 5
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 220,
+     "types": {
+      "list": 220
+     }
+    },
+    "gameMode": {
+     "count": 220,
+     "types": {
+      "list": 220
+     },
+     "values": {
+      "regular": 220,
+      "pve": 220
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 236,
+     "types": {
+      "string": 236
+     },
+     "example": "5ac64f3786f774056634a1cb"
+    },
+    "illustrationConfig": {
+     "count": 11,
+     "types": {
+      "object": 11
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "index": {
+     "count": 16,
+     "types": {
+      "int": 16
+     },
+     "values": {
+      "3": 4,
+      "2": 3,
+      "0": 2,
+      "4": 2,
+      "6": 2,
+      "1": 1,
+      "5": 1,
+      "7": 1
+     },
+     "example": 3
+    },
+    "isHidden": {
+     "count": 220,
+     "types": {
+      "bool": 220
+     },
+     "values": {
+      "false": 220
+     },
+     "example": false
+    },
+    "loyaltyLevel": {
+     "count": 236,
+     "types": {
+      "int": 236
+     },
+     "values": {
+      "4": 91,
+      "3": 52,
+      "2": 51,
+      "1": 42
+     },
+     "example": 1
+    },
+    "target": {
+     "count": 236,
+     "types": {
+      "string": 236
+     },
+     "example": "68a9695194f6582e59140030"
+    },
+    "traderId": {
+     "count": 236,
+     "types": {
+      "string": 236
+     },
+     "values": {
+      "5a7c2eca46aef81a7ca2145d": 50,
+      "5935c25fb3acc3127c3d8cd9": 47,
+      "54cb50c76803fa8b248b4571": 36,
+      "58330581ace78e27b8b10cee": 32,
+      "5c0647fdd443bc2504c2d371": 31,
+      "5ac3b934156ae10c4430e83c": 22,
+      "54cb57776803fa99248b456e": 12,
+      "6617beeaa9cfa777ca915b7c": 6
+     },
+     "example": "54cb50c76803fa8b248b4571"
+    },
+    "type": {
+     "count": 236,
+     "types": {
+      "string": 236
+     },
+     "values": {
+      "AssortmentUnlock": 236
+     },
+     "example": "AssortmentUnlock"
+    },
+    "unknown": {
+     "count": 226,
+     "types": {
+      "bool": 226
+     },
+     "values": {
+      "false": 205,
+      "true": 21
+     },
+     "example": false
+    }
+   }
+  },
+  "reward:CustomizationDirect": {
+   "count": 11,
+   "where": {
+    "Success": 11
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 11,
+     "types": {
+      "list": 11
+     }
+    },
+    "gameMode": {
+     "count": 11,
+     "types": {
+      "list": 11
+     },
+     "values": {
+      "regular": 11,
+      "pve": 11
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "6764977cd6c9dfff4d9d185d": 1,
+      "6764947e284eb4d2acaf9227": 1,
+      "67649726432eed4a6c817a7b": 1,
+      "676497c3105230ddf0a278a1": 1,
+      "676493e72b707cb89adedfa8": 1,
+      "6764488e37be0cb15b40c0d0": 1,
+      "676496aabd47bc01fc2a5056": 1,
+      "676494d1930778e9a782f099": 1,
+      "676453a760b72ec3e03b2f40": 1,
+      "676493252a2479246ffd907b": 1,
+      "6764939bbe89532a75b424a2": 1
+     },
+     "example": "6764977cd6c9dfff4d9d185d"
+    },
+    "isHidden": {
+     "count": 11,
+     "types": {
+      "bool": 11
+     },
+     "values": {
+      "false": 11
+     },
+     "example": false
+    },
+    "target": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "67585d6ab032beb9b5097e96": 1,
+      "675468937dadca6836092b2a": 1,
+      "67585d2cd7a2703986067e99": 1,
+      "67585bf5428877c04c038ee3": 1,
+      "675466d57dadca6836092b26": 1,
+      "675467d8b784110b2702fe11": 1,
+      "67585d161840a37ff10ebdd1": 1,
+      "675468d8c6e063d76309c60f": 1,
+      "67585cf55ec257bf740a446f": 1,
+      "675467aa81067119a10938cb": 1,
+      "6754666c76e1f2b24c0cc956": 1
+     },
+     "example": "67585d6ab032beb9b5097e96"
+    },
+    "type": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "CustomizationDirect": 11
+     },
+     "example": "CustomizationDirect"
+    },
+    "unknown": {
+     "count": 11,
+     "types": {
+      "bool": 11
+     },
+     "values": {
+      "false": 11
+     },
+     "example": false
+    }
+   }
+  },
+  "reward:Experience": {
+   "count": 508,
+   "where": {
+    "Success": 508
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 493,
+     "types": {
+      "list": 493
+     }
+    },
+    "gameMode": {
+     "count": 475,
+     "types": {
+      "list": 475
+     },
+     "values": {
+      "regular": 475,
+      "pve": 475
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 508,
+     "types": {
+      "string": 508
+     },
+     "example": "5fe305df8a67d12f5f24c8aa"
+    },
+    "illustrationConfig": {
+     "count": 17,
+     "types": {
+      "object": 17
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "index": {
+     "count": 33,
+     "types": {
+      "int": 33
+     },
+     "values": {
+      "0": 29,
+      "1": 3,
+      "2": 1
+     },
+     "example": 0
+    },
+    "isHidden": {
+     "count": 475,
+     "types": {
+      "bool": 475
+     },
+     "values": {
+      "false": 475
+     },
+     "example": false
+    },
+    "type": {
+     "count": 508,
+     "types": {
+      "string": 508
+     },
+     "values": {
+      "Experience": 508
+     },
+     "example": "Experience"
+    },
+    "unknown": {
+     "count": 493,
+     "types": {
+      "bool": 493
+     },
+     "values": {
+      "false": 493
+     },
+     "example": false
+    },
+    "value": {
+     "count": 508,
+     "types": {
+      "int": 508
+     },
+     "example": 1700
+    }
+   }
+  },
+  "reward:Item": {
+   "count": 1553,
+   "where": {
+    "Success": 1472,
+    "Started": 81
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 1427,
+     "types": {
+      "list": 1427
+     },
+     "values": {
+      "tournament_live": 2,
+      "tournament": 2,
+      "standard": 2,
+      "press_edition": 2,
+      "left_behind": 2,
+      "prepare_for_escape": 2,
+      "exhibition": 2,
+      "edge_of_darkness": 2,
+      "develop": 2
+     }
+    },
+    "findInRaid": {
+     "count": 1544,
+     "types": {
+      "bool": 1544
+     },
+     "values": {
+      "true": 1035,
+      "false": 509
+     },
+     "example": false
+    },
+    "gameMode": {
+     "count": 1383,
+     "types": {
+      "list": 1383
+     },
+     "values": {
+      "regular": 1381,
+      "pve": 1381
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 1553,
+     "types": {
+      "string": 1553
+     },
+     "example": "5fe305d9c646836c3b6fc562"
+    },
+    "illustrationConfig": {
+     "count": 58,
+     "types": {
+      "object": 58
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "index": {
+     "count": 170,
+     "types": {
+      "int": 170
+     },
+     "values": {
+      "2": 34,
+      "3": 32,
+      "4": 22,
+      "1": 17,
+      "5": 17,
+      "0": 10,
+      "6": 7,
+      "7": 3,
+      "9": 2,
+      "10": 2,
+      "11": 2,
+      "12": 2,
+      "13": 2,
+      "8": 2,
+      "14": 1,
+      "15": 1,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "19": 1,
+      "20": 1,
+      "21": 1,
+      "22": 1,
+      "23": 1,
+      "24": 1,
+      "25": 1,
+      "26": 1,
+      "27": 1,
+      "28": 1,
+      "29": 1
+     },
+     "example": 9
+    },
+    "isEncoded": {
+     "count": 1383,
+     "types": {
+      "bool": 1383
+     },
+     "values": {
+      "false": 1383
+     },
+     "example": false
+    },
+    "isHidden": {
+     "count": 1383,
+     "types": {
+      "bool": 1383
+     },
+     "values": {
+      "false": 1383
+     },
+     "example": false
+    },
+    "target": {
+     "count": 1553,
+     "types": {
+      "string": 1553
+     },
+     "example": "68a9695194f6582e59140026"
+    },
+    "type": {
+     "count": 1553,
+     "types": {
+      "string": 1553
+     },
+     "values": {
+      "Item": 1553
+     },
+     "example": "Item"
+    },
+    "unknown": {
+     "count": 1436,
+     "types": {
+      "bool": 1436
+     },
+     "values": {
+      "false": 1327,
+      "true": 109
+     },
+     "example": false
+    },
+    "value": {
+     "count": 1553,
+     "types": {
+      "int": 1553
+     },
+     "example": 15000
+    }
+   }
+  },
+  "reward:NotificationPopup": {
+   "count": 3,
+   "where": {
+    "Success": 3
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 3,
+     "types": {
+      "list": 3
+     }
+    },
+    "gameMode": {
+     "count": 3,
+     "types": {
+      "list": 3
+     },
+     "values": {
+      "regular": 3,
+      "pve": 3
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "67f1ade6868c8b57f85781a9": 1,
+      "6834145ebc1f443d7603c8b0": 1,
+      "68341846186efa3c5b07f997": 1
+     },
+     "example": "67f1ade6868c8b57f85781a9"
+    },
+    "illustrationConfig": {
+     "count": 3,
+     "types": {
+      "object": 3
+     }
+    },
+    "isHidden": {
+     "count": 3,
+     "types": {
+      "bool": 3
+     },
+     "values": {
+      "false": 3
+     },
+     "example": false
+    },
+    "message": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "67f1adea657637a74150c2ea": 1,
+      "67f1acb2798033628e4c618c": 1,
+      "67f1b1f11b4b4b2dddbefabb": 1
+     },
+     "example": "67f1adea657637a74150c2ea"
+    },
+    "type": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "NotificationPopup": 3
+     },
+     "example": "NotificationPopup"
+    },
+    "unknown": {
+     "count": 3,
+     "types": {
+      "bool": 3
+     },
+     "values": {
+      "false": 3
+     },
+     "example": false
+    }
+   }
+  },
+  "reward:Pockets": {
+   "count": 1,
+   "where": {
+    "Success": 1
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 1,
+     "types": {
+      "list": 1
+     },
+     "values": {
+      "left_behind": 1,
+      "prepare_for_escape": 1,
+      "press_edition": 1,
+      "standard": 1,
+      "edge_of_darkness": 1
+     }
+    },
+    "gameMode": {
+     "count": 1,
+     "types": {
+      "list": 1
+     },
+     "values": {
+      "regular": 1,
+      "pve": 1
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "6682724b2388eb5c9e059d62": 1
+     },
+     "example": "6682724b2388eb5c9e059d62"
+    },
+    "isHidden": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "target": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "65e080be269cbd5c5005e529": 1
+     },
+     "example": "65e080be269cbd5c5005e529"
+    },
+    "type": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "Pockets": 1
+     },
+     "example": "Pockets"
+    },
+    "unknown": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    }
+   }
+  },
+  "reward:ProductionScheme": {
+   "count": 37,
+   "where": {
+    "Success": 31,
+    "Started": 6
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 37,
+     "types": {
+      "list": 37
+     },
+     "values": {
+      "develop": 1,
+      "unheard_edition": 1,
+      "exhibition": 1,
+      "left_behind": 1,
+      "prepare_for_escape": 1,
+      "press_edition": 1,
+      "standard": 1,
+      "tournament": 1,
+      "tournament_live": 1
+     }
+    },
+    "gameMode": {
+     "count": 35,
+     "types": {
+      "list": 35
+     },
+     "values": {
+      "regular": 35,
+      "pve": 35
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 37,
+     "types": {
+      "string": 37
+     },
+     "values": {
+      "655b71861fe356507267b2f7": 1,
+      "655b75adc023e22044165de9": 1,
+      "66abac6ac84cc7141324eedc": 1,
+      "655b87e11f2b6843ec751fdc": 1,
+      "655b8b6d9db22d43ab42b70e": 1,
+      "655b8a2c7f92d5105c6f7b7c": 1,
+      "655b88e632b0b1645e6f54ca": 1,
+      "655b70371f2b6843ec751fd8": 1,
+      "655b80264343a16d2e04766e": 1,
+      "655b84437f92d5105c6f7b7a": 1,
+      "655b76f2975a7f3c734661a9": 1,
+      "64b6afe68faf110b68375e35": 1,
+      "655b82abb71eeb7c4168c632": 1,
+      "655b8c08b71eeb7c4168c636": 1,
+      "655b939e1273611d2462ab7c": 1,
+      "655b79377f92d5105c6f7b78": 1,
+      "63a1da0aab6bb51044344bfe": 1,
+      "64c7bc7feb33c17953050fd4": 1,
+      "64c7bc83be830e2cab48c2c9": 1,
+      "655b76689db22d43ab42b70b": 1,
+      "655b84e09db22d43ab42b70d": 1,
+      "63a5720622ea2f078518814c": 1,
+      "6399f098dbf1d842d260ccc1": 1,
+      "655b7515769de97e1d62d118": 1,
+      "63a2333d4ebcff1c995dc358": 1,
+      "63a233d1fcae11642e50f9c8": 1,
+      "63a233f5423c8970de41982f": 1,
+      "63a23418d6d4651e53602b01": 1,
+      "63a234f0151bfb591645c105": 1,
+      "63a23488423c8970de419830": 1,
+      "63a2357ad6d4651e53602b03": 1,
+      "655b73d1c023e22044165de8": 1,
+      "6671de23baf4e04a020c7322": 1,
+      "670933061d99fbca9006475b": 1,
+      "670910895663dbb73a058b7a": 1,
+      "685e7fe4dcf53764baf9e1e4": 1,
+      "68840f8eb3eb8a7def650ef5": 1
+     },
+     "example": "655b71861fe356507267b2f7"
+    },
+    "illustrationConfig": {
+     "count": 2,
+     "types": {
+      "object": 2
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "index": {
+     "count": 2,
+     "types": {
+      "int": 2
+     },
+     "values": {
+      "0": 1,
+      "1": 1
+     },
+     "example": 0
+    },
+    "isHidden": {
+     "count": 35,
+     "types": {
+      "bool": 35
+     },
+     "values": {
+      "false": 35
+     },
+     "example": false
+    },
+    "loyaltyLevel": {
+     "count": 37,
+     "types": {
+      "int": 37
+     },
+     "values": {
+      "3": 17,
+      "2": 16,
+      "1": 4
+     },
+     "example": 2
+    },
+    "target": {
+     "count": 37,
+     "types": {
+      "string": 37
+     },
+     "values": {
+      "68a9695194f6582e591403e8": 1,
+      "68a9695194f6582e59140140": 1,
+      "68a9695194f6582e59140429": 1,
+      "68a9695194f6582e59140f8a": 1,
+      "68a9695194f6582e59140f58": 1,
+      "68a9695194f6582e591410dc": 1,
+      "68a9695194f6582e59140f69": 1,
+      "68a9695194f6582e5914078e": 1,
+      "68a9695194f6582e59140603": 1,
+      "68a9695194f6582e5913feed": 1,
+      "68a9695194f6582e591405e1": 1,
+      "68a9695194f6582e591404e6": 1,
+      "68a9695194f6582e59140315": 1,
+      "68a9695194f6582e591412e0": 1,
+      "68a9695194f6582e591404b0": 1,
+      "68a9695194f6582e59140587": 1,
+      "68a9695194f6582e5913fe29": 1,
+      "68a9695194f6582e591406e2": 1,
+      "68a9695194f6582e591406e4": 1,
+      "68a9695194f6582e591400fb": 1,
+      "68a9695194f6582e591406fc": 1,
+      "68a9695194f6582e591409ee": 1,
+      "68a9695194f6582e591408f2": 1,
+      "68a9695194f6582e591413fc": 1,
+      "68a9695194f6582e591414e6": 1,
+      "68a9695194f6582e5914149b": 1,
+      "68a9695194f6582e59141496": 1,
+      "68a9695194f6582e59141482": 1,
+      "68a9695194f6582e591414bc": 1,
+      "68a9695194f6582e59141456": 1,
+      "68a9695194f6582e591414a2": 1,
+      "68a9695194f6582e5914092c": 1,
+      "68a9695194f6582e59141074": 1,
+      "6728df85772964fbed0bc373": 1,
+      "6728df85772964fbed0bc428": 1,
+      "68a9695194f6582e59141425": 1,
+      "68a9695194f6582e59141051": 1
+     },
+     "example": "68a9695194f6582e591403e8"
+    },
+    "traderId": {
+     "count": 37,
+     "types": {
+      "int": 37
+     },
+     "values": {
+      "10": 19,
+      "11": 7,
+      "2": 6,
+      "7": 5
+     },
+     "example": 10
+    },
+    "type": {
+     "count": 37,
+     "types": {
+      "string": 37
+     },
+     "values": {
+      "ProductionScheme": 37
+     },
+     "example": "ProductionScheme"
+    },
+    "unknown": {
+     "count": 37,
+     "types": {
+      "bool": 37
+     },
+     "values": {
+      "false": 27,
+      "true": 10
+     },
+     "example": false
+    }
+   }
+  },
+  "reward:Skill": {
+   "count": 83,
+   "where": {
+    "Success": 83
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 80,
+     "types": {
+      "list": 80
+     }
+    },
+    "gameMode": {
+     "count": 80,
+     "types": {
+      "list": 80
+     },
+     "values": {
+      "regular": 80,
+      "pve": 80
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 83,
+     "types": {
+      "string": 83
+     },
+     "example": "629f0a7650f43060015c5382"
+    },
+    "illustrationConfig": {
+     "count": 12,
+     "types": {
+      "object": 12
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "index": {
+     "count": 3,
+     "types": {
+      "int": 3
+     },
+     "values": {
+      "1": 1,
+      "7": 1,
+      "8": 1
+     },
+     "example": 1
+    },
+    "isHidden": {
+     "count": 80,
+     "types": {
+      "bool": 80
+     },
+     "values": {
+      "false": 80
+     },
+     "example": false
+    },
+    "target": {
+     "count": 83,
+     "types": {
+      "string": 83
+     },
+     "values": {
+      "StressResistance": 6,
+      "Perception": 6,
+      "Sniper": 4,
+      "Surgery": 4,
+      "Crafting": 4,
+      "Attention": 3,
+      "Intellect": 3,
+      "Vitality": 3,
+      "Health": 3,
+      "AimDrills": 3,
+      "Assault": 3,
+      "Immunity": 3,
+      "HideoutManagement": 3,
+      "TroubleShooting": 3,
+      "Charisma": 2,
+      "Metabolism": 2,
+      "Melee": 2,
+      "Pistol": 2,
+      "Strength": 2,
+      "Shotgun": 2,
+      "SMG": 2,
+      "DMR": 2,
+      "Endurance": 2,
+      "WeaponTreatment": 2,
+      "CovertMovement": 1,
+      "LightVests": 1,
+      "HeavyVests": 1,
+      "MagDrills": 1,
+      "Search": 1,
+      "Sniping": 1,
+      "HMG": 1,
+      "LMG": 1,
+      "Revolver": 1,
+      "Launcher": 1,
+      "Throwing": 1,
+      "AttachedLauncher": 1
+     },
+     "example": "Attention"
+    },
+    "type": {
+     "count": 83,
+     "types": {
+      "string": 83
+     },
+     "values": {
+      "Skill": 83
+     },
+     "example": "Skill"
+    },
+    "unknown": {
+     "count": 83,
+     "types": {
+      "bool": 83
+     },
+     "values": {
+      "false": 78,
+      "true": 5
+     },
+     "example": false
+    },
+    "value": {
+     "count": 83,
+     "types": {
+      "int": 83
+     },
+     "values": {
+      "100": 57,
+      "200": 10,
+      "300": 6,
+      "500": 6,
+      "400": 3,
+      "50": 1
+     },
+     "example": 300
+    }
+   }
+  },
+  "reward:TraderStanding": {
+   "count": 544,
+   "where": {
+    "Success": 532,
+    "Fail": 12
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 523,
+     "types": {
+      "list": 523
+     }
+    },
+    "gameMode": {
+     "count": 501,
+     "types": {
+      "list": 501
+     },
+     "values": {
+      "regular": 501,
+      "pve": 501
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 544,
+     "types": {
+      "string": 544
+     },
+     "example": "60c89c0c80b2027f403dd992"
+    },
+    "illustrationConfig": {
+     "count": 18,
+     "types": {
+      "object": 18
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "index": {
+     "count": 43,
+     "types": {
+      "int": 43
+     },
+     "values": {
+      "1": 24,
+      "0": 12,
+      "2": 4,
+      "4": 2,
+      "3": 1
+     },
+     "example": 0
+    },
+    "isHidden": {
+     "count": 501,
+     "types": {
+      "bool": 501
+     },
+     "values": {
+      "false": 501
+     },
+     "example": false
+    },
+    "target": {
+     "count": 544,
+     "types": {
+      "string": 544
+     },
+     "values": {
+      "5a7c2eca46aef81a7ca2145d": 102,
+      "5c0647fdd443bc2504c2d371": 91,
+      "54cb50c76803fa8b248b4571": 69,
+      "58330581ace78e27b8b10cee": 66,
+      "54cb57776803fa99248b456e": 58,
+      "5935c25fb3acc3127c3d8cd9": 47,
+      "5ac3b934156ae10c4430e83c": 46,
+      "579dc571d53a0658a154fbec": 18,
+      "638f541a29ffd1183d187f57": 18,
+      "656f0f98d80a697f855d34b1": 15,
+      "6617beeaa9cfa777ca915b7c": 14
+     },
+     "example": "54cb50c76803fa8b248b4571"
+    },
+    "type": {
+     "count": 544,
+     "types": {
+      "string": 544
+     },
+     "values": {
+      "TraderStanding": 544
+     },
+     "example": "TraderStanding"
+    },
+    "unknown": {
+     "count": 523,
+     "types": {
+      "bool": 523
+     },
+     "values": {
+      "false": 521,
+      "true": 2
+     },
+     "example": false
+    },
+    "value": {
+     "count": 544,
+     "types": {
+      "float": 540,
+      "int": 4
+     },
+     "values": {
+      "0.02": 186,
+      "0.03": 149,
+      "0.01": 84,
+      "0.04": 47,
+      "0.05": 29,
+      "0.15": 10,
+      "-0.01": 5,
+      "0.25": 4,
+      "1": 4,
+      "-0.02": 3,
+      "-0.05": 3,
+      "-0.25": 3,
+      "-0.15": 3,
+      "0.06": 2,
+      "0.07": 2,
+      "-0.1": 2,
+      "0.5": 2,
+      "-0.03": 2,
+      "1.1": 1,
+      "0.1": 1,
+      "0.09": 1,
+      "0.2": 1
+     },
+     "example": 0.02
+    }
+   }
+  },
+  "reward:TraderStandingRestore": {
+   "count": 1,
+   "where": {
+    "Success": 1
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 1,
+     "types": {
+      "list": 1
+     }
+    },
+    "gameMode": {
+     "count": 1,
+     "types": {
+      "list": 1
+     },
+     "values": {
+      "regular": 1,
+      "pve": 1
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "63ab69fbe842787ad2135718": 1
+     },
+     "example": "63ab69fbe842787ad2135718"
+    },
+    "isHidden": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "target": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "638f541a29ffd1183d187f57": 1
+     },
+     "example": "638f541a29ffd1183d187f57"
+    },
+    "type": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "TraderStandingRestore": 1
+     },
+     "example": "TraderStandingRestore"
+    },
+    "unknown": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "value": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "0": 1
+     },
+     "example": 0
+    }
+   }
+  },
+  "reward:TraderUnlock": {
+   "count": 2,
+   "where": {
+    "Success": 2
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 2,
+     "types": {
+      "list": 2
+     }
+    },
+    "gameMode": {
+     "count": 2,
+     "types": {
+      "list": 2
+     },
+     "values": {
+      "regular": 2,
+      "pve": 2
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 2,
+     "types": {
+      "string": 2
+     },
+     "values": {
+      "5d78c49786f7745041358b58": 1,
+      "6834145ebc1f443d7603c8af": 1
+     },
+     "example": "5d78c49786f7745041358b58"
+    },
+    "isHidden": {
+     "count": 2,
+     "types": {
+      "bool": 2
+     },
+     "values": {
+      "false": 2
+     },
+     "example": false
+    },
+    "target": {
+     "count": 2,
+     "types": {
+      "string": 2
+     },
+     "values": {
+      "5c0647fdd443bc2504c2d371": 1,
+      "6617beeaa9cfa777ca915b7c": 1
+     },
+     "example": "5c0647fdd443bc2504c2d371"
+    },
+    "type": {
+     "count": 2,
+     "types": {
+      "string": 2
+     },
+     "values": {
+      "TraderUnlock": 2
+     },
+     "example": "TraderUnlock"
+    },
+    "unknown": {
+     "count": 2,
+     "types": {
+      "bool": 2
+     },
+     "values": {
+      "false": 2
+     },
+     "example": false
+    }
+   }
+  },
+  "reward:WebPromoCode": {
+   "count": 1,
+   "where": {
+    "Success": 1
+   },
+   "keys": {
+    "availableInGameEditions": {
+     "count": 1,
+     "types": {
+      "list": 1
+     }
+    },
+    "gameMode": {
+     "count": 1,
+     "types": {
+      "list": 1
+     },
+     "values": {
+      "regular": 1,
+      "pve": 1
+     },
+     "example": [
+      "regular",
+      "pve"
+     ]
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "68341846186efa3c5b07f996": 1
+     },
+     "example": "68341846186efa3c5b07f996"
+    },
+    "illustrationConfig": {
+     "count": 1,
+     "types": {
+      "object": 1
+     },
+     "example": {
+      "bigImage": "",
+      "image": "",
+      "isBigImage": false
+     }
+    },
+    "isHidden": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "type": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "WebPromoCode": 1
+     },
+     "example": "WebPromoCode"
+    },
+    "unknown": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    }
+   }
+  },
+  "reward_item": {
+   "count": 5385,
+   "where": {},
+   "keys": {
+    "_id": {
+     "count": 5385,
+     "types": {
+      "string": 5385
+     },
+     "example": "68a9695194f6582e59140026"
+    },
+    "_tpl": {
+     "count": 5385,
+     "types": {
+      "string": 5385
+     },
+     "example": "5449016a4bdc2d6f028b456f"
+    },
+    "location": {
+     "count": 27,
+     "types": {
+      "int": 27
+     },
+     "values": {
+      "1": 27
+     },
+     "example": 1
+    },
+    "parentId": {
+     "count": 2511,
+     "types": {
+      "string": 2511
+     },
+     "example": "68a9695194f6582e59140027"
+    },
+    "slotId": {
+     "count": 2511,
+     "types": {
+      "string": 2511
+     },
+     "example": "mod_pistol_grip"
+    }
+   }
+  },
+  "reward_item_upd": {
+   "count": 3475,
+   "where": {},
+   "keys": {
+    "FireMode": {
+     "count": 94,
+     "types": {
+      "object": 94
+     },
+     "example": {
+      "FireMode": "single"
+     }
+    },
+    "Foldable": {
+     "count": 38,
+     "types": {
+      "object": 38
+     },
+     "example": {
+      "Folded": false
+     }
+    },
+    "Repairable": {
+     "count": 93,
+     "types": {
+      "object": 93
+     },
+     "example": {
+      "Durability": 100,
+      "MaxDurability": 100
+     }
+    },
+    "SpawnedInSession": {
+     "count": 2107,
+     "types": {
+      "bool": 2107
+     },
+     "values": {
+      "true": 2107
+     },
+     "example": true
+    },
+    "StackObjectsCount": {
+     "count": 3044,
+     "types": {
+      "int": 3044
+     },
+     "example": 15000
+    }
+   }
+  },
+  "subtask:ArenaGameMode": {
+   "count": 7,
+   "where": {
+    "AvailableForFinish": 6,
+    "Fail": 1
+   },
+   "keys": {
+    "conditionType": {
+     "count": 7,
+     "types": {
+      "string": 7
+     },
+     "values": {
+      "ArenaGameMode": 7
+     },
+     "example": "ArenaGameMode"
+    },
+    "dynamicLocale": {
+     "count": 7,
+     "types": {
+      "bool": 7
+     },
+     "values": {
+      "false": 7
+     },
+     "example": false
+    },
+    "id": {
+     "count": 7,
+     "types": {
+      "string": 7
+     },
+     "values": {
+      "67e6b4973c1bd8c7580d35e0": 1,
+      "67ebc00f64bf2bb2c06cb316": 1,
+      "67ebc1c58d7ea222b89fc914": 1,
+      "67e6b98f03a97a9405ed4a6f": 1,
+      "67e6b9ccd421544953a7344d": 1,
+      "67e6b9dff89be0b1dbd371e5": 1,
+      "67e6b6e2727d4a1492fcfe1c": 1
+     },
+     "example": "67e6b4973c1bd8c7580d35e0"
+    },
+    "target": {
+     "count": 7,
+     "types": {
+      "list": 7
+     },
+     "values": {
+      "CheckPoint": 7,
+      "BlastGang": 6,
+      "TeamFight": 6,
+      "LastHero": 1
+     },
+     "example": [
+      "CheckPoint",
+      "LastHero"
+     ]
+    }
+   }
+  },
+  "subtask:ArenaMatchPlace": {
+   "count": 7,
+   "where": {
+    "AvailableForFinish": 6,
+    "Fail": 1
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 7,
+     "types": {
+      "string": 7
+     },
+     "values": {
+      "==": 4,
+      ">": 2,
+      "<=": 1
+     },
+     "example": "=="
+    },
+    "conditionType": {
+     "count": 7,
+     "types": {
+      "string": 7
+     },
+     "values": {
+      "ArenaMatchPlace": 7
+     },
+     "example": "ArenaMatchPlace"
+    },
+    "dynamicLocale": {
+     "count": 7,
+     "types": {
+      "bool": 7
+     },
+     "values": {
+      "false": 7
+     },
+     "example": false
+    },
+    "id": {
+     "count": 7,
+     "types": {
+      "string": 7
+     },
+     "values": {
+      "67ee87fa75a5d18861fe8f88": 1,
+      "662bb1d4ca68a2b005fec235": 1,
+      "67ebc19b79b4cd1899cb20f7": 1,
+      "662bb2388b3c444461ffb064": 1,
+      "665493ba8eccaaf27ad398ee": 1,
+      "662bb253ac4727ee1149a1c7": 1,
+      "662bb2c053b4c3d95e2e0753": 1
+     },
+     "example": "67ee87fa75a5d18861fe8f88"
+    },
+    "value": {
+     "count": 7,
+     "types": {
+      "int": 7
+     },
+     "values": {
+      "1": 7
+     },
+     "example": 1
+    }
+   }
+  },
+  "subtask:ArenaPlayerInTeamPlace": {
+   "count": 1,
+   "where": {
+    "AvailableForFinish": 1
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "<=": 1
+     },
+     "example": "<="
+    },
+    "conditionType": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "ArenaPlayerInTeamPlace": 1
+     },
+     "example": "ArenaPlayerInTeamPlace"
+    },
+    "dynamicLocale": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "662bb201589b7f21d7ab98fa": 1
+     },
+     "example": "662bb201589b7f21d7ab98fa"
+    },
+    "value": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "3": 1
+     },
+     "example": 3
+    }
+   }
+  },
+  "subtask:Equipment": {
+   "count": 26,
+   "where": {
+    "AvailableForFinish": 24,
+    "Fail": 2
+   },
+   "keys": {
+    "IncludeNotEquippedItems": {
+     "count": 26,
+     "types": {
+      "bool": 26
+     },
+     "values": {
+      "false": 26
+     },
+     "example": false
+    },
+    "conditionType": {
+     "count": 26,
+     "types": {
+      "string": 26
+     },
+     "values": {
+      "Equipment": 26
+     },
+     "example": "Equipment"
+    },
+    "dynamicLocale": {
+     "count": 26,
+     "types": {
+      "bool": 26
+     },
+     "values": {
+      "false": 26
+     },
+     "example": false
+    },
+    "equipmentExclusive": {
+     "count": 26,
+     "types": {
+      "list": 26
+     }
+    },
+    "equipmentInclusive": {
+     "count": 26,
+     "types": {
+      "list": 26
+     }
+    },
+    "id": {
+     "count": 26,
+     "types": {
+      "string": 26
+     },
+     "values": {
+      "5d25af8586f77443fe4569c4": 2,
+      "5c922b6486f77438522e0c35": 1,
+      "64c3f3dc7241db5c406f9d93": 1,
+      "5cb32c1188a4503d684dd1b5": 1,
+      "5c94cdc986f77436285a96c2": 1,
+      "5c0d35e2d0928202b25db679": 1,
+      "5c0d4c88d09282029f539179": 1,
+      "5c0d4dc3d0928202a62f4f26": 1,
+      "5c1a71cc86f77456661eaa5c": 1,
+      "5c1a725486f7744c2a78e8b3": 1,
+      "63aec597fe01cd749c5e799b": 1,
+      "65e08b1d3d5898cdd34da72b": 1,
+      "5c12363286f7745c8b0203f4": 1,
+      "5d2f573986f7745e043a808d": 1,
+      "6576fdb75edfd11560169433": 1,
+      "65771f8aced66ca8714c28fe": 1,
+      "6669ac18de9a775893d4b2f3": 1,
+      "66633534b1c6a8ba9d756fef": 1,
+      "667c03064ad48bfe4e5d8119": 1,
+      "67570dcfcd38fd7f08751a1e": 1,
+      "6758319860c9fd4a946303b7": 1,
+      "676a99b1df74dbca1f199538": 1,
+      "6758325ae87312b8ef10c8e4": 1,
+      "676a982547f324b585bdd34f": 1,
+      "664bbfee7783160747253d16": 1
+     },
+     "example": "5c922b6486f77438522e0c35"
+    }
+   }
+  },
+  "subtask:ExitName": {
+   "count": 12,
+   "where": {
+    "AvailableForFinish": 12
+   },
+   "keys": {
+    "conditionType": {
+     "count": 12,
+     "types": {
+      "string": 12
+     },
+     "values": {
+      "ExitName": 12
+     },
+     "example": "ExitName"
+    },
+    "dynamicLocale": {
+     "count": 12,
+     "types": {
+      "bool": 12
+     },
+     "values": {
+      "false": 12
+     },
+     "example": false
+    },
+    "exitName": {
+     "count": 12,
+     "types": {
+      "string": 12
+     },
+     "values": {
+      "E7_car": 3,
+      "Sandbox_VExit": 2,
+      "E9_sniper": 1,
+      "South V-Ex": 1,
+      "Dorms V-Ex": 1,
+      "PP Exfil": 1,
+      "Alpinist": 1,
+      "Gate_o": 1,
+      "customs_sniper_exit": 1
+     },
+     "example": "E9_sniper"
+    },
+    "id": {
+     "count": 12,
+     "types": {
+      "string": 12
+     },
+     "values": {
+      "63929163c115f907b14700bb": 1,
+      "639cc3e37c1532d85b0162ac": 1,
+      "6397a431f376f0344e45711d": 1,
+      "6397a5008b38442139798206": 1,
+      "6397a5e68b38442139798207": 1,
+      "65e0a0580d13cc87ef04c12c": 1,
+      "6397afc22e519e69d2139b2c": 1,
+      "63ab19253606f31cf40e5adc": 1,
+      "64f712fbafbb7b781850f936": 1,
+      "65733f147883616935f7d004": 1,
+      "66c0a86de55c52cd17921935": 1,
+      "675c355af2427b5485ab4b6a": 1
+     },
+     "example": "63929163c115f907b14700bb"
+    }
+   }
+  },
+  "subtask:ExitStatus": {
+   "count": 109,
+   "where": {
+    "AvailableForFinish": 103,
+    "Fail": 6
+   },
+   "keys": {
+    "conditionType": {
+     "count": 109,
+     "types": {
+      "string": 109
+     },
+     "values": {
+      "ExitStatus": 109
+     },
+     "example": "ExitStatus"
+    },
+    "dynamicLocale": {
+     "count": 108,
+     "types": {
+      "bool": 108
+     },
+     "values": {
+      "false": 108
+     },
+     "example": false
+    },
+    "id": {
+     "count": 109,
+     "types": {
+      "string": 109
+     },
+     "example": "5a60653f86f7740d887d2d38"
+    },
+    "status": {
+     "count": 109,
+     "types": {
+      "list": 109
+     },
+     "values": {
+      "Survived": 83,
+      "Transit": 81,
+      "Runner": 33,
+      "Killed": 6,
+      "MissingInAction": 6,
+      "Left": 6
+     },
+     "example": [
+      "Survived",
+      "Runner",
+      "Transit"
+     ]
+    }
+   }
+  },
+  "subtask:HealthBuff": {
+   "count": 2,
+   "where": {
+    "AvailableForFinish": 2
+   },
+   "keys": {
+    "conditionType": {
+     "count": 2,
+     "types": {
+      "string": 2
+     },
+     "values": {
+      "HealthBuff": 2
+     },
+     "example": "HealthBuff"
+    },
+    "dynamicLocale": {
+     "count": 2,
+     "types": {
+      "bool": 2
+     },
+     "values": {
+      "false": 2
+     },
+     "example": false
+    },
+    "id": {
+     "count": 2,
+     "types": {
+      "string": 2
+     },
+     "values": {
+      "649afc576b19d3043743ddd5": 1,
+      "676965df491f7db10f5f5800": 1
+     },
+     "example": "649afc576b19d3043743ddd5"
+    },
+    "target": {
+     "count": 2,
+     "types": {
+      "list": 2
+     },
+     "values": {
+      "Buffs_Obdolbos": 1,
+      "Buffs_Frostbite": 1
+     },
+     "example": [
+      "Buffs_Obdolbos"
+     ]
+    }
+   }
+  },
+  "subtask:HealthEffect": {
+   "count": 5,
+   "where": {
+    "AvailableForFinish": 5
+   },
+   "keys": {
+    "bodyPartsWithEffects": {
+     "count": 5,
+     "types": {
+      "list": 5
+     },
+     "example": [
+      {
+       "bodyParts": [
+        "Stomach"
+       ],
+       "effects": [
+        "Dehydration"
+       ]
+      }
+     ]
+    },
+    "conditionType": {
+     "count": 5,
+     "types": {
+      "string": 5
+     },
+     "values": {
+      "HealthEffect": 5
+     },
+     "example": "HealthEffect"
+    },
+    "dynamicLocale": {
+     "count": 5,
+     "types": {
+      "bool": 5
+     },
+     "values": {
+      "false": 5
+     },
+     "example": false
+    },
+    "energy": {
+     "count": 5,
+     "types": {
+      "object": 5
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "hydration": {
+     "count": 5,
+     "types": {
+      "object": 5
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "id": {
+     "count": 5,
+     "types": {
+      "string": 5
+     },
+     "values": {
+      "5d25c5d086f77408251c4224": 1,
+      "5d25c8ed86f7740a21220d15": 1,
+      "5d25d5b086f77408251c4bf7": 1,
+      "5d25dfb686f77444001e2e47": 1,
+      "6672e2859b857136e1bc6f48": 1
+     },
+     "example": "5d25c5d086f77408251c4224"
+    },
+    "time": {
+     "count": 5,
+     "types": {
+      "object": 5
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 300
+     }
+    }
+   }
+  },
+  "subtask:InZone": {
+   "count": 32,
+   "where": {
+    "AvailableForFinish": 32
+   },
+   "keys": {
+    "conditionType": {
+     "count": 32,
+     "types": {
+      "string": 32
+     },
+     "values": {
+      "InZone": 32
+     },
+     "example": "InZone"
+    },
+    "dynamicLocale": {
+     "count": 32,
+     "types": {
+      "bool": 32
+     },
+     "values": {
+      "false": 32
+     },
+     "example": false
+    },
+    "id": {
+     "count": 32,
+     "types": {
+      "string": 32
+     },
+     "values": {
+      "5d26149b86f77469f1599fdc": 1,
+      "5d27354086f77445722f1f9d": 1,
+      "608c00115e0ef91ab810f98d": 1,
+      "608aaf1a59b92115597ad78b": 1,
+      "608ac7095e0ef91ab810f983": 1,
+      "608a836d59b92115597ad78a": 1,
+      "60ec18cf63fe3506455d8a78": 1,
+      "60ec1e7ea664b027ab1441b0": 1,
+      "60ec224ead25e3185465bbd2": 1,
+      "60e73f9ca6e322250215f07f": 1,
+      "6192460e0f16413a1c5afd00": 1,
+      "6194f8fe0d1f573a784212a2": 1,
+      "6193db6a9c70d67c3d1d6427": 1,
+      "625ed2ceaa168e51321d69d8": 1,
+      "639285abf8e5dd32bf4e3abf": 1,
+      "63991504425b4c708e06d54b": 1,
+      "639a77086402c537c15d012e": 1,
+      "64e7bc62cd54ef058074cc4b": 1,
+      "64e7bd7a7485f65fa36b0e61": 1,
+      "64e7bea0220ee966bf425ece": 1,
+      "6580282ea8340fcb15f6afe3": 1,
+      "66a2e2ce0d9f705feb2ee72c": 1,
+      "66b356f955576c06832a3594": 1,
+      "66b35707834d5a6e9c2c1e43": 1,
+      "675835d4f7b9fa39e8d64e0d": 1,
+      "675835d85511fdfd3c044428": 1,
+      "675835dd91de1aac8ad0fac4": 1,
+      "675859c2cd1cae29fbf3f34f": 1,
+      "675c1cb254ae3d48faf960c4": 1,
+      "675c1fb75478802148e0beda": 1,
+      "675c1faaf1a5f601545067d0": 1,
+      "67f712e16a808601eb4f135d": 1
+     },
+     "example": "5d26149b86f77469f1599fdc"
+    },
+    "zoneIds": {
+     "count": 32,
+     "types": {
+      "list": 32
+     },
+     "values": {
+      "huntsman_013": 1,
+      "huntsman_020": 1,
+      "prapor_hq_area_check_1": 1,
+      "mechanik_exit_area_1": 1,
+      "lijnik_storage_area_1": 1,
+      "eger_barracks_area_1": 1,
+      "eger_barracks_area_2": 1,
+      "prapor_27_1": 1,
+      "prapor_27_2": 1,
+      "prapor_27_3": 1,
+      "place_merch_022_1": 1,
+      "place_merch_022_2": 1,
+      "place_merch_022_3": 1,
+      "place_merch_022_4": 1,
+      "place_merch_022_5": 1,
+      "place_merch_022_6": 1,
+      "place_merch_022_7": 1,
+      "qlight_pr1_heli2_kill": 1,
+      "qlight_pc1_ucot_kill": 1,
+      "qlight_br_secure_road": 1,
+      "meh_44_eastLight_kill": 1,
+      "quest_zone_kill_c17_adm": 1,
+      "quest_zone_keeper5": 1,
+      "quest_zone_keeper6_kiba_kill": 1,
+      "quest_zone_kill_stilo": 1,
+      "quest_zone_kill_cinema": 1,
+      "quest_zone_kill_kardinal": 1,
+      "q14_10_kill": 1,
+      "nf2024_4_zone_kill1": 1,
+      "Marafon_kill_village_lighthouse": 1,
+      "marafon_kill_village_shoreline": 1,
+      "kill_in_forest_woods": 1,
+      "kill_in_forest_shoreline": 1,
+      "kill_in_forest_lighthouse": 1,
+      "kill_in_forest_customs": 1,
+      "killCam": 1,
+      "Killoldoil": 1,
+      "Killnewoil": 1,
+      "RSHG_event_04_jaeger_r_point": 1
+     },
+     "example": [
+      "huntsman_013"
+     ]
+    }
+   }
+  },
+  "subtask:Kills": {
+   "count": 283,
+   "where": {
+    "AvailableForFinish": 275,
+    "Fail": 8
+   },
+   "keys": {
+    "bodyPart": {
+     "count": 256,
+     "types": {
+      "list": 256
+     },
+     "values": {
+      "Head": 15,
+      "Chest": 1,
+      "Stomach": 1,
+      "LeftArm": 1,
+      "RightArm": 1,
+      "LeftLeg": 1,
+      "RightLeg": 1
+     },
+     "example": [
+      "Head"
+     ]
+    },
+    "compareMethod": {
+     "count": 257,
+     "types": {
+      "string": 257
+     },
+     "values": {
+      ">=": 257
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 283,
+     "types": {
+      "string": 283
+     },
+     "values": {
+      "Kills": 283
+     },
+     "example": "Kills"
+    },
+    "daytime": {
+     "count": 256,
+     "types": {
+      "object": 256
+     },
+     "example": {
+      "from": 0,
+      "to": 0
+     }
+    },
+    "distance": {
+     "count": 256,
+     "types": {
+      "object": 256
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "dynamicLocale": {
+     "count": 274,
+     "types": {
+      "bool": 274
+     },
+     "values": {
+      "false": 274
+     },
+     "example": false
+    },
+    "enemyEquipmentExclusive": {
+     "count": 256,
+     "types": {
+      "list": 256
+     },
+     "example": [
+      [
+       "67614b3ab8c060ebb204b106"
+      ]
+     ]
+    },
+    "enemyEquipmentInclusive": {
+     "count": 256,
+     "types": {
+      "list": 256
+     }
+    },
+    "enemyHealthEffects": {
+     "count": 256,
+     "types": {
+      "list": 256
+     }
+    },
+    "id": {
+     "count": 283,
+     "types": {
+      "string": 283
+     },
+     "example": "5967379786f774620e763ea8"
+    },
+    "resetOnSessionEnd": {
+     "count": 256,
+     "types": {
+      "bool": 256
+     },
+     "values": {
+      "false": 255,
+      "true": 1
+     },
+     "example": false
+    },
+    "savageRole": {
+     "count": 280,
+     "types": {
+      "list": 280
+     },
+     "example": [
+      "marksman"
+     ]
+    },
+    "target": {
+     "count": 283,
+     "types": {
+      "string": 283
+     },
+     "values": {
+      "Savage": 178,
+      "AnyPmc": 62,
+      "Any": 40,
+      "Usec": 2,
+      "Bear": 1
+     },
+     "example": "Savage"
+    },
+    "value": {
+     "count": 257,
+     "types": {
+      "int": 256,
+      "string": 1
+     },
+     "values": {
+      "1": 1,
+      "0": 108
+     },
+     "example": 1
+    },
+    "weapon": {
+     "count": 257,
+     "types": {
+      "list": 257
+     }
+    },
+    "weaponCaliber": {
+     "count": 256,
+     "types": {
+      "list": 256
+     },
+     "values": {
+      "5.56x45": 1,
+      "5.45x39": 1,
+      "7.62x39": 1,
+      "7.62x54 R": 1,
+      "9x19": 1,
+      "9x39": 1
+     },
+     "example": [
+      "5.56x45"
+     ]
+    },
+    "weaponModsExclusive": {
+     "count": 256,
+     "types": {
+      "list": 256
+     }
+    },
+    "weaponModsInclusive": {
+     "count": 256,
+     "types": {
+      "list": 256
+     }
+    }
+   }
+  },
+  "subtask:LaunchFlare": {
+   "count": 8,
+   "where": {
+    "AvailableForFinish": 8
+   },
+   "keys": {
+    "conditionType": {
+     "count": 8,
+     "types": {
+      "string": 8
+     },
+     "values": {
+      "LaunchFlare": 8
+     },
+     "example": "LaunchFlare"
+    },
+    "dynamicLocale": {
+     "count": 8,
+     "types": {
+      "bool": 8
+     },
+     "values": {
+      "false": 8
+     },
+     "example": false
+    },
+    "id": {
+     "count": 8,
+     "types": {
+      "string": 8
+     },
+     "values": {
+      "6745c98d1da7ffb8132be7b8": 2,
+      "6745c99aace12a06fcb5c1fc": 2,
+      "63aaccc8f76b8a05dd702924": 1,
+      "63a9ad64655ec5555b4aaa2f": 1,
+      "63bd651d0973ec761709c257": 1,
+      "66740959ccd38d189b9d61cc": 1
+     },
+     "example": "63aaccc8f76b8a05dd702924"
+    },
+    "target": {
+     "count": 8,
+     "types": {
+      "string": 8
+     },
+     "values": {
+      "Final_flare_btr_2": 2,
+      "Final_flare_btr": 2,
+      "quest_zone_prod_flare": 1,
+      "quest_zone_keeper4_flare": 1,
+      "quest_zone_last_flare": 1,
+      "NosQuests_5_Flaer": 1
+     },
+     "example": "quest_zone_prod_flare"
+    }
+   }
+  },
+  "subtask:Location": {
+   "count": 208,
+   "where": {
+    "AvailableForFinish": 203,
+    "Fail": 5
+   },
+   "keys": {
+    "conditionType": {
+     "count": 208,
+     "types": {
+      "string": 208
+     },
+     "values": {
+      "Location": 208
+     },
+     "example": "Location"
+    },
+    "dynamicLocale": {
+     "count": 208,
+     "types": {
+      "bool": 208
+     },
+     "values": {
+      "false": 208
+     },
+     "example": false
+    },
+    "id": {
+     "count": 208,
+     "types": {
+      "string": 208
+     },
+     "example": "59674d5a86f77446b872d5fa"
+    },
+    "target": {
+     "count": 208,
+     "types": {
+      "list": 208
+     },
+     "values": {
+      "Shoreline": 46,
+      "Woods": 39,
+      "bigmap": 33,
+      "TarkovStreets": 32,
+      "RezervBase": 28,
+      "Lighthouse": 26,
+      "Interchange": 23,
+      "factory4_day": 16,
+      "factory4_night": 15,
+      "Sandbox_high": 15,
+      "Sandbox": 14,
+      "laboratory": 11,
+      "develop": 2,
+      "Labyrinth": 1
+     },
+     "example": [
+      "Woods"
+     ]
+    }
+   }
+  },
+  "subtask:Shots": {
+   "count": 3,
+   "where": {
+    "AvailableForFinish": 2,
+    "Fail": 1
+   },
+   "keys": {
+    "bodyPart": {
+     "count": 3,
+     "types": {
+      "list": 3
+     },
+     "values": {
+      "LeftLeg": 1,
+      "RightLeg": 1,
+      "Head": 1
+     },
+     "example": [
+      "LeftLeg",
+      "RightLeg"
+     ]
+    },
+    "compareMethod": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      ">=": 3
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "Shots": 3
+     },
+     "example": "Shots"
+    },
+    "daytime": {
+     "count": 3,
+     "types": {
+      "object": 3
+     },
+     "example": {
+      "from": 0,
+      "to": 0
+     }
+    },
+    "distance": {
+     "count": 3,
+     "types": {
+      "object": 3
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 40
+     }
+    },
+    "dynamicLocale": {
+     "count": 3,
+     "types": {
+      "bool": 3
+     },
+     "values": {
+      "false": 3
+     },
+     "example": false
+    },
+    "enemyEquipmentExclusive": {
+     "count": 3,
+     "types": {
+      "list": 3
+     }
+    },
+    "enemyEquipmentInclusive": {
+     "count": 3,
+     "types": {
+      "list": 3
+     }
+    },
+    "enemyHealthEffects": {
+     "count": 3,
+     "types": {
+      "list": 3
+     }
+    },
+    "id": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "5bd983f286f7740ab2382707": 1,
+      "5bd9948586f774035c4877f4": 1,
+      "664b2eec7f1f3801a3bf102b": 1
+     },
+     "example": "5bd983f286f7740ab2382707"
+    },
+    "resetOnSessionEnd": {
+     "count": 3,
+     "types": {
+      "bool": 3
+     },
+     "values": {
+      "false": 3
+     },
+     "example": false
+    },
+    "savageRole": {
+     "count": 3,
+     "types": {
+      "list": 3
+     },
+     "values": {
+      "bossBoar": 1,
+      "bossKolontay": 1
+     },
+     "example": [
+      "bossBoar",
+      "bossKolontay"
+     ]
+    },
+    "target": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "Any": 2,
+      "Savage": 1
+     },
+     "example": "Any"
+    },
+    "value": {
+     "count": 3,
+     "types": {
+      "int": 3
+     },
+     "values": {
+      "1": 2,
+      "0": 1
+     },
+     "example": 1
+    },
+    "weapon": {
+     "count": 3,
+     "types": {
+      "list": 3
+     },
+     "values": {
+      "55801eed4bdc2d89578b4588": 2,
+      "5de652c31b7e3716273428be": 2,
+      "588892092459774ac91d4b11": 2,
+      "5ae08f0a5acfc408fb1398a1": 2,
+      "5df24cf80dee1b22f862e9bc": 2,
+      "5bfea6e90db834001b7347f3": 2,
+      "5bfd297f0db834001a669119": 2,
+      "61f7c9e189e6fb1a5e3ea78d": 2,
+      "627e14b21713922ded6f2c15": 2
+     }
+    },
+    "weaponCaliber": {
+     "count": 3,
+     "types": {
+      "list": 3
+     }
+    },
+    "weaponModsExclusive": {
+     "count": 3,
+     "types": {
+      "list": 3
+     }
+    },
+    "weaponModsInclusive": {
+     "count": 3,
+     "types": {
+      "list": 3
+     }
+    }
+   }
+  },
+  "subtask:Time": {
+   "count": 1,
+   "where": {
+    "AvailableForFinish": 1
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      ">=": 1
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "Time": 1
+     },
+     "example": "Time"
+    },
+    "dynamicLocale": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "67dc3951e32d3b1c109b959b": 1
+     },
+     "example": "67dc3951e32d3b1c109b959b"
+    },
+    "value": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "1": 1
+     },
+     "example": 1
+    }
+   }
+  },
+  "subtask:UnderArtilleryFire": {
+   "count": 1,
+   "where": {
+    "AvailableForFinish": 1
+   },
+   "keys": {
+    "conditionType": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "UnderArtilleryFire": 1
+     },
+     "example": "UnderArtilleryFire"
+    },
+    "dynamicLocale": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "66e19b0828a9b0c1adbe3cac": 1
+     },
+     "example": "66e19b0828a9b0c1adbe3cac"
+    }
+   }
+  },
+  "subtask:UseItem": {
+   "count": 1,
+   "where": {
+    "Fail": 1
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      ">=": 1
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "UseItem": 1
+     },
+     "example": "UseItem"
+    },
+    "dynamicLocale": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "5d25d14786f77409de05b575": 1
+     },
+     "example": "5d25d14786f77409de05b575"
+    },
+    "target": {
+     "count": 1,
+     "types": {
+      "list": 1
+     }
+    },
+    "value": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "1": 1
+     },
+     "example": 1
+    }
+   }
+  },
+  "subtask:VisitPlace": {
+   "count": 212,
+   "where": {
+    "AvailableForFinish": 212
+   },
+   "keys": {
+    "conditionType": {
+     "count": 212,
+     "types": {
+      "string": 212
+     },
+     "values": {
+      "VisitPlace": 212
+     },
+     "example": "VisitPlace"
+    },
+    "dynamicLocale": {
+     "count": 212,
+     "types": {
+      "bool": 212
+     },
+     "values": {
+      "false": 212
+     },
+     "example": false
+    },
+    "id": {
+     "count": 212,
+     "types": {
+      "string": 212
+     },
+     "example": "5a3fbdd386f7740fad0d7e26"
+    },
+    "target": {
+     "count": 212,
+     "types": {
+      "string": 212
+     },
+     "example": "locked_office"
+    },
+    "value": {
+     "count": 212,
+     "types": {
+      "int": 212
+     },
+     "values": {
+      "1": 212
+     },
+     "example": 1
+    }
+   }
+  },
+  "task:CounterCreator": {
+   "count": 626,
+   "where": {
+    "AvailableForFinish": 609,
+    "Fail": 17
+   },
+   "keys": {
+    "completeInSeconds": {
+     "count": 596,
+     "types": {
+      "int": 596
+     },
+     "values": {
+      "0": 596
+     },
+     "example": 0
+    },
+    "conditionType": {
+     "count": 626,
+     "types": {
+      "string": 626
+     },
+     "values": {
+      "CounterCreator": 626
+     },
+     "example": "CounterCreator"
+    },
+    "doNotResetIfCounterCompleted": {
+     "count": 626,
+     "types": {
+      "bool": 626
+     },
+     "values": {
+      "false": 623,
+      "true": 3
+     },
+     "example": false
+    },
+    "dynamicLocale": {
+     "count": 626,
+     "types": {
+      "bool": 626
+     },
+     "values": {
+      "false": 626
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 624,
+     "types": {
+      "string": 624
+     },
+     "values": {
+      "": 622,
+      "66acc972c007d8548a0a30d5": 1,
+      "67700a88881ee6b3b4020dea": 1
+     },
+     "example": "66acc972c007d8548a0a30d5"
+    },
+    "id": {
+     "count": 626,
+     "types": {
+      "string": 626
+     },
+     "example": "5967379186f77463860dadd6"
+    },
+    "index": {
+     "count": 626,
+     "types": {
+      "int": 626
+     },
+     "values": {
+      "0": 265,
+      "1": 110,
+      "2": 72,
+      "3": 45,
+      "4": 45,
+      "5": 24,
+      "6": 15,
+      "7": 13,
+      "8": 10,
+      "9": 7,
+      "10": 7,
+      "11": 5,
+      "12": 4,
+      "24": 1,
+      "13": 1,
+      "14": 1,
+      "15": 1
+     },
+     "example": 0
+    },
+    "isNecessary": {
+     "count": 540,
+     "types": {
+      "bool": 540
+     },
+     "values": {
+      "false": 540
+     },
+     "example": false
+    },
+    "isResetOnConditionFailed": {
+     "count": 540,
+     "types": {
+      "bool": 540
+     },
+     "values": {
+      "false": 539,
+      "true": 1
+     },
+     "example": false
+    },
+    "oneSessionOnly": {
+     "count": 626,
+     "types": {
+      "bool": 626
+     },
+     "values": {
+      "false": 457,
+      "true": 169
+     },
+     "example": false
+    },
+    "parentId": {
+     "count": 626,
+     "types": {
+      "string": 626
+     },
+     "values": {
+      "": 604,
+      "66e19f359fee1e54e0e01f7c": 3,
+      "5969fa4886f7741ddb481544": 2,
+      "596b44b686f77457cb50ecca": 2,
+      "6575a64d3fc09bdfb38b713d": 2,
+      "5968943f86f7740d137ebfc2": 1,
+      "5968ed3186f77420d2328013": 1,
+      "5968981986f7740d1648df42": 1,
+      "5979fc2686f77426d702a0f2": 1,
+      "5a28017786f77452f6318b1b": 1,
+      "5a2801f986f774531b679875": 1,
+      "66aa5c8ba8c36eaef492ef92": 1,
+      "66aba85403e0ee310104287a": 1,
+      "683421515619c8e2a9031515": 1,
+      "684070a1a550c194cf2f833a": 1,
+      "68406fd3b614b3db64e6097d": 1,
+      "684181808b21759f04e1c4ee": 1,
+      "686407a72737deb604314e16": 1
+     },
+     "example": "5968943f86f7740d137ebfc2"
+    },
+    "type": {
+     "count": 626,
+     "types": {
+      "string": 626
+     },
+     "values": {
+      "Elimination": 284,
+      "Exploration": 144,
+      "Completion": 111,
+      "Discover": 85,
+      "Experience": 2
+     },
+     "example": "Elimination"
+    },
+    "value": {
+     "count": 626,
+     "types": {
+      "int": 626
+     },
+     "values": {
+      "1": 403,
+      "10": 42,
+      "5": 41,
+      "15": 19,
+      "20": 14,
+      "3": 13,
+      "4": 11,
+      "12": 10,
+      "7": 10,
+      "30": 9,
+      "25": 8,
+      "2": 8,
+      "50": 8,
+      "8": 7,
+      "100": 6,
+      "6": 5,
+      "40": 4,
+      "60": 3,
+      "35": 2,
+      "9999999999": 1,
+      "55": 1,
+      "36": 1
+     },
+     "example": 5
+    }
+   }
+  },
+  "task:FindItem": {
+   "count": 269,
+   "where": {
+    "AvailableForFinish": 269
+   },
+   "keys": {
+    "conditionType": {
+     "count": 269,
+     "types": {
+      "string": 269
+     },
+     "values": {
+      "FindItem": 269
+     },
+     "example": "FindItem"
+    },
+    "countInRaid": {
+     "count": 269,
+     "types": {
+      "bool": 269
+     },
+     "values": {
+      "false": 269
+     },
+     "example": false
+    },
+    "dogtagLevel": {
+     "count": 269,
+     "types": {
+      "int": 269
+     },
+     "values": {
+      "0": 269
+     },
+     "example": 0
+    },
+    "dynamicLocale": {
+     "count": 269,
+     "types": {
+      "bool": 269
+     },
+     "values": {
+      "false": 269
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 269,
+     "types": {
+      "string": 269
+     },
+     "values": {
+      "": 269
+     }
+    },
+    "id": {
+     "count": 269,
+     "types": {
+      "string": 269
+     },
+     "example": "5968ec9986f7741ddd6c1012"
+    },
+    "index": {
+     "count": 269,
+     "types": {
+      "int": 269
+     },
+     "values": {
+      "0": 111,
+      "2": 51,
+      "1": 48,
+      "4": 20,
+      "3": 15,
+      "6": 7,
+      "8": 6,
+      "5": 3,
+      "10": 3,
+      "12": 2,
+      "7": 1,
+      "14": 1,
+      "16": 1
+     },
+     "example": 0
+    },
+    "isEncoded": {
+     "count": 269,
+     "types": {
+      "bool": 269
+     },
+     "values": {
+      "false": 267,
+      "true": 2
+     },
+     "example": false
+    },
+    "maxDurability": {
+     "count": 269,
+     "types": {
+      "int": 269
+     },
+     "values": {
+      "100": 268,
+      "50": 1
+     },
+     "example": 100
+    },
+    "minDurability": {
+     "count": 269,
+     "types": {
+      "int": 269
+     },
+     "values": {
+      "0": 268,
+      "50": 1
+     },
+     "example": 0
+    },
+    "onlyFoundInRaid": {
+     "count": 269,
+     "types": {
+      "bool": 269
+     },
+     "values": {
+      "false": 146,
+      "true": 123
+     },
+     "example": false
+    },
+    "parentId": {
+     "count": 269,
+     "types": {
+      "string": 269
+     },
+     "values": {
+      "": 260,
+      "5968ec9986f7741ddd6c1012": 1,
+      "5968943f86f7740d137ebfc2": 1,
+      "675c1cf4a757ddd00404f0a6": 1,
+      "67dbdd4d6a2e4b8e002b647d": 1,
+      "67dbe0f532ff08bfa13237a8": 1,
+      "6834233fecd5cf3a440d855f": 1,
+      "685e95c44b14e68996ad6590": 1,
+      "684181808b21759f04e1c4ee": 1,
+      "6863e0ddcc3c166557cafb02": 1
+     },
+     "example": "5968ec9986f7741ddd6c1012"
+    },
+    "target": {
+     "count": 269,
+     "types": {
+      "list": 269
+     },
+     "example": [
+      "5937fd0086f7742bf33fc198"
+     ]
+    },
+    "value": {
+     "count": 269,
+     "types": {
+      "int": 269
+     },
+     "values": {
+      "1": 190,
+      "2": 23,
+      "5": 16,
+      "3": 15,
+      "10": 11,
+      "4": 7,
+      "15": 2,
+      "20": 2,
+      "8": 1,
+      "7": 1,
+      "12": 1
+     },
+     "example": 1
+    }
+   }
+  },
+  "task:GlobalVariableValue": {
+   "count": 3,
+   "where": {
+    "AvailableForFinish": 3
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "==": 3
+     },
+     "example": "=="
+    },
+    "conditionType": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "GlobalVariableValue": 3
+     },
+     "example": "GlobalVariableValue"
+    },
+    "dynamicLocale": {
+     "count": 3,
+     "types": {
+      "bool": 3
+     },
+     "values": {
+      "false": 3
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "": 3
+     }
+    },
+    "id": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "6896181b5acce44d52cb6171": 1,
+      "68973f9deb8e761f4af7aa46": 1,
+      "689742854d0559304e040e58": 1
+     },
+     "example": "6896181b5acce44d52cb6171"
+    },
+    "index": {
+     "count": 3,
+     "types": {
+      "int": 3
+     },
+     "values": {
+      "0": 3
+     },
+     "example": 0
+    },
+    "parentId": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "": 3
+     }
+    },
+    "target": {
+     "count": 3,
+     "types": {
+      "string": 3
+     },
+     "values": {
+      "687444be7a85341d2e818b62": 1,
+      "688e0c6fa900b8073dac8fa4": 1,
+      "6897422e446fec70285d4811": 1
+     },
+     "example": "687444be7a85341d2e818b62"
+    },
+    "value": {
+     "count": 3,
+     "types": {
+      "int": 3
+     },
+     "values": {
+      "1": 3
+     },
+     "example": 1
+    }
+   }
+  },
+  "task:HandoverItem": {
+   "count": 413,
+   "where": {
+    "AvailableForFinish": 413
+   },
+   "keys": {
+    "conditionType": {
+     "count": 413,
+     "types": {
+      "string": 413
+     },
+     "values": {
+      "HandoverItem": 413
+     },
+     "example": "HandoverItem"
+    },
+    "dogtagLevel": {
+     "count": 413,
+     "types": {
+      "int": 413
+     },
+     "values": {
+      "0": 410,
+      "50": 2,
+      "25": 1
+     },
+     "example": 0
+    },
+    "dynamicLocale": {
+     "count": 413,
+     "types": {
+      "bool": 413
+     },
+     "values": {
+      "false": 413
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 413,
+     "types": {
+      "string": 413
+     },
+     "values": {
+      "": 413
+     }
+    },
+    "id": {
+     "count": 413,
+     "types": {
+      "string": 413
+     },
+     "example": "596737cb86f77463a8115efd"
+    },
+    "index": {
+     "count": 413,
+     "types": {
+      "int": 413
+     },
+     "example": 3
+    },
+    "isEncoded": {
+     "count": 410,
+     "types": {
+      "bool": 410
+     },
+     "values": {
+      "false": 410
+     },
+     "example": false
+    },
+    "maxDurability": {
+     "count": 413,
+     "types": {
+      "int": 413
+     },
+     "values": {
+      "100": 409,
+      "15": 2,
+      "50": 1,
+      "75": 1
+     },
+     "example": 100
+    },
+    "minDurability": {
+     "count": 413,
+     "types": {
+      "int": 413
+     },
+     "values": {
+      "0": 411,
+      "50": 1,
+      "75": 1
+     },
+     "example": 0
+    },
+    "onlyFoundInRaid": {
+     "count": 413,
+     "types": {
+      "bool": 413
+     },
+     "values": {
+      "true": 231,
+      "false": 182
+     },
+     "example": false
+    },
+    "parentId": {
+     "count": 413,
+     "types": {
+      "string": 413
+     },
+     "values": {
+      "": 412,
+      "5968ed3186f77420d2328013": 1
+     },
+     "example": "5968ed3186f77420d2328013"
+    },
+    "target": {
+     "count": 413,
+     "types": {
+      "list": 413
+     },
+     "example": [
+      "54491c4f4bdc2db1078b4568"
+     ]
+    },
+    "value": {
+     "count": 413,
+     "types": {
+      "int": 413
+     },
+     "values": {
+      "1": 245,
+      "2": 37,
+      "5": 29,
+      "3": 23,
+      "4": 14,
+      "10": 13,
+      "15": 11,
+      "30": 9,
+      "20": 6,
+      "50": 5,
+      "7": 4,
+      "1000000": 4,
+      "8": 3,
+      "50000": 3,
+      "12": 2,
+      "8000": 1,
+      "5000": 1,
+      "400000": 1,
+      "25": 1,
+      "4500": 1
+     },
+     "example": 2
+    }
+   }
+  },
+  "task:HideoutArea": {
+   "count": 1,
+   "where": {
+    "AvailableForFinish": 1
+   },
+   "keys": {
+    "areaType": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "21": 1
+     },
+     "example": 21
+    },
+    "compareMethod": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      ">=": 1
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "HideoutArea": 1
+     },
+     "example": "HideoutArea"
+    },
+    "dynamicLocale": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "": 1
+     }
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "6757069b842eb3c4d8220979": 1
+     },
+     "example": "6757069b842eb3c4d8220979"
+    },
+    "index": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "0": 1
+     },
+     "example": 0
+    },
+    "parentId": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "": 1
+     }
+    },
+    "value": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "1": 1
+     },
+     "example": 1
+    }
+   }
+  },
+  "task:LeaveItemAtLocation": {
+   "count": 150,
+   "where": {
+    "AvailableForFinish": 149,
+    "Fail": 1
+   },
+   "keys": {
+    "conditionType": {
+     "count": 150,
+     "types": {
+      "string": 150
+     },
+     "values": {
+      "LeaveItemAtLocation": 150
+     },
+     "example": "LeaveItemAtLocation"
+    },
+    "dogtagLevel": {
+     "count": 150,
+     "types": {
+      "int": 150
+     },
+     "values": {
+      "0": 150
+     },
+     "example": 0
+    },
+    "dynamicLocale": {
+     "count": 150,
+     "types": {
+      "bool": 150
+     },
+     "values": {
+      "false": 150
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 150,
+     "types": {
+      "string": 150
+     },
+     "values": {
+      "": 150
+     }
+    },
+    "id": {
+     "count": 150,
+     "types": {
+      "string": 150
+     },
+     "example": "59674fe586f7744f4e358aa2"
+    },
+    "index": {
+     "count": 150,
+     "types": {
+      "int": 150
+     },
+     "values": {
+      "1": 32,
+      "2": 31,
+      "3": 24,
+      "0": 21,
+      "4": 11,
+      "5": 5,
+      "6": 3,
+      "10": 2,
+      "11": 2,
+      "12": 2,
+      "7": 1,
+      "8": 1,
+      "9": 1,
+      "13": 1,
+      "14": 1,
+      "15": 1,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "19": 1,
+      "20": 1,
+      "21": 1,
+      "22": 1,
+      "23": 1,
+      "24": 1,
+      "25": 1,
+      "26": 1
+     },
+     "example": 1
+    },
+    "isEncoded": {
+     "count": 150,
+     "types": {
+      "bool": 150
+     },
+     "values": {
+      "false": 150
+     },
+     "example": false
+    },
+    "maxDurability": {
+     "count": 150,
+     "types": {
+      "int": 150
+     },
+     "values": {
+      "100": 130,
+      "0": 20
+     },
+     "example": 100
+    },
+    "minDurability": {
+     "count": 150,
+     "types": {
+      "int": 150
+     },
+     "values": {
+      "0": 150
+     },
+     "example": 0
+    },
+    "onlyFoundInRaid": {
+     "count": 150,
+     "types": {
+      "bool": 150
+     },
+     "values": {
+      "false": 150
+     },
+     "example": false
+    },
+    "parentId": {
+     "count": 150,
+     "types": {
+      "string": 150
+     },
+     "values": {
+      "": 148,
+      "673f507029a1128d5c4d7498": 1,
+      "686407a72737deb604314e16": 1
+     },
+     "example": "673f507029a1128d5c4d7498"
+    },
+    "plantTime": {
+     "count": 150,
+     "types": {
+      "int": 150
+     },
+     "values": {
+      "10": 36,
+      "15": 28,
+      "20": 26,
+      "30": 25,
+      "40": 22,
+      "5": 7,
+      "25": 3,
+      "35": 2,
+      "60": 1
+     },
+     "example": 10
+    },
+    "target": {
+     "count": 150,
+     "types": {
+      "list": 150
+     },
+     "example": [
+      "591092ef86f7747bb8703422"
+     ]
+    },
+    "value": {
+     "count": 150,
+     "types": {
+      "int": 150
+     },
+     "values": {
+      "1": 140,
+      "3": 5,
+      "2": 3,
+      "12": 2
+     },
+     "example": 1
+    },
+    "zoneId": {
+     "count": 150,
+     "types": {
+      "string": 150
+     },
+     "example": "case_extraction"
+    }
+   }
+  },
+  "task:Level": {
+   "count": 224,
+   "where": {
+    "AvailableForStart": 224
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 224,
+     "types": {
+      "string": 224
+     },
+     "values": {
+      ">=": 224
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 224,
+     "types": {
+      "string": 224
+     },
+     "values": {
+      "Level": 224
+     },
+     "example": "Level"
+    },
+    "dynamicLocale": {
+     "count": 224,
+     "types": {
+      "bool": 224
+     },
+     "values": {
+      "false": 224
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 224,
+     "types": {
+      "string": 224
+     },
+     "values": {
+      "": 224
+     }
+    },
+    "id": {
+     "count": 224,
+     "types": {
+      "string": 224
+     },
+     "example": "658471a72957dfa0e01552d1"
+    },
+    "index": {
+     "count": 224,
+     "types": {
+      "int": 224
+     },
+     "values": {
+      "0": 168,
+      "1": 52,
+      "2": 3,
+      "3": 1
+     },
+     "example": 0
+    },
+    "parentId": {
+     "count": 224,
+     "types": {
+      "string": 224
+     },
+     "values": {
+      "": 224
+     }
+    },
+    "value": {
+     "count": 224,
+     "types": {
+      "int": 224
+     },
+     "example": 1
+    }
+   }
+  },
+  "task:PlaceBeacon": {
+   "count": 96,
+   "where": {
+    "AvailableForFinish": 96
+   },
+   "keys": {
+    "conditionType": {
+     "count": 96,
+     "types": {
+      "string": 96
+     },
+     "values": {
+      "PlaceBeacon": 96
+     },
+     "example": "PlaceBeacon"
+    },
+    "dynamicLocale": {
+     "count": 96,
+     "types": {
+      "bool": 96
+     },
+     "values": {
+      "false": 96
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 96,
+     "types": {
+      "string": 96
+     },
+     "values": {
+      "": 96
+     }
+    },
+    "id": {
+     "count": 96,
+     "types": {
+      "string": 96
+     },
+     "example": "59b242ea86f7741e6e0e7a86"
+    },
+    "index": {
+     "count": 96,
+     "types": {
+      "int": 96
+     },
+     "values": {
+      "1": 24,
+      "2": 23,
+      "0": 21,
+      "3": 11,
+      "5": 5,
+      "6": 4,
+      "4": 4,
+      "7": 2,
+      "9": 1,
+      "8": 1
+     },
+     "example": 1
+    },
+    "parentId": {
+     "count": 96,
+     "types": {
+      "string": 96
+     },
+     "values": {
+      "": 96
+     }
+    },
+    "plantTime": {
+     "count": 96,
+     "types": {
+      "int": 96
+     },
+     "values": {
+      "30": 52,
+      "15": 17,
+      "10": 14,
+      "40": 13
+     },
+     "example": 30
+    },
+    "target": {
+     "count": 96,
+     "types": {
+      "list": 96
+     },
+     "values": {
+      "5991b51486f77447b112d44f": 89,
+      "63a0b2eabea67a6d93009e52": 4,
+      "5ac78a9b86f7741cca0bbd8d": 3
+     },
+     "example": [
+      "5991b51486f77447b112d44f"
+     ]
+    },
+    "value": {
+     "count": 96,
+     "types": {
+      "int": 96
+     },
+     "values": {
+      "1": 96
+     },
+     "example": 1
+    },
+    "zoneId": {
+     "count": 96,
+     "types": {
+      "string": 96
+     },
+     "example": "gazel"
+    }
+   }
+  },
+  "task:Quest": {
+   "count": 781,
+   "where": {
+    "AvailableForStart": 736,
+    "AvailableForFinish": 7,
+    "Fail": 38
+   },
+   "keys": {
+    "availableAfter": {
+     "count": 781,
+     "types": {
+      "int": 781
+     },
+     "values": {
+      "0": 738,
+      "15": 13,
+      "36000": 10,
+      "75600": 8,
+      "3600": 2,
+      "7200": 2,
+      "64800": 2,
+      "86400": 1,
+      "5": 1,
+      "43200": 1,
+      "5400": 1,
+      "1800": 1,
+      "120": 1
+     },
+     "example": 0
+    },
+    "conditionType": {
+     "count": 781,
+     "types": {
+      "string": 781
+     },
+     "values": {
+      "Quest": 781
+     },
+     "example": "Quest"
+    },
+    "dispersion": {
+     "count": 779,
+     "types": {
+      "int": 779
+     },
+     "values": {
+      "0": 770,
+      "7200": 3,
+      "21600": 2,
+      "28800": 1,
+      "500": 1,
+      "3000": 1,
+      "300": 1
+     },
+     "example": 0
+    },
+    "dynamicLocale": {
+     "count": 781,
+     "types": {
+      "bool": 781
+     },
+     "values": {
+      "false": 781
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 779,
+     "types": {
+      "string": 779
+     },
+     "values": {
+      "": 779
+     }
+    },
+    "id": {
+     "count": 781,
+     "types": {
+      "string": 781
+     },
+     "example": "658471a35740d10d154dac8f"
+    },
+    "index": {
+     "count": 781,
+     "types": {
+      "int": 781
+     },
+     "example": 1
+    },
+    "parentId": {
+     "count": 781,
+     "types": {
+      "string": 781
+     },
+     "values": {
+      "": 780,
+      "67e41d4e9f783e8f4b234a1b": 1
+     },
+     "example": "67e41d4e9f783e8f4b234a1b"
+    },
+    "status": {
+     "count": 781,
+     "types": {
+      "list": 781
+     },
+     "values": {
+      "4": 763,
+      "2": 50,
+      "5": 27
+     },
+     "example": [
+      4,
+      5
+     ]
+    },
+    "target": {
+     "count": 781,
+     "types": {
+      "string": 781
+     },
+     "example": "657315df034d76585f032e01"
+    }
+   }
+  },
+  "task:SellItemToTrader": {
+   "count": 5,
+   "where": {
+    "AvailableForFinish": 5
+   },
+   "keys": {
+    "conditionType": {
+     "count": 5,
+     "types": {
+      "string": 5
+     },
+     "values": {
+      "SellItemToTrader": 5
+     },
+     "example": "SellItemToTrader"
+    },
+    "dogtagLevel": {
+     "count": 5,
+     "types": {
+      "int": 5
+     },
+     "values": {
+      "0": 5
+     },
+     "example": 0
+    },
+    "dynamicLocale": {
+     "count": 5,
+     "types": {
+      "bool": 5
+     },
+     "values": {
+      "false": 5
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 5,
+     "types": {
+      "string": 5
+     },
+     "values": {
+      "": 5
+     }
+    },
+    "id": {
+     "count": 5,
+     "types": {
+      "string": 5
+     },
+     "values": {
+      "666973ee1d80fbbbfeaf46c9": 1,
+      "673f637a1fbc23a60a72b743": 1,
+      "67519696567b9773f0811bae": 1,
+      "675196dff77c0b8436ec1ef5": 1,
+      "675197664e610fc2b88e0bf3": 1
+     },
+     "example": "666973ee1d80fbbbfeaf46c9"
+    },
+    "index": {
+     "count": 5,
+     "types": {
+      "int": 5
+     },
+     "values": {
+      "0": 2,
+      "2": 2,
+      "4": 1
+     },
+     "example": 0
+    },
+    "isEncoded": {
+     "count": 5,
+     "types": {
+      "bool": 5
+     },
+     "values": {
+      "false": 5
+     },
+     "example": false
+    },
+    "maxDurability": {
+     "count": 5,
+     "types": {
+      "int": 5
+     },
+     "values": {
+      "100": 5
+     },
+     "example": 100
+    },
+    "minDurability": {
+     "count": 5,
+     "types": {
+      "int": 5
+     },
+     "values": {
+      "0": 5
+     },
+     "example": 0
+    },
+    "onlyFoundInRaid": {
+     "count": 5,
+     "types": {
+      "bool": 5
+     },
+     "values": {
+      "false": 5
+     },
+     "example": false
+    },
+    "parentId": {
+     "count": 5,
+     "types": {
+      "string": 5
+     },
+     "values": {
+      "": 5
+     }
+    },
+    "target": {
+     "count": 5,
+     "types": {
+      "list": 5
+     }
+    },
+    "traderId": {
+     "count": 5,
+     "types": {
+      "string": 5
+     },
+     "values": {
+      "5ac3b934156ae10c4430e83c": 2,
+      "5935c25fb3acc3127c3d8cd9": 2,
+      "54cb50c76803fa8b248b4571": 1
+     },
+     "example": "5ac3b934156ae10c4430e83c"
+    },
+    "value": {
+     "count": 5,
+     "types": {
+      "int": 5
+     },
+     "values": {
+      "50": 3,
+      "250": 1,
+      "75": 1
+     },
+     "example": 250
+    }
+   }
+  },
+  "task:Skill": {
+   "count": 10,
+   "where": {
+    "AvailableForFinish": 10
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      ">=": 10
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "Skill": 10
+     },
+     "example": "Skill"
+    },
+    "dynamicLocale": {
+     "count": 10,
+     "types": {
+      "bool": 10
+     },
+     "values": {
+      "false": 10
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "": 10
+     }
+    },
+    "id": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "5a28235e86f7741da250b438": 1,
+      "5a6878e886f7745e65687985": 1,
+      "5ac5eb3286f7746e7a509a09": 1,
+      "5ae9c29386f77427153c7fb0": 1,
+      "5c0bdbb586f774166e38eed5": 1,
+      "5c0be2b486f7747bcb347d58": 1,
+      "5c0d0dfd86f7747f482a89a5": 1,
+      "5c112dc486f77465686bff38": 1,
+      "5d2605ef86f77469ef0f7622": 1,
+      "639a169e6cd47c525121a116": 1
+     },
+     "example": "5a28235e86f7741da250b438"
+    },
+    "index": {
+     "count": 10,
+     "types": {
+      "int": 10
+     },
+     "values": {
+      "0": 9,
+      "1": 1
+     },
+     "example": 0
+    },
+    "parentId": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "": 10
+     }
+    },
+    "target": {
+     "count": 10,
+     "types": {
+      "string": 10
+     },
+     "values": {
+      "Sniper": 3,
+      "Health": 2,
+      "Attention": 1,
+      "Charisma": 1,
+      "StressResistance": 1,
+      "Search": 1,
+      "Vitality": 1
+     },
+     "example": "Sniper"
+    },
+    "value": {
+     "count": 10,
+     "types": {
+      "int": 10
+     },
+     "values": {
+      "10": 4,
+      "5": 2,
+      "7": 1,
+      "4": 1,
+      "8": 1,
+      "9": 1
+     },
+     "example": 7
+    }
+   }
+  },
+  "task:TraderLoyalty": {
+   "count": 14,
+   "where": {
+    "AvailableForStart": 4,
+    "AvailableForFinish": 10
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 14,
+     "types": {
+      "string": 14
+     },
+     "values": {
+      ">=": 14
+     },
+     "example": ">="
+    },
+    "conditionType": {
+     "count": 14,
+     "types": {
+      "string": 14
+     },
+     "values": {
+      "TraderLoyalty": 14
+     },
+     "example": "TraderLoyalty"
+    },
+    "dynamicLocale": {
+     "count": 14,
+     "types": {
+      "bool": 14
+     },
+     "values": {
+      "false": 14
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 14,
+     "types": {
+      "string": 14
+     },
+     "values": {
+      "": 14
+     }
+    },
+    "id": {
+     "count": 14,
+     "types": {
+      "string": 14
+     },
+     "values": {
+      "59a9280b86f77477925e27cb": 1,
+      "5dbadfd186f77449467d1482": 1,
+      "5ae44c6886f7744f1a7eb2b8": 1,
+      "5ae9c38e86f7743515398707": 1,
+      "5c12470d86f77465ae27a8c0": 1,
+      "5c1247f386f77452db1d2b03": 1,
+      "5c12484586f7744b83469074": 1,
+      "5c12487386f7742a60324299": 1,
+      "5c12489886f77452db1d2b05": 1,
+      "5c1248ef86f77428266184c2": 1,
+      "65e08db1a97b2cd4e452432d": 1,
+      "5e58dabd86f7747c27218702": 1,
+      "5e58dd2a86f7747c28220304": 1,
+      "600304b78dfec348e767018c": 1
+     },
+     "example": "59a9280b86f77477925e27cb"
+    },
+    "index": {
+     "count": 14,
+     "types": {
+      "int": 14
+     },
+     "values": {
+      "0": 7,
+      "1": 2,
+      "2": 1,
+      "3": 1,
+      "4": 1,
+      "5": 1,
+      "6": 1
+     },
+     "example": 0
+    },
+    "parentId": {
+     "count": 14,
+     "types": {
+      "string": 14
+     },
+     "values": {
+      "": 14
+     }
+    },
+    "target": {
+     "count": 14,
+     "types": {
+      "string": 14
+     },
+     "values": {
+      "5ac3b934156ae10c4430e83c": 4,
+      "54cb50c76803fa8b248b4571": 3,
+      "54cb57776803fa99248b456e": 2,
+      "5c0647fdd443bc2504c2d371": 2,
+      "58330581ace78e27b8b10cee": 1,
+      "5a7c2eca46aef81a7ca2145d": 1,
+      "5935c25fb3acc3127c3d8cd9": 1
+     },
+     "example": "54cb50c76803fa8b248b4571"
+    },
+    "value": {
+     "count": 14,
+     "types": {
+      "int": 14
+     },
+     "values": {
+      "4": 10,
+      "2": 2,
+      "3": 2
+     },
+     "example": 2
+    }
+   }
+  },
+  "task:TraderStanding": {
+   "count": 11,
+   "where": {
+    "AvailableForStart": 8,
+    "Fail": 2,
+    "AvailableForFinish": 1
+   },
+   "keys": {
+    "compareMethod": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "<=": 6,
+      ">=": 4,
+      "<": 1
+     },
+     "example": "<"
+    },
+    "conditionType": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "TraderStanding": 11
+     },
+     "example": "TraderStanding"
+    },
+    "dynamicLocale": {
+     "count": 11,
+     "types": {
+      "bool": 11
+     },
+     "values": {
+      "false": 11
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "": 11
+     }
+    },
+    "id": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "59a9280b86f77477925e27cb": 2,
+      "6723f30cc5924c57ce0ca014": 1,
+      "6724cc2fbfa3a7b538063feb": 1,
+      "66422d1a98c1a9ac7b6902ec": 1,
+      "639c6674eb92d6238e058dea": 1,
+      "63c909122a5ab7dd5d057ff1": 1,
+      "63a6c752d4153566a073285a": 1,
+      "66813c01decf4560581ca0c0": 1,
+      "6672daa3a5f158174abeaab2": 1,
+      "66dace4d03b34844877a50fc": 1
+     },
+     "example": "59a9280b86f77477925e27cb"
+    },
+    "index": {
+     "count": 11,
+     "types": {
+      "int": 11
+     },
+     "values": {
+      "0": 8,
+      "1": 2,
+      "13": 1
+     },
+     "example": 0
+    },
+    "parentId": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "": 11
+     }
+    },
+    "target": {
+     "count": 11,
+     "types": {
+      "string": 11
+     },
+     "values": {
+      "579dc571d53a0658a154fbec": 8,
+      "638f541a29ffd1183d187f57": 3
+     },
+     "example": "579dc571d53a0658a154fbec"
+    },
+    "value": {
+     "count": 11,
+     "types": {
+      "int": 11
+     },
+     "values": {
+      "-1": 4,
+      "0": 3,
+      "1": 2,
+      "5": 1,
+      "4": 1
+     },
+     "example": -1
+    }
+   }
+  },
+  "task:VisitPlace": {
+   "count": 1,
+   "where": {
+    "AvailableForFinish": 1
+   },
+   "keys": {
+    "conditionType": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "VisitPlace": 1
+     },
+     "example": "VisitPlace"
+    },
+    "dynamicLocale": {
+     "count": 1,
+     "types": {
+      "bool": 1
+     },
+     "values": {
+      "false": 1
+     },
+     "example": false
+    },
+    "globalQuestCounterId": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "": 1
+     }
+    },
+    "id": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "67ff74183ce253402679842a": 1
+     },
+     "example": "67ff74183ce253402679842a"
+    },
+    "index": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "2": 1
+     },
+     "example": 2
+    },
+    "parentId": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "67f45f2598742add16d22abf": 1
+     },
+     "example": "67f45f2598742add16d22abf"
+    },
+    "target": {
+     "count": 1,
+     "types": {
+      "string": 1
+     },
+     "values": {
+      "1": 1
+     },
+     "example": "1"
+    },
+    "value": {
+     "count": 1,
+     "types": {
+      "int": 1
+     },
+     "values": {
+      "1": 1
+     },
+     "example": 1
+    }
+   }
+  },
+  "task:WeaponAssembly": {
+   "count": 32,
+   "where": {
+    "AvailableForFinish": 32
+   },
+   "keys": {
+    "baseAccuracy": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "conditionType": {
+     "count": 32,
+     "types": {
+      "string": 32
+     },
+     "values": {
+      "WeaponAssembly": 32
+     },
+     "example": "WeaponAssembly"
+    },
+    "containsItems": {
+     "count": 32,
+     "types": {
+      "list": 32
+     },
+     "example": [
+      "57ffa9f4245977728561e844"
+     ]
+    },
+    "durability": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 60
+     }
+    },
+    "dynamicLocale": {
+     "count": 32,
+     "types": {
+      "bool": 32
+     },
+     "values": {
+      "false": 32
+     },
+     "example": false
+    },
+    "effectiveDistance": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "emptyTacticalSlot": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "ergonomics": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 47
+     }
+    },
+    "globalQuestCounterId": {
+     "count": 32,
+     "types": {
+      "string": 32
+     },
+     "values": {
+      "": 32
+     }
+    },
+    "hasItemFromCategory": {
+     "count": 32,
+     "types": {
+      "list": 32
+     },
+     "values": {
+      "550aa4cd4bdc2dd8348b456c": 10,
+      "55818b164bdc2ddc698b456c": 7,
+      "55818af64bdc2d5b648b4570": 1
+     },
+     "example": [
+      "55818b164bdc2ddc698b456c"
+     ]
+    },
+    "height": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": "<=",
+      "value": 1
+     }
+    },
+    "id": {
+     "count": 32,
+     "types": {
+      "string": 32
+     },
+     "values": {
+      "5accd5e386f77463027e9397": 1,
+      "5accd9b686f774112d7173d1": 1,
+      "5accde3686f7740cea1b7ec2": 1,
+      "5acce08b86f7745f8521fa64": 1,
+      "5acce11786f77411ed6fa6eb": 1,
+      "5accdfdb86f77412265cbfc9": 1,
+      "5ae34b8b86f7741e5b1e5d48": 1,
+      "5ae3550b86f7741cf44fc799": 1,
+      "5ae3570b86f7746efa6b4494": 1,
+      "5ae445f386f7744e87761331": 1,
+      "5ae4479686f7744f6c79b7b3": 1,
+      "5b47796686f774374f4a8bb1": 1,
+      "5b477b3b86f77401da02e6c4": 1,
+      "5b477f1486f7743009493232": 1,
+      "5b47824386f7744d190d8dd1": 1,
+      "5b4783ba86f7744d1c353185": 1,
+      "63987404e5163c24b3029356": 1,
+      "6398776f93ae507d5858c3a8": 1,
+      "63987860c8f8cc12a47b02a6": 1,
+      "639879addecada40426d3449": 1,
+      "63987a4e3693c63d86328f27": 1,
+      "63987b49cd51826f7a069b85": 1,
+      "63987b9c05aa481907106505": 1,
+      "64f83d0eed30ed471f49bcde": 1,
+      "64f83e9d52fc01298e2c857e": 1,
+      "64f841199a4f905106515448": 1,
+      "66632cf3fbd7dedfa6153a9f": 1,
+      "66a74c628410476dd65543c2": 1,
+      "676529e759261ce07bc47b62": 1,
+      "676529af9c90953d090882ea": 1,
+      "67652a2f4f75e1a9543289ed": 1,
+      "68650e9f3fcd447ed9be380c": 1
+     },
+     "example": "5accd5e386f77463027e9397"
+    },
+    "index": {
+     "count": 32,
+     "types": {
+      "int": 32
+     },
+     "values": {
+      "0": 29,
+      "1": 2,
+      "2": 1
+     },
+     "example": 0
+    },
+    "magazineCapacity": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 5
+     }
+    },
+    "muzzleVelocity": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "parentId": {
+     "count": 32,
+     "types": {
+      "string": 32
+     },
+     "values": {
+      "": 32
+     }
+    },
+    "recoil": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": "<=",
+      "value": 850
+     }
+    },
+    "target": {
+     "count": 32,
+     "types": {
+      "list": 32
+     },
+     "values": {
+      "5447a9cd4bdc2dbd208b4567": 3,
+      "54491c4f4bdc2db1078b4568": 1,
+      "57dc2fa62459775949412633": 1,
+      "5926bb2186f7744b1c6c6e60": 1,
+      "588892092459774ac91d4b11": 1,
+      "5a367e5dc4a282000e49738f": 1,
+      "5a7828548dc32e5a9c28b516": 1,
+      "59d6088586f774275f37482f": 1,
+      "5ab8e9fcd8ce870019439434": 1,
+      "5ac66d9b5acfc4001633997a": 1,
+      "57c44b372459772d2b39b8ce": 1,
+      "5ac66d015acfc400180ae6e4": 1,
+      "58948c8e86f77409493f7266": 1,
+      "5a0ec13bfcdbcb00165aa685": 1,
+      "5aafa857e5b5b00018480968": 1,
+      "587e02ff24597743df3deaeb": 1,
+      "56d59856d2720bd8418b456a": 1,
+      "5fc3f2d5900b1d5091531e57": 1,
+      "5bb2475ed4351e00853264e3": 1,
+      "5c46fbd72e2216398b5a8c9c": 1,
+      "5bfea6e90db834001b7347f3": 1,
+      "5e81c3cbac2bb513793cdc75": 1,
+      "606587252535c57a13424cfd": 1,
+      "5df8ce05b11454561e39243b": 1,
+      "64ca3d3954fc657e230529cc": 1,
+      "5580223e4bdc2d1c128b457f": 1,
+      "5df24cf80dee1b22f862e9bc": 1,
+      "59984ab886f7743e98271174": 1,
+      "5a7ae0c351dfba0017554310": 1,
+      "66992b349950f5f4cd06029f": 1
+     },
+     "example": [
+      "54491c4f4bdc2db1078b4568"
+     ]
+    },
+    "value": {
+     "count": 32,
+     "types": {
+      "int": 32
+     },
+     "values": {
+      "1": 32
+     },
+     "example": 1
+    },
+    "weight": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": ">=",
+      "value": 0
+     }
+    },
+    "width": {
+     "count": 32,
+     "types": {
+      "object": 32
+     },
+     "example": {
+      "compareMethod": "<=",
+      "value": 4
+     }
+    }
+   }
+  },
+  "visibility": {
+   "count": 242,
+   "where": {},
+   "keys": {
+    "conditionType": {
+     "count": 242,
+     "types": {
+      "string": 242
+     },
+     "values": {
+      "CompleteCondition": 242
+     },
+     "example": "CompleteCondition"
+    },
+    "id": {
+     "count": 242,
+     "types": {
+      "string": 242
+     },
+     "example": "5a5778c986f7740ad83cd652"
+    },
+    "target": {
+     "count": 242,
+     "types": {
+      "string": 242
+     },
+     "example": "5968ec9986f7741ddd6c1012"
+    }
+   }
+  }
+ }
+}

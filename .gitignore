@@ -3,3 +3,7 @@ local_dev
 src/data/datafiles.json
 src/trader_builder.log*
 .pytest_cache/
+src_new/data/my_items.json
+src_new/spt_builder.log*
+src_new/dist/
+src_new/build/

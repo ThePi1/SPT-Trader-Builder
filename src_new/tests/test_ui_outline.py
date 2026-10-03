@@ -1,0 +1,127 @@
+import os
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+import pytest
+
+pytest.importorskip("PySide6")
+from PySide6.QtWidgets import QApplication
+
+from core.documents import Document
+from schema import validate
+from schema.issues import errors
+from ui.quest_outline import ROLE, QuestOutline
+
+
+def fix_trader(doc):
+	for quest in doc.data.values():
+		quest["traderId"] = "54cb50c76803fa8b248b4571"
+
+
+@pytest.fixture(scope="module")
+def app():
+	return QApplication.instance() or QApplication([])
+
+
+def make(data=None):
+	outline = QuestOutline()
+	doc = Document(data if data is not None else {})
+	outline.set_document(doc)
+	return outline, doc
+
+
+def test_new_quest_task_reward_are_valid(app):
+	outline, doc = make()
+	outline.add_quest()
+	assert len(doc.data) == 1
+	for kind in ("HandoverItem", "Level", "CounterCreator"):
+		outline.add_item("task", kind)
+	outline.add_item("reward", "Experience")
+	counter = outline.tree.currentItem()
+	outline.tree.setCurrentItem(next(i for i in outline._walk() if i.data(0, ROLE).kind == "task" and i.data(0, ROLE).path[-1] == 1))
+	outline.add_item("subtask", "Kills")
+	fix_trader(doc)
+	assert not errors(validate.validate_quests(doc.data))
+
+
+def test_counter_subtasks_and_undo(app):
+	outline, doc = make()
+	outline.add_quest()
+	outline.add_item("task", "CounterCreator")
+	outline.add_item("subtask", "Kills")
+	quest = next(iter(doc.data.values()))
+	counter = quest["conditions"]["AvailableForFinish"][0]
+	assert len(counter["counter"]["conditions"]) == 1
+	doc.undo()
+	assert counter["counter"]["conditions"] == [] or quest["conditions"]["AvailableForFinish"][0]["counter"]["conditions"] == []
+
+
+def test_copy_delete_move_retime(app):
+	outline, doc = make()
+	outline.add_quest()
+	outline.add_item("reward", "Experience")
+	outline.copy_selected()
+	quest = next(iter(doc.data.values()))
+	rewards = quest["rewards"]["Success"]
+	assert len(rewards) == 2 and rewards[0]["id"] != rewards[1]["id"]
+	outline.move_selected(-1)
+	outline.retime(outline._current(), "Started")
+	assert len(quest["rewards"]["Started"]) == 1
+	outline.delete_selected()
+	assert not quest["rewards"]["Started"]
+
+
+def test_copy_quest_gets_new_ids(app):
+	outline, doc = make()
+	outline.add_quest()
+	outline.add_item("task", "Level")
+	outline._select_key(("quest", (next(iter(doc.data)),)))
+	outline.copy_selected()
+	assert len(doc.data) == 2
+	fix_trader(doc)
+	assert not errors(validate.validate_quests(doc.data))
+
+
+def test_opens_every_vanilla_quest(app, vanilla_quests):
+	import itertools
+
+	outline, doc = make(dict(itertools.islice(vanilla_quests.items(), 40)))
+	assert outline.tree.topLevelItemCount() == 40
+	before = repr(doc.data)
+	for item in outline._walk():
+		outline.tree.setCurrentItem(item)
+	assert repr(doc.data) == before
+
+
+def test_problems_are_listed_and_jump(app):
+	outline, doc = make()
+	outline.add_quest()
+	outline.add_item("task", "CounterCreator")  # a Counter with no steps is a problem
+	outline.check()
+	assert outline.problems.list.count() >= 1
+	items = [outline.problems.list.item(i) for i in range(outline.problems.list.count())]
+	item = next(i for i in items if "no steps" in i.text())
+	outline.problems.activated.emit(item.data(256))
+	assert outline._current().kind in ("task", "quest")
+
+
+def test_item_reward_parts_editor(app):
+	from core import parts as P
+
+	outline, doc = make()
+	outline.picker = lambda ref, multi, parent: ["a" * 24]
+	outline.add_quest()
+	outline.add_item("reward", "Item")
+	from ui.parts_editor import PartsEditor
+
+	editor = outline.pane.findChild(PartsEditor)
+	assert editor is not None
+	editor.add_item()
+	reward = next(iter(doc.data.values()))["rewards"]["Success"][0]
+	assert len(reward["items"]) == 1 and reward["target"] == reward["items"][0]["_id"]
+	outline.picker = lambda ref, multi, parent: ["b" * 24]
+	editor.ctx.picker = outline.picker
+	editor._ask_slot = lambda parent, tpl: "mod_x"  # no template data, so it would ask
+	editor.add_item()
+	assert [p.get("slotId") for p in reward["items"]] == [None, "mod_x"]
+	assert P.roots(reward["items"])[0]["_id"] == reward["target"]
