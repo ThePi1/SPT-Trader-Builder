@@ -27,6 +27,7 @@ class CompositeTab(QWidget, Ui_CompositeForm):
 		self.library, self.gamedata, self.picker = library, gamedata, picker
 		self.editor = None
 		self.mine.currentItemChanged.connect(self._select)
+		self.vanilla.currentItemChanged.connect(self._select_vanilla)
 		for button, slot in (
 			(self.newButton, self.new), (self.renameButton, self.rename), (self.deleteButton, self.delete),
 			(self.copyButton, self.copy_vanilla),
@@ -65,7 +66,34 @@ class CompositeTab(QWidget, Ui_CompositeForm):
 	def _clear_right(self):
 		_clear(self.right_layout)
 
+	def _deselect(self, view):
+		"""Clear the selection of one of the two lists without running its handler."""
+		view.blockSignals(True)
+		view.setCurrentRow(-1)
+		view.clearSelection()
+		view.blockSignals(False)
+
+	def _select_vanilla(self, item, _previous=None):
+		"""A base game item: show its parts like one of mine, but read only (copy it to change it)."""
+		if item is None:
+			return
+		self._deselect(self.mine)
+		self._clear_right()
+		preset = self.gamedata.item_presets[item.data(ROLE)]
+		self.problem = QLabel()
+		self.editor = PartsEditor(library_module.preset_parts(preset), self._ctx())
+		self.editor.set_read_only(True)
+		note = QLabel("This is one of the base game's items, so it can't be changed here. Use Make my own copy to edit a copy.")
+		note.setStyleSheet("color: #808080;")
+		note.setWordWrap(True)
+		self.right_layout.addWidget(QLabel(f"<b>{preset.get('_name', '')}</b>  (base game item, read only)"))
+		self.right_layout.addWidget(self.editor)
+		self.right_layout.addWidget(note)
+		self.right_layout.addStretch(1)
+
 	def _select(self, item, _previous):
+		if item is not None:
+			self._deselect(self.vanilla)
 		self._clear_right()
 		self.editor = None
 		if item is None:

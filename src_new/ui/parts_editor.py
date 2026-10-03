@@ -25,6 +25,7 @@ class PartsEditor(QWidget):
 		super().__init__(parent)
 		self.parts, self.ctx = parts, ctx
 		self._loading = False
+		self.read_only = False
 		layout = QVBoxLayout(self)
 		layout.setContentsMargins(0, 0, 0, 0)
 		bar = QHBoxLayout()
@@ -34,7 +35,7 @@ class PartsEditor(QWidget):
 		self.add_button.clicked.connect(self.add_item)
 		self.remove_button = QPushButton("Remove")
 		self.remove_button.clicked.connect(self.remove_selected)
-		more = QToolButton()
+		more = self.more_button = QToolButton()
 		more.setText("More")
 		more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 		menu = QMenu(more)
@@ -75,6 +76,14 @@ class PartsEditor(QWidget):
 		form.addRow(self.hint)
 		layout.addWidget(self.detail)
 		self.rebuild()
+
+	def set_read_only(self, read_only=True):
+		"""Show the parts without letting them be changed: the buttons and the fields are disabled, but the tree
+		can still be browsed to see each part's details."""
+		self.read_only = read_only
+		for widget in (self.add_button, self.more_button, self.slot, self.stack, self.found):
+			widget.setEnabled(not read_only)
+		self.remove_button.setEnabled(not read_only and self.tree.currentItem() is not None)
 
 	# --- helpers ----------------------------------------------------------------------------
 	@property
@@ -134,7 +143,7 @@ class PartsEditor(QWidget):
 	def _selected(self, item, _previous):
 		part = P.find(self.parts, item.data(0, ROLE)) if item is not None else None
 		self.detail.setVisible(part is not None)
-		self.remove_button.setEnabled(part is not None)
+		self.remove_button.setEnabled(part is not None and not self.read_only)
 		if part is None:
 			return
 		self._loading = True
