@@ -4,8 +4,10 @@ Your saved items are listed first and can be edited. The base game's own composi
 separate read-only list; copy one to make it yours.
 """
 
+import copy
+
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QInputDialog, QLabel, QListWidgetItem, QMessageBox, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QInputDialog, QLabel, QListWidgetItem, QMessageBox, QPushButton, QWidget
 
 from core import library as library_module
 from schema import assort as assort_schema
@@ -13,7 +15,7 @@ from schema.common import Names
 from ui.compiled.ui_composite_tab import Ui_CompositeForm
 from ui.forms import Context
 from ui.parts_editor import PartsEditor
-from ui.quest_outline import _clear
+from ui.quest_outline import JsonDialog, _clear
 
 ROLE = Qt.ItemDataRole.UserRole
 
@@ -89,6 +91,7 @@ class CompositeTab(QWidget, Ui_CompositeForm):
 		self.right_layout.addWidget(QLabel(f"<b>{preset.get('_name', '')}</b>  (base game item, read only)"))
 		self.right_layout.addWidget(self.editor)
 		self.right_layout.addWidget(note)
+		self.right_layout.addLayout(self._json_row("View as JSON...", lambda preset=preset: self.view_json(preset)))
 		self.right_layout.addStretch(1)
 
 	def _select(self, item, _previous):
@@ -110,8 +113,33 @@ class CompositeTab(QWidget, Ui_CompositeForm):
 		self.right_layout.addWidget(QLabel(f"<b>{entry.get('name', '')}</b>"))
 		self.right_layout.addWidget(self.editor)
 		self.right_layout.addWidget(self.problem)
+		self.right_layout.addLayout(self._json_row("Edit as JSON...", lambda i=item.data(ROLE): self.edit_json(i)))
 		self.right_layout.addStretch(1)
 		self._check(entry)
+
+	def _json_row(self, text, slot):
+		"""A row with one button on the left, like the quests' Edit as JSON."""
+		self.json_button = QPushButton(text)
+		self.json_button.clicked.connect(lambda _checked=False: slot())
+		row = QHBoxLayout()
+		row.addWidget(self.json_button)
+		row.addStretch(1)
+		return row
+
+	def edit_json(self, entry_id):
+		"""Edit one of my items as JSON: its name and its parts, as they are saved."""
+		dialog = JsonDialog(copy.deepcopy(self.library.entries[entry_id]), self)
+		if not dialog.exec() or dialog.result_value is None:
+			return False
+		if not self.library.replace(entry_id, dialog.result_value):
+			QMessageBox.warning(self, "Edit as JSON", "An item needs a list of parts under \"items\".")
+			return False
+		self.refresh(entry_id)
+		return True
+
+	def view_json(self, preset):
+		"""Look at a base game item as the game has it (it can't be changed)."""
+		JsonDialog(copy.deepcopy(preset), self, read_only=True).exec()
 
 	def _check(self, entry):
 		issues = assort_schema.validate_composite(entry)

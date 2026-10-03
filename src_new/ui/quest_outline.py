@@ -634,21 +634,25 @@ def _replace(node, value):
 
 
 class JsonDialog(QDialog):
-	"""Edit one item as JSON text. OK is refused while the text isn't valid JSON of the same shape."""
+	"""Edit one item as JSON text. OK is refused while the text isn't valid JSON of the same shape.
+	With read_only the text can only be looked at (and copied), and the window has just a Close button."""
 
-	def __init__(self, data, parent=None):
+	def __init__(self, data, parent=None, read_only=False):
 		super().__init__(parent)
-		self.setWindowTitle("Edit as JSON")
+		self.setWindowTitle("View as JSON" if read_only else "Edit as JSON")
 		self.resize(560, 480)
 		self.result_value, self._is_list = None, isinstance(data, list)
 		layout = QVBoxLayout(self)
 		self.text = QPlainTextEdit(json.dumps(data, indent=2, ensure_ascii=False))
 		self.text.setStyleSheet("font-family: Consolas, monospace;")
+		self.text.setReadOnly(read_only)
 		layout.addWidget(self.text)
 		self.message = QLabel()
 		self.message.setStyleSheet("color: #c0392b;")
 		layout.addWidget(self.message)
-		buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+		buttons = QDialogButtonBox(
+			QDialogButtonBox.StandardButton.Close if read_only else QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+		)
 		buttons.accepted.connect(self._ok)
 		buttons.rejected.connect(self.reject)
 		layout.addWidget(buttons)

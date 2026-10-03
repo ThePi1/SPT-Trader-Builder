@@ -42,7 +42,7 @@ def test_a_base_game_item_opens_read_only_and_a_saved_item_stays_editable(tmp_pa
 	assert not viewer.slot.isEnabled() and not viewer.stack.isEnabled() and not viewer.found.isEnabled()
 	assert viewer.tree.isEnabled()
 	assert any("read only" in label.text() for label in tab.right.findChildren(QLabel))
-	assert [b for b in tab.right.findChildren(QPushButton) if b.isEnabled()] == []
+	assert [b.text() for b in tab.right.findChildren(QPushButton) if b.isEnabled()] == ["View as JSON..."]  # (looking is allowed)
 	# the details of each part can still be looked at
 	names = set()
 	for item in viewer._walk():
@@ -86,3 +86,79 @@ def test_clicking_a_base_game_item_with_the_mouse_keeps_it_open(tmp_path):
 	QTest.mouseClick(tab.mine.viewport(), Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, tab.mine.visualItemRect(mine).center())
 	QTest.qWait(100)
 	assert tab.mine.currentRow() == 0 and tab.vanilla.currentRow() == -1 and not tab.editor.read_only
+
+
+def _tab(tmp_path):
+	from core.gamedata import GameData
+	from core.paths import BUNDLED_DATABASE_DIR
+
+	QApplication.instance() or QApplication([])
+	lib = Library(tmp_path / "l.json")
+	mine = lib.add("Gun", [{"_id": "1" * 24, "_tpl": "a" * 24}])
+	return lib, mine, CompositeTab(lib, GameData(None, "en", BUNDLED_DATABASE_DIR), lambda ref, multi, parent: [])
+
+
+def test_my_item_can_be_edited_as_json(tmp_path, monkeypatch):
+	import json
+
+	from ui.quest_outline import JsonDialog
+
+	lib, mine, tab = _tab(tmp_path)
+	assert tab.json_button.text() == "Edit as JSON..."
+	original = json.loads(json.dumps(lib.entries[mine]))  # (adding gave the part a new id)
+	seen = {}
+
+	def edit(self):
+		seen["data"] = json.loads(self.text.toPlainText())
+		seen["title"], seen["read_only"] = self.windowTitle(), self.text.isReadOnly()
+		self.text.setPlainText(json.dumps({"name": "Rifle", "items": [{"_id": "2" * 24, "_tpl": "b" * 24}, {"_id": "3" * 24, "_tpl": "c" * 24, "parentId": "2" * 24, "slotId": "mod_stock"}]}))
+		self._ok()
+		return True
+
+	monkeypatch.setattr(JsonDialog, "exec", edit)
+	tab.json_button.click()
+	assert seen["data"] == original and seen["data"]["items"][0]["_tpl"] == "a" * 24 and seen["title"] == "Edit as JSON" and not seen["read_only"]
+	assert [e["name"] for e in lib.entries.values()] == ["Rifle"] and len(lib.entries[mine]["items"]) == 2
+	assert Library(tmp_path / "l.json").entries[mine]["items"][1]["slotId"] == "mod_stock"  # (saved)
+	assert tab.mine.item(0).text() == "Rifle" and tab.editor.tree.topLevelItemCount() == 1 and tab.current_id() == mine
+
+
+def test_json_without_a_list_of_items_is_refused_and_cancel_changes_nothing(tmp_path, monkeypatch):
+	from ui.quest_outline import JsonDialog
+
+	lib, mine, tab = _tab(tmp_path)
+	before = {k: dict(v) for k, v in lib.entries.items()}
+	warned = []
+	monkeypatch.setattr("ui.composite_tab.QMessageBox.warning", lambda *a: warned.append(a[2]))
+	monkeypatch.setattr(JsonDialog, "exec", lambda self: self.text.setPlainText('{"name": "X", "items": "no"}') or self._ok() or True)
+	tab.json_button.click()
+	assert warned and lib.entries == before
+	monkeypatch.setattr(JsonDialog, "exec", lambda self: False)
+	tab.json_button.click()
+	assert lib.entries == before
+
+
+def test_a_base_game_item_can_be_viewed_as_json_but_not_changed(tmp_path, monkeypatch):
+	import json
+
+	from PySide6.QtWidgets import QDialogButtonBox
+
+	from ui.quest_outline import JsonDialog
+
+	lib, mine, tab = _tab(tmp_path)
+	tab.vanilla.setCurrentRow(2)
+	assert tab.json_button.text() == "View as JSON..."
+	preset = tab.gamedata.item_presets[tab.vanilla.item(2).data(256)]
+	seen = {}
+
+	def view(self):
+		seen["data"] = json.loads(self.text.toPlainText())
+		seen["title"], seen["read_only"] = self.windowTitle(), self.text.isReadOnly()
+		seen["buttons"] = [b.text().replace("&", "") for b in self.findChild(QDialogButtonBox).buttons()]
+		return 0
+
+	monkeypatch.setattr(JsonDialog, "exec", view)
+	tab.json_button.click()
+	assert seen["data"] == preset and seen["title"] == "View as JSON" and seen["read_only"]
+	assert seen["buttons"] == ["Close"]
+	assert len(lib.entries) == 1 and lib.entries[mine]["name"] == "Gun"

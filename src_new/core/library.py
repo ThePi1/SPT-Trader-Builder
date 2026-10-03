@@ -43,6 +43,14 @@ class Library:
 			entry["items"] = parts
 		self.save()
 
+	def replace(self, entry_id, entry):
+		"""Use an edited entry (a dict with a list of items); a missing name keeps the old one. Returns False if it isn't one."""
+		if entry_id not in self.entries or not isinstance(entry, dict) or not isinstance(entry.get("items"), list):
+			return False
+		self.entries[entry_id] = {**entry, "name": entry.get("name") if isinstance(entry.get("name"), str) else self.entries[entry_id].get("name", "")}
+		self.save()
+		return True
+
 	def remove(self, entry_id):
 		self.entries.pop(entry_id, None)
 		self.save()
