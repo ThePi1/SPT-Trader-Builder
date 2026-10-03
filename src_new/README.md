@@ -16,6 +16,13 @@ Quests (outline tree and forms, text boxes, problems list), Text (the whole loca
 Composite items (your saved items, plus the base game's), Find IDs, Schema Explorer. Each file (quests, text, assort,
 quest locks) is opened and saved on its own from the File menu; any of them can be started from nothing.
 
+## Version and update check
+
+`data/version.txt` is the program's version. Help > Check for updates compares it with the file at `version_url`
+(Settings file, `[updates]`), exactly as the old program does, and says "out of date" when they differ. Keep the two
+equal for a released build, and change `version_url`'s path when the rebuild takes the old program's place in the repo
+(it points at `src/data/version.txt` on the main branch now).
+
 ## Game data and building
 
     python tools/bundle_database.py "<your SPT_Data/database folder>" --languages en
