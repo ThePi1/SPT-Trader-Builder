@@ -59,7 +59,8 @@ The compiled files are committed, so the program runs without compiling. A test 
 (`python tools/compile_ui.py --check` says which). Only the fixed parts of a window are in the `.ui` files: the quest,
 task and reward forms are generated from `schema/`, and the Settings pages, lists and the item editors are filled in
 by code.
-The tabs along the top are the empty `page_*` pages in `main_window.ui`: rename, reorder or add a tooltip or icon to
-a page there, and the program puts that tab's real widget in its place (a page needs a matching entry in
-`MainWindow._fill_tabs`, or the program says so on start).
+The tabs along the top are the empty `page_*` pages in `main_window.ui` (the Schema Explorer's two in `explorer_tab.ui`):
+rename, reorder or add a tooltip or icon to a page there, and the program puts that tab's real widget in its place.
+A page needs a matching entry in the `fill_tabs(...)` call (`ui/main_window.py`, `ui/explorer_tab.py`), or the program
+says so on start.
 Widgets keep the names code uses (`search`, `table`, `note`, ...), so rename them in Designer only together with the code.
