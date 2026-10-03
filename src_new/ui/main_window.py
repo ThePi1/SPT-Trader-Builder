@@ -11,10 +11,12 @@ from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox, QTabWidget
 
 from core import lookup
+from core.locale_copy import copy_to_other_languages
 from core.documents import Document
 from ui import dialogs, updates
 from core.library import Library
 from schema import assort as assort_schema
+from schema import locale as locale_schema
 from ui.assort_tab import AssortTab
 from ui.composite_tab import CompositeTab
 from ui.explorer_tab import ExplorerTab
@@ -203,7 +205,27 @@ class MainWindow(QMainWindow):
 		except OSError as e:
 			QMessageBox.warning(self, "Save", f"The file could not be saved.\n\n{e}")
 			return False
+		if doc is self.locale and self.settings.copy_locale_to_all_languages:
+			self.copy_text_to_other_languages()
 		return True
+
+	def copy_text_to_other_languages(self):
+		"""Add the saved text (that of the open quests, or all of it when no quests are open) to the other
+		languages' files next to it. Entries those files already have are kept."""
+		folder = Path(self.locale.path).parent
+		entries = dict(self.locale.data)
+		if self.quests.data:
+			mine = locale_schema.key_owners(self.quests.data)
+			entries = {key: text for key, text in entries.items() if key in mine}
+		languages = self.gamedata.languages if self.gamedata is not None else {"en": "English"}
+		changed, failed = copy_to_other_languages(entries, folder, Path(self.locale.path).name, languages)
+		if changed:
+			self.statusBar().showMessage(f"The text was also added to {len(changed)} other language file(s).", 8000)
+		if failed:
+			QMessageBox.warning(
+				self, "Copy text",
+				"The text could not be added to some language files:\n\n" + "\n".join(f"{name}: {why}" for name, why in failed.items()),
+			)
 
 	def new_quests(self):
 		self._new(self.quests, "quest", self._set_quests)
@@ -275,6 +297,7 @@ class MainWindow(QMainWindow):
 			if before != {k: getattr(self.settings, k) for k in before}:
 				self.update_status = updates.pending_status(self.settings)
 				self.start_update_check()
+			self.quest_outline.apply_settings()
 
 	def show_about(self):
 		dialogs.AboutDialog(self.update_status.local_version, self.update_status.project_url, self).exec()

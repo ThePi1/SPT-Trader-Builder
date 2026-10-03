@@ -68,7 +68,7 @@ _LABELS = {
 }
 _TIPS = {
 	"debug_logging": "Writes spt_builder.log next to the program, for troubleshooting.",
-	"copy_locale_to_all_languages": "When saving text, also add it to the other language files you have open.",
+	"copy_locale_to_all_languages": "When you save the text file, also add the text of the open quests to the other languages' files in the same folder. Entries those files already have are kept.",
 	"database_folder": "Your SPT_Data/database folder. Empty uses the data that comes with the program. It is only read, never changed.",
 	"language": "Language used for item and trader names (en, ru, de, ...).",
 	"quest_icon": "The icon new quests start with.",

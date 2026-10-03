@@ -32,16 +32,7 @@ class LocaleModel(QAbstractTableModel):
 
 	def _owners(self):
 		"""{key: name of the quest it belongs to} for every key the open quests use or could use."""
-		owners = {}
-		for quest in self.quests.data.values():
-			if not isinstance(quest, dict):
-				continue
-			name = quest.get("QuestName", "")
-			for key in L.QUEST_TEXT_KEYS:
-				owners[L.quest_key(quest.get("_id", ""), key)] = name
-			for task_id, _timing, _task in L.quest_tasks(quest):
-				owners[task_id] = name
-		return owners
+		return L.key_owners(self.quests.data)
 
 	def refresh(self, mode="all", text=""):
 		self.beginResetModel()

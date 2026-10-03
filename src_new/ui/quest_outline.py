@@ -103,7 +103,17 @@ class QuestOutline(QWidget):
 		scroll = QScrollArea()
 		scroll.setWidgetResizable(True)
 		scroll.setWidget(self.pane)
-		splitter.addWidget(scroll)
+		right = QSplitter(Qt.Orientation.Vertical)
+		right.addWidget(scroll)
+		self.json_view = QPlainTextEdit()  # what is selected, as it will be saved
+		self.json_view.setReadOnly(True)
+		self.json_view.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
+		self.json_view.setVisible(bool(settings and settings.show_json_preview))
+		right.addWidget(self.json_view)
+		right.setStretchFactor(0, 3)
+		right.setStretchFactor(1, 1)
+		right.setSizes([560, 200])
+		splitter.addWidget(right)
 		splitter.setSizes([360, 620])
 		outer = QHBoxLayout(self)
 		outer.setContentsMargins(0, 0, 0, 0)
@@ -129,7 +139,30 @@ class QuestOutline(QWidget):
 			self._refresh_labels()
 		else:
 			self.rebuild()
+		self._update_json()
 		self.check_soon()
+
+	def apply_settings(self):
+		"""Settings changed: show or hide the JSON, and rebuild the open form (it may show more or fewer fields)."""
+		self.json_view.setVisible(bool(self.settings and self.settings.show_json_preview))
+		item = self.tree.currentItem()
+		if item is not None:
+			self._selected(item, None)
+		self._update_json()
+
+	def _update_json(self):
+		"""The selected node as JSON (when the preview is on)."""
+		if not self.json_view.isVisible() or self.doc is None:
+			return
+		address = self._current()
+		try:
+			text = json.dumps(_get(self.doc.data, address.path), indent=2, ensure_ascii=False) if address else ""
+		except (KeyError, IndexError, TypeError):
+			text = ""
+		if text != self.json_view.toPlainText():
+			bar = self.json_view.verticalScrollBar().value()
+			self.json_view.setPlainText(text)
+			self.json_view.verticalScrollBar().setValue(bar)
 
 	def check_soon(self):
 		self._check_timer.start()
@@ -298,6 +331,7 @@ class QuestOutline(QWidget):
 		self.pane_layout.addStretch(1)
 
 	def _selected(self, item, _previous):
+		self._update_json()
 		self._clear_pane()
 		if item is None:
 			return self._show_hint("Add a quest to begin, or open a quest file.")

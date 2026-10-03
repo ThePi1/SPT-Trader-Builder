@@ -102,6 +102,20 @@ def missing_keys(quests, locale, optional=False):
 	return missing
 
 
+def key_owners(quests):
+	"""{key: name of the quest it belongs to} for every key the quests use or could use."""
+	owners = {}
+	for quest in quests.values():
+		if not isinstance(quest, dict):
+			continue
+		name = quest.get("QuestName", "")
+		for key in QUEST_TEXT_KEYS:
+			owners[quest_key(quest.get("_id", ""), key)] = name
+		for task_id, _timing, _task in quest_tasks(quest):
+			owners[task_id] = name
+	return owners
+
+
 def unused_keys(quests, locale):
 	"""Quest and task keys in the locale that none of the quests uses."""
 	used = set()

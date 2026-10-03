@@ -36,7 +36,6 @@ class Setting:
 
 SETTINGS = (
 	Setting("general", "debug_logging", "bool", False),
-	Setting("general", "merge_locales_on_export", "bool", True),
 	Setting("general", "copy_locale_to_all_languages", "bool", False),
 	Setting("data", "database_folder", "path", ""),
 	Setting("data", "language", "text", "en"),
