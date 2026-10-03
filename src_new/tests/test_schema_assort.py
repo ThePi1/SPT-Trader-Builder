@@ -54,3 +54,9 @@ def test_composite():
 	part = {"_id": "a" * 24, "_tpl": "b" * 24}
 	assert not assort.validate_composite(assort.new_composite("Gun", [part]))
 	assert assort.validate_composite(assort.new_composite("Empty", []))[0].level == ERROR
+
+
+def test_every_vanilla_quest_lock_file_is_valid(vanilla_questassorts, vanilla_quests):
+	assert len(vanilla_questassorts) >= 8
+	for trader_id, locks in vanilla_questassorts.items():
+		assert not errors(assort.validate_questassort(locks, None, set(vanilla_quests))), trader_id

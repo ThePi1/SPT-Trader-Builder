@@ -40,11 +40,13 @@ def bundle(source, target, languages):
 		(target / GLOBALS).parent.mkdir(parents=True, exist_ok=True)
 		write_json(target / GLOBALS, {"ItemPresets": read_json(globals_file).get("ItemPresets", {})})
 		copied.append(GLOBALS)
-	for base in sorted((source / "traders").glob("*/base.json")):
-		out = target / "traders" / base.parent.name / "base.json"
-		out.parent.mkdir(parents=True, exist_ok=True)
-		shutil.copyfile(base, out)
-		copied.append(str(out.relative_to(target)))
+	# each trader's base.json (their name and levels) and questassort.json (which offers a quest unlocks; small)
+	for name in ("base.json", "questassort.json"):
+		for found in sorted((source / "traders").glob(f"*/{name}")):
+			out = target / "traders" / found.parent.name / name
+			out.parent.mkdir(parents=True, exist_ok=True)
+			shutil.copyfile(found, out)
+			copied.append(str(out.relative_to(target)))
 	return copied
 
 

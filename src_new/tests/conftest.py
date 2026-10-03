@@ -1,43 +1,46 @@
+"""Shared test data: the base game's own files, which are known to be valid.
+
+The quests, the English text and the quest locks come from the game data bundled with the app
+(data/database, copied from SPT 4.0.13 by tools/bundle_database.py). The one trader assort
+(Mechanic's, 589 offers) is a fixture, because the bundle leaves the big assort files out.
+"""
+
 import json
-import os
 from pathlib import Path
 
 import pytest
 
-# Where the base game's data is, for the tests that check against it. Set SPT_SAMPLES to a folder
-# holding quests.json and en.json (and optionally assort.json / questassort.json); tests that
-# need them are skipped when they can't be found.
-_CANDIDATES = [
-	os.environ.get("SPT_SAMPLES"),
-	str(Path(__file__).resolve().parents[2] / "local_dev" / "samples"),
-	"/mnt/user-data/uploads/SPT-Trader-Builder/local_dev/samples",
-]
+DATABASE = Path(__file__).resolve().parents[1] / "data" / "database"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+MECHANIC = "5a7c2eca46aef81a7ca2145d"
 
 
-def _samples_dir():
-	for candidate in _CANDIDATES:
-		if candidate and (Path(candidate) / "quests.json").is_file():
-			return Path(candidate)
-	return None
-
-
-def _load(name):
-	folder = _samples_dir()
-	if folder is None or not (folder / name).is_file():
-		pytest.skip(f"sample {name} not found (set SPT_SAMPLES)")
-	return json.loads((folder / name).read_bytes().decode("utf-8-sig"))
+def _load(path):
+	return json.loads(Path(path).read_bytes().decode("utf-8-sig"))
 
 
 @pytest.fixture(scope="session")
 def vanilla_quests():
-	return _load("quests.json")
+	return _load(DATABASE / "templates" / "quests.json")
 
 
 @pytest.fixture(scope="session")
 def vanilla_locale():
-	return _load("en.json")
+	return _load(DATABASE / "locales" / "global" / "en.json")
 
 
 @pytest.fixture(scope="session")
 def vanilla_assort():
-	return _load("assort.json")
+	return _load(FIXTURES / "assort_mechanic.json")
+
+
+@pytest.fixture(scope="session")
+def vanilla_questassort():
+	"""Mechanic's quest locks: {started, success, fail: {offer id: quest id}}."""
+	return _load(DATABASE / "traders" / MECHANIC / "questassort.json")
+
+
+@pytest.fixture(scope="session")
+def vanilla_questassorts():
+	"""Every trader's quest locks that the bundle has: {trader id: {started, success, fail}}."""
+	return {path.parent.name: _load(path) for path in sorted((DATABASE / "traders").glob("*/questassort.json"))}

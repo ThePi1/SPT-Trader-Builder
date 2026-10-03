@@ -13,8 +13,12 @@ def test_bundle_copies_and_trims(tmp_path):
 	(src / "globals.json").write_text(json.dumps({"ItemPresets": {"a": 1}, "huge": list(range(100))}))
 	(src / "traders" / "t1").mkdir(parents=True)
 	(src / "traders" / "t1" / "base.json").write_text("{}")
+	(src / "traders" / "t1" / "questassort.json").write_text("{}")
+	(src / "traders" / "t1" / "assort.json").write_text("{}")
 	(src / "locations").mkdir()
 	copied = bundle_database.bundle(src, dst, ["en"])
 	assert json.loads((dst / "globals.json").read_text()) == {"ItemPresets": {"a": 1}}
 	assert (dst / "traders" / "t1" / "base.json").is_file() and not (dst / "locations").exists()
+	assert (dst / "traders" / "t1" / "questassort.json").is_file()
+	assert not (dst / "traders" / "t1" / "assort.json").exists()  # (the offers themselves are big and not needed)
 	assert "templates/items.json" in copied

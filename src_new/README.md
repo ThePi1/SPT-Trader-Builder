@@ -25,7 +25,8 @@ quest locks) is opened and saved on its own from the File menu; any of them can 
 
     python -m pytest -q
 
-Tests that need the base game's files look for `local_dev/samples` next to this folder (or set `SPT_SAMPLES`).
+The tests that check against the base game use the game data bundled in `data/database` (and one trader assort in
+`tests/fixtures`), so they run anywhere.
 
 ## Layout
 
