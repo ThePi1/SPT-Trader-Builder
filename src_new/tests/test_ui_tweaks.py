@@ -209,7 +209,8 @@ def test_the_type_list_has_no_rare_tag_and_a_line_says_whether_it_is_common(app)
 	page.tree.setCurrentItem(spec_item(page, True))
 	assert page.commonLabel.text() == "This type is marked as commonly used."
 	page.tree.setCurrentItem(spec_item(page, False))
-	assert page.commonLabel.text() == "This type is marked as not commonly used."
+	assert page.commonLabel.text() == "This type is marked as <b>not</b> commonly used."  # (the "not" is bold)
+	assert "not commonly used." in page.commonLabel.text().replace("<b>", "").replace("</b>", "")
 	page.tree.setCurrentItem(None)
 	assert page.commonLabel.text() == ""
 	# it sits under the "Can be used" / "Filled in by the app" line
