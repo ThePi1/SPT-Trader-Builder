@@ -105,3 +105,23 @@ def test_undo_stamp_orders_documents():
 	one.change("one", lambda d: d.update(a=2))
 	two.change("two", lambda d: d.update(a=2))
 	assert two.undo_stamp > one.undo_stamp
+
+
+def test_a_note_stays_with_its_step_through_undo_and_redo():
+	doc = Document({"a": 1})
+	doc.replace("First", {"a": 2}, note=["x.json"])
+	doc.change("Second", lambda d: d.__setitem__("b", 1))
+	doc.replace("Third", {"a": 3}, note=["y.json"])
+	assert doc.applied_notes() == [["x.json"], ["y.json"]]
+	doc.undo()
+	assert doc.applied_notes() == [["x.json"]]
+	doc.redo()
+	assert doc.applied_notes() == [["x.json"], ["y.json"]]
+	doc.undo()
+	doc.undo()
+	doc.undo()
+	assert doc.applied_notes() == []
+	doc.redo()
+	assert doc.applied_notes() == [["x.json"]]
+	doc.replace("Fourth", {"a": 9})  # (a new edit drops what could be redone)
+	assert doc.applied_notes() == [["x.json"]]

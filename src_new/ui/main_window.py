@@ -57,7 +57,6 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.setWindowIcon(app_icon())
 		self.update_status = updates.pending_status(settings)
 		self._workers = []
-		self.imported = {key: [] for key, *_rest in KINDS}  # the files imported into each section since it was opened
 		self.quest_sources = {}  # quest id -> the file it was imported from
 		self.quests = Document({})
 		self.locale = Document({})
@@ -170,6 +169,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self._update_title()
 		self._refresh_strip()
 
+	def imported_files(self, key):
+		"""The names of the files imported into this section that are still in it (undoing an import takes them out)."""
+		names = []
+		for note in getattr(self, key).applied_notes():
+			names.extend(name for name in note if name not in names)
+		return names
+
 	def _count(self, key):
 		data = getattr(self, key).data
 		if key == "assort":
@@ -180,7 +186,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def _refresh_strip(self):
 		for key, _title, _label, _kind in KINDS:
-			doc, count, names = getattr(self, key), self._count(key), self.imported[key]
+			doc, count, names = getattr(self, key), self._count(key), self.imported_files(key)
 			imports = f"{len(names)} file{'' if len(names) == 1 else 's'} imported" if names else ""
 			if doc.path:
 				file_text = doc.name + (f" \u00b7 +{imports}" if imports else "")
@@ -204,7 +210,6 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def _set_quests(self, doc):
 		self.quests = doc
-		self.imported["quests"].clear()
 		self.quest_sources.clear()
 		doc.on_change(self._doc_changed)
 		self.quest_outline.set_document(doc)
@@ -213,7 +218,6 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def _set_locale(self, doc):
 		self.locale = doc
-		self.imported["locale"].clear()
 		doc.on_change(self._doc_changed)
 		doc.on_change(lambda _d: self.quest_outline.check_soon())
 		self.quest_outline.locale = doc
@@ -305,7 +309,6 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def _set_other(self, name, doc):
 		setattr(self, name, doc)
-		self.imported[name].clear()
 		doc.on_change(self._doc_changed)
 		self.assort_tab.watch(self.assort, self.locks)
 		self._doc_changed()
@@ -380,11 +383,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		label = f"Import {len(included)} file{'' if len(included) == 1 else 's'}"
 		for kind in M.ORDER:
 			if kind in plan.data:
-				getattr(self, KEY_OF_KIND[kind]).replace(label, plan.data[kind])
-		for item in included:
-			names = self.imported[KEY_OF_KIND[item.kind]]
-			if item.name not in names:
-				names.append(item.name)
+				names = [item.name for item in included if item.kind == kind]
+				getattr(self, KEY_OF_KIND[kind]).replace(label, plan.data[kind], note=names)  # (the note follows undo and redo)
 		self.quest_sources.update(plan.sources)
 		self.quest_outline.set_sources(self.quest_sources)
 		self._doc_changed()

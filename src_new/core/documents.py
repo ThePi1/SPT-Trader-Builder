@@ -30,7 +30,7 @@ class Document:
 		self.data = data if data is not None else {}
 		self.path = Path(path) if path else None
 		self._saved = copy.deepcopy(self.data)
-		self._undo = []  # (label, path, subtree before, coalesce key)
+		self._undo = []  # (label, path, subtree before, coalesce key, stamp, note)
 		self._redo = []
 		self._watched = None
 		self._listeners = []
@@ -61,14 +61,15 @@ class Document:
 	# --- editing --------------------------------------------------------------------------
 	# An undo step remembers the part of the data it changed (the subtree at ``path``), so a
 	# change inside one quest of a big file only copies that quest.
-	def change(self, label, edit, path=()):
-		"""Run edit(subtree) as one undoable step on the data at path. Nothing is recorded if edit changes nothing."""
+	def change(self, label, edit, path=(), note=None):
+		"""Run edit(subtree) as one undoable step on the data at path. Nothing is recorded if edit changes nothing.
+		note (anything) is kept with the step: it is there while the step is applied, and goes with it on undo and redo."""
 		node = _get(self.data, path)
 		before = copy.deepcopy(node)
 		edit(node)
 		if node == before:
 			return False
-		self._record(label, path, before)
+		self._record(label, path, before, note=note)
 		return True
 
 	def watch(self, path=()):
@@ -93,8 +94,8 @@ class Document:
 		self._record(label, path, before, coalesce)
 		return True
 
-	def _record(self, label, path, before, coalesce=None):
-		self._undo.append((label, path, before, (path, coalesce) if coalesce is not None else None, next(_clock)))
+	def _record(self, label, path, before, coalesce=None, note=None):
+		self._undo.append((label, path, before, (path, coalesce) if coalesce is not None else None, next(_clock), note))
 		del self._undo[:-UNDO_LIMIT]
 		self._redo.clear()
 		self._watched = (path, copy.deepcopy(_get(self.data, path)))
@@ -116,7 +117,7 @@ class Document:
 			self._redo.clear()
 			self._notify()
 			return True
-		self._undo.append((label, path, _Leaf(before), key, next(_clock)))
+		self._undo.append((label, path, _Leaf(before), key, next(_clock), None))
 		del self._undo[:-UNDO_LIMIT]
 		self._redo.clear()
 		self._notify()
@@ -130,8 +131,12 @@ class Document:
 	def redo_stamp(self):
 		return self._redo[-1][4] if self._redo else 0
 
-	def replace(self, label, data):
-		return self.change(label, lambda node: _swap(node, data))
+	def replace(self, label, data, note=None):
+		return self.change(label, lambda node: _swap(node, data), note=note)
+
+	def applied_notes(self):
+		"""The notes of the steps that are applied now (not undone), oldest first."""
+		return [entry[5] for entry in self._undo if entry[5] is not None]
 
 	@property
 	def undo_label(self):
@@ -150,10 +155,10 @@ class Document:
 	def _step(self, source, target):
 		if not source:
 			return False
-		label, path, snapshot, _key, _stamp = source.pop()
+		label, path, snapshot, _key, _stamp, note = source.pop()
 		if isinstance(snapshot, _Leaf):
 			parent = _get(self.data, path[:-1])
-			target.append((label, path, _Leaf(parent.get(path[-1], MISSING)), None, next(_clock)))
+			target.append((label, path, _Leaf(parent.get(path[-1], MISSING)), None, next(_clock), note))
 			if snapshot.value is MISSING:
 				parent.pop(path[-1], None)
 			else:
@@ -161,7 +166,7 @@ class Document:
 			self._notify()
 			return True
 		node = _get(self.data, path)
-		target.append((label, path, copy.deepcopy(node), None, next(_clock)))
+		target.append((label, path, copy.deepcopy(node), None, next(_clock), note))
 		_swap(node, snapshot)
 		self._watched = (path, copy.deepcopy(node))
 		self._notify()

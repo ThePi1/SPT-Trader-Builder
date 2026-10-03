@@ -87,7 +87,7 @@ def test_five_files_import_into_one_workspace(window, tmp_path):
 	assert window.locks.data["success"] == {OFFER: Q1}
 	assert window.locale.data == {f"{Q1} name": "One", f"{Q2} name": "Two", T2: "do it"}  # (only the text of the quests)
 	assert window.quest_sources == {Q1: "kappa.json", Q2: "side_jobs.json"}
-	assert window.imported["quests"] == ["kappa.json", "side_jobs.json"] and window.imported["locale"] == ["en.json"]
+	assert window.imported_files("quests") == ["kappa.json", "side_jobs.json"] and window.imported_files("locale") == ["en.json"]
 	assert "Imported 2 quests" in window.statusBar().currentMessage()
 	assert window.quests.undo_label == "Import 5 files"
 	window.quests.undo()
@@ -176,9 +176,9 @@ def test_the_strip_shows_count_file_and_state_for_each_section(window, tmp_path)
 
 def test_opening_a_file_forgets_what_was_imported(window, tmp_path):
 	window.import_files(files(tmp_path)[:2])
-	assert window.quest_sources and window.imported["quests"]
+	assert window.quest_sources and window.imported_files("quests")
 	window._set_quests(Document({}))
-	assert window.quest_sources == {} and window.imported["quests"] == []
+	assert window.quest_sources == {} and window.imported_files("quests") == []
 	assert segment_text(window, "quests")[2] == "empty"
 
 
@@ -397,3 +397,38 @@ def test_the_export_window_disables_what_there_is_none_of_and_rejects_duplicate_
 	full.localeEdit.textEdited.emit("exported_quests.json")
 	full.localeEdit.setText("exported_quests.json")
 	assert "own name" in full.noteLabel.text() and not full.buttons.button(full.buttons.StandardButton.Ok).isEnabled()
+
+
+# --- undoing and redoing an import ----------------------------------------------------------
+
+def test_undoing_an_import_takes_its_files_off_the_strip_and_redo_puts_them_back(window, tmp_path):
+	window._set_quests(Document.open(write(tmp_path, "mine.json", {Q3: quest(Q3, "Mine", T3)})))
+	window.import_files(files(tmp_path)[:3])
+	assert segment_text(window, "quests")[2] == "mine.json · +2 files imported"
+	assert segment_text(window, "locale")[2] == "not saved yet · 1 file imported"
+	window.locale.undo()
+	assert segment_text(window, "locale")[2] == "empty" and window.imported_files("locale") == []
+	assert segment_text(window, "quests")[2].endswith("+2 files imported")  # (the quests import is still applied)
+	window.quests.undo()
+	assert segment_text(window, "quests")[2] == "mine.json" and window.imported_files("quests") == []
+	window.quests.redo()
+	assert segment_text(window, "quests")[2] == "mine.json · +2 files imported"
+	window.locale.redo()
+	assert segment_text(window, "locale")[2] == "not saved yet · 1 file imported"
+
+
+def test_a_second_import_adds_its_files_and_undoing_it_removes_only_those(window, tmp_path):
+	paths = files(tmp_path)
+	window.import_files(paths[:1])
+	window.import_files(paths[1:2])
+	assert window.imported_files("quests") == ["kappa.json", "side_jobs.json"]
+	window.quests.undo()
+	assert window.imported_files("quests") == ["kappa.json"] and set(window.quests.data) == {Q1}
+	assert segment_text(window, "quests")[2] == "not saved yet · 1 file imported"
+
+
+def test_importing_what_is_already_there_adds_no_imported_note(window, tmp_path):
+	paths = files(tmp_path)
+	window.import_files(paths[:1])
+	window.import_files(paths[:1])  # (nothing new the second time)
+	assert window.imported_files("quests") == ["kappa.json"] and len(window.quests._undo) == 1
