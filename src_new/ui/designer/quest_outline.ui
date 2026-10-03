@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>OutlineForm</class>
  <widget class="QWidget" name="OutlineForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>728</width>
+    <height>226</height>
+   </rect>
+  </property>
   <layout class="QHBoxLayout" name="outerLayout">
    <property name="leftMargin">
     <number>0</number>
@@ -26,7 +34,7 @@
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="rightMargin">
         <number>0</number>
@@ -39,6 +47,9 @@
          <property name="spacing">
           <number>3</number>
          </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QPushButton" name="new_quest_button">
            <property name="text">
@@ -49,7 +60,7 @@
          <item>
           <widget class="QToolButton" name="add_button">
            <property name="text">
-            <string>Add</string>
+            <string>Add </string>
            </property>
            <property name="popupMode">
             <enum>QToolButton::InstantPopup</enum>
@@ -129,8 +140,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>100</width>
-          <height>30</height>
+          <width>252</width>
+          <height>69</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="pane_layout"/>

@@ -24,6 +24,7 @@ class Ui_OutlineForm(object):
     def setupUi(self, OutlineForm):
         if not OutlineForm.objectName():
             OutlineForm.setObjectName(u"OutlineForm")
+        OutlineForm.resize(728, 226)
         self.outerLayout = QHBoxLayout(OutlineForm)
         self.outerLayout.setObjectName(u"outerLayout")
         self.outerLayout.setContentsMargins(0, 0, 0, 0)
@@ -34,10 +35,11 @@ class Ui_OutlineForm(object):
         self.leftPane.setObjectName(u"leftPane")
         self.leftLayout = QVBoxLayout(self.leftPane)
         self.leftLayout.setObjectName(u"leftLayout")
-        self.leftLayout.setContentsMargins(0, 0, 0, 0)
+        self.leftLayout.setContentsMargins(0, 6, 0, 0)
         self.tools = QHBoxLayout()
         self.tools.setSpacing(3)
         self.tools.setObjectName(u"tools")
+        self.tools.setContentsMargins(-1, 0, -1, -1)
         self.new_quest_button = QPushButton(self.leftPane)
         self.new_quest_button.setObjectName(u"new_quest_button")
 
@@ -95,7 +97,7 @@ class Ui_OutlineForm(object):
         self.scroll.setWidgetResizable(True)
         self.pane = QWidget()
         self.pane.setObjectName(u"pane")
-        self.pane.setGeometry(QRect(0, 0, 100, 30))
+        self.pane.setGeometry(QRect(0, 0, 252, 69))
         self.pane_layout = QVBoxLayout(self.pane)
         self.pane_layout.setObjectName(u"pane_layout")
         self.scroll.setWidget(self.pane)
@@ -117,7 +119,7 @@ class Ui_OutlineForm(object):
 
     def retranslateUi(self, OutlineForm):
         self.new_quest_button.setText(QCoreApplication.translate("OutlineForm", u"New quest", None))
-        self.add_button.setText(QCoreApplication.translate("OutlineForm", u"Add", None))
+        self.add_button.setText(QCoreApplication.translate("OutlineForm", u"Add ", None))
         self.copy_button.setText(QCoreApplication.translate("OutlineForm", u"Copy", None))
         self.delete_button.setText(QCoreApplication.translate("OutlineForm", u"Delete", None))
         self.up_button.setText(QCoreApplication.translate("OutlineForm", u"Up", None))
