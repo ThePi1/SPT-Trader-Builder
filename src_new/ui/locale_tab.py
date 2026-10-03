@@ -1,10 +1,11 @@
-"""The text tab: every entry of the locale file, with the quest each one belongs to."""
+"""The Locale tab: every entry of the locale file, with the quest each one belongs to."""
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PySide6.QtWidgets import (
 	QComboBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QPushButton, QTableView, QVBoxLayout, QWidget,
 )
 
+from core import settings as S
 from core.documents import MISSING
 from schema import locale as L
 
@@ -15,14 +16,14 @@ FILTERS = (
 	("missing", "Text still missing for those quests"),
 	("unused", "Text those quests don't use"),
 )
-MAX_SHOWN = 5000
 
 
 class LocaleModel(QAbstractTableModel):
-	def __init__(self, locale_doc, quests_doc):
+	def __init__(self, locale_doc, quests_doc, settings=None):
 		super().__init__()
-		self.locale, self.quests = locale_doc, quests_doc
+		self.locale, self.quests, self.settings = locale_doc, quests_doc, settings
 		self.keys, self.owner = [], {}
+		self.truncated, self.total = False, 0
 
 	def set_documents(self, locale_doc, quests_doc):
 		self.beginResetModel()
@@ -49,8 +50,9 @@ class LocaleModel(QAbstractTableModel):
 		words = text.lower().split()
 		if words:
 			keys = [k for k in keys if all(w in f"{k} {data.get(k, '')} {owners.get(k, '')}".lower() for w in words)]
-		self.keys, self.owner = keys[:MAX_SHOWN], owners
-		self.truncated = len(keys) > MAX_SHOWN
+		most = S.limit(self.settings, "locale_max_entries")
+		self.keys, self.owner = keys[:most], owners
+		self.truncated = len(keys) > most
 		self.total = len(keys)
 		self.endResetModel()
 
@@ -89,9 +91,9 @@ class LocaleModel(QAbstractTableModel):
 
 
 class LocaleTab(QWidget):
-	def __init__(self, locale_doc, quests_doc, parent=None):
+	def __init__(self, locale_doc, quests_doc, settings=None, parent=None):
 		super().__init__(parent)
-		self.model = LocaleModel(locale_doc, quests_doc)
+		self.model = LocaleModel(locale_doc, quests_doc, settings)
 		layout = QVBoxLayout(self)
 		top = QHBoxLayout()
 		self.search = QLineEdit()

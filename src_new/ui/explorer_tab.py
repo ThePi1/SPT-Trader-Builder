@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 )
 
 from core import jsonio
+from core import settings as S
 from schema import explorer
 from schema.issues import ERROR
 from ui.problems import ERROR_COLOR, WARNING_COLOR
@@ -81,9 +82,9 @@ class BrowsePage(QWidget):
 class CheckPage(QWidget):
 	"""Open any JSON file and see what is wrong with it."""
 
-	def __init__(self, get_quests, get_locale, gamedata=None, parent=None):
+	def __init__(self, get_quests, get_locale, gamedata=None, settings=None, parent=None):
 		super().__init__(parent)
-		self.get_quests, self.get_locale, self.gamedata = get_quests, get_locale, gamedata
+		self.get_quests, self.get_locale, self.gamedata, self.settings = get_quests, get_locale, gamedata, settings
 		layout = QVBoxLayout(self)
 		row = QHBoxLayout()
 		button = QPushButton("Open a file to check...")
@@ -93,13 +94,13 @@ class CheckPage(QWidget):
 		for value, label in explorer.FILE_KINDS:
 			self.kind.addItem(label, value)
 		self.kind.currentIndexChanged.connect(lambda _i: self.run())
-		self.with_open = QCheckBox("Check against the quests and text that are open")
+		self.with_open = QCheckBox("Check against the quests and locale that are open")
 		self.with_open.stateChanged.connect(lambda _s: self.run())
 		for widget in (button, self.kind, self.with_open):
 			row.addWidget(widget)
 		row.addStretch(1)
 		layout.addLayout(row)
-		self.summary = QLabel("Open a quest, text, assort or quest-lock file. Nothing is changed in it.")
+		self.summary = QLabel("Open a quest, locale, assort or quest-lock file. Nothing is changed in it.")
 		self.summary.setWordWrap(True)
 		layout.addWidget(self.summary)
 		self.list = QListWidget()
@@ -128,7 +129,7 @@ class CheckPage(QWidget):
 			return
 		kind = self.kind.currentData() or explorer.detect_kind(self.data)
 		if kind is None:
-			self.summary.setText("This doesn't look like a quest, text, assort or quest-lock file. Pick what it is above.")
+			self.summary.setText("This doesn't look like a quest, locale, assort or quest-lock file. Pick what it is above.")
 			return
 		quests = self.get_quests() if self.with_open.isChecked() else None
 		locale = self.get_locale() if self.with_open.isChecked() else None
@@ -138,16 +139,19 @@ class CheckPage(QWidget):
 		self.summary.setText(
 			f"{self.name}\nChecked as: {label}. " + ("No problems found." if not issues else f"{errors} to fix, {len(issues) - errors} to check.")
 		)
-		for issue in sorted(issues, key=lambda i: i.level != ERROR)[:500]:
+		most = S.limit(self.settings, "explorer_max_problems")
+		for issue in sorted(issues, key=lambda i: i.level != ERROR)[:most]:
 			item = QListWidgetItem(f"{issue.where() or 'File'}: {issue.message}")
 			item.setForeground(ERROR_COLOR if issue.level == ERROR else WARNING_COLOR)
 			self.list.addItem(item)
+		if len(issues) > most:
+			self.list.addItem(QListWidgetItem(f"...and {len(issues) - most} more not shown (Settings > Lists changes this)."))
 
 
 class ExplorerTab(QTabWidget):
-	def __init__(self, get_quests, get_locale, gamedata=None, parent=None):
+	def __init__(self, get_quests, get_locale, gamedata=None, settings=None, parent=None):
 		super().__init__(parent)
 		self.browse = BrowsePage()
-		self.check = CheckPage(get_quests, get_locale, gamedata)
+		self.check = CheckPage(get_quests, get_locale, gamedata, settings)
 		self.addTab(self.browse, "What things are made of")
 		self.addTab(self.check, "Check a file")

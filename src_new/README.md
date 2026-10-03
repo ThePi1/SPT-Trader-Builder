@@ -12,8 +12,8 @@ In Settings > Game data, point "SPT database folder" at your SPT_Data/database f
 
 ## Tabs
 
-Quests (outline tree and forms, text boxes, problems list), Text (the whole locale file), Trader (assort and quest locks),
-Composite items (your saved items, plus the base game's), Find IDs, Schema Explorer. Each file (quests, text, assort,
+Quests (outline tree and forms, text boxes, problems list), Locale (the whole locale file), Trader (assort and quest locks),
+Composite items (your saved items, plus the base game's), Find IDs, Schema Explorer. Each file (quests, locale, assort,
 quest locks) is opened and saved on its own from the File menu; any of them can be started from nothing.
 
 ## Version and update check

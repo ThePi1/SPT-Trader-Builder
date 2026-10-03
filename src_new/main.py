@@ -8,11 +8,12 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from core.gamedata import GameData
 from core.paths import BUNDLED_DATABASE_DIR
 from core.settings import Settings, SettingsError
-from ui.main_window import MainWindow
+from ui.main_window import MainWindow, app_icon
 
 
 def main():
 	app = QApplication(sys.argv)
+	app.setWindowIcon(app_icon())  # (every window and dialog, the message boxes before the main window too)
 	try:
 		settings = Settings.load()
 	except SettingsError as e:

@@ -22,3 +22,6 @@ BUNDLED_DATABASE_DIR = DATA_DIR / "database"
 LIBRARY_FILE = DATA_DIR / "my_items.json"
 
 SETTINGS_FILE = DATA_DIR / "settings.ini"
+
+# The window icon (also the icon of the packaged .exe)
+ICON_FILE = DATA_DIR / "icon.ico"

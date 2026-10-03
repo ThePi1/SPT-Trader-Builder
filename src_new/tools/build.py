@@ -18,7 +18,7 @@ def main():
 	subprocess.check_call([
 		sys.executable, "-m", "PyInstaller", "--noconfirm", "--windowed", "--name", NAME,
 		"--paths", str(ROOT), "--distpath", str(ROOT / "dist"), "--workpath", str(ROOT / "build"),
-		"--specpath", str(ROOT / "build"),
+		"--specpath", str(ROOT / "build"), "--icon", str(ROOT / "data" / "icon.ico"),
 		# the schema's two JSON files are read next to the schema code
 		"--add-data", f"{ROOT / 'schema' / 'server_models.json'}{os.pathsep}schema",
 		"--add-data", f"{ROOT / 'schema' / 'vanilla_profile.json'}{os.pathsep}schema",

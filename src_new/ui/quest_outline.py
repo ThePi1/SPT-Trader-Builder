@@ -168,6 +168,7 @@ class QuestOutline(QWidget):
 		if item is not None:
 			self._selected(item, None)
 		self._update_json()
+		self.check()  # (the Problems list may now show more or fewer)
 
 	def _update_json(self):
 		"""The selected node as JSON (when the preview is on)."""

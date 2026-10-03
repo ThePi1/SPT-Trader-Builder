@@ -7,12 +7,13 @@ there is no project folder.
 from pathlib import Path
 
 from PySide6.QtCore import QThreadPool
-from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox, QTabWidget
 
 from core import lookup
 from core.locale_copy import copy_to_other_languages
 from core.documents import Document
+from core.paths import ICON_FILE
 from ui import dialogs, updates
 from core.library import Library
 from schema import assort as assort_schema
@@ -27,10 +28,16 @@ from ui.quest_outline import QuestOutline
 JSON_FILTER = "JSON files (*.json);;All files (*)"
 
 
+def app_icon():
+	"""The window icon (an empty icon, so no icon, if the file is missing)."""
+	return QIcon(str(ICON_FILE)) if ICON_FILE.is_file() else QIcon()
+
+
 class MainWindow(QMainWindow):
 	def __init__(self, settings, gamedata=None):
 		super().__init__()
 		self.settings, self.gamedata = settings, gamedata
+		self.setWindowIcon(app_icon())
 		self.update_status = updates.pending_status(settings)
 		self._workers = []
 		self.quests = Document({})
@@ -43,18 +50,18 @@ class MainWindow(QMainWindow):
 		self.quest_outline.set_document(self.quests)
 		self.quest_outline.picker = self.pick
 		self.quest_outline.locale = self.locale
-		self.locale_tab = LocaleTab(self.locale, self.quests)
+		self.locale_tab = LocaleTab(self.locale, self.quests, settings)
 		self._base_rows = None
-		self.lookup_tab = LookupTab([])
+		self.lookup_tab = LookupTab([], settings)
 		self.library = Library()
 		self.quest_outline.library = self.library
 		self.composite_tab = CompositeTab(self.library, gamedata, self.pick)
 		self.assort_tab = AssortTab(
 			self.assort, self.locks, gamedata, self.pick, self.library, lambda: self.quests.data, lambda: self.quests
 		)
-		self.explorer_tab = ExplorerTab(lambda: self.quests.data, lambda: self.locale.data, gamedata)
+		self.explorer_tab = ExplorerTab(lambda: self.quests.data, lambda: self.locale.data, gamedata, settings)
 		for widget, title in (
-			(self.quest_outline, "Quests"), (self.locale_tab, "Text"), (self.assort_tab, "Trader"), (self.composite_tab, "Composite items"), (self.lookup_tab, "Find IDs"), (self.explorer_tab, "Schema Explorer"),
+			(self.quest_outline, "Quests"), (self.locale_tab, "Locale"), (self.assort_tab, "Trader"), (self.composite_tab, "Composite items"), (self.lookup_tab, "Find IDs"), (self.explorer_tab, "Schema Explorer"),
 		):
 			self.tabs.addTab(widget, title)
 		self.tabs.currentChanged.connect(self._tab_changed)
@@ -80,7 +87,7 @@ class MainWindow(QMainWindow):
 
 	def pick(self, ref, multi=False, parent=None):
 		title = {"item": "Find an item", "quest": "Find a quest", "achievement": "Find an achievement", "customization": "Find clothing"}.get(ref, "Find")
-		dialog = PickerDialog(self.rows((ref,)), (ref,), title, multi, parent or self)
+		dialog = PickerDialog(self.rows((ref,)), (ref,), title, multi, self.settings, parent or self)
 		return dialog.ids if dialog.exec() else []
 
 	def _tab_changed(self, index):
@@ -109,10 +116,10 @@ class MainWindow(QMainWindow):
 		self._action(file_menu, "&Save quest file", self.save_quests, "Ctrl+S")
 		self._action(file_menu, "Save quest file &as...", self.save_quests_as, "Ctrl+Shift+S")
 		file_menu.addSeparator()
-		self._action(file_menu, "New &text file", self.new_locale)
-		self._action(file_menu, "Open t&ext file...", self.open_locale)
-		self._action(file_menu, "Save text &file", self.save_locale, "Ctrl+Alt+S")
-		self._action(file_menu, "Save text file as...", self.save_locale_as)
+		self._action(file_menu, "New &locale file", self.new_locale)
+		self._action(file_menu, "Open lo&cale file...", self.open_locale)
+		self._action(file_menu, "Save locale &file", self.save_locale, "Ctrl+Alt+S")
+		self._action(file_menu, "Save locale file as...", self.save_locale_as)
 		for title, label, setter_name in (("Trader assort", "assort", "assort"), ("Quest locks", "locks", "locks")):
 			sub = file_menu.addMenu(title)
 			self._action(sub, "New", lambda _c=False, n=setter_name: self._new_other(n))
@@ -199,7 +206,7 @@ class MainWindow(QMainWindow):
 	def _save(self, doc, label, as_new=False):
 		path = None if as_new or doc.path is None else doc.path
 		if path is None:
-			start = doc.name if doc.path else f"{label}s.json"
+			start = doc.name if doc.path else f"{self.settings.language}.json" if doc is self.locale else f"{label}s.json"
 			chosen, _ = QFileDialog.getSaveFileName(self, f"Save {label} file", start, JSON_FILTER)
 			if not chosen:
 				return False
@@ -244,16 +251,16 @@ class MainWindow(QMainWindow):
 		return self._save(self.quests, "quest", as_new=True)
 
 	def new_locale(self):
-		self._new(self.locale, "text", self._set_locale)
+		self._new(self.locale, "locale", self._set_locale)
 
 	def open_locale(self):
-		self._open(self.locale, "text", self._set_locale)
+		self._open(self.locale, "locale", self._set_locale)
 
 	def save_locale(self):
-		return self._save(self.locale, "text")
+		return self._save(self.locale, "locale")
 
 	def save_locale_as(self):
-		return self._save(self.locale, "text", as_new=True)
+		return self._save(self.locale, "locale", as_new=True)
 
 	_OTHER = {"assort": ("trader assort", assort_schema.empty_assort), "locks": ("quest locks", assort_schema.empty_questassort)}
 
@@ -289,7 +296,7 @@ class MainWindow(QMainWindow):
 		max(self._docs(), key=lambda d: d.redo_stamp).redo()
 
 	def closeEvent(self, event):
-		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "text", "trader assort", "quest locks"))):
+		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest locks"))):
 			event.accept()
 		else:
 			event.ignore()
@@ -302,6 +309,8 @@ class MainWindow(QMainWindow):
 				self.update_status = updates.pending_status(self.settings)
 				self.start_update_check()
 			self.quest_outline.apply_settings()
+			self.locale_tab.refresh()
+			self.lookup_tab.view.refresh()
 
 	def show_about(self):
 		dialogs.AboutDialog(self.update_status.local_version, self.update_status.project_url, self).exec()

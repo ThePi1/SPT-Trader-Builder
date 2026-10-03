@@ -15,7 +15,7 @@ GROUP_TITLES = (
 	("quest", "Quest"), ("task", "Tasks"), ("subtask", "Subtasks (steps of an in-raid objective)"), ("reward", "Rewards"),
 )
 FILE_KINDS = (
-	("quests", "Quests"), ("locale", "Text (locale)"), ("assort", "Trader assort"), ("questassort", "Quest locks for assort"),
+	("quests", "Quests"), ("locale", "Locale"), ("assort", "Trader assort"), ("questassort", "Quest locks for assort"),
 )
 
 

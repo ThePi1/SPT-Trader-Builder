@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QSizePolicy, QToolButton, QVBoxLayout, QWidget
 
+from core import settings as S
 from schema.issues import ERROR
 
 ERROR_COLOR = QColor("#c0392b")
@@ -68,13 +69,16 @@ class ProblemsPanel(QWidget):
 		warnings = len(issues) - errors
 		parts = ([f"{errors} to fix"] if errors else []) + ([f"{warnings} to check"] if warnings else [])
 		self.header.setText("Problems: " + ", ".join(parts))
-		for issue in sorted(issues, key=lambda i: i.level != ERROR)[:300]:
+		most = S.limit(self.settings, "problems_max_shown")
+		for issue in sorted(issues, key=lambda i: i.level != ERROR)[:most]:
 			where = describe(issue.path)
 			item = QListWidgetItem(f"{where}: {issue.message}" if where else issue.message)
 			item.setForeground(ERROR_COLOR if issue.level == ERROR else WARNING_COLOR)
 			item.setData(ROLE, node_path(issue.path) if issue.path else ())
 			item.setToolTip(str(issue))
 			self.list.addItem(item)
+		if len(issues) > most:
+			self.list.addItem(QListWidgetItem(f"...and {len(issues) - most} more not shown (Settings > Lists changes this)."))
 
 	def _activated(self, item):
 		path = item.data(ROLE)

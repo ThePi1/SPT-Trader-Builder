@@ -3,7 +3,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
 	QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
-	QMessageBox, QPushButton, QTabWidget, QVBoxLayout, QWidget,
+	QMessageBox, QPushButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget,
 )
 
 from core import settings as S
@@ -54,7 +54,7 @@ class UpdatesDialog(QDialog):
 
 _LABELS = {
 	"debug_logging": "Write a detailed log",
-	"copy_locale_to_all_languages": "Copy text into every language file",
+	"copy_locale_to_all_languages": "Copy locale into every language file",
 	"database_folder": "SPT database folder",
 	"language": "Language for names",
 	"quest_icon": "Icon",
@@ -62,22 +62,31 @@ _LABELS = {
 	"trader": "Trader",
 	"show_all_fields": "Show every option",
 	"show_json_preview": "Show the JSON",
+	"locale_max_entries": "Locale tab",
+	"lookup_max_rows": "Find IDs and pickers",
+	"problems_max_shown": "Problems under the quests",
+	"explorer_max_problems": "Schema Explorer file check",
 	"version_file": "Version file",
 	"version_url": "Latest version address",
 	"project_url": "Project address",
 }
 _TIPS = {
 	"debug_logging": "Writes spt_builder.log next to the program, for troubleshooting.",
-	"copy_locale_to_all_languages": "When you save the text file, also add the text of the open quests to the other languages' files in the same folder. Entries those files already have are kept.",
+	"copy_locale_to_all_languages": "When you save the locale file, also add the text of the open quests to the other languages' files in the same folder. Entries those files already have are kept.",
 	"database_folder": "Your SPT_Data/database folder. Empty uses the data that comes with the program. It is only read, never changed.",
 	"language": "Language used for item and trader names (en, ru, de, ...).",
 	"quest_icon": "The icon new quests start with.",
 	"show_all_fields": "Show rarely used options without clicking More options.",
+	"locale_max_entries": "The most entries the Locale tab lists. Search to find the rest.",
+	"lookup_max_rows": "The most rows Find IDs and the id pickers list. Type more to narrow them down.",
+	"problems_max_shown": "The most problems listed under the quests. The count above the list is always the full total.",
+	"explorer_max_problems": "The most problems listed after checking a file in the Schema Explorer.",
 }
 _TABS = (
 	("General", ("debug_logging", "copy_locale_to_all_languages", "show_all_fields", "show_json_preview")),
 	("Game data", ("database_folder", "language")),
 	("New quests", ("quest_icon", "side", "trader")),
+	("Lists", ("locale_max_entries", "lookup_max_rows", "problems_max_shown", "explorer_max_problems")),
 	("Updates", ("version_file", "version_url", "project_url")),
 )
 
@@ -112,6 +121,13 @@ class SettingsDialog(QDialog):
 			box = QCheckBox()
 			box.setChecked(value)
 			return box
+		if setting.kind == "int":
+			spin = QSpinBox()
+			spin.setRange(S.MIN_LIMIT, S.MAX_LIMIT)
+			spin.setSingleStep(100)
+			spin.setSuffix(" entries")
+			spin.setValue(value)
+			return spin
 		if setting.key == "side":
 			combo = QComboBox()
 			for v, label in choices.SIDES:
@@ -135,6 +151,8 @@ class SettingsDialog(QDialog):
 		for key, control in self.controls.items():
 			if isinstance(control, QCheckBox):
 				out[key] = control.isChecked()
+			elif isinstance(control, QSpinBox):
+				out[key] = control.value()
 			elif isinstance(control, QComboBox):
 				out[key] = control.currentData()
 			elif isinstance(control, _FolderEdit):

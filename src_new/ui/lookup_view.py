@@ -8,8 +8,7 @@ from PySide6.QtWidgets import (
 )
 
 from core import lookup
-
-MAX_ROWS = 400
+from core import settings as S
 
 
 class LookupView(QWidget):
@@ -17,9 +16,9 @@ class LookupView(QWidget):
 
 	picked = Signal(list)  # the ids of the chosen rows
 
-	def __init__(self, rows, kinds=None, multi=False, show_filter=True, parent=None):
+	def __init__(self, rows, kinds=None, multi=False, show_filter=True, settings=None, parent=None):
 		super().__init__(parent)
-		self.rows, self.kinds = rows, tuple(kinds) if kinds else None
+		self.rows, self.kinds, self.settings = rows, tuple(kinds) if kinds else None, settings
 		layout = QVBoxLayout(self)
 		layout.setContentsMargins(0, 0, 0, 0)
 		top = QHBoxLayout()
@@ -66,7 +65,8 @@ class LookupView(QWidget):
 		kind = self.filter.currentData()
 		kinds = (kind,) if kind else self.kinds
 		found = lookup.search(self.rows, self.search.text(), kinds)
-		shown = found[:MAX_ROWS]
+		most = S.limit(self.settings, "lookup_max_rows")
+		shown = found[:most]
 		self.table.setRowCount(len(shown))
 		for i, row in enumerate(shown):
 			for column, text in enumerate((row.name or "(no name)", row.detail, lookup.KIND_LABEL[row.kind], row.id)):
@@ -74,7 +74,7 @@ class LookupView(QWidget):
 		if shown:
 			self.table.selectRow(0)
 		self.note.setText(
-			f"Showing the first {MAX_ROWS} of {len(found)}. Type more to narrow it down." if len(found) > MAX_ROWS
+			f"Showing the first {most} of {len(found)}. Type more to narrow it down." if len(found) > most
 			else f"{len(found)} found." if self.search.text() else f"{len(found)} in total."
 		)
 
@@ -93,13 +93,13 @@ class LookupView(QWidget):
 class PickerDialog(QDialog):
 	"""Choose one thing (or several) from a search. ids is the result, empty if cancelled."""
 
-	def __init__(self, rows, kinds, title, multi=False, parent=None):
+	def __init__(self, rows, kinds, title, multi=False, settings=None, parent=None):
 		super().__init__(parent)
 		self.setWindowTitle(title)
 		self.resize(760, 480)
 		self.ids = []
 		layout = QVBoxLayout(self)
-		self.view = LookupView(rows, kinds, multi, show_filter=False)
+		self.view = LookupView(rows, kinds, multi, show_filter=False, settings=settings)
 		layout.addWidget(self.view, 1)
 		buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 		buttons.accepted.connect(self.accept)
@@ -120,10 +120,10 @@ class PickerDialog(QDialog):
 class LookupTab(QWidget):
 	"""The 'Find IDs' tab: search everything, copy an id or a name."""
 
-	def __init__(self, rows, parent=None):
+	def __init__(self, rows, settings=None, parent=None):
 		super().__init__(parent)
 		layout = QVBoxLayout(self)
-		self.view = LookupView(rows)
+		self.view = LookupView(rows, settings=settings)
 		layout.addWidget(self.view, 1)
 		row = QHBoxLayout()
 		for text, column in (("Copy id", 3), ("Copy name", 0)):

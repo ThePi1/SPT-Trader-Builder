@@ -34,7 +34,7 @@ def copy_to_other_languages(entries, folder, own_name, languages):
 		try:
 			existing = read_json(path) if path.is_file() else {}
 			if not isinstance(existing, dict):
-				failed[name] = "this doesn't look like a text file"
+				failed[name] = "this doesn't look like a locale file"
 				continue
 			merged = dict(existing)
 			for key, text in texts.items():

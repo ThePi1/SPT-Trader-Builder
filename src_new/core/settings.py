@@ -26,13 +26,34 @@ def parse_bool(text):
 	raise ValueError(f"not a true/false value: {text!r}")
 
 
+def parse_int(text):
+	"""'500' -> 500 for a list limit; ValueError if it isn't a whole number from MIN_LIMIT to MAX_LIMIT."""
+	try:
+		number = int(str(text).strip())
+	except ValueError:
+		raise ValueError(f"not a whole number: {text!r}") from None
+	if not MIN_LIMIT <= number <= MAX_LIMIT:
+		raise ValueError(f"must be between {MIN_LIMIT} and {MAX_LIMIT}")
+	return number
+
+
+def parse_value(setting, text):
+	if setting.kind == "bool":
+		return parse_bool(text)
+	if setting.kind == "int":
+		return parse_int(text)
+	return text.strip()
+
+
 @dataclass(frozen=True)
 class Setting:
 	section: str
 	key: str
-	kind: str  # "bool", "text", "path" (a file or folder; relative means relative to the program folder), "url"
+	kind: str  # "bool", "int" (a whole number from MIN_LIMIT up), "text", "path" (a file or folder; relative means relative to the program folder), "url"
 	default: object
 
+
+MIN_LIMIT, MAX_LIMIT = 10, 100000  # how many entries a list may be set to show
 
 SETTINGS = (
 	Setting("general", "debug_logging", "bool", False),
@@ -45,6 +66,10 @@ SETTINGS = (
 	Setting("display", "show_all_fields", "bool", False),
 	Setting("display", "show_json_preview", "bool", False),
 	Setting("display", "problems_collapsed", "bool", False),  # (set by the Problems header, not in the dialog)
+	Setting("lists", "locale_max_entries", "int", 5000),  # the Locale tab
+	Setting("lists", "lookup_max_rows", "int", 400),  # Find IDs, and the pickers that search for an id
+	Setting("lists", "problems_max_shown", "int", 300),  # the Problems list under the quests
+	Setting("lists", "explorer_max_problems", "int", 500),  # the results of Schema Explorer > Check a file
 	Setting("updates", "version_file", "path", "data/version.txt"),
 	Setting("updates", "version_url", "url", "https://raw.githubusercontent.com/ThePi1/SPT-Trader-Builder/main/src/data/version.txt"),
 	Setting("updates", "project_url", "url", "https://github.com/ThePi1/SPT-Trader-Builder"),
@@ -83,7 +108,7 @@ class Settings:
 			if text is None:
 				continue
 			try:
-				values[setting.key] = parse_bool(text) if setting.kind == "bool" else text.strip()
+				values[setting.key] = parse_value(setting, text)
 			except ValueError as e:
 				raise SettingsError(f"There is a problem with the settings file:\n{path}\n\n{setting.key}: {e}") from e
 		return cls(values, path=path)
@@ -126,6 +151,9 @@ def validate(values):
 		elif setting.kind == "bool":
 			if not isinstance(value, bool):
 				errors[key] = "Must be true or false."
+		elif setting.kind == "int":
+			if isinstance(value, bool) or not isinstance(value, int) or not MIN_LIMIT <= value <= MAX_LIMIT:
+				errors[key] = f"Must be a whole number from {MIN_LIMIT} to {MAX_LIMIT}."
 		elif "\n" in str(value) or "\r" in str(value):
 			errors[key] = "Must be a single line."
 		elif setting.kind == "url" and not re.fullmatch(r"https?://\S+", str(value).strip()):
@@ -135,6 +163,12 @@ def validate(values):
 
 def to_text(key, value):
 	return ("true" if value else "false") if BY_KEY[key].kind == "bool" else str(value)
+
+
+def limit(settings, key):
+	"""The list limit setting `key` of these settings (its default if there are none, or they lack it)."""
+	value = getattr(settings, key, None)
+	return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else BY_KEY[key].default
 
 
 # --- writing settings.ini without losing its comments ---------------------------------
