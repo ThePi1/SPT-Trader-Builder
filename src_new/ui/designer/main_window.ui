@@ -31,7 +31,41 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QTabWidget" name="tabs"/>
+     <widget class="QTabWidget" name="tabs">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="page_quests">
+       <attribute name="title">
+        <string>Quests</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_locale">
+       <attribute name="title">
+        <string>Locale</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_trader">
+       <attribute name="title">
+        <string>Trader</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_composite">
+       <attribute name="title">
+        <string>Composite items</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_find_ids">
+       <attribute name="title">
+        <string>Find IDs</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_explorer">
+       <attribute name="title">
+        <string>Schema Explorer</string>
+       </attribute>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>

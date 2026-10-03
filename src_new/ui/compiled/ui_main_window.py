@@ -76,6 +76,24 @@ class Ui_MainWindowForm(object):
         self.centralLayout.setContentsMargins(0, 0, 0, 0)
         self.tabs = QTabWidget(self.centralwidget)
         self.tabs.setObjectName(u"tabs")
+        self.page_quests = QWidget()
+        self.page_quests.setObjectName(u"page_quests")
+        self.tabs.addTab(self.page_quests, "")
+        self.page_locale = QWidget()
+        self.page_locale.setObjectName(u"page_locale")
+        self.tabs.addTab(self.page_locale, "")
+        self.page_trader = QWidget()
+        self.page_trader.setObjectName(u"page_trader")
+        self.tabs.addTab(self.page_trader, "")
+        self.page_composite = QWidget()
+        self.page_composite.setObjectName(u"page_composite")
+        self.tabs.addTab(self.page_composite, "")
+        self.page_find_ids = QWidget()
+        self.page_find_ids.setObjectName(u"page_find_ids")
+        self.tabs.addTab(self.page_find_ids, "")
+        self.page_explorer = QWidget()
+        self.page_explorer.setObjectName(u"page_explorer")
+        self.tabs.addTab(self.page_explorer, "")
 
         self.centralLayout.addWidget(self.tabs)
 
@@ -129,6 +147,9 @@ class Ui_MainWindowForm(object):
 
         self.retranslateUi(MainWindowForm)
 
+        self.tabs.setCurrentIndex(0)
+
+
         QMetaObject.connectSlotsByName(MainWindowForm)
     # setupUi
 
@@ -180,6 +201,12 @@ class Ui_MainWindowForm(object):
         self.actionSettings.setText(QCoreApplication.translate("MainWindowForm", u"&Settings...", None))
         self.actionAbout.setText(QCoreApplication.translate("MainWindowForm", u"&About", None))
         self.actionUpdates.setText(QCoreApplication.translate("MainWindowForm", u"Check for &updates", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.page_quests), QCoreApplication.translate("MainWindowForm", u"Quests", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.page_locale), QCoreApplication.translate("MainWindowForm", u"Locale", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.page_trader), QCoreApplication.translate("MainWindowForm", u"Trader", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.page_composite), QCoreApplication.translate("MainWindowForm", u"Composite items", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.page_find_ids), QCoreApplication.translate("MainWindowForm", u"Find IDs", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.page_explorer), QCoreApplication.translate("MainWindowForm", u"Schema Explorer", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindowForm", u"&File", None))
         self.menuAssort.setTitle(QCoreApplication.translate("MainWindowForm", u"Trader assort", None))
         self.menuLocks.setTitle(QCoreApplication.translate("MainWindowForm", u"Quest locks", None))

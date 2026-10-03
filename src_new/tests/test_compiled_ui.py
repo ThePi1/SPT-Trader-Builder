@@ -211,3 +211,31 @@ def test_the_add_button_opens_its_menu_and_the_outline_has_its_panes(app):
 	assert outline.add_menu.actions()  # (what can be added to the selected quest)
 	assert outline.splitter.count() == 2 and outline.rightSplitter.count() == 2
 	assert outline.pane_layout.count() > 0 and outline.problems.parent() is outline.leftPane
+
+
+# --- the tab bar (main_window.ui has a placeholder page per tab) ---------------------------------
+
+
+def test_the_tabs_come_from_the_ui_file_and_hold_the_real_widgets(window):
+	from PySide6.QtWidgets import QTabWidget
+
+	expected = [
+		("Quests", window.quest_outline), ("Locale", window.locale_tab), ("Trader", window.assort_tab),
+		("Composite items", window.composite_tab), ("Find IDs", window.lookup_tab), ("Schema Explorer", window.explorer_tab),
+	]
+	assert [(window.tabs.tabText(i), window.tabs.widget(i)) for i in range(window.tabs.count())] == expected
+	assert isinstance(window.tabs, QTabWidget) and window.tabs.currentIndex() == 0
+
+
+def test_the_placeholder_pages_are_gone_and_a_mismatch_with_the_ui_file_is_reported(window, app):
+	assert not [n for n in vars(window) if n.startswith("page_")]
+	with pytest.raises(RuntimeError, match="main_window.ui has the tab pages"):
+		window._fill_tabs({"page_quests": window.quest_outline})  # (the tabs already hold real widgets: names don't match)
+
+
+def test_switching_tabs_still_refreshes_the_tab(window):
+	window._set_locale(Document({"a": "b"}))
+	window.tabs.setCurrentWidget(window.locale_tab)
+	assert window.locale_tab.model.total == 1
+	window.tabs.setCurrentWidget(window.lookup_tab)
+	assert window.lookup_tab.view.table.rowCount() > 0
