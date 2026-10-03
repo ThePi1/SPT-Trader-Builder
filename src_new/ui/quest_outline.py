@@ -78,6 +78,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.tree.currentItemChanged.connect(self._selected)
+		self.search.textChanged.connect(lambda _text: self.apply_filter())
 		self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 		self.tree.customContextMenuRequested.connect(self._context_menu)
 		self.problems = ProblemsPanel(settings)  # (under the tree)
@@ -238,6 +239,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 				self._build_quest(qid, quest)
 		self.tree.expandAll()
 		self.tree.blockSignals(False)
+		self.apply_filter()
 		if not self._select_key(keep):
 			if self.tree.topLevelItemCount():
 				self.tree.setCurrentItem(self.tree.topLevelItem(0))
@@ -320,6 +322,32 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			self.sources.pop(q, None)
 		self.set_sources(self.sources)
 		return len(ids)
+
+	def apply_filter(self):
+		"""Show only the quests whose name (or the file they were imported from) has all the words in the search box."""
+		words = self.search.text().lower().split()
+		current = self.tree.currentItem()
+		first_shown = None
+		for i in range(self.tree.topLevelItemCount()):
+			item = self.tree.topLevelItem(i)
+			qid = item.data(0, ROLE).path[0]
+			quest = self.doc.data.get(qid) if self.doc else None
+			text = f"{(quest or {}).get('QuestName', '')} {self.sources.get(qid, '')}".lower()
+			hidden = bool(words) and not all(word in text for word in words)
+			item.setHidden(hidden)
+			if hidden:
+				for part in self._walk(item):
+					part.setSelected(False)
+			elif first_shown is None:
+				first_shown = item
+		if current is not None:
+			top = current
+			while top.parent() is not None:
+				top = top.parent()
+			if top.isHidden():
+				self.tree.setCurrentItem(first_shown)
+				if first_shown is None:
+					self._show_hint("No quest matches the search.")
 
 	def set_sources(self, sources):
 		"""Show which file each imported quest came from (quest id -> file name)."""

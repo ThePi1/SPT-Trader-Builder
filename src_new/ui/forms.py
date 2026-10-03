@@ -17,6 +17,7 @@ from core.ids import new_id
 from schema import choices as choice_lists
 from schema import fields as F
 from schema.common import short
+from ui.more_button import MoreButton
 
 PICKABLE = (F.ITEM, F.QUEST, F.ACHIEVEMENT, F.CUSTOMIZATION)  # ids the Find... button can search for
 BAD_STYLE = "border: 1px solid #c0392b; background: #fdecea;"
@@ -547,9 +548,7 @@ class FormWidget(QWidget):
 			self.controls.append(control)
 			(more if field.advanced else main).addRow(field.label, control)
 		outer.addLayout(main)
-		self.more_button = QPushButton("More options", self)  # (given a parent now: with none, setVisible below would open it as a window)
-		self.more_button.setCheckable(True)
-		self.more_button.setFlat(True)
+		self.more_button = MoreButton("More options", self)  # (given a parent now: with none, setVisible below would open it as a window)
 		self.more_box = QWidget(self)
 		self.more_box.setLayout(more)
 		self.more_box.setVisible(False)

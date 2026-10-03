@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QHBoxLayout, QHeaderView,
-    QPlainTextEdit, QPushButton, QScrollArea, QSizePolicy,
-    QSplitter, QToolButton, QTreeWidget, QTreeWidgetItem,
-    QVBoxLayout, QWidget)
+    QLineEdit, QPlainTextEdit, QPushButton, QScrollArea,
+    QSizePolicy, QSplitter, QToolButton, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout, QWidget)
 
 class Ui_OutlineForm(object):
     def setupUi(self, OutlineForm):
@@ -85,6 +85,12 @@ class Ui_OutlineForm(object):
 
         self.leftLayout.addLayout(self.tools)
 
+        self.search = QLineEdit(self.leftPane)
+        self.search.setObjectName(u"search")
+        self.search.setClearButtonEnabled(True)
+
+        self.leftLayout.addWidget(self.search)
+
         self.tree = QTreeWidget(self.leftPane)
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, u"1");
@@ -96,7 +102,7 @@ class Ui_OutlineForm(object):
 
         self.leftLayout.addWidget(self.tree)
 
-        self.leftLayout.setStretch(1, 1)
+        self.leftLayout.setStretch(2, 1)
         self.splitter.addWidget(self.leftPane)
         self.rightSplitter = QSplitter(self.splitter)
         self.rightSplitter.setObjectName(u"rightSplitter")
@@ -133,6 +139,7 @@ class Ui_OutlineForm(object):
         self.delete_button.setText(QCoreApplication.translate("OutlineForm", u"Delete", None))
         self.up_button.setText(QCoreApplication.translate("OutlineForm", u"Up", None))
         self.down_button.setText(QCoreApplication.translate("OutlineForm", u"Down", None))
+        self.search.setPlaceholderText(QCoreApplication.translate("OutlineForm", u"Search quests by name", None))
         pass
     # retranslateUi
 

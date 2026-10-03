@@ -43,6 +43,10 @@ class AssortTab(QWidget, Ui_AssortForm):
 		self.quests_document = quests_document
 		self._editing = False
 		self.search.textChanged.connect(lambda _t: self.refresh())
+		self.levelFilter.addItem("All levels", None)
+		for level in A.LEVELS:
+			self.levelFilter.addItem(f"Level {level}", level)
+		self.levelFilter.currentIndexChanged.connect(lambda _i: self.refresh())
 		self.list.currentItemChanged.connect(self._select)
 		for button, slot in ((self.addButton, self.add_offer), (self.copyButton, self.copy_offer), (self.deleteButton, self.delete_offer)):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
@@ -122,6 +126,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 	def refresh(self, select=None):
 		keep = select or self.current_id()
 		words = self.search.text().lower().split()
+		level = self.levelFilter.currentData()
 		self.list.blockSignals(True)
 		self.list.clear()
 		names = self._names()
@@ -135,6 +140,8 @@ class AssortTab(QWidget, Ui_AssortForm):
 				text += "  [quest]"
 			total += 1
 			if words and not all(w in text.lower() for w in words):
+				continue
+			if level is not None and data.get("loyal_level_items", {}).get(offer_id) != level:
 				continue
 			item = QListWidgetItem(text)
 			item.setData(ROLE, offer_id)
@@ -378,7 +385,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 			if quest is None:
 				label.setText("That quest isn't in the open quest file.")
 			elif A.find_unlock(quest, lock, tpl, self.trader_id or None):
-				label.setText(f'Quest "{quest.get("QuestName") or quest_id}" gives this unlock.')
+				label.setText(f'Linked quest "{quest.get("QuestName") or quest_id}" gives this unlock.')
 			else:
 				label.setText("The quest doesn't unlock this item yet.")
 				button, action = "Add unlock to the quest", lambda: self._add_unlock(offer_id, lock, quest_id)

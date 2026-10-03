@@ -78,11 +78,22 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLineEdit" name="search">
-         <property name="placeholderText">
-          <string>Search the offers</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="searchRow" stretch="1,0">
+         <item>
+          <widget class="QLineEdit" name="search">
+           <property name="placeholderText">
+            <string>Search the offers</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="levelFilter">
+           <property name="toolTip">
+            <string>Show only the offers that unlock at this trader level.</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QListWidget" name="list"/>
@@ -146,6 +157,7 @@
  </widget>
  <tabstops>
   <tabstop>search</tabstop>
+  <tabstop>levelFilter</tabstop>
   <tabstop>list</tabstop>
   <tabstop>addButton</tabstop>
   <tabstop>copyButton</tabstop>

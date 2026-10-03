@@ -29,7 +29,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <widget class="QWidget" name="leftPane">
-      <layout class="QVBoxLayout" name="leftLayout" stretch="0,1">
+      <layout class="QVBoxLayout" name="leftLayout" stretch="0,0,1">
        <property name="leftMargin">
         <number>0</number>
        </property>
@@ -102,6 +102,16 @@
           </widget>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="search">
+         <property name="placeholderText">
+          <string>Search quests by name</string>
+         </property>
+         <property name="clearButtonEnabled">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QTreeWidget" name="tree">

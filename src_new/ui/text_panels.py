@@ -1,10 +1,12 @@
 """Text boxes for the words the game shows (a quest's name and description, a task's text),
 kept in the locale file. They write to the open locale document."""
 
-from PySide6.QtWidgets import QFormLayout, QGroupBox, QLabel, QLineEdit, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFormLayout, QGroupBox, QLabel, QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
 
 from core.documents import MISSING
 from schema import locale as L
+from ui.more_button import MoreButton
 
 
 class TextBox(QWidget):
@@ -38,29 +40,31 @@ class TextBox(QWidget):
 		self.doc.set_value("Edit text", (self.key,), text, coalesce=self.key)
 
 
+DEFAULT_FIELDS = ("name", "description", "startedMessageText", "successMessageText")  # shown first, in this order
+
+
 class QuestTextPanel(QGroupBox):
-	"""The text of a quest: name, description, messages. The rarely used ones are under More."""
+	"""The locale of a quest: name, description and the start and completion messages; the rest is under More locale."""
 
 	def __init__(self, doc, quest, parent=None):
-		super().__init__("Text", parent)
+		super().__init__("Locale", parent)
 		qid = quest.get("_id", "")
 		layout = QVBoxLayout(self)
 		main, more = QFormLayout(), QFormLayout()
-		for field in L.QUEST_TEXT:
+		fields = {field.key: field for field in L.QUEST_TEXT}
+		for field in [fields[k] for k in DEFAULT_FIELDS] + [f for f in L.QUEST_TEXT if f.key not in DEFAULT_FIELDS]:
 			key = quest.get(field.key) or L.quest_key(qid, field.key)
 			if not isinstance(key, str):
 				continue
 			box = TextBox(doc, key, field.multiline)
-			(main if field.used else more).addRow(field.label, box)
+			(main if field.key in DEFAULT_FIELDS else more).addRow(field.label, box)
 		layout.addLayout(main)
-		self.more_button = QPushButton("More text", self)
-		self.more_button.setCheckable(True)
-		self.more_button.setFlat(True)
+		self.more_button = MoreButton("More locale", self)
 		self.more_box = QWidget(self)
 		self.more_box.setLayout(more)
 		self.more_box.setVisible(False)
 		self.more_button.toggled.connect(self.more_box.setVisible)
-		layout.addWidget(self.more_button)
+		layout.addWidget(self.more_button, 0, Qt.AlignmentFlag.AlignLeft)
 		layout.addWidget(self.more_box)
 
 
@@ -68,7 +72,7 @@ class TaskTextPanel(QGroupBox):
 	"""What the quest screen says for a task. Start tasks have none (the game writes it itself)."""
 
 	def __init__(self, doc, task_id, timing, parent=None):
-		super().__init__("Text", parent)
+		super().__init__("Locale", parent)
 		layout = QVBoxLayout(self)
 		layout.addWidget(TextBox(doc, task_id, True))
 		if timing == "Fail":

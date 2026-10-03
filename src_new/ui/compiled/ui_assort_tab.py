@@ -57,10 +57,21 @@ class Ui_AssortForm(object):
         self.leftLayout = QVBoxLayout(self.leftPane)
         self.leftLayout.setObjectName(u"leftLayout")
         self.leftLayout.setContentsMargins(0, 0, 0, 0)
+        self.searchRow = QHBoxLayout()
+        self.searchRow.setObjectName(u"searchRow")
         self.search = QLineEdit(self.leftPane)
         self.search.setObjectName(u"search")
 
-        self.leftLayout.addWidget(self.search)
+        self.searchRow.addWidget(self.search)
+
+        self.levelFilter = QComboBox(self.leftPane)
+        self.levelFilter.setObjectName(u"levelFilter")
+
+        self.searchRow.addWidget(self.levelFilter)
+
+        self.searchRow.setStretch(0, 1)
+
+        self.leftLayout.addLayout(self.searchRow)
 
         self.list = QListWidget(self.leftPane)
         self.list.setObjectName(u"list")
@@ -105,7 +116,8 @@ class Ui_AssortForm(object):
         self.outerLayout.addWidget(self.splitter)
 
         self.outerLayout.setStretch(1, 1)
-        QWidget.setTabOrder(self.search, self.list)
+        QWidget.setTabOrder(self.search, self.levelFilter)
+        QWidget.setTabOrder(self.levelFilter, self.list)
         QWidget.setTabOrder(self.list, self.addButton)
         QWidget.setTabOrder(self.addButton, self.copyButton)
         QWidget.setTabOrder(self.copyButton, self.deleteButton)
@@ -122,6 +134,9 @@ class Ui_AssortForm(object):
         self.trader.setToolTip(QCoreApplication.translate("AssortForm", u"The trader this assort is for. Needed to add quest unlocks. You can paste a trader id.", None))
 #endif // QT_CONFIG(tooltip)
         self.search.setPlaceholderText(QCoreApplication.translate("AssortForm", u"Search the offers", None))
+#if QT_CONFIG(tooltip)
+        self.levelFilter.setToolTip(QCoreApplication.translate("AssortForm", u"Show only the offers that unlock at this trader level.", None))
+#endif // QT_CONFIG(tooltip)
         self.note.setText("")
         self.addButton.setText(QCoreApplication.translate("AssortForm", u"Add offer...", None))
         self.copyButton.setText(QCoreApplication.translate("AssortForm", u"Copy", None))
