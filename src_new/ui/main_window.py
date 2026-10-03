@@ -6,11 +6,12 @@ there is no project folder.
 
 from pathlib import Path
 
-from PySide6.QtCore import QThreadPool
+from PySide6.QtCore import QThreadPool, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 
 from core import lookup
+from core import merge as M
 from core.locale_copy import copy_to_other_languages
 from core.documents import Document
 from core.paths import ICON_FILE
@@ -22,12 +23,20 @@ from ui.assort_tab import AssortTab
 from ui.compiled.ui_main_window import Ui_MainWindowForm
 from ui.composite_tab import CompositeTab
 from ui.explorer_tab import ExplorerTab
+from ui.files_strip import FilesStrip
+from ui.import_dialog import ImportDialog
 from ui.locale_tab import LocaleTab
 from ui.lookup_view import LookupTab, PickerDialog
 from ui.quest_outline import QuestOutline
 from ui.tabs import fill_tabs
 
 JSON_FILTER = "JSON files (*.json);;All files (*)"
+# (key = the attribute holding its Document, the strip's title, the name used in dialogs, the kind core.merge knows it as)
+KINDS = (
+	("quests", "Quests", "quest", M.QUESTS), ("locale", "Locale", "locale", M.LOCALE),
+	("assort", "Trader assort", "trader assort", M.ASSORT), ("locks", "Quest locks", "quest locks", M.LOCKS),
+)
+KEY_OF_KIND = {kind: key for key, _title, _label, kind in KINDS}
 
 
 def app_icon():
@@ -45,6 +54,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.setWindowIcon(app_icon())
 		self.update_status = updates.pending_status(settings)
 		self._workers = []
+		self.imported = {key: [] for key, *_rest in KINDS}  # the files imported into each section since it was opened
+		self.quest_sources = {}  # quest id -> the file it was imported from
 		self.quests = Document({})
 		self.locale = Document({})
 		self.assort = Document(assort_schema.empty_assort())
@@ -68,12 +79,14 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			"page_composite": self.composite_tab, "page_find_ids": self.lookup_tab, "page_explorer": self.explorer_tab,
 		})
 		self.tabs.currentChanged.connect(self._tab_changed)
+		self.files_strip = FilesStrip([(key, title) for key, title, _label, _kind in KINDS])
+		self.centralLayout.addWidget(self.files_strip)
 		for doc in (self.quests, self.locale, self.assort, self.locks):
-			doc.on_change(lambda _d: self._update_title())
-		self.locale.on_change(lambda _d: self._update_title())
+			doc.on_change(self._doc_changed)
 		self.locale.on_change(lambda _d: self.quest_outline.check_soon())
 		self._connect_menus()
-		self._update_title()
+		self.setAcceptDrops(True)
+		self._doc_changed()
 		self.start_update_check()
 
 	# --- finding ids --------------------------------------------------------------------------
@@ -103,23 +116,37 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	# --- menus ------------------------------------------------------------------------------
 	def _connect_menus(self):
-		"""The menus and their actions are in main_window.ui (names, shortcuts); this says what each one does."""
+		"""The menus and their actions are in main_window.ui (names, shortcuts); this says what each one does.
+		The same actions are the menus of the files strip's segments."""
+		sections = {
+			"quests": (self.actionNewQuests, self.actionOpenQuests, self.actionImportQuests, self.actionSaveQuests, self.actionSaveQuestsAs),
+			"locale": (self.actionNewLocale, self.actionOpenLocale, self.actionImportLocale, self.actionSaveLocale, self.actionSaveLocaleAs),
+			"assort": (self.actionAssortNew, self.actionAssortOpen, self.actionAssortImport, self.actionAssortSave, self.actionAssortSaveAs),
+			"locks": (self.actionLocksNew, self.actionLocksOpen, self.actionLocksImport, self.actionLocksSave, self.actionLocksSaveAs),
+		}
+		doing = {
+			"quests": (self.new_quests, self.open_quests, self.save_quests, self.save_quests_as),
+			"locale": (self.new_locale, self.open_locale, self.save_locale, self.save_locale_as),
+			"assort": (lambda: self._new_other("assort"), lambda: self._open_other("assort"), lambda: self._save_other("assort"), lambda: self._save_other("assort", True)),
+			"locks": (lambda: self._new_other("locks"), lambda: self._open_other("locks"), lambda: self._save_other("locks"), lambda: self._save_other("locks", True)),
+		}
+		for key, (new, open_, import_, save, save_as) in sections.items():
+			do_new, do_open, do_save, do_save_as = doing[key]
+			for action, slot in ((new, do_new), (open_, do_open), (import_, lambda key=key: self.import_into(key)), (save, do_save), (save_as, do_save_as)):
+				action.triggered.connect(lambda _checked=False, slot=slot: slot())
+			menu = self.files_strip.segment(key).menu
+			for action in (new, open_, import_):
+				menu.addAction(action)
+			menu.addSeparator()
+			menu.addAction(save)
+			menu.addAction(save_as)
 		for action, slot in (
-			(self.actionNewQuests, self.new_quests), (self.actionOpenQuests, self.open_quests),
-			(self.actionSaveQuests, self.save_quests), (self.actionSaveQuestsAs, self.save_quests_as),
-			(self.actionNewLocale, self.new_locale), (self.actionOpenLocale, self.open_locale),
-			(self.actionSaveLocale, self.save_locale), (self.actionSaveLocaleAs, self.save_locale_as),
-			(self.actionAssortNew, lambda: self._new_other("assort")), (self.actionAssortOpen, lambda: self._open_other("assort")),
-			(self.actionAssortSave, lambda: self._save_other("assort")),
-			(self.actionAssortSaveAs, lambda: self._save_other("assort", True)),
-			(self.actionLocksNew, lambda: self._new_other("locks")), (self.actionLocksOpen, lambda: self._open_other("locks")),
-			(self.actionLocksSave, lambda: self._save_other("locks")),
-			(self.actionLocksSaveAs, lambda: self._save_other("locks", True)),
-			(self.actionExit, self.close), (self.actionUndo, self.undo), (self.actionRedo, self.redo),
-			(self.actionSettings, self.show_settings), (self.actionAbout, self.show_about),
+			(self.actionImportFiles, self.import_any), (self.actionExit, self.close), (self.actionUndo, self.undo),
+			(self.actionRedo, self.redo), (self.actionSettings, self.show_settings), (self.actionAbout, self.show_about),
 			(self.actionUpdates, self.show_updates),
 		):
 			action.triggered.connect(lambda _checked=False, slot=slot: slot())
+		self.actionExportQuests.setVisible(False)  # (the export window comes with the next change)
 		self.undo_action, self.redo_action = self.actionUndo, self.actionRedo
 		self.menuEdit.aboutToShow.connect(self._update_edit_menu)
 
@@ -132,11 +159,31 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.redo_action.setText(f"&Redo {redo_doc.redo_label}" if redo_doc.redo_label else "&Redo")
 
 	def _update_title(self):
-		def label(doc):
-			return doc.name + ("*" if doc.dirty else "")
+		"""The title is the program's name, with * when anything is unsaved (the files strip says which)."""
+		self.setWindowTitle(dialogs.APP_NAME + ("*" if any(d.dirty for d in self._docs()) else ""))
 
-		shown = [label(d) for d in self._docs() if d.path is not None or d.dirty]
-		self.setWindowTitle(f"{', '.join(shown) or 'Untitled'} - {dialogs.APP_NAME}")
+	def _doc_changed(self, _doc=None):
+		self._update_title()
+		self._refresh_strip()
+
+	def _count(self, key):
+		data = getattr(self, key).data
+		if key == "assort":
+			return len(assort_schema.offer_ids(data))
+		if key == "locks":
+			return sum(len(v) for v in data.values() if isinstance(v, dict))
+		return len(data)
+
+	def _refresh_strip(self):
+		for key, _title, _label, _kind in KINDS:
+			doc, count, names = getattr(self, key), self._count(key), self.imported[key]
+			imports = f"{len(names)} file{'' if len(names) == 1 else 's'} imported" if names else ""
+			if doc.path:
+				file_text = doc.name + (f" \u00b7 +{imports}" if imports else "")
+			else:
+				file_text = ("not saved yet" if count else "empty") + (f" \u00b7 {imports}" if imports else "")
+			state, tone = ("unsaved", "warn") if doc.dirty else (("saved", "ok") if doc.path else ("", "muted"))
+			self.files_strip.segment(key).set_info(count, state, tone, file_text, str(doc.path) if doc.path else "")
 
 	# --- files ------------------------------------------------------------------------------
 	def _confirm_discard(self, doc, label):
@@ -153,20 +200,23 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def _set_quests(self, doc):
 		self.quests = doc
-		doc.on_change(lambda _d: self._update_title())
+		self.imported["quests"].clear()
+		self.quest_sources.clear()
+		doc.on_change(self._doc_changed)
 		self.quest_outline.set_document(doc)
 		self.locale_tab.set_documents(self.locale, doc)
-		self._update_title()
+		self._doc_changed()
 
 	def _set_locale(self, doc):
 		self.locale = doc
-		doc.on_change(lambda _d: self._update_title())
+		self.imported["locale"].clear()
+		doc.on_change(self._doc_changed)
 		doc.on_change(lambda _d: self.quest_outline.check_soon())
 		self.quest_outline.locale = doc
 		self.quest_outline.rebuild()
 		self.quest_outline.check()
 		self.locale_tab.set_documents(doc, self.quests)
-		self._update_title()
+		self._doc_changed()
 
 	def _new(self, doc, label, setter):
 		if self._confirm_discard(doc, label):
@@ -189,9 +239,9 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		setter(opened)
 
 	def _save(self, doc, label, as_new=False):
-		path = None if as_new or doc.path is None else doc.path
-		if path is None:
-			start = doc.name if doc.path else f"{self.settings.language}.json" if doc is self.locale else f"{label}s.json"
+		path = doc.path
+		if as_new or path is None or self.settings.save_asks_for_file:
+			start = str(doc.path) if doc.path else f"{self.settings.language}.json" if doc is self.locale else f"{label}s.json"
 			chosen, _ = QFileDialog.getSaveFileName(self, f"Save {label} file", start, JSON_FILTER)
 			if not chosen:
 				return False
@@ -251,9 +301,10 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def _set_other(self, name, doc):
 		setattr(self, name, doc)
-		doc.on_change(lambda _d: self._update_title())
+		self.imported[name].clear()
+		doc.on_change(self._doc_changed)
 		self.assort_tab.watch(self.assort, self.locks)
-		self._update_title()
+		self._doc_changed()
 
 	def _new_other(self, name):
 		label, empty = self._OTHER[name]
@@ -285,6 +336,82 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			event.accept()
 		else:
 			event.ignore()
+
+	# --- importing ---------------------------------------------------------------------------
+	def _workspace(self):
+		return {M.QUESTS: self.quests.data, M.LOCALE: self.locale.data, M.ASSORT: self.assort.data, M.LOCKS: self.locks.data}
+
+	def import_any(self):
+		"""File > Import files...: pick any number of files of any kind; their kinds are worked out."""
+		paths, _ = QFileDialog.getOpenFileNames(self, "Import files", "", JSON_FILTER)
+		if paths:
+			self.import_files(paths)
+
+	def import_into(self, key):
+		"""Import... in one section's menu: only files of that kind are ticked."""
+		label = {k: lab for k, _t, lab, _m in KINDS}[key]
+		paths, _ = QFileDialog.getOpenFileNames(self, f"Import {label} files", "", JSON_FILTER)
+		if paths:
+			self.import_files(paths, only=dict((k, kind) for k, _t, _l, kind in KINDS)[key])
+
+	def import_files(self, paths, only=None):
+		"""Show the import window for these files (and the .json files in these folders); apply it if accepted."""
+		items = M.load_items(paths)
+		if not items:
+			QMessageBox.information(self, "Import files", "There are no .json files to import there.")
+			return None
+		if only:
+			for item in items:
+				if item.kind and item.kind != only:
+					item.include = False
+					item.error = f"This looks like a {M.KIND_LABEL[item.kind].lower()} file."
+		dialog = ImportDialog(items, self._workspace(), self)
+		if not dialog.exec() or dialog.plan is None:
+			return None
+		return self.apply_import(dialog.plan, dialog.chosen_items())
+
+	def apply_import(self, plan, items):
+		"""Put an import's result in the open sections, one undo step each, and say what happened."""
+		included = [i for i in items if i.include and i.kind]
+		label = f"Import {len(included)} file{'' if len(included) == 1 else 's'}"
+		for kind in M.ORDER:
+			if kind in plan.data:
+				getattr(self, KEY_OF_KIND[kind]).replace(label, plan.data[kind])
+		for item in included:
+			names = self.imported[KEY_OF_KIND[item.kind]]
+			if item.name not in names:
+				names.append(item.name)
+		self.quest_sources.update(plan.sources)
+		self.quest_outline.set_sources(self.quest_sources)
+		self._doc_changed()
+		parts = [f"{plan.adds(kind)} {M.KIND_LABEL[kind].lower()}" for kind in M.ORDER if plan.adds(kind)]
+		text = ("Imported " + ", ".join(parts) + ".") if parts else "Imported."
+		bare = [qid for qid in plan.sources if locale_schema.missing_keys({qid: self.quests.data[qid]}, self.locale.data)] if self.quests.data else []
+		if bare:
+			text += f" {len(bare)} imported quest{'' if len(bare) == 1 else 's'} {'has' if len(bare) == 1 else 'have'} no text yet: import a locale file."
+		self.statusBar().showMessage(text, 15000)
+		return plan
+
+	@staticmethod
+	def _droppable(mime):
+		from pathlib import Path as _Path
+
+		return mime.hasUrls() and any(
+			u.isLocalFile() and (u.toLocalFile().lower().endswith(".json") or _Path(u.toLocalFile()).is_dir()) for u in mime.urls()
+		)
+
+	def dragEnterEvent(self, event):
+		if self._droppable(event.mimeData()):
+			event.acceptProposedAction()
+
+	def dragMoveEvent(self, event):
+		if self._droppable(event.mimeData()):
+			event.acceptProposedAction()
+
+	def dropEvent(self, event):
+		paths = [u.toLocalFile() for u in event.mimeData().urls() if u.isLocalFile()]
+		event.acceptProposedAction()
+		QTimer.singleShot(0, lambda: self.import_files(paths))  # (so the drop finishes before the window opens)
 
 	# --- settings, about, updates -----------------------------------------------------------
 	def show_settings(self):

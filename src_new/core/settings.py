@@ -58,6 +58,7 @@ MIN_LIMIT, MAX_LIMIT = 10, 100000  # how many entries a list may be set to show
 SETTINGS = (
 	Setting("general", "debug_logging", "bool", False),
 	Setting("general", "copy_locale_to_all_languages", "bool", False),
+	Setting("general", "save_asks_for_file", "bool", False),
 	Setting("data", "database_folder", "path", ""),
 	Setting("data", "language", "text", "en"),
 	Setting("defaults", "quest_icon", "text", "/files/quest/icon/6137505384aedf00fa17b651.jpg"),

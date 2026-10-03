@@ -69,13 +69,11 @@ def action(win, name):
 def test_the_menu_bar_has_the_four_menus_with_their_entries(window):
 	assert [a.text() for a in window.menubar.actions()] == ["&File", "&Edit", "&Settings", "&Help"]
 	file_entries = [a.text().replace("&", "") for a in window.menuFile.actions() if not a.isSeparator()]
-	assert file_entries == [
-		"New quest file", "Open quest file...", "Save quest file", "Save quest file as...",
-		"New locale file", "Open locale file...", "Save locale file", "Save locale file as...",
-		"Trader assort", "Quest locks", "Exit",
-	]
-	assert [a.text() for a in window.menuAssort.actions()] == ["New", "Open...", "Save", "Save as..."]
-	assert [a.text() for a in window.menuLocks.actions()] == ["New", "Open...", "Save", "Save as..."]
+	assert file_entries == ["Import files...", "Quests", "Locale", "Trader assort", "Quest locks", "Exit"]
+	section = ["New (empty)", "Open...", "Import...", "Save", "Save as..."]
+	for menu in (window.menuLocale, window.menuAssort, window.menuLocks):
+		assert [a.text() for a in menu.actions() if not a.isSeparator()] == section
+	assert [a.text() for a in window.menuQuests.actions() if not a.isSeparator()] == section + ["&Export selected quests..."]
 
 
 @pytest.mark.parametrize("name,keys", [

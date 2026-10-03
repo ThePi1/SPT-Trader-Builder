@@ -174,9 +174,8 @@ def test_the_tab_and_the_file_menu_say_locale(app, tmp_path, monkeypatch):
 	win = window(tmp_path, monkeypatch)
 	tabs = [win.tabs.tabText(i) for i in range(win.tabs.count())]
 	assert "Locale" in tabs and "Text" not in tabs
+	assert win.menuLocale.title().replace("&", "") == "Locale"
 	entries = [a.text().replace("&", "") for a in win.findChildren(QAction) if a.text()]
-	assert "New locale file" in entries and "Open locale file..." in entries
-	assert "Save locale file" in entries and "Save locale file as..." in entries
 	assert not [e for e in entries if "text" in e.lower()]
 
 

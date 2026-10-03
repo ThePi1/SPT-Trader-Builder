@@ -62,6 +62,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.gamedata, self.settings, self.doc = gamedata, settings, None
 		self.library = None  # the user's saved composite items
 		self.locale = None  # the open locale Document, for the text boxes
+		self.sources = {}  # quest id -> the file it was imported from, shown next to the quest
 		self.picker = None  # (ref kind, multi, parent) -> [ids]: the window's search dialog
 		self._editing = False
 		self.setupUi(self)  # (the layout: the buttons, tree, form pane and JSON view are in ui/designer/quest_outline.ui)
@@ -216,7 +217,8 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		data = _get(self.doc.data, address.path)
 		names = self._names()
 		if address.kind == "quest":
-			return QUEST.summary(data, names)
+			source = self.sources.get(address.path[0])
+			return QUEST.summary(data, names) + (f"  [{source}]" if source else "")
 		if address.kind == "group":
 			return f"{address.timing} ({len(data)})" if address.group != "rewards" else "Rewards"
 		return registry.spec_of(data, address.kind).summary(data, names)
@@ -267,6 +269,11 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			for i in range(len(rewards[timing] or [])):
 				node = self._add_item(group, "", Address("reward", path + (i,), "reward", timing))
 				node.setText(0, self._label(node.data(0, ROLE)))
+
+	def set_sources(self, sources):
+		"""Show which file each imported quest came from (quest id -> file name)."""
+		self.sources = sources
+		self._refresh_labels()
 
 	def _walk(self, item=None):
 		items = [item] if item is not None else [self.tree.topLevelItem(i) for i in range(self.tree.topLevelItemCount())]

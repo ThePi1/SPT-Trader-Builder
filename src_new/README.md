@@ -16,6 +16,22 @@ Quests (outline tree and forms, text boxes, problems list), Locale (the whole lo
 Composite items (your saved items, plus the base game's), Find IDs, Schema Explorer. Each file (quests, locale, assort,
 quest locks) is opened and saved on its own from the File menu; any of them can be started from nothing.
 
+## Opening, importing and saving
+
+The program holds four things at once: quests, locale (the text), a trader's assort and its quest locks. The strip along
+the bottom shows each one: how many entries it has, whether it is saved, and the file Save writes to. Click a segment
+for its menu (the same entries are under File).
+
+- Open replaces what is held and links the file, so Save writes back to it. New (empty) starts over.
+- Import adds the contents of other files to what is held, and keeps the link. File > Import files... (Ctrl+I) takes any
+  number of files of any kind, and so does dropping files or a folder on the window; a section's own Import... takes
+  files of that kind. A window shows what would be added and what clashes (the same quest id, offer id, or locale key with
+  other text) before anything changes. Clashes can keep what you have, use the imported one, or keep both (the imported
+  quest or offer gets new ids; its text and locks follow it). Locale files add only the text of the quests by default.
+- Save writes to the linked file, or asks for a name when there is none. Settings > General > "Always ask for a file name
+  when saving" makes it ask every time. Importing five quest files and saving gives one file.
+- The window title is the program's name, with * when anything is unsaved.
+
 ## Version and update check
 
 `data/version.txt` is the program's version. Help > Check for updates compares it with the file at `version_url`
