@@ -7,8 +7,8 @@ there is no project folder.
 from pathlib import Path
 
 from PySide6.QtCore import QThreadPool
-from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox, QTabWidget
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 
 from core import lookup
 from core.locale_copy import copy_to_other_languages
@@ -19,6 +19,7 @@ from core.library import Library
 from schema import assort as assort_schema
 from schema import locale as locale_schema
 from ui.assort_tab import AssortTab
+from ui.compiled.ui_main_window import Ui_MainWindowForm
 from ui.composite_tab import CompositeTab
 from ui.explorer_tab import ExplorerTab
 from ui.locale_tab import LocaleTab
@@ -33,9 +34,12 @@ def app_icon():
 	return QIcon(str(ICON_FILE)) if ICON_FILE.is_file() else QIcon()
 
 
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow, Ui_MainWindowForm):
+	"""The window, its menus and the (empty) tab bar are ui/designer/main_window.ui; the tabs are added here."""
+
 	def __init__(self, settings, gamedata=None):
 		super().__init__()
+		self.setupUi(self)
 		self.settings, self.gamedata = settings, gamedata
 		self.setWindowIcon(app_icon())
 		self.update_status = updates.pending_status(settings)
@@ -44,8 +48,6 @@ class MainWindow(QMainWindow):
 		self.locale = Document({})
 		self.assort = Document(assort_schema.empty_assort())
 		self.locks = Document(assort_schema.empty_questassort())
-		self.tabs = QTabWidget()
-		self.setCentralWidget(self.tabs)
 		self.quest_outline = QuestOutline(gamedata, settings)
 		self.quest_outline.set_document(self.quests)
 		self.quest_outline.picker = self.pick
@@ -69,8 +71,7 @@ class MainWindow(QMainWindow):
 			doc.on_change(lambda _d: self._update_title())
 		self.locale.on_change(lambda _d: self._update_title())
 		self.locale.on_change(lambda _d: self.quest_outline.check_soon())
-		self._build_menus()
-		self.resize(1100, 700)
+		self._connect_menus()
 		self._update_title()
 		self.start_update_check()
 
@@ -100,43 +101,26 @@ class MainWindow(QMainWindow):
 			self.assort_tab.refresh(self.assort_tab.current_id())  # (the quests may have changed)
 
 	# --- menus ------------------------------------------------------------------------------
-	def _action(self, menu, text, slot, shortcut=None):
-		action = QAction(text, self)
-		action.triggered.connect(slot)
-		if shortcut:
-			action.setShortcut(QKeySequence(shortcut))
-		menu.addAction(action)
-		return action
-
-	def _build_menus(self):
-		bar = self.menuBar()
-		file_menu = bar.addMenu("&File")
-		self._action(file_menu, "&New quest file", self.new_quests, "Ctrl+N")
-		self._action(file_menu, "&Open quest file...", self.open_quests, "Ctrl+O")
-		self._action(file_menu, "&Save quest file", self.save_quests, "Ctrl+S")
-		self._action(file_menu, "Save quest file &as...", self.save_quests_as, "Ctrl+Shift+S")
-		file_menu.addSeparator()
-		self._action(file_menu, "New &locale file", self.new_locale)
-		self._action(file_menu, "Open lo&cale file...", self.open_locale)
-		self._action(file_menu, "Save locale &file", self.save_locale, "Ctrl+Alt+S")
-		self._action(file_menu, "Save locale file as...", self.save_locale_as)
-		for title, label, setter_name in (("Trader assort", "assort", "assort"), ("Quest locks", "locks", "locks")):
-			sub = file_menu.addMenu(title)
-			self._action(sub, "New", lambda _c=False, n=setter_name: self._new_other(n))
-			self._action(sub, "Open...", lambda _c=False, n=setter_name: self._open_other(n))
-			self._action(sub, "Save", lambda _c=False, n=setter_name: self._save_other(n))
-			self._action(sub, "Save as...", lambda _c=False, n=setter_name: self._save_other(n, True))
-		file_menu.addSeparator()
-		self._action(file_menu, "E&xit", self.close, "Alt+F4")
-		edit = bar.addMenu("&Edit")
-		self.undo_action = self._action(edit, "&Undo", self.undo, "Ctrl+Z")
-		self.redo_action = self._action(edit, "&Redo", self.redo, "Ctrl+Y")
-		edit.aboutToShow.connect(self._update_edit_menu)
-		settings = bar.addMenu("&Settings")
-		self._action(settings, "&Settings...", self.show_settings)
-		help_menu = bar.addMenu("&Help")
-		self._action(help_menu, "&About", self.show_about)
-		self._action(help_menu, "Check for &updates", self.show_updates)
+	def _connect_menus(self):
+		"""The menus and their actions are in main_window.ui (names, shortcuts); this says what each one does."""
+		for action, slot in (
+			(self.actionNewQuests, self.new_quests), (self.actionOpenQuests, self.open_quests),
+			(self.actionSaveQuests, self.save_quests), (self.actionSaveQuestsAs, self.save_quests_as),
+			(self.actionNewLocale, self.new_locale), (self.actionOpenLocale, self.open_locale),
+			(self.actionSaveLocale, self.save_locale), (self.actionSaveLocaleAs, self.save_locale_as),
+			(self.actionAssortNew, lambda: self._new_other("assort")), (self.actionAssortOpen, lambda: self._open_other("assort")),
+			(self.actionAssortSave, lambda: self._save_other("assort")),
+			(self.actionAssortSaveAs, lambda: self._save_other("assort", True)),
+			(self.actionLocksNew, lambda: self._new_other("locks")), (self.actionLocksOpen, lambda: self._open_other("locks")),
+			(self.actionLocksSave, lambda: self._save_other("locks")),
+			(self.actionLocksSaveAs, lambda: self._save_other("locks", True)),
+			(self.actionExit, self.close), (self.actionUndo, self.undo), (self.actionRedo, self.redo),
+			(self.actionSettings, self.show_settings), (self.actionAbout, self.show_about),
+			(self.actionUpdates, self.show_updates),
+		):
+			action.triggered.connect(lambda _checked=False, slot=slot: slot())
+		self.undo_action, self.redo_action = self.actionUndo, self.actionRedo
+		self.menuEdit.aboutToShow.connect(self._update_edit_menu)
 
 	def _update_edit_menu(self):
 		undo_doc = self._latest()

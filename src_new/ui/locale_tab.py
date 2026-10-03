@@ -1,13 +1,12 @@
 """The Locale tab: every entry of the locale file, with the quest each one belongs to."""
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
-from PySide6.QtWidgets import (
-	QComboBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QPushButton, QTableView, QVBoxLayout, QWidget,
-)
+from PySide6.QtWidgets import QInputDialog, QWidget
 
 from core import settings as S
 from core.documents import MISSING
 from schema import locale as L
+from ui.compiled.ui_locale_tab import Ui_LocaleForm
 
 COLUMNS = ("Belongs to", "Key", "Text")
 FILTERS = (
@@ -90,41 +89,23 @@ class LocaleModel(QAbstractTableModel):
 		return True
 
 
-class LocaleTab(QWidget):
+class LocaleTab(QWidget, Ui_LocaleForm):
+	"""The layout is ui/designer/locale_tab.ui: search, mode, table, note, and the four buttons."""
+
 	def __init__(self, locale_doc, quests_doc, settings=None, parent=None):
 		super().__init__(parent)
+		self.setupUi(self)
 		self.model = LocaleModel(locale_doc, quests_doc, settings)
-		layout = QVBoxLayout(self)
-		top = QHBoxLayout()
-		self.search = QLineEdit()
-		self.search.setPlaceholderText("Search the text, keys or quest names")
-		self.search.setClearButtonEnabled(True)
-		self.mode = QComboBox()
 		for value, label in FILTERS:
 			self.mode.addItem(label, value)
-		top.addWidget(self.search, 1)
-		top.addWidget(self.mode)
-		layout.addLayout(top)
-		self.table = QTableView()
 		self.table.setModel(self.model)
-		self.table.verticalHeader().setVisible(False)
-		self.table.horizontalHeader().setStretchLastSection(True)
 		self.table.setColumnWidth(0, 180)
 		self.table.setColumnWidth(1, 260)
-		layout.addWidget(self.table, 1)
-		self.note = QLabel()
-		self.note.setStyleSheet("color: #808080;")
-		layout.addWidget(self.note)
-		row = QHBoxLayout()
-		for text, slot in (
-			("Add missing text", self.add_missing), ("Add an entry...", self.add_entry), ("Delete", self.delete_selected),
-			("Fix old spellings", self.fix_spelling),
+		for button, slot in (
+			(self.addMissingButton, self.add_missing), (self.addEntryButton, self.add_entry),
+			(self.deleteButton, self.delete_selected), (self.fixSpellingButton, self.fix_spelling),
 		):
-			button = QPushButton(text)
-			button.clicked.connect(slot)
-			row.addWidget(button)
-		row.addStretch(1)
-		layout.addLayout(row)
+			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.search.textChanged.connect(lambda _t: self.refresh())
 		self.mode.currentIndexChanged.connect(lambda _i: self.refresh())
 		self.refresh()

@@ -41,5 +41,20 @@ The tests that check against the base game use the game data bundled in `data/da
 - `schema/`: what a quest, task, reward, text, assort and composite item are. The forms, the checks and the
   Schema Explorer are all made from this. No Qt.
 - `ui/`: the window, the outline editor, the generated forms, dialogs.
+  - `ui/designer/`: Qt Designer files (`.ui`) for the fixed layouts: the main window and its menus, the Settings, About
+    and Check for updates windows, the Locale tab, Find IDs, and the Schema Explorer's Check a file page.
+  - `ui/compiled/`: those files compiled to Python (`ui_*.py`). Generated: don't edit them by hand.
 - `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source) and `schema/vanilla_profile.json`
-  (from the base game's quests).
+  (from the base game's quests), and compile the Designer files.
+
+## Changing a window's layout
+
+Open the file in Qt Designer, save it, then compile and commit both files:
+
+    pyside6-designer ui/designer/locale_tab.ui
+    python tools/compile_ui.py
+
+The compiled files are committed, so the program runs without compiling. A test fails if a compiled file is out of date
+(`python tools/compile_ui.py --check` says which). Only the fixed parts of a window are in the `.ui` files: the quest,
+task and reward forms are generated from `schema/`, and the tabs, the Settings pages and lists are filled in by code.
+Widgets keep the names code uses (`search`, `table`, `note`, ...), so rename them in Designer only together with the code.

@@ -2,14 +2,15 @@
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-	QCheckBox, QComboBox, QFileDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QSplitter,
-	QTabWidget, QTableWidget, QTableWidgetItem, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+	QFileDialog, QHBoxLayout, QLabel, QListWidgetItem, QSplitter, QTabWidget, QTableWidget, QTableWidgetItem, QTreeWidget,
+	QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
 from core import jsonio
 from core import settings as S
 from schema import explorer
 from schema.issues import ERROR
+from ui.compiled.ui_check_page import Ui_CheckForm
 from ui.problems import ERROR_COLOR, WARNING_COLOR
 
 ROLE = Qt.ItemDataRole.UserRole
@@ -79,32 +80,19 @@ class BrowsePage(QWidget):
 			self.where.setText((self.where.text() + "   " if self.where.text() else "") + f"Filled in by the app: {managed}")
 
 
-class CheckPage(QWidget):
-	"""Open any JSON file and see what is wrong with it."""
+class CheckPage(QWidget, Ui_CheckForm):
+	"""Open any JSON file and see what is wrong with it. The layout is ui/designer/check_page.ui."""
 
 	def __init__(self, get_quests, get_locale, gamedata=None, settings=None, parent=None):
 		super().__init__(parent)
+		self.setupUi(self)
 		self.get_quests, self.get_locale, self.gamedata, self.settings = get_quests, get_locale, gamedata, settings
-		layout = QVBoxLayout(self)
-		row = QHBoxLayout()
-		button = QPushButton("Open a file to check...")
-		button.clicked.connect(self.open_file)
-		self.kind = QComboBox()
+		self.openButton.clicked.connect(lambda _checked=False: self.open_file())
 		self.kind.addItem("Work out what it is", None)
 		for value, label in explorer.FILE_KINDS:
 			self.kind.addItem(label, value)
 		self.kind.currentIndexChanged.connect(lambda _i: self.run())
-		self.with_open = QCheckBox("Check against the quests and locale that are open")
 		self.with_open.stateChanged.connect(lambda _s: self.run())
-		for widget in (button, self.kind, self.with_open):
-			row.addWidget(widget)
-		row.addStretch(1)
-		layout.addLayout(row)
-		self.summary = QLabel("Open a quest, locale, assort or quest-lock file. Nothing is changed in it.")
-		self.summary.setWordWrap(True)
-		layout.addWidget(self.summary)
-		self.list = QListWidget()
-		layout.addWidget(self.list, 1)
 		self.data, self.name = None, ""
 
 	def open_file(self):

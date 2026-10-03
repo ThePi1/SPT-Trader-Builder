@@ -1,14 +1,16 @@
 """Small dialogs: About, Check for updates, Settings."""
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-	QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
-	QMessageBox, QPushButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget,
+	QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QMessageBox, QPushButton,
+	QSpinBox, QWidget,
 )
 
 from core import settings as S
 from schema import choices
 from ui import updates
+from ui.compiled.ui_about_dialog import Ui_AboutForm
+from ui.compiled.ui_settings_dialog import Ui_SettingsForm
+from ui.compiled.ui_updates_dialog import Ui_UpdatesForm
 
 APP_NAME = "SPT Quest Builder"
 
@@ -17,31 +19,17 @@ def _link(url):
 	return f'<a href="{url}">{url}</a>'
 
 
-class AboutDialog(QDialog):
+class AboutDialog(QDialog, Ui_AboutForm):  # (the layout is ui/designer/about_dialog.ui)
 	def __init__(self, version, project_url, parent=None):
 		super().__init__(parent)
-		self.setWindowTitle("About")
-		layout = QVBoxLayout(self)
-		label = QLabel(f"<p>Made with \u2665 by the SPT Trader Builder Team</p><p>{version}</p><p>{_link(project_url)}</p>")
-		label.setOpenExternalLinks(True)
-		label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
-		layout.addWidget(label)
-		buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-		buttons.rejected.connect(self.reject)
-		layout.addWidget(buttons)
+		self.setupUi(self)
+		self.label.setText(f"<p>Made with \u2665 by the SPT Trader Builder Team</p><p>{version}</p><p>{_link(project_url)}</p>")
 
 
-class UpdatesDialog(QDialog):
+class UpdatesDialog(QDialog, Ui_UpdatesForm):  # (ui/designer/updates_dialog.ui)
 	def __init__(self, status, parent=None):
 		super().__init__(parent)
-		self.setWindowTitle("Check for updates")
-		layout = QVBoxLayout(self)
-		self.label = QLabel()
-		self.label.setOpenExternalLinks(True)
-		layout.addWidget(self.label)
-		buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-		buttons.rejected.connect(self.reject)
-		layout.addWidget(buttons)
+		self.setupUi(self)
 		self.show_status(status)
 
 	def show_status(self, status):
@@ -91,16 +79,14 @@ _TABS = (
 )
 
 
-class SettingsDialog(QDialog):
-	"""Edits the settings; OK saves them to settings.ini."""
+class SettingsDialog(QDialog, Ui_SettingsForm):
+	"""Edits the settings; OK saves them to settings.ini. The window is ui/designer/settings_dialog.ui;
+	its tabs and their controls are made from the list of settings."""
 
 	def __init__(self, settings, gamedata=None, parent=None):
 		super().__init__(parent)
-		self.setWindowTitle("Settings")
+		self.setupUi(self)
 		self.settings, self.controls = settings, {}
-		layout = QVBoxLayout(self)
-		tabs = QTabWidget()
-		layout.addWidget(tabs)
 		for title, keys in _TABS:
 			page = QWidget()
 			form = QFormLayout(page)
@@ -109,11 +95,7 @@ class SettingsDialog(QDialog):
 				control.setToolTip(_TIPS.get(key, ""))
 				self.controls[key] = control
 				form.addRow(_LABELS[key], control)
-			tabs.addTab(page, title)
-		buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-		buttons.accepted.connect(self.accept)
-		buttons.rejected.connect(self.reject)
-		layout.addWidget(buttons)
+			self.tabs.addTab(page, title)
 
 	def _make(self, setting, gamedata):
 		value = getattr(self.settings, setting.key)

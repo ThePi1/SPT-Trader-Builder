@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindowForm</class>
+ <widget class="QMainWindow" name="MainWindowForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1100</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SPT Quest Builder</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="centralLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QTabWidget" name="tabs"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menuAssort">
+     <property name="title">
+      <string>Trader assort</string>
+     </property>
+     <addaction name="actionAssortNew"/>
+     <addaction name="actionAssortOpen"/>
+     <addaction name="actionAssortSave"/>
+     <addaction name="actionAssortSaveAs"/>
+    </widget>
+    <widget class="QMenu" name="menuLocks">
+     <property name="title">
+      <string>Quest locks</string>
+     </property>
+     <addaction name="actionLocksNew"/>
+     <addaction name="actionLocksOpen"/>
+     <addaction name="actionLocksSave"/>
+     <addaction name="actionLocksSaveAs"/>
+    </widget>
+    <addaction name="actionNewQuests"/>
+    <addaction name="actionOpenQuests"/>
+    <addaction name="actionSaveQuests"/>
+    <addaction name="actionSaveQuestsAs"/>
+    <addaction name="separator"/>
+    <addaction name="actionNewLocale"/>
+    <addaction name="actionOpenLocale"/>
+    <addaction name="actionSaveLocale"/>
+    <addaction name="actionSaveLocaleAs"/>
+    <addaction name="menuAssort"/>
+    <addaction name="menuLocks"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>&amp;Settings</string>
+    </property>
+    <addaction name="actionSettings"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionUpdates"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuSettings"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <action name="actionNewQuests">
+   <property name="text">
+    <string>&amp;New quest file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionOpenQuests">
+   <property name="text">
+    <string>&amp;Open quest file...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionSaveQuests">
+   <property name="text">
+    <string>&amp;Save quest file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSaveQuestsAs">
+   <property name="text">
+    <string>Save quest file &amp;as...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionNewLocale">
+   <property name="text">
+    <string>New &amp;locale file</string>
+   </property>
+  </action>
+  <action name="actionOpenLocale">
+   <property name="text">
+    <string>Open lo&amp;cale file...</string>
+   </property>
+  </action>
+  <action name="actionSaveLocale">
+   <property name="text">
+    <string>Save locale &amp;file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+S</string>
+   </property>
+  </action>
+  <action name="actionSaveLocaleAs">
+   <property name="text">
+    <string>Save locale file as...</string>
+   </property>
+  </action>
+  <action name="actionAssortNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionAssortOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionAssortSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionAssortSaveAs">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionLocksNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionLocksOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionLocksSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionLocksSaveAs">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+F4</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>&amp;Undo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>&amp;Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>&amp;Settings...</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="actionUpdates">
+   <property name="text">
+    <string>Check for &amp;updates</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -3,54 +3,36 @@
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
-	QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget,
-	QTableWidgetItem, QVBoxLayout, QWidget,
+	QAbstractItemView, QDialog, QDialogButtonBox, QHBoxLayout, QPushButton, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from core import lookup
 from core import settings as S
+from ui.compiled.ui_lookup_view import Ui_LookupForm
 
 
-class LookupView(QWidget):
-	"""Search box, an optional type filter, and the matching rows. Double-click or Enter picks a row."""
+class LookupView(QWidget, Ui_LookupForm):
+	"""Search box, an optional type filter, and the matching rows. Double-click or Enter picks a row.
+	The layout is ui/designer/lookup_view.ui."""
 
 	picked = Signal(list)  # the ids of the chosen rows
 
 	def __init__(self, rows, kinds=None, multi=False, show_filter=True, settings=None, parent=None):
 		super().__init__(parent)
+		self.setupUi(self)
 		self.rows, self.kinds, self.settings = rows, tuple(kinds) if kinds else None, settings
-		layout = QVBoxLayout(self)
-		layout.setContentsMargins(0, 0, 0, 0)
-		top = QHBoxLayout()
-		self.search = QLineEdit()
-		self.search.setPlaceholderText("Type a name or id")
-		self.search.setClearButtonEnabled(True)
-		top.addWidget(self.search, 1)
-		self.filter = QComboBox()
 		self.filter.addItem("Everything", None)
 		present = {r.kind for r in rows}
 		for kind, label in lookup.KIND_LABEL.items():
 			if kind in present and (not self.kinds or kind in self.kinds):
 				self.filter.addItem(label, kind)
 		self.filter.setVisible(show_filter and self.filter.count() > 2)
-		top.addWidget(self.filter)
-		layout.addLayout(top)
-		self.table = QTableWidget(0, 4)
-		self.table.setHorizontalHeaderLabels(["Name", "Details", "Type", "Id"])
-		self.table.horizontalHeader().setStretchLastSection(True)
-		self.table.verticalHeader().setVisible(False)
-		self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-		self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 		self.table.setSelectionMode(
 			QAbstractItemView.SelectionMode.ExtendedSelection if multi else QAbstractItemView.SelectionMode.SingleSelection
 		)
 		self.table.setColumnWidth(0, 230)
 		self.table.setColumnWidth(1, 200)
 		self.table.setColumnWidth(2, 110)
-		layout.addWidget(self.table, 1)
-		self.note = QLabel()
-		self.note.setStyleSheet("color: #808080;")
-		layout.addWidget(self.note)
 		self._timer = QTimer(self)
 		self._timer.setSingleShot(True)
 		self._timer.setInterval(150)
