@@ -153,18 +153,17 @@ def test_the_task_panel_is_called_locale_too(app):
 	assert TaskTextPanel(Document({}), "b" * 24, "Finish").title() == "Locale"
 
 
-def test_the_more_buttons_look_like_buttons_and_open_their_part(app):
+def test_the_more_buttons_are_outlined_buttons_without_a_caret(app):
 	panel = QuestTextPanel(Document({}), quest("a" * 24, "Q"))
 	form = FormWidget(registry.spec_of({"conditionType": "Level"}, "task"))
 	for button in (panel.more_button, form.more_button):
 		assert isinstance(button, MoreButton) and button.isCheckable()
 		assert "border" in button.styleSheet() and button.cursor().shape() == Qt.CursorShape.PointingHandCursor
-		assert button.arrowType() == Qt.ArrowType.DownArrow  # (a caret says it opens)
-		assert button.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonTextBesideIcon  # (the caret sits beside the text)
+		assert button.arrowType() == Qt.ArrowType.NoArrow  # (no caret: the outline says it is a button)
+		assert button.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonTextOnly
 		button.setChecked(True)
-		assert button.arrowType() == Qt.ArrowType.UpArrow
+		assert button.isChecked()
 		button.setChecked(False)
-		assert button.arrowType() == Qt.ArrowType.DownArrow
 	assert form.more_button.text() == "More options"
 	panel.more_button.setChecked(True)
 	assert panel.more_box.isVisibleTo(panel)
