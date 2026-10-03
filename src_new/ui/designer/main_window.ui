@@ -111,7 +111,7 @@
     </widget>
     <widget class="QMenu" name="menuLocks">
      <property name="title">
-      <string>Quest l&amp;ocks</string>
+      <string>Quest &amp;assort</string>
      </property>
      <addaction name="actionLocksNew"/>
      <addaction name="actionLocksOpen"/>

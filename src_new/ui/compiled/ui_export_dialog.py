@@ -135,7 +135,7 @@ class Ui_ExportForm(object):
         self.localeBrowse.setText(QCoreApplication.translate("ExportForm", u"Browse...", None))
         self.assortBox.setText(QCoreApplication.translate("ExportForm", u"Their trader offers", None))
         self.assortBrowse.setText(QCoreApplication.translate("ExportForm", u"Browse...", None))
-        self.locksBox.setText(QCoreApplication.translate("ExportForm", u"Their quest locks", None))
+        self.locksBox.setText(QCoreApplication.translate("ExportForm", u"Their quest assort", None))
         self.locksBrowse.setText(QCoreApplication.translate("ExportForm", u"Browse...", None))
         self.noteLabel.setText(QCoreApplication.translate("ExportForm", u"Only these files are written. What is open is not changed.", None))
     # retranslateUi

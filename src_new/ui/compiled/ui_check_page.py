@@ -69,7 +69,7 @@ class Ui_CheckForm(object):
     def retranslateUi(self, CheckForm):
         self.openButton.setText(QCoreApplication.translate("CheckForm", u"Open a file to check...", None))
         self.with_open.setText(QCoreApplication.translate("CheckForm", u"Check against the quests and locale that are open", None))
-        self.summary.setText(QCoreApplication.translate("CheckForm", u"Open a quest, locale, assort or quest-lock file. Nothing is changed in it.", None))
+        self.summary.setText(QCoreApplication.translate("CheckForm", u"Open a quest, locale, trader assort or quest assort file. Nothing is changed in it.", None))
         pass
     # retranslateUi
 

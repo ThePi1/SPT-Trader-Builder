@@ -1,5 +1,5 @@
 """The files strip along the bottom of the window: for each kind of file the program holds (quests, locale,
-trader assort, quest locks) how much there is, whether it is saved, and which file Save writes to.
+trader assort, quest assort) how much there is, whether it is saved, and which file Save writes to.
 Clicking a segment opens its menu (New, Open, Import, Save, Save as)."""
 
 from PySide6.QtCore import QPoint, Qt

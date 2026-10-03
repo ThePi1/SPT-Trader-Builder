@@ -437,3 +437,4 @@ def test_importing_what_is_already_there_adds_no_imported_note(window, tmp_path)
 def test_the_strip_calls_the_quest_locks_section_quest_assort(window):
 	assert "Quest assort" in window.files_strip.segment("locks").titleLabel.text()
 	assert "Quest locks" not in window.files_strip.segment("locks").titleLabel.text()
+	assert window.menuLocks.title().replace("&", "") == "Quest assort"

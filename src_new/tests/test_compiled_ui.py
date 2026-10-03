@@ -69,7 +69,7 @@ def action(win, name):
 def test_the_menu_bar_has_the_four_menus_with_their_entries(window):
 	assert [a.text() for a in window.menubar.actions()] == ["&File", "&Edit", "&Settings", "&Help"]
 	file_entries = [a.text().replace("&", "") for a in window.menuFile.actions() if not a.isSeparator()]
-	assert file_entries == ["Import files...", "Quests", "Locale", "Trader assort", "Quest locks", "Exit"]
+	assert file_entries == ["Import files...", "Quests", "Locale", "Trader assort", "Quest assort", "Exit"]
 	section = ["New (empty)", "Open...", "Import...", "Save", "Save as..."]
 	for menu in (window.menuLocale, window.menuAssort, window.menuLocks):
 		assert [a.text() for a in menu.actions() if not a.isSeparator()] == section
@@ -93,7 +93,7 @@ def test_every_menu_entry_does_something(window, monkeypatch):
 		"OpenQuests": "Open quest file", "SaveQuests": "Save quest file", "SaveQuestsAs": "Save quest file",
 		"OpenLocale": "Open locale file", "SaveLocale": "Save locale file", "SaveLocaleAs": "Save locale file",
 		"AssortOpen": "Open trader assort file", "AssortSave": "Save trader assort file", "AssortSaveAs": "Save trader assort file",
-		"LocksOpen": "Open quest locks file", "LocksSave": "Save quest locks file", "LocksSaveAs": "Save quest locks file",
+		"LocksOpen": "Open quest assort file", "LocksSave": "Save quest assort file", "LocksSaveAs": "Save quest assort file",
 	}
 	for name, title in expected.items():
 		dialogs_seen.clear()

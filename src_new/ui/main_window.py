@@ -37,7 +37,7 @@ JSON_FILTER = "JSON files (*.json);;All files (*)"
 # (key = the attribute holding its Document, the strip's title, the name used in dialogs, the kind core.merge knows it as)
 KINDS = (
 	("quests", "Quests", "quest", M.QUESTS), ("locale", "Locale", "locale", M.LOCALE),
-	("assort", "Trader assort", "trader assort", M.ASSORT), ("locks", "Quest assort", "quest locks", M.LOCKS),
+	("assort", "Trader assort", "trader assort", M.ASSORT), ("locks", "Quest assort", "quest assort", M.LOCKS),
 )
 KEY_OF_KIND = {kind: key for key, _title, _label, kind in KINDS}
 
@@ -305,7 +305,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 	def save_locale_as(self):
 		return self._save(self.locale, "locale", as_new=True)
 
-	_OTHER = {"assort": ("trader assort", assort_schema.empty_assort), "locks": ("quest locks", assort_schema.empty_questassort)}
+	_OTHER = {"assort": ("trader assort", assort_schema.empty_assort), "locks": ("quest assort", assort_schema.empty_questassort)}
 
 	def _set_other(self, name, doc):
 		setattr(self, name, doc)
@@ -339,7 +339,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		max(self._docs(), key=lambda d: d.redo_stamp).redo()
 
 	def closeEvent(self, event):
-		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest locks"))):
+		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest assort"))):
 			event.accept()
 		else:
 			event.ignore()

@@ -25,7 +25,7 @@ KEEP, REPLACE, BOTH = "keep", "replace", "both"
 POLICIES = (KEEP, REPLACE, BOTH)
 
 QUESTS, LOCALE, ASSORT, LOCKS = "quests", "locale", "assort", "questassort"  # the kinds (explorer.detect_kind)
-KIND_LABEL = {QUESTS: "Quests", LOCALE: "Locale", ASSORT: "Trader assort", LOCKS: "Quest locks"}
+KIND_LABEL = {QUESTS: "Quests", LOCALE: "Locale", ASSORT: "Trader assort", LOCKS: "Quest assort"}
 ORDER = (QUESTS, ASSORT, LOCKS, LOCALE)  # the order files are merged in (the locale last: it needs the quests)
 
 
@@ -207,7 +207,7 @@ def load_items(paths, limit=200):
 			items.append(Item(path.name, path=path, error=f"Couldn't be read: {e}", include=False))
 			continue
 		kind = explorer.detect_kind(data)
-		items.append(Item(path.name, kind, data, path, "" if kind else "Not a quest, locale, assort or quest-lock file.", include=bool(kind)))
+		items.append(Item(path.name, kind, data, path, "" if kind else "Not a quest, locale, trader assort or quest assort file.", include=bool(kind)))
 	return items
 
 

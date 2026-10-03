@@ -86,7 +86,7 @@
      <item row="3" column="0">
       <widget class="QCheckBox" name="locksBox">
        <property name="text">
-        <string>Their quest locks</string>
+        <string>Their quest assort</string>
        </property>
        <property name="checked">
         <bool>true</bool>

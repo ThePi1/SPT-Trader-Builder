@@ -9,13 +9,13 @@ from core import merge as M
 from ui.compiled.ui_import_dialog import Ui_ImportForm
 
 COLUMNS = {"include": 0, "file": 1, "type": 2, "new": 3, "there": 4, "notes": 5}
-TYPES = ((None, "Not recognised"), (M.QUESTS, "Quests"), (M.LOCALE, "Locale"), (M.ASSORT, "Trader assort"), (M.LOCKS, "Quest locks"))
-NOUN = {M.QUESTS: "quest", M.ASSORT: "offer", M.LOCKS: "quest lock"}
+TYPES = ((None, "Not recognised"), (M.QUESTS, "Quests"), (M.LOCALE, "Locale"), (M.ASSORT, "Trader assort"), (M.LOCKS, "Quest assort"))
+NOUN = {M.QUESTS: "quest", M.ASSORT: "offer"}
 
 
 def _count_words(kind, n):
-	if kind == M.LOCALE:
-		return f"{n} locale {'entry' if n == 1 else 'entries'}"
+	if kind in (M.LOCALE, M.LOCKS):
+		return f"{n} {'locale' if kind == M.LOCALE else 'quest assort'} {'entry' if n == 1 else 'entries'}"
 	return f"{n} {NOUN[kind]}{'' if n == 1 else 's'}"
 
 

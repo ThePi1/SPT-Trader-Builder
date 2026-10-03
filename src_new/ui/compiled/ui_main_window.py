@@ -249,7 +249,7 @@ class Ui_MainWindowForm(object):
         self.menuQuests.setTitle(QCoreApplication.translate("MainWindowForm", u"&Quests", None))
         self.menuLocale.setTitle(QCoreApplication.translate("MainWindowForm", u"&Locale", None))
         self.menuAssort.setTitle(QCoreApplication.translate("MainWindowForm", u"&Trader assort", None))
-        self.menuLocks.setTitle(QCoreApplication.translate("MainWindowForm", u"Quest l&ocks", None))
+        self.menuLocks.setTitle(QCoreApplication.translate("MainWindowForm", u"Quest &assort", None))
         self.menuEdit.setTitle(QCoreApplication.translate("MainWindowForm", u"&Edit", None))
         self.menuSettings.setTitle(QCoreApplication.translate("MainWindowForm", u"&Settings", None))
         self.menuHelp.setTitle(QCoreApplication.translate("MainWindowForm", u"&Help", None))

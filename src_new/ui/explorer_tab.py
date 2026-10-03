@@ -99,7 +99,7 @@ class CheckPage(QWidget, Ui_CheckForm):
 			return
 		kind = self.kind.currentData() or explorer.detect_kind(self.data)
 		if kind is None:
-			self.summary.setText("This doesn't look like a quest, locale, assort or quest-lock file. Pick what it is above.")
+			self.summary.setText("This doesn't look like a quest, locale, trader assort or quest assort file. Pick what it is above.")
 			return
 		quests = self.get_quests() if self.with_open.isChecked() else None
 		locale = self.get_locale() if self.with_open.isChecked() else None

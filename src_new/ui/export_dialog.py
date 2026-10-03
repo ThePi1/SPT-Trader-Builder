@@ -23,7 +23,7 @@ class ExportDialog(QDialog, Ui_ExportForm):
 		self.rows = {
 			"locale": (self.localeBox, self.localeEdit, self.localeBrowse, len(export.locale), "Their text ({n} entries)"),
 			"assort": (self.assortBox, self.assortEdit, self.assortBrowse, export.offer_count(), "Their trader offers ({n})"),
-			"locks": (self.locksBox, self.locksEdit, self.locksBrowse, export.lock_count(), "Their quest locks ({n})"),
+			"locks": (self.locksBox, self.locksEdit, self.locksBrowse, export.lock_count(), "Their quest assort ({n})"),
 		}
 		self._typed = set()  # the paths the user has typed or browsed to (they are not derived from the quests file any more)
 		self.questsEdit.setText(str(Path(folder or ".") / "exported_quests.json") if folder else "exported_quests.json")

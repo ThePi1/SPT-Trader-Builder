@@ -12,13 +12,13 @@ In Settings > Game data, point "SPT database folder" at your SPT_Data/database f
 
 ## Tabs
 
-Quests (outline tree and forms, text boxes, problems list), Locale (the whole locale file), Trader (assort and quest locks),
+Quests (outline tree and forms, text boxes, problems list), Locale (the whole locale file), Trader (assort and quest assort),
 Composite items (your saved items, plus the base game's), Find IDs, Schema Explorer. Each file (quests, locale, assort,
-quest locks) is opened and saved on its own from the File menu; any of them can be started from nothing.
+quest assort) is opened and saved on its own from the File menu; any of them can be started from nothing.
 
 ## Opening, importing and saving
 
-The program holds four things at once: quests, locale (the text), a trader's assort and its quest locks. The strip along
+The program holds four things at once: quests, locale (the text), a trader's assort and its quest assort (the file that locks offers to quests). The strip along
 the bottom shows each one: how many entries it has, whether it is saved, and the file Save writes to. Click a segment
 for its menu (the same entries are under File).
 
