@@ -23,6 +23,7 @@ from core.settings import Settings
 from schema import assort as assort_schema
 from ui import dialogs, updates
 from ui.main_window import MainWindow
+from ui.tabs import fill_tabs
 
 
 @pytest.fixture(scope="module")
@@ -229,8 +230,8 @@ def test_the_tabs_come_from_the_ui_file_and_hold_the_real_widgets(window):
 
 def test_the_placeholder_pages_are_gone_and_a_mismatch_with_the_ui_file_is_reported(window, app):
 	assert not [n for n in vars(window) if n.startswith("page_")]
-	with pytest.raises(RuntimeError, match="main_window.ui has the tab pages"):
-		window._fill_tabs({"page_quests": window.quest_outline})  # (the tabs already hold real widgets: names don't match)
+	with pytest.raises(RuntimeError, match="the .ui file has the tab pages"):
+		fill_tabs(window.tabs, window, {"page_quests": window.quest_outline})  # (the tabs already hold real widgets: names don't match)
 
 
 def test_switching_tabs_still_refreshes_the_tab(window):
@@ -271,3 +272,111 @@ def test_the_button_row_fills_the_width_in_equal_parts(app):
 	assert buttons[-1].geometry().right() + 1 == outline.leftPane.width() - margins.right()
 	widths = [b.width() for b in buttons]
 	assert max(widths) - min(widths) <= 2
+
+
+# --- the other tabs (composite, trader, find ids, the picker, the schema explorer) ---------------
+
+
+def test_the_composite_tab_buttons(app, tmp_path, monkeypatch):
+	from core.library import Library
+	from ui.composite_tab import CompositeTab
+
+	library = Library(tmp_path / "l.json")
+	tab = CompositeTab(library, GameData(None, "en", BUNDLED_DATABASE_DIR))
+	answers = iter([("Gun", True), ("Rifle", True)])
+	monkeypatch.setattr("ui.composite_tab.QInputDialog.getText", lambda *a, **k: next(answers))
+	monkeypatch.setattr("ui.composite_tab.QMessageBox.question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+	tab.newButton.click()
+	assert [e["name"] for e in library.entries.values()] == ["Gun"] and tab.mine.count() == 1
+	tab.renameButton.click()
+	assert [e["name"] for e in library.entries.values()] == ["Rifle"]
+	assert tab.vanilla.count() > 0
+	tab.vanilla.setCurrentRow(0)
+	tab.copyButton.click()
+	assert len(library.entries) == 2 and tab.mine.count() == 2
+	tab.deleteButton.click()
+	assert len(library.entries) == 1
+	assert tab.splitter.count() == 2 and tab.editor is not None
+
+
+def test_the_trader_tab_buttons_and_the_trader_box(app, monkeypatch):
+	from ui.assort_tab import AssortTab
+
+	monkeypatch.setattr("ui.assort_tab.QMessageBox.question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+	gamedata = GameData(None, "en", BUNDLED_DATABASE_DIR)
+	tab = AssortTab(Document(assort_schema.empty_assort()), Document(assort_schema.empty_questassort()), gamedata, lambda ref, multi, parent: ["a" * 24, "b" * 24])
+	tab.addButton.click()
+	assert tab.list.count() == 2
+	tab.copyButton.click()
+	assert tab.list.count() == 3
+	tab.deleteButton.click()
+	assert tab.list.count() == 2
+	# the trader box: only a different trader refreshes the tab (the box also reports losing focus)
+	refreshed = []
+	tab.refresh = lambda select=None: refreshed.append(select)
+	tab.trader.lineEdit().editingFinished.emit()
+	assert refreshed == []
+	tab.trader.setCurrentIndex(1)
+	tab.trader.activated.emit(1)
+	tab.trader.lineEdit().editingFinished.emit()
+	assert len(refreshed) == 1 and tab.trader_id == tab.trader.itemData(1)
+
+
+def test_the_tab_order_of_the_trader_tab_ends_with_the_trader_box(app):
+	from ui.assort_tab import AssortTab
+
+	tab = AssortTab(Document(assort_schema.empty_assort()), Document(assort_schema.empty_questassort()))
+	tab.show()
+	app.processEvents()
+	named = [tab.search, tab.list, tab.addButton, tab.copyButton, tab.deleteButton, tab.trader]
+	chain, widget = [], tab.search
+	for _ in range(60):  # (the chain also holds inner widgets such as the list's scroll bars)
+		if widget in named and widget not in chain:
+			chain.append(widget)
+		widget = widget.nextInFocusChain()
+	assert chain == named
+
+
+def test_the_find_ids_tab_copies_ids_and_names(app):
+	from PySide6.QtGui import QGuiApplication
+
+	from core import lookup
+	from ui.lookup_view import LookupTab
+
+	rows = [lookup.Row(id="a" * 24, name="Alpha", kind="item"), lookup.Row(id="b" * 24, name="Beta", kind="item")]
+	tab = LookupTab(rows)
+	tab.view.table.selectRow(1)
+	tab.copy_id_button.click()
+	assert QGuiApplication.clipboard().text() == "b" * 24
+	tab.copy_name_button.click()
+	assert QGuiApplication.clipboard().text() == "Beta"
+	assert tab.view is tab.verticalLayout.itemAt(0).widget()
+
+
+def test_the_picker_dialog_returns_the_chosen_ids_or_nothing(app):
+	from core import lookup
+	from ui.lookup_view import PickerDialog
+
+	rows = [lookup.Row(id="a" * 24, name="Alpha", kind="item"), lookup.Row(id="b" * 24, name="Beta", kind="item")]
+	dialog = PickerDialog(rows, ("item",), "Find an item")
+	assert dialog.windowTitle() == "Find an item" and dialog.view.table.rowCount() == 2
+	dialog.view.table.selectRow(1)
+	dialog.buttons.accepted.emit()
+	assert dialog.result() == dialog.DialogCode.Accepted and dialog.ids == ["b" * 24]
+	cancelled = PickerDialog(rows, ("item",), "Find an item")
+	cancelled.buttons.rejected.emit()
+	assert cancelled.result() == cancelled.DialogCode.Rejected and cancelled.ids == []
+
+
+def test_the_schema_explorer_pages(app):
+	from ui.explorer_tab import ExplorerTab
+
+	tab = ExplorerTab(lambda: {}, lambda: {})
+	assert [tab.tabText(i) for i in range(tab.count())] == ["What things are made of", "Check a file"]
+	assert tab.widget(0) is tab.browse and tab.widget(1) is tab.check
+	assert not [n for n in vars(tab) if n.startswith("page_")]
+	assert tab.browse.tree.topLevelItemCount() > 0
+	first = tab.browse.tree.topLevelItem(0).child(0)
+	tab.browse.tree.setCurrentItem(first)
+	assert tab.browse.title.text() and tab.browse.table.rowCount() > 0
+	assert [tab.browse.table.horizontalHeaderItem(i).text() for i in range(5)] == ["Field", "Key in the file", "Kind", "Needed", "Starts as"]

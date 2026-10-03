@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ExplorerForm</class>
+ <widget class="QTabWidget" name="ExplorerForm">
+  <property name="currentIndex">
+   <number>0</number>
+  </property>
+  <widget class="QWidget" name="page_browse">
+   <attribute name="title">
+    <string>What things are made of</string>
+   </attribute>
+  </widget>
+  <widget class="QWidget" name="page_check">
+   <attribute name="title">
+    <string>Check a file</string>
+   </attribute>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

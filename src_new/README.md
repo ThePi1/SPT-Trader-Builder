@@ -41,9 +41,9 @@ The tests that check against the base game use the game data bundled in `data/da
 - `schema/`: what a quest, task, reward, text, assort and composite item are. The forms, the checks and the
   Schema Explorer are all made from this. No Qt.
 - `ui/`: the window, the outline editor, the generated forms, dialogs.
-  - `ui/designer/`: Qt Designer files (`.ui`) for the fixed layouts: the main window and its menus, the Settings, About
-    and Check for updates windows, the Quests tab (buttons, tree and panes), the Locale tab, Find IDs, and the Schema
-    Explorer's Check a file page.
+  - `ui/designer/`: Qt Designer files (`.ui`) for the fixed layouts: the main window (menus and tab bar), the Settings,
+    About and Check for updates windows, the Quests, Locale, Trader and Composite items tabs, Find IDs and its picker
+    window, and the Schema Explorer (both pages).
   - `ui/compiled/`: those files compiled to Python (`ui_*.py`). Generated: don't edit them by hand.
 - `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source) and `schema/vanilla_profile.json`
   (from the base game's quests), and compile the Designer files.
@@ -57,7 +57,8 @@ Open the file in Qt Designer, save it, then compile and commit both files:
 
 The compiled files are committed, so the program runs without compiling. A test fails if a compiled file is out of date
 (`python tools/compile_ui.py --check` says which). Only the fixed parts of a window are in the `.ui` files: the quest,
-task and reward forms are generated from `schema/`, and the tabs, the Settings pages and lists are filled in by code.
+task and reward forms are generated from `schema/`, and the Settings pages, lists and the item editors are filled in
+by code.
 The tabs along the top are the empty `page_*` pages in `main_window.ui`: rename, reorder or add a tooltip or icon to
 a page there, and the program puts that tab's real widget in its place (a page needs a matching entry in
 `MainWindow._fill_tabs`, or the program says so on start).

@@ -2,13 +2,13 @@
 
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import (
-	QAbstractItemView, QDialog, QDialogButtonBox, QHBoxLayout, QPushButton, QTableWidgetItem, QVBoxLayout, QWidget,
-)
+from PySide6.QtWidgets import QAbstractItemView, QDialog, QTableWidgetItem, QWidget
 
 from core import lookup
 from core import settings as S
+from ui.compiled.ui_lookup_tab import Ui_LookupTabForm
 from ui.compiled.ui_lookup_view import Ui_LookupForm
+from ui.compiled.ui_picker_dialog import Ui_PickerForm
 
 
 class LookupView(QWidget, Ui_LookupForm):
@@ -72,21 +72,17 @@ class LookupView(QWidget, Ui_LookupForm):
 			self.picked.emit(ids)
 
 
-class PickerDialog(QDialog):
-	"""Choose one thing (or several) from a search. ids is the result, empty if cancelled."""
+class PickerDialog(QDialog, Ui_PickerForm):
+	"""Choose one thing (or several) from a search. ids is the result, empty if cancelled.
+	The window and its OK / Cancel buttons are ui/designer/picker_dialog.ui; the search view goes above them."""
 
 	def __init__(self, rows, kinds, title, multi=False, settings=None, parent=None):
 		super().__init__(parent)
+		self.setupUi(self)
 		self.setWindowTitle(title)
-		self.resize(760, 480)
 		self.ids = []
-		layout = QVBoxLayout(self)
 		self.view = LookupView(rows, kinds, multi, show_filter=False, settings=settings)
-		layout.addWidget(self.view, 1)
-		buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-		buttons.accepted.connect(self.accept)
-		buttons.rejected.connect(self.reject)
-		layout.addWidget(buttons)
+		self.verticalLayout.insertWidget(0, self.view, 1)
 		self.view.picked.connect(self._picked)
 		self.view.search.setFocus()
 
@@ -99,21 +95,16 @@ class PickerDialog(QDialog):
 		super().accept()
 
 
-class LookupTab(QWidget):
-	"""The 'Find IDs' tab: search everything, copy an id or a name."""
+class LookupTab(QWidget, Ui_LookupTabForm):
+	"""The 'Find IDs' tab: search everything, copy an id or a name. The buttons are ui/designer/lookup_tab.ui."""
 
 	def __init__(self, rows, settings=None, parent=None):
 		super().__init__(parent)
-		layout = QVBoxLayout(self)
+		self.setupUi(self)
 		self.view = LookupView(rows, settings=settings)
-		layout.addWidget(self.view, 1)
-		row = QHBoxLayout()
-		for text, column in (("Copy id", 3), ("Copy name", 0)):
-			button = QPushButton(text)
-			button.clicked.connect(lambda _c=False, c=column: self._copy(c))
-			row.addWidget(button)
-		row.addStretch(1)
-		layout.addLayout(row)
+		self.verticalLayout.insertWidget(0, self.view, 1)
+		self.copy_id_button.clicked.connect(lambda _checked=False: self._copy(3))
+		self.copy_name_button.clicked.connect(lambda _checked=False: self._copy(0))
 		self.view.picked.connect(lambda _ids: self._copy(3))
 
 	def _copy(self, column):

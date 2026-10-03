@@ -6,14 +6,15 @@ import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-	QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-	QMessageBox, QPushButton, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+	QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidgetItem, QMessageBox,
+	QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from core import parts as P
 from schema import assort as A
 from schema.common import Names, short
 from schema.copying import with_new_ids
+from ui.compiled.ui_assort_tab import Ui_AssortForm
 from ui.forms import Context
 from ui.parts_editor import PartsEditor
 from ui.quest_outline import _clear
@@ -29,59 +30,31 @@ MONEY_NAMES = {v: k.capitalize() for k, v in A.MONEY.items()}
 WHEN = {"started": "when it is started", "success": "when it is completed", "fail": "when it is failed"}
 
 
-class AssortTab(QWidget):
+class AssortTab(QWidget, Ui_AssortForm):
+	"""The layout is ui/designer/assort_tab.ui: the trader box, the offer list with its buttons, the pane for an offer."""
+
 	def __init__(self, assort_doc, locks_doc, gamedata=None, picker=None, library=None, quests=None, quests_document=None, parent=None):
 		"""quests() gives the open quests' data and quests_document() their Document (to add an unlock reward to a quest)."""
 		super().__init__(parent)
+		self.setupUi(self)
 		self.doc, self.locks = assort_doc, locks_doc
 		self.gamedata, self.picker, self.library = gamedata, picker, library
 		self.quests = quests or (lambda: {})
 		self.quests_document = quests_document
 		self._editing = False
-		split = QSplitter(self)
-		left = QWidget()
-		column = QVBoxLayout(left)
-		column.setContentsMargins(0, 0, 0, 0)
-		self.search = QLineEdit()
-		self.search.setPlaceholderText("Search the offers")
 		self.search.textChanged.connect(lambda _t: self.refresh())
-		column.addWidget(self.search)
-		self.list = QListWidget()
 		self.list.currentItemChanged.connect(self._select)
-		column.addWidget(self.list, 1)
-		self.note = QLabel()
-		self.note.setStyleSheet("color: #808080;")
-		column.addWidget(self.note)
-		row = QHBoxLayout()
-		for text, slot in (("Add offer...", self.add_offer), ("Copy", self.copy_offer), ("Delete", self.delete_offer)):
-			button = QPushButton(text)
-			button.clicked.connect(slot)
-			row.addWidget(button)
-		column.addLayout(row)
-		split.addWidget(left)
-		self.right = QWidget()
-		self.right_layout = QVBoxLayout(self.right)
-		split.addWidget(self.right)
-		split.setSizes([420, 520])
-		outer = QVBoxLayout(self)
-		outer.setContentsMargins(0, 0, 0, 0)
-		top = QHBoxLayout()
-		top.addWidget(QLabel("Trader"))
-		self.trader = QComboBox()  # which trader this assort is for: needed to link offers and quest rewards
-		self.trader.setEditable(True)
-		self.trader.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-		self.trader.setMinimumWidth(240)
-		self.trader.setToolTip("The trader this assort is for. Needed to add quest unlocks. You can paste a trader id.")
+		for button, slot in ((self.addButton, self.add_offer), (self.copyButton, self.copy_offer), (self.deleteButton, self.delete_offer)):
+			button.clicked.connect(lambda _checked=False, slot=slot: slot())
+		self.splitter.setSizes([420, 520])
+		# which trader this assort is for: needed to link offers and quest rewards
 		self.trader.addItem("(not set)", "")
 		for trader_id, name in (gamedata.traders.items() if gamedata is not None else ()):
 			self.trader.addItem(name, trader_id)
 		self.trader.setCurrentIndex(0)
 		self.trader.activated.connect(lambda _i: self._trader_changed())
 		self.trader.lineEdit().editingFinished.connect(self._trader_changed)
-		top.addWidget(self.trader)
-		top.addStretch(1)
-		outer.addLayout(top)
-		outer.addWidget(split, 1)
+		self._last_trader = self.trader_id
 		self.watch(assort_doc, locks_doc)
 
 	@property
@@ -94,6 +67,10 @@ class AssortTab(QWidget):
 		return text if re.fullmatch(r"[0-9a-fA-F]{24}", text) else ""
 
 	def _trader_changed(self):
+		"""The trader box was used. Only a different trader changes anything (the box also reports losing focus)."""
+		if self.trader_id == self._last_trader:
+			return
+		self._last_trader = self.trader_id
 		self.refresh(self.current_id())
 
 	# --- documents --------------------------------------------------------------------------

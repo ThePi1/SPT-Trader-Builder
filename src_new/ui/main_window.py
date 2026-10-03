@@ -25,6 +25,7 @@ from ui.explorer_tab import ExplorerTab
 from ui.locale_tab import LocaleTab
 from ui.lookup_view import LookupTab, PickerDialog
 from ui.quest_outline import QuestOutline
+from ui.tabs import fill_tabs
 
 JSON_FILTER = "JSON files (*.json);;All files (*)"
 
@@ -62,7 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			self.assort, self.locks, gamedata, self.pick, self.library, lambda: self.quests.data, lambda: self.quests
 		)
 		self.explorer_tab = ExplorerTab(lambda: self.quests.data, lambda: self.locale.data, gamedata, settings)
-		self._fill_tabs({
+		fill_tabs(self.tabs, self, {
 			"page_quests": self.quest_outline, "page_locale": self.locale_tab, "page_trader": self.assort_tab,
 			"page_composite": self.composite_tab, "page_find_ids": self.lookup_tab, "page_explorer": self.explorer_tab,
 		})
@@ -74,24 +75,6 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self._connect_menus()
 		self._update_title()
 		self.start_update_check()
-
-	def _fill_tabs(self, pages):
-		"""main_window.ui has an empty page for each tab, with its title (and order, tooltip, icon). Swap each for
-		its real widget, keeping what the page was given in Designer. {page name: the widget that replaces it}."""
-		in_file = {self.tabs.widget(i).objectName() for i in range(self.tabs.count())}
-		if in_file != set(pages):
-			raise RuntimeError(f"main_window.ui has the tab pages {sorted(in_file)}, but the code fills {sorted(pages)}")
-		for name, widget in pages.items():
-			placeholder = getattr(self, name)
-			index = self.tabs.indexOf(placeholder)
-			title, tip, icon = self.tabs.tabText(index), self.tabs.tabToolTip(index), self.tabs.tabIcon(index)
-			self.tabs.removeTab(index)
-			placeholder.hide()
-			placeholder.deleteLater()
-			delattr(self, name)
-			self.tabs.insertTab(index, widget, icon, title)
-			self.tabs.setTabToolTip(index, tip)
-		self.tabs.setCurrentIndex(0)
 
 	# --- finding ids --------------------------------------------------------------------------
 	def rows(self, kinds=None):

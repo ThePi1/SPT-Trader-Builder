@@ -4,15 +4,13 @@ Your saved items are listed first and can be edited. The base game's own composi
 separate read-only list; copy one to make it yours.
 """
 
-from PySide6.QtWidgets import (
-	QGroupBox, QHBoxLayout, QInputDialog, QLabel, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSplitter,
-	QVBoxLayout, QWidget,
-)
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QInputDialog, QLabel, QListWidgetItem, QMessageBox, QWidget
 
 from core import library as library_module
 from schema import assort as assort_schema
 from schema.common import Names
+from ui.compiled.ui_composite_tab import Ui_CompositeForm
 from ui.forms import Context
 from ui.parts_editor import PartsEditor
 from ui.quest_outline import _clear
@@ -20,39 +18,21 @@ from ui.quest_outline import _clear
 ROLE = Qt.ItemDataRole.UserRole
 
 
-class CompositeTab(QWidget):
+class CompositeTab(QWidget, Ui_CompositeForm):
+	"""The layout is ui/designer/composite_tab.ui: the two lists with their buttons, and the pane for the editor."""
+
 	def __init__(self, library, gamedata=None, picker=None, parent=None):
 		super().__init__(parent)
+		self.setupUi(self)
 		self.library, self.gamedata, self.picker = library, gamedata, picker
 		self.editor = None
-		split = QSplitter(self)
-		left = QWidget()
-		column = QVBoxLayout(left)
-		column.setContentsMargins(0, 0, 0, 0)
-		column.addWidget(QLabel("<b>My items</b>"))
-		self.mine = QListWidget()
 		self.mine.currentItemChanged.connect(self._select)
-		column.addWidget(self.mine, 2)
-		row = QHBoxLayout()
-		for text, slot in (("New", self.new), ("Rename", self.rename), ("Delete", self.delete)):
-			button = QPushButton(text)
-			button.clicked.connect(slot)
-			row.addWidget(button)
-		column.addLayout(row)
-		column.addWidget(QLabel("<b>Base game items</b> (read only)"))
-		self.vanilla = QListWidget()
-		column.addWidget(self.vanilla, 2)
-		copy = QPushButton("Make my own copy")
-		copy.clicked.connect(self.copy_vanilla)
-		column.addWidget(copy)
-		split.addWidget(left)
-		self.right = QWidget()
-		self.right_layout = QVBoxLayout(self.right)
-		split.addWidget(self.right)
-		split.setSizes([300, 600])
-		outer = QHBoxLayout(self)
-		outer.setContentsMargins(0, 0, 0, 0)
-		outer.addWidget(split)
+		for button, slot in (
+			(self.newButton, self.new), (self.renameButton, self.rename), (self.deleteButton, self.delete),
+			(self.copyButton, self.copy_vanilla),
+		):
+			button.clicked.connect(lambda _checked=False, slot=slot: slot())
+		self.splitter.setSizes([300, 600])
 		self.refresh()
 
 	def _ctx(self):

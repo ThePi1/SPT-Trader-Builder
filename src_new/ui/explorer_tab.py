@@ -1,29 +1,27 @@
 """The Schema Explorer: browse what a quest, task, reward ... is made of, and check any JSON file."""
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-	QFileDialog, QHBoxLayout, QLabel, QListWidgetItem, QSplitter, QTabWidget, QTableWidget, QTableWidgetItem, QTreeWidget,
-	QTreeWidgetItem, QVBoxLayout, QWidget,
-)
+from PySide6.QtWidgets import QFileDialog, QListWidgetItem, QTabWidget, QTableWidgetItem, QTreeWidgetItem, QWidget
 
 from core import jsonio
 from core import settings as S
 from schema import explorer
 from schema.issues import ERROR
+from ui.compiled.ui_browse_page import Ui_BrowseForm
 from ui.compiled.ui_check_page import Ui_CheckForm
+from ui.compiled.ui_explorer_tab import Ui_ExplorerForm
 from ui.problems import ERROR_COLOR, WARNING_COLOR
+from ui.tabs import fill_tabs
 
 ROLE = Qt.ItemDataRole.UserRole
 
 
-class BrowsePage(QWidget):
+class BrowsePage(QWidget, Ui_BrowseForm):
+	"""The layout is ui/designer/browse_page.ui: the tree on the left, the description and field table on the right."""
+
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		layout = QHBoxLayout(self)
-		split = QSplitter()
-		layout.addWidget(split)
-		self.tree = QTreeWidget()
-		self.tree.setHeaderHidden(True)
+		self.setupUi(self)
 		for title, specs in explorer.all_specs():
 			top = QTreeWidgetItem([title])
 			font = top.font(0)
@@ -35,25 +33,9 @@ class BrowsePage(QWidget):
 				child.setData(0, ROLE, spec)
 				top.addChild(child)
 		self.tree.expandAll()
-		split.addWidget(self.tree)
-		right = QWidget()
-		column = QVBoxLayout(right)
-		self.title = QLabel()
-		self.title.setStyleSheet("font-weight: bold;")
-		self.note = QLabel()
-		self.note.setWordWrap(True)
-		self.where = QLabel()
-		self.where.setStyleSheet("color: #808080;")
-		self.table = QTableWidget(0, 5)
-		self.table.setHorizontalHeaderLabels(["Field", "Key in the file", "Kind", "Needed", "Starts as"])
-		self.table.verticalHeader().setVisible(False)
-		self.table.horizontalHeader().setStretchLastSection(True)
 		for i, width in enumerate((170, 170, 120, 70)):
 			self.table.setColumnWidth(i, width)
-		for widget in (self.title, self.note, self.where, self.table):
-			column.addWidget(widget)
-		split.addWidget(right)
-		split.setSizes([260, 640])
+		self.splitter.setSizes([260, 640])
 		self.tree.currentItemChanged.connect(self._selected)
 
 	def _selected(self, item, _previous):
@@ -136,10 +118,12 @@ class CheckPage(QWidget, Ui_CheckForm):
 			self.list.addItem(QListWidgetItem(f"...and {len(issues) - most} more not shown (Settings > Lists changes this)."))
 
 
-class ExplorerTab(QTabWidget):
+class ExplorerTab(QTabWidget, Ui_ExplorerForm):
+	"""The two pages (names and order) are in ui/designer/explorer_tab.ui."""
+
 	def __init__(self, get_quests, get_locale, gamedata=None, settings=None, parent=None):
 		super().__init__(parent)
+		self.setupUi(self)
 		self.browse = BrowsePage()
 		self.check = CheckPage(get_quests, get_locale, gamedata, settings)
-		self.addTab(self.browse, "What things are made of")
-		self.addTab(self.check, "Check a file")
+		fill_tabs(self, self, {"page_browse": self.browse, "page_check": self.check})
