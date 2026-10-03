@@ -19,9 +19,10 @@ ROLE = Qt.ItemDataRole.UserRole
 class BrowsePage(QWidget, Ui_BrowseForm):
 	"""The layout is ui/designer/browse_page.ui: the tree on the left, the description and field table on the right."""
 
-	def __init__(self, parent=None):
+	def __init__(self, settings=None, parent=None):
 		super().__init__(parent)
 		self.setupUi(self)
+		self.settings = settings
 		for title, specs in explorer.all_specs():
 			top = QTreeWidgetItem([title])
 			font = top.font(0)
@@ -29,7 +30,7 @@ class BrowsePage(QWidget, Ui_BrowseForm):
 			top.setFont(0, font)
 			self.tree.addTopLevelItem(top)
 			for spec in specs:
-				child = QTreeWidgetItem([spec.label + ("" if spec.everyday else " (rare)")])
+				child = QTreeWidgetItem([spec.label])
 				child.setData(0, ROLE, spec)
 				top.addChild(child)
 		self.tree.expandAll()
@@ -38,6 +39,10 @@ class BrowsePage(QWidget, Ui_BrowseForm):
 		self.splitter.setSizes([260, 640])
 		self.tree.currentItemChanged.connect(self._selected)
 
+	def refresh(self):
+		"""Draw the open description again (a setting changed)."""
+		self._selected(self.tree.currentItem(), None)
+
 	def _selected(self, item, _previous):
 		spec = item.data(0, ROLE) if item else None
 		self.table.setRowCount(0)
@@ -45,16 +50,19 @@ class BrowsePage(QWidget, Ui_BrowseForm):
 			self.title.setText("")
 			self.note.setText("")
 			self.where.setText("")
+			self.commonLabel.setText("")
 			return
 		self.title.setText(spec.label)
 		self.note.setText(spec.note)
 		self.where.setText(("Can be used: " + ", ".join(spec.timings)) if spec.timings else "")
+		self.commonLabel.setText("This type is marked as commonly used." if spec.common else "This type is marked as not commonly used.")
 		rows = explorer.field_rows(spec)
+		mark = getattr(self.settings, "mark_uncommon_fields", True)
 		self.table.setRowCount(len(rows))
 		for r, row in enumerate(rows):
 			for c, value in enumerate(row[:5]):
 				cell = QTableWidgetItem(value)
-				if row[5]:
+				if row[5] and mark:
 					cell.setForeground(Qt.GlobalColor.gray)
 				self.table.setItem(r, c, cell)
 		managed = ", ".join(spec.managed)
@@ -124,6 +132,6 @@ class ExplorerTab(QTabWidget, Ui_ExplorerForm):
 	def __init__(self, get_quests, get_locale, gamedata=None, settings=None, parent=None):
 		super().__init__(parent)
 		self.setupUi(self)
-		self.browse = BrowsePage()
+		self.browse = BrowsePage(settings)
 		self.check = CheckPage(get_quests, get_locale, gamedata, settings)
 		fill_tabs(self, self, {"page_browse": self.browse, "page_check": self.check})

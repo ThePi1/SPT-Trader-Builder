@@ -211,7 +211,7 @@ _add(Spec(
 	note="A skill must reach this level.",
 ))
 
-# --- rare kinds: a generic form, or JSON ---------------------------------------------------
+# --- less common kinds ---------------------------------------------------
 
 _add(Spec(
 	"task", "SellItemToTrader", "Sell items to a trader", _item_fields((
@@ -221,7 +221,7 @@ _add(Spec(
 		"SellItemToTrader", dogtagLevel=0, isEncoded=False, maxDurability=100, minDurability=0, onlyFoundInRaid=False,
 		target=[], traderId="", value=1,
 	),
-	timings=(FINISH,), managed=MANAGED, everyday=False,
+	timings=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Sell {item.get('value', 1)} roubles' worth to {names.trader(item.get('traderId', ''))}",
 	note="Sell items to a trader for a total amount.",
 ))
@@ -256,7 +256,7 @@ def _weapon_assembly_base():
 
 _add(Spec(
 	"task", "WeaponAssembly", "Build a weapon", _weapon_fields(), _weapon_assembly_base(),
-	timings=(FINISH,), managed=MANAGED, everyday=False,
+	timings=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Build {names.items(item.get('target', []))}",
 	note="Hand in a weapon built to a set of requirements.",
 ))
@@ -269,7 +269,7 @@ _add(Spec(
 		_ORDER,
 	),
 	_base("HideoutArea", areaType=0, compareMethod=">=", value=1),
-	timings=(FINISH,), managed=MANAGED, everyday=False,
+	timings=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Hideout area {item.get('areaType')} level {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="A hideout area must reach a level.",
 ))
@@ -282,7 +282,7 @@ _add(Spec(
 		_ORDER,
 	),
 	_base("GlobalVariableValue", compareMethod="==", target="", value=1),
-	timings=(FINISH,), managed=MANAGED, everyday=False,
+	timings=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Game variable {short(item.get('target', ''), 12)} {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="A value the game keeps must match.",
 ))
@@ -294,7 +294,7 @@ _add(Spec(
 		_LINKED, _ORDER,
 	),
 	_base("VisitPlace", target="", value=1),
-	timings=(FINISH,), managed=MANAGED, everyday=False,
+	timings=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Visit {item.get('target')}",
 	note="Visit a place (used outside a raid counter by a few quests).",
 ))

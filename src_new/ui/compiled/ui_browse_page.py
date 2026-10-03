@@ -59,6 +59,12 @@ class Ui_BrowseForm(object):
 
         self.column.addWidget(self.where)
 
+        self.commonLabel = QLabel(self.right)
+        self.commonLabel.setObjectName(u"commonLabel")
+        self.commonLabel.setWordWrap(True)
+
+        self.column.addWidget(self.commonLabel)
+
         self.table = QTableWidget(self.right)
         if (self.table.columnCount() < 5):
             self.table.setColumnCount(5)
@@ -92,6 +98,7 @@ class Ui_BrowseForm(object):
         self.title.setText("")
         self.note.setText("")
         self.where.setText("")
+        self.commonLabel.setText("")
         ___qtablewidgetitem = self.table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("BrowseForm", u"Field", None));
         ___qtablewidgetitem1 = self.table.horizontalHeaderItem(1)

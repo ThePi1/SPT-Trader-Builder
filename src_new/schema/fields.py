@@ -56,7 +56,7 @@ class Spec:
 	timings: tuple = ()  # where it may sit: for tasks Start / Finish / Fail, for rewards Success / Started / Fail
 	managed: tuple = ()  # keys the app fills in itself (ids, the type): never shown as fields
 	summary: Callable = None  # (item, names) -> text for the outline
-	everyday: bool = True  # False: rare kind, shown with a generic form or as JSON
+	common: bool = True  # False: a less common kind: it is listed under "Less common" in the Add menu, after the others
 	note: str = ""  # one plain sentence about the kind, for the Schema Explorer
 	fresh_ids: tuple = ()  # more keys that get a new id when a new item is made ("counter.id")
 

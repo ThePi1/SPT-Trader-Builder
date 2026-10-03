@@ -16,7 +16,7 @@ KIND_KEY = {"task": "conditionType", "subtask": "conditionType", "reward": "type
 
 # A generic spec for a kind the app has no spec for: everything is kept, nothing has a form.
 def unknown_spec(group, kind):
-	return Spec(group, kind, kind or "Unknown", (), {}, everyday=False, summary=lambda item, names: kind or "Unknown",
+	return Spec(group, kind, kind or "Unknown", (), {}, common=False, summary=lambda item, names: kind or "Unknown",
 		note="A kind this app doesn't know. It is kept exactly as it is.")
 
 
@@ -45,9 +45,9 @@ def new_item(group, kind):
 	return item
 
 
-def kinds(group, everyday_only=False):
-	"""The specs of a group in the order the Add menu lists them: everyday kinds first."""
+def kinds(group, common_only=False):
+	"""The specs of a group in the order the Add menu lists them: the common kinds first."""
 	specs = list(GROUPS[group].values())
-	if everyday_only:
-		specs = [s for s in specs if s.everyday]
-	return sorted(specs, key=lambda s: not s.everyday)
+	if common_only:
+		specs = [s for s in specs if s.common]
+	return sorted(specs, key=lambda s: not s.common)

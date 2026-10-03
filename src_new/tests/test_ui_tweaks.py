@@ -170,3 +170,102 @@ def test_the_more_buttons_are_outlined_buttons_without_a_caret(app):
 	panel.resize(600, 300)
 	panel.show()
 	assert panel.more_button.width() < 200  # (it is not stretched across the panel)
+
+
+# --- Spec.common, the explorer's line about it, and the setting that greys uncommon fields ------
+
+def spec_item(page, common):
+	"""The tree item of the first type whose Spec.common is this."""
+	for i in range(page.tree.topLevelItemCount()):
+		top = page.tree.topLevelItem(i)
+		for j in range(top.childCount()):
+			if top.child(j).data(0, 256).common is common:
+				return top.child(j)
+
+
+def grey_rows(page):
+	return [r for r in range(page.table.rowCount()) if page.table.item(r, 0).foreground().style() != Qt.BrushStyle.NoBrush]
+
+
+def test_spec_common_replaces_everyday():
+	from schema.fields import Spec
+	from schema import registry
+
+	assert "common" in Spec.__dataclass_fields__ and "everyday" not in Spec.__dataclass_fields__
+	assert Spec.__dataclass_fields__["common"].default is True
+	kinds = registry.kinds("task")
+	assert all(s.common for s in registry.kinds("task", common_only=True))
+	flags = [s.common for s in kinds]
+	assert flags == sorted(flags, reverse=True) and False in flags  # (the common kinds come first)
+	assert registry.kinds("reward")[0].common and not registry.spec_for("task", "SellItemToTrader").common
+
+
+def test_the_type_list_has_no_rare_tag_and_a_line_says_whether_it_is_common(app):
+	from ui.explorer_tab import BrowsePage
+
+	page = BrowsePage()
+	labels = [page.tree.topLevelItem(i).child(j).text(0) for i in range(page.tree.topLevelItemCount()) for j in range(page.tree.topLevelItem(i).childCount())]
+	assert labels and not [text for text in labels if "(rare)" in text or "(less common)" in text]
+	page.tree.setCurrentItem(spec_item(page, True))
+	assert page.commonLabel.text() == "This type is marked as commonly used."
+	page.tree.setCurrentItem(spec_item(page, False))
+	assert page.commonLabel.text() == "This type is marked as not commonly used."
+	page.tree.setCurrentItem(None)
+	assert page.commonLabel.text() == ""
+	# it sits under the "Can be used" / "Filled in by the app" line
+	layout = page.column
+	order = [layout.itemAt(i).widget() for i in range(layout.count())]
+	assert order.index(page.commonLabel) == order.index(page.where) + 1
+
+
+def test_the_setting_greys_the_uncommon_fields_or_leaves_them_normal(app):
+	from core.settings import Settings
+	from ui.explorer_tab import BrowsePage
+	from schema import explorer
+
+	settings = Settings()
+	assert settings.mark_uncommon_fields is True  # (on to start)
+	page = BrowsePage(settings)
+	quest = page.tree.topLevelItem(0).child(0)  # Quest: several uncommon fields
+	page.tree.setCurrentItem(quest)
+	expected = [r for r, row in enumerate(explorer.field_rows(quest.data(0, 256))) if row[5]]
+	assert expected and grey_rows(page) == expected
+	settings.mark_uncommon_fields = False
+	page.refresh()
+	assert grey_rows(page) == []  # (the same fields, in normal text)
+	assert page.table.rowCount() > len(expected)
+	settings.mark_uncommon_fields = True
+	page.refresh()
+	assert grey_rows(page) == expected
+
+
+def test_the_setting_is_in_the_settings_window_and_the_file(app, tmp_path):
+	import configparser
+
+	from core import settings as S
+	from ui.dialogs import SettingsDialog
+	from PySide6.QtWidgets import QCheckBox
+
+	dialog = SettingsDialog(S.Settings(), None)
+	box = dialog.controls["mark_uncommon_fields"]
+	assert isinstance(box, QCheckBox) and box.isChecked()
+	parser = configparser.ConfigParser(interpolation=None)
+	parser.read(S.SETTINGS_FILE, encoding="utf-8")
+	assert parser.has_option("display", "mark_uncommon_fields")
+
+
+def test_changing_the_setting_in_the_main_window_redraws_the_open_description(app, tmp_path, monkeypatch):
+	from core.gamedata import GameData
+	from core.paths import BUNDLED_DATABASE_DIR
+	from core.settings import Settings
+	from ui import updates
+	from ui.main_window import MainWindow
+
+	monkeypatch.setattr(updates, "fetch_remote_version", lambda config: None)
+	win = MainWindow(Settings.load(tmp_path / "none.ini"), GameData(None, "en", BUNDLED_DATABASE_DIR))
+	page = win.explorer_tab.browse
+	page.tree.setCurrentItem(page.tree.topLevelItem(0).child(0))
+	assert grey_rows(page)
+	win.settings.mark_uncommon_fields = False
+	page.refresh()
+	assert grey_rows(page) == []

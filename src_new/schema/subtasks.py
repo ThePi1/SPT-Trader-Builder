@@ -156,7 +156,7 @@ _add(Spec(
 	note="Have a stimulant or other buff active.",
 ))
 
-# --- rare kinds ---------------------------------------------------------------------------
+# --- less common kinds ---------------------------------------------------------------------------
 
 
 def _compare_value(condition_type, label, note, value=1, **extra):
@@ -166,7 +166,7 @@ def _compare_value(condition_type, label, note, value=1, **extra):
 			Field("value", "Value", INT, value, minimum=0),
 		) + tuple(extra.get("fields", ())),
 		_base(condition_type, compareMethod=">=", value=value, **extra.get("base", {})),
-		timings=("Finish", "Fail"), managed=MANAGED, everyday=False,
+		timings=("Finish", "Fail"), managed=MANAGED, common=False,
 		summary=lambda item, names, label=label: f"{label} {compare_text(item.get('compareMethod'))} {item.get('value')}",
 		note=note,
 	)
@@ -182,18 +182,18 @@ _add(_compare_value(
 _add(Spec(
 	"subtask", "ArenaGameMode", "Arena game mode", (Field("target", "Modes", LIST, [], choices="arena_game_modes", open=True),),
 	_base("ArenaGameMode", target=[]),
-	timings=("Finish", "Fail"), managed=MANAGED, everyday=False, summary=lambda item, names: f"Arena {', '.join(item.get('target', []))}",
+	timings=("Finish", "Fail"), managed=MANAGED, common=False, summary=lambda item, names: f"Arena {', '.join(item.get('target', []))}",
 	note="Play an Arena game mode.",
 ))
 _add(Spec(
 	"subtask", "ArenaRankingMode", "Arena ranking mode", (Field("target", "Modes", LIST, []),),
 	_base("ArenaRankingMode", target=[]),
-	timings=("Finish", "Fail"), managed=MANAGED, everyday=False, summary=lambda item, names: "Arena ranking mode",
+	timings=("Finish", "Fail"), managed=MANAGED, common=False, summary=lambda item, names: "Arena ranking mode",
 	note="Play an Arena ranking mode.",
 ))
 _add(Spec(
 	"subtask", "UnderArtilleryFire", "Under artillery fire", (),
 	_base("UnderArtilleryFire"),
-	timings=("Finish",), managed=MANAGED, everyday=False, summary=lambda item, names: "Survive artillery fire",
+	timings=("Finish",), managed=MANAGED, common=False, summary=lambda item, names: "Survive artillery fire",
 	note="Be under artillery fire.",
 ))

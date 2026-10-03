@@ -66,6 +66,7 @@ SETTINGS = (
 	Setting("defaults", "trader", "text", ""),
 	Setting("display", "show_all_fields", "bool", False),
 	Setting("display", "show_json_preview", "bool", False),
+	Setting("display", "mark_uncommon_fields", "bool", True),
 	Setting("display", "problems_collapsed", "bool", True),  # (set by the Problems header, not in the dialog)
 	Setting("lists", "locale_max_entries", "int", 5000),  # the Locale tab
 	Setting("lists", "lookup_max_rows", "int", 400),  # Find IDs, and the pickers that search for an id

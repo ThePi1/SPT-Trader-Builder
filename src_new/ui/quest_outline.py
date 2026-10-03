@@ -484,13 +484,13 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 				sub.addAction(spec.label, lambda s=spec: self.add_item("subtask", s.kind))
 		for group, heading in (("task", "Task"), ("reward", "Reward")):
 			menu = self.add_menu.addMenu(heading)
-			everyday = registry.kinds(group, everyday_only=True)
-			for spec in everyday:
+			common = registry.kinds(group, common_only=True)
+			for spec in common:
 				menu.addAction(spec.label, lambda g=group, s=spec: self.add_item(g, s.kind))
-			rare = [s for s in registry.kinds(group) if not s.everyday]
-			if rare:
+			uncommon = [s for s in registry.kinds(group) if not s.common]
+			if uncommon:
 				more = menu.addMenu("Less common")
-				for spec in rare:
+				for spec in uncommon:
 					more.addAction(spec.label, lambda g=group, s=spec: self.add_item(g, s.kind))
 
 	def _counter_path(self, address):

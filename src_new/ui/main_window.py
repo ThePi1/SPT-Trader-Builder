@@ -450,6 +450,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 				self.update_status = updates.pending_status(self.settings)
 				self.start_update_check()
 			self.quest_outline.apply_settings()
+			self.explorer_tab.browse.refresh()
 			self.locale_tab.refresh()
 			self.lookup_tab.view.refresh()
 

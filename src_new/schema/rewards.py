@@ -118,11 +118,11 @@ _add(Spec(
 _add(Spec(
 	"reward", "StashRows", "Stash rows", (Field("value", "Rows", INT, 1, minimum=1),) + _COMMON,
 	_base("StashRows", value=1),
-	timings=(SUCCESS,), managed=MANAGED, everyday=False, summary=lambda item, names: f"Stash +{item.get('value')} rows",
+	timings=(SUCCESS,), managed=MANAGED, common=False, summary=lambda item, names: f"Stash +{item.get('value')} rows",
 	note="Makes the stash taller.",
 ))
 
-# --- rare kinds ---------------------------------------------------------------------------
+# --- less common kinds ---------------------------------------------------------------------------
 
 _add(Spec(
 	"reward", "ProductionScheme", "Hideout recipe", (
@@ -132,7 +132,7 @@ _add(Spec(
 		Field("items", "Item", REWARD_ITEMS),
 	) + _COMMON,
 	_base("ProductionScheme", items=[], loyaltyLevel=1, target="", traderId=10),
-	timings=(SUCCESS, STARTED), managed=MANAGED, everyday=False,
+	timings=(SUCCESS, STARTED), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Hideout recipe {_main_item_name(item, names)}",
 	note="Unlocks a hideout crafting recipe. traderId is a hideout area number here, not a trader.",
 ))
@@ -140,7 +140,7 @@ _add(Spec(
 _add(Spec(
 	"reward", "CustomizationDirect", "Clothing or customization", (Field("target", "Item", REF, ref=CUSTOMIZATION, required=True),) + _COMMON,
 	_base("CustomizationDirect", target=""),
-	timings=(SUCCESS,), managed=MANAGED, everyday=False, summary=lambda item, names: f"Customization {short(item.get('target', ''), 12)}",
+	timings=(SUCCESS,), managed=MANAGED, common=False, summary=lambda item, names: f"Customization {short(item.get('target', ''), 12)}",
 	note="Gives a clothing or customization item.",
 ))
 
@@ -149,7 +149,7 @@ _add(Spec(
 		Field("target", "Trader", REF, ref=TRADER), Field("value", "Value", NUMBER, 0),
 	) + _COMMON,
 	_base("TraderStandingRestore", target="", value=0),
-	timings=(SUCCESS,), managed=MANAGED, everyday=False,
+	timings=(SUCCESS,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Restore {names.trader(item.get('target', ''))} standing",
 	note="Resets a trader's standing.",
 ))
@@ -157,21 +157,21 @@ _add(Spec(
 _add(Spec(
 	"reward", "Pockets", "Pockets", (Field("target", "Pockets item", REF),) + _COMMON,
 	_base("Pockets", target=""),
-	timings=(SUCCESS,), managed=MANAGED, everyday=False, summary=lambda item, names: "Pockets",
+	timings=(SUCCESS,), managed=MANAGED, common=False, summary=lambda item, names: "Pockets",
 	note="Gives a pockets upgrade.",
 ))
 
 _add(Spec(
 	"reward", "NotificationPopup", "Pop-up message", (Field("message", "Message id", TEXT, ""),) + _COMMON,
 	_base("NotificationPopup", message=""),
-	timings=(SUCCESS,), managed=MANAGED, everyday=False, summary=lambda item, names: "Pop-up message",
+	timings=(SUCCESS,), managed=MANAGED, common=False, summary=lambda item, names: "Pop-up message",
 	fresh_ids=("message",),
 	note="Shows a pop-up message.",
 ))
 
 _add(Spec(
 	"reward", "WebPromoCode", "Promo code", _COMMON, _base("WebPromoCode"),
-	timings=(SUCCESS,), managed=MANAGED, everyday=False, summary=lambda item, names: "Promo code",
+	timings=(SUCCESS,), managed=MANAGED, common=False, summary=lambda item, names: "Promo code",
 	note="Gives a web promo code.",
 ))
 
