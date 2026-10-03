@@ -239,3 +239,35 @@ def test_switching_tabs_still_refreshes_the_tab(window):
 	assert window.locale_tab.model.total == 1
 	window.tabs.setCurrentWidget(window.lookup_tab)
 	assert window.lookup_tab.view.table.rowCount() > 0
+
+
+def test_the_tree_gets_the_spare_height_and_the_problems_list_stays_small(app):
+	from ui.quest_outline import QuestOutline
+
+	class Expanded:
+		show_json_preview = show_all_fields = problems_collapsed = False
+
+		def update(self, values):
+			pass
+
+	outline = QuestOutline(None, Expanded())
+	outline.set_document(Document({}))
+	outline.resize(1000, 700)
+	outline.show()
+	app.processEvents()
+	assert outline.problems.list.isVisible()
+	assert outline.problems.height() < 200 and outline.tree.height() > 3 * outline.problems.height()
+	assert outline.tree.geometry().bottom() < outline.problems.geometry().top() <= outline.tree.geometry().bottom() + 10
+
+
+def test_the_button_row_fills_the_width_in_equal_parts(app):
+	outline, _first = _outline(app)
+	outline.resize(1800, 700)
+	outline.splitter.setSizes([1200, 500])  # (wide enough that the buttons have room to spare)
+	app.processEvents()
+	buttons = [outline.new_quest_button, outline.add_button, outline.copy_button, outline.delete_button, outline.up_button, outline.down_button]
+	margins = outline.leftLayout.contentsMargins()
+	assert buttons[0].geometry().left() == margins.left()
+	assert buttons[-1].geometry().right() + 1 == outline.leftPane.width() - margins.right()
+	widths = [b.width() for b in buttons]
+	assert max(widths) - min(widths) <= 2

@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QHeaderView, QPlainTextEdit,
-    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QSplitter, QToolButton, QTreeWidget, QTreeWidgetItem,
-    QVBoxLayout, QWidget)
+    QPushButton, QScrollArea, QSizePolicy, QSplitter,
+    QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+    QWidget)
 
 class Ui_OutlineForm(object):
     def setupUi(self, OutlineForm):
@@ -47,6 +47,11 @@ class Ui_OutlineForm(object):
 
         self.add_button = QToolButton(self.leftPane)
         self.add_button.setObjectName(u"add_button")
+        sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.add_button.sizePolicy().hasHeightForWidth())
+        self.add_button.setSizePolicy(sizePolicy)
         self.add_button.setPopupMode(QToolButton.InstantPopup)
 
         self.tools.addWidget(self.add_button)
@@ -71,10 +76,12 @@ class Ui_OutlineForm(object):
 
         self.tools.addWidget(self.down_button)
 
-        self.toolsSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.tools.addItem(self.toolsSpacer)
-
+        self.tools.setStretch(0, 1)
+        self.tools.setStretch(1, 1)
+        self.tools.setStretch(2, 1)
+        self.tools.setStretch(3, 1)
+        self.tools.setStretch(4, 1)
+        self.tools.setStretch(5, 1)
 
         self.leftLayout.addLayout(self.tools)
 
@@ -88,6 +95,7 @@ class Ui_OutlineForm(object):
 
         self.leftLayout.addWidget(self.tree)
 
+        self.leftLayout.setStretch(1, 1)
         self.splitter.addWidget(self.leftPane)
         self.rightSplitter = QSplitter(self.splitter)
         self.rightSplitter.setObjectName(u"rightSplitter")

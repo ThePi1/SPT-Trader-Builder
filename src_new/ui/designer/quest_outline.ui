@@ -29,7 +29,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <widget class="QWidget" name="leftPane">
-      <layout class="QVBoxLayout" name="leftLayout">
+      <layout class="QVBoxLayout" name="leftLayout" stretch="0,1">
        <property name="leftMargin">
         <number>0</number>
        </property>
@@ -43,7 +43,7 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QHBoxLayout" name="tools">
+        <layout class="QHBoxLayout" name="tools" stretch="1,1,1,1,1,1">
          <property name="spacing">
           <number>3</number>
          </property>
@@ -59,6 +59,12 @@
          </item>
          <item>
           <widget class="QToolButton" name="add_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Add </string>
            </property>
@@ -94,19 +100,6 @@
             <string>Down</string>
            </property>
           </widget>
-         </item>
-         <item>
-          <spacer name="toolsSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
          </item>
         </layout>
        </item>
