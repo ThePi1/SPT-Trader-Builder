@@ -10,7 +10,7 @@ import json
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import (
 	QComboBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMenu, QMessageBox, QPlainTextEdit, QPushButton,
-	QScrollArea, QSplitter, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+	QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
 from core.documents import duplicate, move
@@ -22,6 +22,7 @@ from schema.fields import get_path
 from schema.quest import QUEST, make_quest
 from schema import validate
 from schema.issues import ERROR
+from ui.compiled.ui_quest_outline import Ui_OutlineForm
 from ui.problems import ERROR_COLOR, WARNING_COLOR, ProblemsPanel, node_path
 from ui.forms import Context, FormWidget
 from ui.text_panels import QuestTextPanel, TaskTextPanel, task_has_text
@@ -55,7 +56,7 @@ def reward_path(qid, timing):
 	return (qid, "rewards", timing)
 
 
-class QuestOutline(QWidget):
+class QuestOutline(QWidget, Ui_OutlineForm):
 	def __init__(self, gamedata=None, settings=None, parent=None):
 		super().__init__(parent)
 		self.gamedata, self.settings, self.doc = gamedata, settings, None
@@ -63,61 +64,29 @@ class QuestOutline(QWidget):
 		self.locale = None  # the open locale Document, for the text boxes
 		self.picker = None  # (ref kind, multi, parent) -> [ids]: the window's search dialog
 		self._editing = False
-		splitter = QSplitter(self)
-		left = QWidget()
-		lay = QVBoxLayout(left)
-		lay.setContentsMargins(0, 0, 0, 0)
-		tools = QHBoxLayout()
-		tools.setSpacing(3)
-		self.new_quest_button = QPushButton("New quest")
-		self.new_quest_button.clicked.connect(self.add_quest)
-		self.add_button = QToolButton()
-		self.add_button.setText("Add")
-		self.add_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+		self.setupUi(self)  # (the layout: the buttons, tree, form pane and JSON view are in ui/designer/quest_outline.ui)
 		self.add_menu = QMenu(self.add_button)
 		self.add_menu.aboutToShow.connect(self._fill_add_menu)
 		self.add_button.setMenu(self.add_menu)
-		tools.addWidget(self.new_quest_button)
-		tools.addWidget(self.add_button)
-		for text, slot in (("Copy", self.copy_selected), ("Delete", self.delete_selected), ("Up", lambda: self.move_selected(-1)), ("Down", lambda: self.move_selected(1))):
-			button = QPushButton(text)
-			button.clicked.connect(slot)
-			tools.addWidget(button)
-		tools.addStretch(1)
-		lay.addLayout(tools)
-		self.tree = QTreeWidget()
-		self.tree.setHeaderHidden(True)
-		self.tree.setIndentation(16)
+		for button, slot in (
+			(self.new_quest_button, self.add_quest), (self.copy_button, self.copy_selected),
+			(self.delete_button, self.delete_selected), (self.up_button, lambda: self.move_selected(-1)),
+			(self.down_button, lambda: self.move_selected(1)),
+		):
+			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.tree.currentItemChanged.connect(self._selected)
-		lay.addWidget(self.tree, 1)
-		self.problems = ProblemsPanel(settings)
+		self.problems = ProblemsPanel(settings)  # (under the tree)
 		self.problems.activated.connect(self._jump)
-		lay.addWidget(self.problems)
+		self.leftLayout.addWidget(self.problems)
 		self._check_timer = QTimer(self)
 		self._check_timer.setSingleShot(True)
 		self._check_timer.setInterval(400)
 		self._check_timer.timeout.connect(self.check)
-		splitter.addWidget(left)
-		self.pane = QWidget()
-		self.pane_layout = QVBoxLayout(self.pane)
-		scroll = QScrollArea()
-		scroll.setWidgetResizable(True)
-		scroll.setWidget(self.pane)
-		right = QSplitter(Qt.Orientation.Vertical)
-		right.addWidget(scroll)
-		self.json_view = QPlainTextEdit(right)  # what is selected, as it will be saved
-		self.json_view.setReadOnly(True)
-		self.json_view.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
-		self.json_view.setVisible(bool(settings and settings.show_json_preview))
-		right.addWidget(self.json_view)
-		right.setStretchFactor(0, 3)
-		right.setStretchFactor(1, 1)
-		right.setSizes([560, 200])
-		splitter.addWidget(right)
-		splitter.setSizes([360, 620])
-		outer = QHBoxLayout(self)
-		outer.setContentsMargins(0, 0, 0, 0)
-		outer.addWidget(splitter)
+		self.json_view.setVisible(bool(settings and settings.show_json_preview))  # what is selected, as it will be saved
+		self.rightSplitter.setStretchFactor(0, 3)
+		self.rightSplitter.setStretchFactor(1, 1)
+		self.rightSplitter.setSizes([560, 200])
+		self.splitter.setSizes([360, 505])  # (puts the divider where it was before the layout moved to the .ui file)
 		self._show_hint("Add a quest to begin, or open a quest file.")
 
 	# --- the document -----------------------------------------------------------------------

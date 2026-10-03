@@ -1,6 +1,6 @@
 """Finding ids: a search box over everything the game has, as a tab and as a picker dialog."""
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QTimer, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
 	QAbstractItemView, QDialog, QDialogButtonBox, QHBoxLayout, QPushButton, QTableWidgetItem, QVBoxLayout, QWidget,

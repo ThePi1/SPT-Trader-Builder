@@ -42,7 +42,8 @@ The tests that check against the base game use the game data bundled in `data/da
   Schema Explorer are all made from this. No Qt.
 - `ui/`: the window, the outline editor, the generated forms, dialogs.
   - `ui/designer/`: Qt Designer files (`.ui`) for the fixed layouts: the main window and its menus, the Settings, About
-    and Check for updates windows, the Locale tab, Find IDs, and the Schema Explorer's Check a file page.
+    and Check for updates windows, the Quests tab (buttons, tree and panes), the Locale tab, Find IDs, and the Schema
+    Explorer's Check a file page.
   - `ui/compiled/`: those files compiled to Python (`ui_*.py`). Generated: don't edit them by hand.
 - `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source) and `schema/vanilla_profile.json`
   (from the base game's quests), and compile the Designer files.

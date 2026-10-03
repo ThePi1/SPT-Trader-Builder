@@ -156,3 +156,58 @@ def test_the_dialogs_close_with_their_buttons(app, tmp_path):
 	dialog.show()
 	dialog.buttons.rejected.emit()
 	assert not dialog.isVisible() and dialog.tabs.count() == 5
+
+
+# --- the Quests tab's buttons (ui/designer/quest_outline.ui) -------------------------------------
+
+
+def _outline(app):
+	from ui.quest_outline import QuestOutline
+
+	a, b = "a" * 24, "b" * 24
+
+	def quest(qid, name):
+		return {
+			"_id": qid, "QuestName": name, "traderId": "t" * 24,
+			"conditions": {
+				"AvailableForStart": [], "Fail": [],
+				"AvailableForFinish": [{"id": "1" * 24, "conditionType": "Level", "value": 5, "compareMethod": ">="}, {"id": "2" * 24, "conditionType": "Level", "value": 9, "compareMethod": ">="}],
+			},
+			"rewards": {"Success": [], "Started": [], "Fail": []},
+		}
+
+	outline = QuestOutline(None, None)
+	outline.set_document(Document({a: quest(a, "First"), b: quest(b, "Second")}))
+	outline.show()
+	return outline, a
+
+
+def test_the_outline_buttons_do_what_they_say(app, monkeypatch):
+	monkeypatch.setattr("ui.quest_outline.QMessageBox.question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+	outline, first = _outline(app)
+	outline._select_key(("quest", (first,)))
+	outline.new_quest_button.click()
+	assert len(outline.doc.data) == 3 and outline.doc.data[outline._current().path[0]]["QuestName"] == "New quest"
+	outline._select_key(("quest", (first,)))
+	outline.copy_button.click()
+	assert [q["QuestName"] for q in outline.doc.data.values()].count("First (copy)") == 1
+	outline._select_key(("task", (first, "conditions", "AvailableForFinish", 0)))
+	outline.down_button.click()
+	assert [t["value"] for t in outline.doc.data[first]["conditions"]["AvailableForFinish"]] == [9, 5]
+	outline.up_button.click()
+	assert [t["value"] for t in outline.doc.data[first]["conditions"]["AvailableForFinish"]] == [5, 9]
+	outline.delete_button.click()
+	assert [t["value"] for t in outline.doc.data[first]["conditions"]["AvailableForFinish"]] == [9]
+	outline._select_key(("quest", (first,)))
+	outline.delete_button.click()
+	assert first not in outline.doc.data
+
+
+def test_the_add_button_opens_its_menu_and_the_outline_has_its_panes(app):
+	outline, first = _outline(app)
+	outline._select_key(("quest", (first,)))
+	assert outline.add_button.menu() is outline.add_menu
+	outline.add_menu.aboutToShow.emit()
+	assert outline.add_menu.actions()  # (what can be added to the selected quest)
+	assert outline.splitter.count() == 2 and outline.rightSplitter.count() == 2
+	assert outline.pane_layout.count() > 0 and outline.problems.parent() is outline.leftPane
