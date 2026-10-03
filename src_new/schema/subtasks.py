@@ -124,7 +124,7 @@ _add(Spec(
 	),
 	_base("Equipment", IncludeNotEquippedItems=False, equipmentExclusive=[], equipmentInclusive=[]),
 	timings=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: "Wear equipment",
-	note="Go in wearing certain items. Items in the same group are alternatives.",
+	note="Go in wearing certain items. A group needs all of its items, and any one group is enough.",
 ))
 
 _add(Spec(

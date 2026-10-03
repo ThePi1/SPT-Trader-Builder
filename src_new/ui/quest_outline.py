@@ -127,9 +127,28 @@ class QuestOutline(QWidget):
 		self.rebuild()
 		self.check()
 
-	def _ctx(self):
+	def _ctx(self, quest_id=None, task_id=None):
+		"""What the forms need. With a quest, the other tasks of that quest (not task_id) are offered for "Only show after"."""
 		quest_names = {q: v.get("QuestName", "") for q, v in self.doc.data.items() if isinstance(v, dict)} if self.doc else {}
-		return Context(self.gamedata, Names(self.gamedata, quest_names), self.picker, self.library)
+		names = Names(self.gamedata, quest_names)
+		return Context(self.gamedata, names, self.picker, self.library, self._task_choices(quest_id, task_id, names))
+
+	def _task_choices(self, quest_id, skip_id, names):
+		quest = self.doc.data.get(quest_id) if self.doc and quest_id else None
+		if not isinstance(quest, dict):
+			return []
+		found = []
+		for timing, list_key in choices.TASK_LIST_KEY.items():
+			for task in (quest.get("conditions") or {}).get(list_key, []) or []:
+				if not isinstance(task, dict) or not task.get("id") or task["id"] == skip_id:
+					continue
+				spec = registry.spec_of(task, "task")
+				try:
+					words = spec.summary(task, names) if spec.summary else spec.label
+				except (KeyError, TypeError, IndexError):
+					words = spec.label
+				found.append((task["id"], f"{words} ({timing})"))
+		return found
 
 	def _names(self):
 		return self._ctx().names
@@ -351,7 +370,8 @@ class QuestOutline(QWidget):
 			self.pane_layout.addWidget(note)
 		if address.kind in ("task", "reward") and len(spec.timings) > 1:
 			self.pane_layout.addLayout(self._timing_row(address, spec))
-		form = FormWidget(spec, self._ctx(), show_advanced=bool(self.settings and self.settings.show_all_fields))
+		own_id = data.get("id") if isinstance(data, dict) else None
+		form = FormWidget(spec, self._ctx(qpath[0] if qpath else None, own_id), show_advanced=bool(self.settings and self.settings.show_all_fields))
 		form.bind(data)
 		self.doc.watch(qpath)
 		form.field_changed.connect(lambda key, a=address: self._form_edited(a, key))

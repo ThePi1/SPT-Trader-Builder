@@ -146,3 +146,22 @@ def test_problems_list_can_be_hidden_and_the_choice_is_remembered(app, tmp_path)
 	assert not again.problems.list.isVisible()  # (a new window starts the way it was left)
 	again.problems.header.click()
 	assert again.problems.list.isVisible()
+
+
+def test_only_show_after_offers_the_other_tasks_of_the_quest(app):
+	from ui import forms
+
+	outline, doc = make()
+	outline.add_quest()
+	outline.add_item("task", "Level")
+	outline.add_item("task", "HandoverItem")
+	hand_over = outline.tree.currentItem()
+	task_id = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["id"]
+	pane = outline.pane
+	control = next(w for w in pane.findChildren(forms.VisibilityControl))
+	assert [tid for tid, _label in control.ctx.tasks] != [] and task_id not in [tid for tid, _l in control.ctx.tasks]
+	assert any("Level" in label for _tid, label in control.ctx.tasks)
+	control.combo.setCurrentIndex(0)
+	control._add()
+	conditions = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["visibilityConditions"]
+	assert len(conditions) == 1 and conditions[0]["target"] == control.ctx.tasks[0][0]

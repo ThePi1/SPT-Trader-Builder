@@ -10,9 +10,10 @@ import json
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
 	QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPlainTextEdit, QPushButton,
-	QVBoxLayout, QWidget,
+	QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
+from core.ids import new_id
 from schema import choices as choice_lists
 from schema import fields as F
 from schema.common import short
@@ -25,10 +26,11 @@ HINT_STYLE = "color: #808080;"
 class Context:
 	"""What the controls need to show names and choices: the game data (may be None)."""
 
-	def __init__(self, gamedata=None, names=None, picker=None, library=None):
+	def __init__(self, gamedata=None, names=None, picker=None, library=None, tasks=None):
 		from schema.common import PLAIN
 
 		self.library = library  # core.library.Library of the user's saved composite items
+		self.tasks = list(tasks or [])  # [(task id, words)] of the other tasks of the quest being edited
 		self.picker = picker  # (ref kind, multi, parent widget) -> [ids]; set by the window
 		self.gamedata = gamedata
 		self.names = names or PLAIN
@@ -42,6 +44,10 @@ class Context:
 		if self.picker is None:
 			return []
 		return self.picker(ref, multi, parent)
+
+	def task_label(self, task_id):
+		"""Words for a task of the quest being edited ('' if it isn't one)."""
+		return next((label for known, label in self.tasks if known == task_id), "")
 
 	def name_of(self, ref, value):
 		"""The name of the thing an id points at, or ''."""
@@ -121,7 +127,7 @@ class BoolControl(Control):
 	def __init__(self, field, ctx):
 		super().__init__(field, ctx)
 		self.check = QCheckBox()
-		self.check.clicked.connect(self.edited.emit)
+		self.check.clicked.connect(lambda checked: self.edited.emit(bool(checked)))  # (not connected straight to emit: PySide then calls it with no value)
 		self.box.addWidget(self.check)
 		self.box.addStretch(1)
 
@@ -265,6 +271,179 @@ class ListControl(Control):
 			self.edited.emit(list(self.values))
 
 
+class GroupsControl(Control):
+	"""Groups of items where any one group will do and a group needs all of its items (what a quest wants
+	worn, the mods a weapon must have). A tree of groups with their items under them. Ids are typed
+	(several can be separated by spaces or commas) or found with Find..."""
+
+	def __init__(self, field, ctx):
+		super().__init__(field, ctx)
+		self.groups = []
+		column = QVBoxLayout()
+		column.setSpacing(2)
+		hint = QLabel("Any one group is enough. A group needs all of its items.")
+		hint.setStyleSheet(HINT_STYLE + " font-size: 11px;")
+		column.addWidget(hint)
+		self.tree = QTreeWidget()
+		self.tree.setHeaderHidden(True)
+		self.tree.setIndentation(14)
+		self.tree.setMinimumHeight(60)
+		self.tree.setMaximumHeight(160)
+		column.addWidget(self.tree)
+		row = QHBoxLayout()
+		row.setSpacing(4)
+		self.entry = QLineEdit()
+		self.entry.setPlaceholderText("Item id")
+		row.addWidget(self.entry, 1)
+		if ctx.picker is not None:
+			find = QPushButton("Find...")
+			find.clicked.connect(self._find)
+			row.addWidget(find)
+		for text, slot in (("New group", self._new_group), ("Add to group", self._add_to_group), ("Remove", self._remove)):
+			button = QPushButton(text)
+			button.clicked.connect(slot)
+			row.addWidget(button)
+		column.addLayout(row)
+		self.box.addLayout(column, 1)
+
+	def _name(self, tpl):
+		name = self.ctx.name_of(F.ITEM, tpl)
+		return f"{name} ({short(tpl, 12)})" if name else str(tpl)
+
+	def _fill(self, select=None):
+		"""Rebuild the tree; select is (group number, item number or None)."""
+		self.tree.clear()
+		chosen = None
+		for g, group in enumerate(self.groups):
+			top = QTreeWidgetItem([f"Group {g + 1}"])
+			font = top.font(0)
+			font.setBold(True)
+			top.setFont(0, font)
+			self.tree.addTopLevelItem(top)
+			for i, tpl in enumerate(group):
+				child = QTreeWidgetItem([self._name(tpl)])
+				top.addChild(child)
+				if select == (g, i):
+					chosen = child
+			if select == (g, None):
+				chosen = top
+			top.setExpanded(True)
+		if chosen is not None:
+			self.tree.setCurrentItem(chosen)
+
+	def load(self, value):
+		self.groups = [list(g) if isinstance(g, list) else [g] for g in value] if isinstance(value, list) else []
+		self._fill()
+
+	def _changed(self, select=None):
+		self.groups = [g for g in self.groups if g]  # (a group with nothing in it goes)
+		self._fill(select)
+		self.edited.emit([list(g) for g in self.groups])
+
+	def _find(self):
+		ids = self.ctx.pick(F.ITEM, True, self)
+		if ids:
+			self.entry.setText(", ".join(ids))
+
+	def _typed(self):
+		ids = [part for part in self.entry.text().replace(",", " ").split() if part]
+		self.entry.clear()
+		return ids
+
+	def _new_group(self):
+		ids = self._typed()
+		if ids:
+			self.groups.append(ids)
+			self._changed((len(self.groups) - 1, None))
+
+	def _selected(self):
+		item = self.tree.currentItem()
+		if item is None:
+			return None, None
+		parent = item.parent()
+		if parent is None:
+			return self.tree.indexOfTopLevelItem(item), None
+		return self.tree.indexOfTopLevelItem(parent), parent.indexOfChild(item)
+
+	def _add_to_group(self):
+		ids = self._typed()
+		if not ids:
+			return
+		g, _i = self._selected()
+		if g is None:
+			self.groups.append(ids)
+			g = len(self.groups) - 1
+		else:
+			self.groups[g].extend(i for i in ids if i not in self.groups[g])
+		self._changed((g, None))
+
+	def _remove(self):
+		g, i = self._selected()
+		if g is None:
+			return
+		if i is None:
+			del self.groups[g]
+		else:
+			del self.groups[g][i]
+		self._changed()
+
+
+class VisibilityControl(Control):
+	"""'Only show after' these tasks of the quest are done. The conditions that are already there keep
+	their own ids; a new one gets a new id."""
+
+	def __init__(self, field, ctx):
+		super().__init__(field, ctx)
+		self.entries = []
+		column = QVBoxLayout()
+		column.setSpacing(2)
+		self.list = QListWidget()
+		self.list.setMinimumHeight(40)
+		self.list.setMaximumHeight(72)
+		column.addWidget(self.list)
+		row = QHBoxLayout()
+		row.setSpacing(4)
+		self.combo = QComboBox()
+		for task_id, label in ctx.tasks:
+			self.combo.addItem(label, task_id)
+		add, remove = QPushButton("Add"), QPushButton("Remove")
+		add.clicked.connect(self._add)
+		remove.clicked.connect(self._remove)
+		for widget, stretch in ((self.combo, 1), (add, 0), (remove, 0)):
+			row.addWidget(widget, stretch)
+		column.addLayout(row)
+		self.box.addLayout(column, 1)
+
+	@staticmethod
+	def _target(entry):
+		return entry.get("target", "") if isinstance(entry, dict) else str(entry)
+
+	def _fill(self):
+		self.list.clear()
+		for entry in self.entries:
+			target = self._target(entry)
+			self.list.addItem(self.ctx.task_label(target) or short(target, 24))
+
+	def load(self, value):
+		self.entries = list(value) if isinstance(value, list) else []
+		self._fill()
+
+	def _add(self):
+		target = self.combo.currentData()
+		if not target or any(self._target(e) == target for e in self.entries):
+			return
+		self.entries.append({"conditionType": "CompleteCondition", "id": new_id(), "target": target})
+		self._fill()
+		self.edited.emit(list(self.entries))
+
+	def _remove(self):
+		row = self.list.currentRow()
+		if row >= 0:
+			del self.entries[row]
+			self._fill()
+			self.edited.emit(list(self.entries))
+
+
 class PartsControl(Control):
 	"""The parts of an item (a reward's items): a tree of parts with their details."""
 
@@ -324,6 +503,10 @@ def make_control(field, ctx):
 		return TraderControl(field, ctx) if field.ref == F.TRADER else RefControl(field, ctx)
 	if field.kind == F.REWARD_ITEMS:
 		return PartsControl(field, ctx)
+	if field.kind == F.GROUPS:
+		return GroupsControl(field, ctx)
+	if field.kind == F.VISIBILITY:
+		return VisibilityControl(field, ctx)
 	if field.kind == F.LIST and not field.choices:
 		return ListControl(field, ctx)
 	return _CONTROLS.get(field.kind, JsonControl)(field, ctx)
