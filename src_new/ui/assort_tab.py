@@ -2,6 +2,7 @@
 (questassort.json). Each offer is an item (maybe with mods), a price, a trader level and an optional quest lock."""
 
 import copy
+import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -25,14 +26,17 @@ LOCK_LABELS = (
 	("fail", "Removed if the quest is failed"),
 )
 MONEY_NAMES = {v: k.capitalize() for k, v in A.MONEY.items()}
+WHEN = {"started": "when it is started", "success": "when it is completed", "fail": "when it is failed"}
 
 
 class AssortTab(QWidget):
-	def __init__(self, assort_doc, locks_doc, gamedata=None, picker=None, library=None, quests=None, parent=None):
+	def __init__(self, assort_doc, locks_doc, gamedata=None, picker=None, library=None, quests=None, quests_document=None, parent=None):
+		"""quests() gives the open quests' data and quests_document() their Document (to add an unlock reward to a quest)."""
 		super().__init__(parent)
 		self.doc, self.locks = assort_doc, locks_doc
 		self.gamedata, self.picker, self.library = gamedata, picker, library
 		self.quests = quests or (lambda: {})
+		self.quests_document = quests_document
 		self._editing = False
 		split = QSplitter(self)
 		left = QWidget()
@@ -59,10 +63,38 @@ class AssortTab(QWidget):
 		self.right_layout = QVBoxLayout(self.right)
 		split.addWidget(self.right)
 		split.setSizes([420, 520])
-		outer = QHBoxLayout(self)
+		outer = QVBoxLayout(self)
 		outer.setContentsMargins(0, 0, 0, 0)
-		outer.addWidget(split)
+		top = QHBoxLayout()
+		top.addWidget(QLabel("Trader"))
+		self.trader = QComboBox()  # which trader this assort is for: needed to link offers and quest rewards
+		self.trader.setEditable(True)
+		self.trader.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+		self.trader.setMinimumWidth(240)
+		self.trader.setToolTip("The trader this assort is for. Needed to add quest unlocks. You can paste a trader id.")
+		self.trader.addItem("(not set)", "")
+		for trader_id, name in (gamedata.traders.items() if gamedata is not None else ()):
+			self.trader.addItem(name, trader_id)
+		self.trader.setCurrentIndex(0)
+		self.trader.activated.connect(lambda _i: self._trader_changed())
+		self.trader.lineEdit().editingFinished.connect(self._trader_changed)
+		top.addWidget(self.trader)
+		top.addStretch(1)
+		outer.addLayout(top)
+		outer.addWidget(split, 1)
 		self.watch(assort_doc, locks_doc)
+
+	@property
+	def trader_id(self):
+		"""The chosen trader's id: a trader picked from the list, or a pasted id; '' if none."""
+		text = self.trader.currentText().strip()
+		index = self.trader.findText(text)
+		if index >= 0:
+			return self.trader.itemData(index)
+		return text if re.fullmatch(r"[0-9a-fA-F]{24}", text) else ""
+
+	def _trader_changed(self):
+		self.refresh(self.current_id())
 
 	# --- documents --------------------------------------------------------------------------
 	def watch(self, assort_doc, locks_doc):
@@ -131,7 +163,9 @@ class AssortTab(QWidget):
 			item.setData(ROLE, offer_id)
 			self.list.addItem(item)
 		self.list.blockSignals(False)
-		self.note.setText(f"{self.list.count()} of {total} offers.")
+		problems = self._lock_problems()
+		self.note.setText(f"{self.list.count()} of {total} offers." + (f" {len(problems)} quest unlock(s) to check." if problems else ""))
+		self.note.setToolTip("\n".join(i.message for i in problems[:30]))
 		row = next((i for i in range(self.list.count()) if self.list.item(i).data(ROLE) == keep), 0)
 		if self.list.count():
 			self.list.setCurrentRow(row)
@@ -140,6 +174,13 @@ class AssortTab(QWidget):
 	def current_id(self):
 		item = self.list.currentItem()
 		return item.data(ROLE) if item else None
+
+	def _lock_problems(self):
+		"""Quest locks that don't match the open quests' unlock rewards (nothing to say with no quests open)."""
+		quests = self.quests()
+		if not quests:
+			return []
+		return A.lock_problems(quests, self.locks.data, self.doc.data, self.trader_id or None)
 
 	# --- the offer --------------------------------------------------------------------------
 	def _select(self, item, _previous):
@@ -315,14 +356,7 @@ class AssortTab(QWidget):
 			quest_row.addWidget(widget, stretch)
 
 		def apply(lock_value, quest_id):
-			def edit(d):
-				for section in A.QUEST_LOCKS:
-					(d.setdefault(section, {})).pop(offer_id, None)
-				if lock_value and quest_id:
-					d.setdefault(lock_value, {})[offer_id] = quest_id
-
-			self._edit("Change quest lock", edit, doc=self.locks)
-			self.refresh(offer_id)
+			self._set_lock(offer_id, lock_value, quest_id)
 
 		def pick():
 			ids = self.picker("quest", False, self) if self.picker else []
@@ -335,7 +369,73 @@ class AssortTab(QWidget):
 		find.clicked.connect(pick)
 		layout.addRow("Availability", combo)
 		layout.addRow("Quest", quest_row)
+		unlock = self._unlock_row(offer_id, lock, quest)
+		if unlock is not None:
+			layout.addRow(unlock)
 		return box
+
+	def _set_lock(self, offer_id, lock_value, quest_id):
+		def edit(d):
+			for section in A.QUEST_LOCKS:
+				(d.setdefault(section, {})).pop(offer_id, None)
+			if lock_value and quest_id:
+				d.setdefault(lock_value, {})[offer_id] = quest_id
+
+		self._edit("Change quest lock", edit, doc=self.locks)
+		self.refresh(offer_id)
+
+	# --- the link between a quest lock and the quest's unlock reward ---------------------------------
+	def _unlock_row(self, offer_id, lock, quest_id):
+		"""What the open quests say about this offer: whether the locking quest gives the unlock (with a button to
+		add it), or, for an offer with no lock, a quest that unlocks this item at this trader (with a button to lock to it)."""
+		quests = self.quests()
+		if not quests:
+			return None
+		tpl = A.offer_tpl(self.doc.data, offer_id)
+		label = QLabel()
+		label.setWordWrap(True)
+		label.setStyleSheet("color: #808080;")
+		button, action = None, None
+		if lock in A.UNLOCKED_BY and quest_id:
+			quest = quests.get(quest_id)
+			if quest is None:
+				label.setText("That quest isn't in the open quest file.")
+			elif A.find_unlock(quest, lock, tpl, self.trader_id or None):
+				label.setText("The quest gives this unlock.")
+			else:
+				label.setText("The quest doesn't unlock this item yet.")
+				button, action = "Add unlock to the quest", lambda: self._add_unlock(offer_id, lock, quest_id)
+		elif not lock and self.trader_id:
+			match = next(((q, s, r) for q, s, r, t in A.unlocks(quests, self.trader_id) if t == tpl and s in A.UNLOCKED_BY), None)
+			if match is None:
+				return None
+			found_quest, status, _reward = match
+			label.setText(f'The quest "{quests[found_quest].get("QuestName", found_quest)}" unlocks this item {WHEN[status]}.')
+			button, action = "Lock this offer to it", lambda: self._set_lock(offer_id, status, found_quest)
+		else:
+			return None
+		holder = QWidget()
+		row = QHBoxLayout(holder)
+		row.setContentsMargins(0, 0, 0, 0)
+		row.addWidget(label, 1)
+		if button:
+			push = QPushButton(button)
+			push.clicked.connect(lambda _c=False: action())
+			row.addWidget(push)
+		return holder
+
+	def _add_unlock(self, offer_id, status, quest_id):
+		"""Give the locking quest an unlock reward for this offer's item (same mods, trader and level)."""
+		if not self.trader_id:
+			QMessageBox.information(self, "Add unlock", "Choose the trader this assort is for first (at the top of this tab).")
+			return
+		doc = self.quests_document() if self.quests_document else None
+		if doc is None or quest_id not in doc.data:
+			return
+		reward = A.unlock_reward(self.doc.data, offer_id, self.trader_id)
+		timing = A.LOCK_TIMING[status]
+		doc.change("Add unlock to quest", lambda quest: quest.setdefault("rewards", {}).setdefault(timing, []).append(reward), path=(quest_id,))
+		self.refresh(offer_id)
 
 	# --- add, copy, delete ------------------------------------------------------------------
 	def add_offer(self):

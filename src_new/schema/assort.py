@@ -137,6 +137,107 @@ def validate_questassort(data, assort=None, quest_ids=None):
 	return issues
 
 
+# --- quest locks and the quests' unlock rewards ----------------------------------------------
+# An offer locked behind a quest is listed in questassort.json, and the quest gives an AssortmentUnlock
+# reward for the same item at the same trader. The two are matched by the item (the root part's _tpl),
+# not by id: the reward's parts have ids of their own (checked on all 236 vanilla quest locks).
+
+LOCK_TIMING = {"started": "Started", "success": "Success", "fail": "Fail"}  # the lock section -> the reward list
+UNLOCKED_BY = ("started", "success")  # the lock sections that a quest reward goes with (a "fail" lock has none)
+
+
+def offer_tpl(assort, offer_id):
+	"""The item an offer sells."""
+	root = next((p for p in assort.get("items", []) if p.get("_id") == offer_id), None)
+	return (root or {}).get("_tpl", "")
+
+
+def reward_root(reward):
+	"""The main part of an AssortmentUnlock reward (the part its target points at, else the first)."""
+	parts = reward.get("items") or []
+	target = reward.get("target")
+	return next((p for p in parts if p.get("_id") == target), parts[0] if parts else None)
+
+
+def unlocks(quests, trader_id=None):
+	"""[(quest id, lock section, reward, item)] for every AssortmentUnlock reward in the quests
+	(only those at this trader if trader_id is given)."""
+	found = []
+	for quest_id, quest in quests.items():
+		if not isinstance(quest, dict):
+			continue
+		for status, timing in LOCK_TIMING.items():
+			for reward in (quest.get("rewards") or {}).get(timing) or []:
+				if isinstance(reward, dict) and reward.get("type") == "AssortmentUnlock" and (not trader_id or reward.get("traderId") == trader_id):
+					root = reward_root(reward)
+					if root:
+						found.append((quest_id, status, reward, root.get("_tpl", "")))
+	return found
+
+
+def find_unlock(quest, status, tpl, trader_id=None):
+	"""The reward of this quest that unlocks the item when the lock section applies, or None."""
+	for _qid, found_status, reward, found_tpl in unlocks({"q": quest}, trader_id):
+		if found_status == status and found_tpl == tpl:
+			return reward
+	return None
+
+
+def lock_problems(quests, locks, assort, trader_id=None):
+	"""Warnings for what doesn't add up between the quest locks, the offers and the quests' unlock rewards.
+
+	A lock whose quest has no reward unlocking that item gets a warning at (section, offer id). With a
+	trader_id, a reward at that trader that no offer's lock matches gets a warning at ("unlock", quest id,
+	reward id). Locks for offers or quests that aren't there are left to validate_questassort.
+	"""
+	issues = []
+	offers = set(offer_ids(assort))
+	for status in UNLOCKED_BY:
+		for offer, quest_id in (locks.get(status) or {}).items():
+			quest = quests.get(quest_id)
+			if offer not in offers or not isinstance(quest, dict):
+				continue
+			if find_unlock(quest, status, offer_tpl(assort, offer), trader_id) is None:
+				issues.append(Issue(WARNING, (status, offer), f"The quest \"{quest.get('QuestName', quest_id)}\" has no reward that unlocks this item."))
+	if trader_id:
+		by_tpl = {}
+		for offer in offers:
+			by_tpl.setdefault(offer_tpl(assort, offer), []).append(offer)
+		for quest_id, status, reward, tpl in unlocks(quests, trader_id):
+			if status not in UNLOCKED_BY:
+				continue
+			if not any((locks.get(status) or {}).get(offer) == quest_id for offer in by_tpl.get(tpl, [])):
+				name = quests[quest_id].get("QuestName", quest_id)
+				issues.append(Issue(WARNING, ("unlock", quest_id, reward.get("id", "")), f"The quest \"{name}\" unlocks an item here, but no offer for it is locked to the quest."))
+	return issues
+
+
+def unlock_reward(assort, offer_id, trader_id, level=None, ids=new_id):
+	"""A new AssortmentUnlock reward for an offer: the same item and mods (with ids of their own), at this
+	trader and level. Put it in the quest's Success / Started list to match a quest lock."""
+	import copy
+
+	from schema import registry
+
+	parts = offer_parts(assort, offer_id)
+	id_map = {p["_id"]: ids() for p in parts}
+	items = []
+	for part in parts:
+		item = {"_id": id_map[part["_id"]], "_tpl": part["_tpl"]}
+		if part["_id"] != offer_id:  # (the main part is just the id and the item, as in the base game)
+			item["parentId"] = id_map.get(part.get("parentId"), part.get("parentId"))
+			item["slotId"] = part.get("slotId", "")
+			for key in ("location", "upd"):
+				if part.get(key):
+					item[key] = copy.deepcopy(part[key])
+		items.append(item)
+	reward = registry.new_item("reward", "AssortmentUnlock")
+	if level is None:
+		level = assort.get("loyal_level_items", {}).get(offer_id, 1)
+	reward.update(traderId=trader_id, loyaltyLevel=level, items=items, target=items[0]["_id"])
+	return reward
+
+
 # --- composite items: a saved multi-part item (a weapon with mods) ---------------------------
 
 def new_composite(name, parts):

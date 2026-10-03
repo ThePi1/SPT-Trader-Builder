@@ -49,7 +49,9 @@ class MainWindow(QMainWindow):
 		self.library = Library()
 		self.quest_outline.library = self.library
 		self.composite_tab = CompositeTab(self.library, gamedata, self.pick)
-		self.assort_tab = AssortTab(self.assort, self.locks, gamedata, self.pick, self.library, lambda: self.quests.data)
+		self.assort_tab = AssortTab(
+			self.assort, self.locks, gamedata, self.pick, self.library, lambda: self.quests.data, lambda: self.quests
+		)
 		self.explorer_tab = ExplorerTab(lambda: self.quests.data, lambda: self.locale.data, gamedata)
 		for widget, title in (
 			(self.quest_outline, "Quests"), (self.locale_tab, "Text"), (self.assort_tab, "Trader"), (self.composite_tab, "Composite items"), (self.lookup_tab, "Find IDs"), (self.explorer_tab, "Schema Explorer"),
@@ -87,6 +89,8 @@ class MainWindow(QMainWindow):
 			self.lookup_tab.set_rows(self.rows())
 		elif widget is self.locale_tab:
 			self.locale_tab.refresh()
+		elif widget is self.assort_tab:
+			self.assort_tab.refresh(self.assort_tab.current_id())  # (the quests may have changed)
 
 	# --- menus ------------------------------------------------------------------------------
 	def _action(self, menu, text, slot, shortcut=None):
