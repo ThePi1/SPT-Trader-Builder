@@ -136,16 +136,17 @@ def test_problems_list_can_be_hidden_and_the_choice_is_remembered(app, tmp_path)
 	outline = QuestOutline(None, settings)
 	outline.set_document(Document({"a" * 24: {"QuestName": "x"}}))
 	outline.show()
-	assert outline.problems.list.isVisible() and not settings.problems_collapsed
+	assert not outline.problems.list.isVisible() and settings.problems_collapsed  # (hidden unless the user opens it)
+	assert outline.problems.header.text()  # (the counts stay)
 	outline.problems.header.click()
-	assert not outline.problems.list.isVisible() and outline.problems.header.text()  # (the counts stay)
-	assert settings.problems_collapsed and "problems_collapsed = true" in ini.read_text(encoding="utf-8")
-	assert Settings.load(ini).problems_collapsed
+	assert outline.problems.list.isVisible() and not settings.problems_collapsed
+	assert "problems_collapsed = false" in ini.read_text(encoding="utf-8")
+	assert not Settings.load(ini).problems_collapsed
 	again = QuestOutline(None, Settings.load(ini))
 	again.show()
-	assert not again.problems.list.isVisible()  # (a new window starts the way it was left)
+	assert again.problems.list.isVisible()  # (a new window starts the way it was left)
 	again.problems.header.click()
-	assert again.problems.list.isVisible()
+	assert not again.problems.list.isVisible()
 
 
 def test_only_show_after_offers_the_other_tasks_of_the_quest(app):
