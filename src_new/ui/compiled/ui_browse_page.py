@@ -55,6 +55,7 @@ class Ui_BrowseForm(object):
         self.where = QLabel(self.right)
         self.where.setObjectName(u"where")
         self.where.setStyleSheet(u"color: #808080;")
+        self.where.setWordWrap(True)
 
         self.column.addWidget(self.where)
 

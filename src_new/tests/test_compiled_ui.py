@@ -378,3 +378,18 @@ def test_the_schema_explorer_pages(app):
 	tab.browse.tree.setCurrentItem(first)
 	assert tab.browse.title.text() and tab.browse.table.rowCount() > 0
 	assert [tab.browse.table.horizontalHeaderItem(i).text() for i in range(5)] == ["Field", "Key in the file", "Kind", "Needed", "Starts as"]
+
+
+def test_a_long_description_in_the_schema_explorer_does_not_squeeze_the_tree(app):
+	from ui.explorer_tab import BrowsePage
+
+	page = BrowsePage()
+	page.resize(900, 500)
+	page.show()
+	app.processEvents()
+	before = page.tree.width()
+	page.tree.setCurrentItem(page.tree.topLevelItem(0).child(0))  # (Quest: its "filled in by the app" line is very long)
+	app.processEvents()
+	assert "Filled in by the app" in page.where.text() and len(page.where.text()) > 150
+	assert page.where.wordWrap() and page.tree.width() == before and page.tree.width() >= 200
+	assert page.where.width() <= page.splitter.width() - page.tree.width()
