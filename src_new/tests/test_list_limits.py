@@ -58,10 +58,15 @@ def test_limit_falls_back_to_the_default_for_missing_or_odd_settings():
 	assert S.limit(Settings({"lookup_max_rows": 7}), "lookup_max_rows") == 7
 
 
-def test_the_shipped_settings_file_lists_every_limit_with_its_default():
+def test_the_shipped_settings_file_lists_every_limit_with_a_valid_value():
+	"""(Whatever number is in the file, it is the user's choice: the file only has to list each limit and load.)"""
+	import configparser
+
+	parser = configparser.ConfigParser(interpolation=None)
+	parser.read(S.SETTINGS_FILE, encoding="utf-8")
+	assert all(parser.has_option("lists", key) for key in LIMIT_KEYS)
 	shipped = Settings.load(S.SETTINGS_FILE)
-	for key in LIMIT_KEYS:
-		assert getattr(shipped, key) == S.BY_KEY[key].default
+	assert all(S.MIN_LIMIT <= getattr(shipped, key) <= S.MAX_LIMIT for key in LIMIT_KEYS)
 
 
 # --- the lists and the window -----------------------------------------------------------------

@@ -37,7 +37,7 @@ JSON_FILTER = "JSON files (*.json);;All files (*)"
 # (key = the attribute holding its Document, the strip's title, the name used in dialogs, the kind core.merge knows it as)
 KINDS = (
 	("quests", "Quests", "quest", M.QUESTS), ("locale", "Locale", "locale", M.LOCALE),
-	("assort", "Trader assort", "trader assort", M.ASSORT), ("locks", "Quest locks", "quest locks", M.LOCKS),
+	("assort", "Trader assort", "trader assort", M.ASSORT), ("locks", "Quest assort", "quest locks", M.LOCKS),
 )
 KEY_OF_KIND = {kind: key for key, _title, _label, kind in KINDS}
 

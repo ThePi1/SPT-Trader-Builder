@@ -378,7 +378,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 			if quest is None:
 				label.setText("That quest isn't in the open quest file.")
 			elif A.find_unlock(quest, lock, tpl, self.trader_id or None):
-				label.setText("The quest gives this unlock.")
+				label.setText(f'Quest "{quest.get("QuestName") or quest_id}" gives this unlock.')
 			else:
 				label.setText("The quest doesn't unlock this item yet.")
 				button, action = "Add unlock to the quest", lambda: self._add_unlock(offer_id, lock, quest_id)

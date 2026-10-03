@@ -196,7 +196,7 @@ def test_clicking_a_segment_opens_its_menu(app, window, monkeypatch):
 	QTest.mouseClick(window.files_strip.segment("assort"), Qt.MouseButton.LeftButton)
 	window.files_strip.segment("locks").setFocus()
 	QTest.keyClick(window.files_strip.segment("locks"), Qt.Key.Key_Return)
-	assert opened == ["Trader assort", "Quest locks"]
+	assert opened == ["Trader assort", "Quest assort"]
 
 
 # --- saving and dropping files --------------------------------------------------------------
@@ -432,3 +432,8 @@ def test_importing_what_is_already_there_adds_no_imported_note(window, tmp_path)
 	window.import_files(paths[:1])
 	window.import_files(paths[:1])  # (nothing new the second time)
 	assert window.imported_files("quests") == ["kappa.json"] and len(window.quests._undo) == 1
+
+
+def test_the_strip_calls_the_quest_locks_section_quest_assort(window):
+	assert "Quest assort" in window.files_strip.segment("locks").titleLabel.text()
+	assert "Quest locks" not in window.files_strip.segment("locks").titleLabel.text()
