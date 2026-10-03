@@ -79,6 +79,8 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.tree.currentItemChanged.connect(self._selected)
 		self.search.textChanged.connect(lambda _text: self.apply_filter())
+		self.expandAllButton.clicked.connect(lambda _checked=False: self.expand_all())
+		self.collapseAllButton.clicked.connect(lambda _checked=False: self.collapse_all())
 		self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 		self.tree.customContextMenuRequested.connect(self._context_menu)
 		self.problems = ProblemsPanel(settings)  # (under the tree)
@@ -228,16 +230,32 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			return f"{address.timing} ({len(data)})" if address.group != "rewards" else "Rewards"
 		return registry.spec_of(data, address.kind).summary(data, names)
 
+	def expand_all(self):
+		self.tree.expandAll()
+
+	def collapse_all(self):
+		"""Fold every quest up to its own row (the open item stays: it moves to its quest if it was inside one)."""
+		current = self.tree.currentItem()
+		self.tree.collapseAll()
+		if current is not None:
+			top = current
+			while top.parent() is not None:
+				top = top.parent()
+			if top is not current:
+				self.tree.setCurrentItem(top)
+
 	def rebuild(self):
 		keep = self._current_key()
 		self.tree.blockSignals(True)
+		before = {item.data(0, ROLE).key(): item.isExpanded() for item in self._walk()}  # (what was open and shut)
 		self.tree.clear()
 		if self.doc is not None:
 			for qid, quest in self.doc.data.items():
 				if not isinstance(quest, dict):
 					continue
 				self._build_quest(qid, quest)
-		self.tree.expandAll()
+		for item in self._walk():  # (new things start open; what was shut stays shut)
+			item.setExpanded(before.get(item.data(0, ROLE).key(), True))
 		self.tree.blockSignals(False)
 		self.apply_filter()
 		if not self._select_key(keep):
@@ -295,7 +313,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			source = self.sources.get(quest_id)
 			if source:
 				actions.append((f"Remove the quests imported from {source}", lambda source=source: self.remove_from_source(source)))
-		return actions
+		return actions + [("Expand all", self.expand_all), ("Collapse all", self.collapse_all)]
 
 	def _context_menu(self, pos):
 		actions = self._context_actions(self.tree.itemAt(pos))

@@ -270,3 +270,60 @@ def test_changing_the_setting_in_the_main_window_redraws_the_open_description(ap
 	win.settings.mark_uncommon_fields = False
 	page.refresh()
 	assert grey_rows(page) == []
+
+
+# --- expanding and collapsing the quests ------------------------------------------------------
+
+def expanded_counts(outline):
+	items = list(outline._walk())
+	return sum(1 for i in items if i.childCount() and i.isExpanded()), sum(1 for i in items if i.childCount())
+
+
+def quest_with_tasks(quest_id, name):
+	q = quest(quest_id, name)
+	q["conditions"]["AvailableForFinish"] = [{"id": "e" * 24, "conditionType": "Level", "value": 5, "compareMethod": ">="}]
+	return q
+
+
+def test_two_small_buttons_expand_and_collapse_everything(app):
+	outline = make_outline(app)
+	assert outline.expandAllButton.toolTip() == "Expand all" and outline.collapseAllButton.toolTip() == "Collapse all"
+	assert outline.expandAllButton.autoRaise() and outline.collapseAllButton.autoRaise()  # (flat: they only show on hover)
+	open_now, parents = expanded_counts(outline)
+	assert open_now == parents > 4  # (a new file starts fully open)
+	outline.collapseAllButton.click()
+	assert expanded_counts(outline)[0] == 0
+	assert all(not outline.tree.topLevelItem(i).isExpanded() for i in range(outline.tree.topLevelItemCount()))
+	assert outline.tree.topLevelItemCount() == 4  # (every quest is still listed)
+	outline.expandAllButton.click()
+	assert expanded_counts(outline)[0] == parents
+
+
+def test_collapsing_moves_the_open_item_to_its_quest(app):
+	outline = QuestOutline(None, None)
+	outline.set_document(Document({IDS["Debut"]: quest_with_tasks(IDS["Debut"], "Debut")}))
+	outline.show()
+	task = next(i for i in outline._walk() if i.data(0, 256).kind == "task")
+	outline.tree.setCurrentItem(task)
+	outline.collapse_all()
+	assert outline._current().kind == "quest"  # (not hidden away inside a folded quest)
+
+
+def test_the_context_menu_has_the_same_two_actions_and_they_work(app):
+	outline = make_outline(app)
+	actions = dict(outline._context_actions(None))
+	actions["Collapse all"]()
+	assert expanded_counts(outline)[0] == 0
+	actions["Expand all"]()
+	assert expanded_counts(outline)[0] == expanded_counts(outline)[1]
+
+
+def test_a_collapsed_quest_stays_collapsed_when_the_quests_change(app):
+	outline = make_outline(app)
+	outline.collapse_all()
+	outline.tree.topLevelItem(0).setExpanded(True)  # (the user opens one quest)
+	opened = outline.tree.topLevelItem(0).data(0, 256).key()
+	outline.doc.change("Add quest", lambda data: data.__setitem__("f" * 24, quest("f" * 24, "Brand new")))
+	states = {outline.tree.topLevelItem(i).data(0, 256).key(): outline.tree.topLevelItem(i).isExpanded() for i in range(outline.tree.topLevelItemCount())}
+	assert states[opened] is True
+	assert [k for k, v in states.items() if v] == [opened, ("quest", ("f" * 24,))]  # (the new quest starts open, the others stay shut)

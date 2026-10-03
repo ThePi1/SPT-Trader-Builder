@@ -85,11 +85,34 @@ class Ui_OutlineForm(object):
 
         self.leftLayout.addLayout(self.tools)
 
+        self.searchRow = QHBoxLayout()
+        self.searchRow.setSpacing(2)
+        self.searchRow.setObjectName(u"searchRow")
         self.search = QLineEdit(self.leftPane)
         self.search.setObjectName(u"search")
         self.search.setClearButtonEnabled(True)
 
-        self.leftLayout.addWidget(self.search)
+        self.searchRow.addWidget(self.search)
+
+        self.expandAllButton = QToolButton(self.leftPane)
+        self.expandAllButton.setObjectName(u"expandAllButton")
+        self.expandAllButton.setMinimumSize(QSize(24, 24))
+        self.expandAllButton.setStyleSheet(u"font-weight: bold; font-size: 14px;")
+        self.expandAllButton.setAutoRaise(True)
+
+        self.searchRow.addWidget(self.expandAllButton)
+
+        self.collapseAllButton = QToolButton(self.leftPane)
+        self.collapseAllButton.setObjectName(u"collapseAllButton")
+        self.collapseAllButton.setMinimumSize(QSize(24, 24))
+        self.collapseAllButton.setStyleSheet(u"font-weight: bold; font-size: 14px;")
+        self.collapseAllButton.setAutoRaise(True)
+
+        self.searchRow.addWidget(self.collapseAllButton)
+
+        self.searchRow.setStretch(0, 1)
+
+        self.leftLayout.addLayout(self.searchRow)
 
         self.tree = QTreeWidget(self.leftPane)
         __qtreewidgetitem = QTreeWidgetItem()
@@ -140,6 +163,14 @@ class Ui_OutlineForm(object):
         self.up_button.setText(QCoreApplication.translate("OutlineForm", u"Up", None))
         self.down_button.setText(QCoreApplication.translate("OutlineForm", u"Down", None))
         self.search.setPlaceholderText(QCoreApplication.translate("OutlineForm", u"Search quests by name", None))
+#if QT_CONFIG(tooltip)
+        self.expandAllButton.setToolTip(QCoreApplication.translate("OutlineForm", u"Expand all", None))
+#endif // QT_CONFIG(tooltip)
+        self.expandAllButton.setText(QCoreApplication.translate("OutlineForm", u"+", None))
+#if QT_CONFIG(tooltip)
+        self.collapseAllButton.setToolTip(QCoreApplication.translate("OutlineForm", u"Collapse all", None))
+#endif // QT_CONFIG(tooltip)
+        self.collapseAllButton.setText(QCoreApplication.translate("OutlineForm", u"\u2212", None))
         pass
     # retranslateUi
 

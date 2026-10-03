@@ -293,13 +293,14 @@ def test_the_context_menu_offers_export_and_removing_a_files_quests(window, tmp_
 	window._set_quests(Document({Q3: quest(Q3, "Mine", T3)}))
 	window.import_files(files(tmp_path)[:2])
 	outline = window.quest_outline
-	assert [t for t, _s in outline._context_actions(quest_item(window, Q3))] == ["Export this quest..."]
-	assert [t for t, _s in outline._context_actions(quest_item(window, Q1))] == ["Export this quest...", "Remove the quests imported from kappa.json"]
+	ends = ["Expand all", "Collapse all"]
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q3))] == ["Export this quest..."] + ends
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q1))] == ["Export this quest...", "Remove the quests imported from kappa.json"] + ends
 	outline.tree.clearSelection()
 	quest_item(window, Q1).setSelected(True)
 	quest_item(window, Q2).setSelected(True)
 	assert outline._context_actions(quest_item(window, Q2))[0][0] == "Export 2 selected quests..."
-	assert outline._context_actions(None) == []
+	assert [t for t, _s in outline._context_actions(None)] == ends  # (a click on empty space)
 
 
 def test_removing_the_quests_imported_from_a_file(window, tmp_path, monkeypatch):
