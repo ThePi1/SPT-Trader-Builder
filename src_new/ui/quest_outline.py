@@ -105,7 +105,7 @@ class QuestOutline(QWidget):
 		scroll.setWidget(self.pane)
 		right = QSplitter(Qt.Orientation.Vertical)
 		right.addWidget(scroll)
-		self.json_view = QPlainTextEdit()  # what is selected, as it will be saved
+		self.json_view = QPlainTextEdit(right)  # what is selected, as it will be saved
 		self.json_view.setReadOnly(True)
 		self.json_view.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
 		self.json_view.setVisible(bool(settings and settings.show_json_preview))
@@ -562,6 +562,7 @@ def _clear(layout):
 		child = layout.takeAt(0)
 		widget = child.widget()
 		if widget is not None:
+			widget.hide()  # (a visible widget that loses its parent becomes a window, and flashes)
 			widget.setParent(None)
 			widget.deleteLater()
 		elif child.layout() is not None:

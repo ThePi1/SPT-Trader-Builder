@@ -455,6 +455,7 @@ class PartsControl(Control):
 		from ui.parts_editor import PartsEditor
 
 		if self.editor is not None:
+			self.editor.hide()
 			self.editor.setParent(None)
 			self.editor.deleteLater()
 		self.parts = value if isinstance(value, list) else []
@@ -546,10 +547,10 @@ class FormWidget(QWidget):
 			self.controls.append(control)
 			(more if field.advanced else main).addRow(field.label, control)
 		outer.addLayout(main)
-		self.more_button = QPushButton("More options")
+		self.more_button = QPushButton("More options", self)  # (given a parent now: with none, setVisible below would open it as a window)
 		self.more_button.setCheckable(True)
 		self.more_button.setFlat(True)
-		self.more_box = QWidget()
+		self.more_box = QWidget(self)
 		self.more_box.setLayout(more)
 		self.more_box.setVisible(False)
 		has_more = more.rowCount() > 0
