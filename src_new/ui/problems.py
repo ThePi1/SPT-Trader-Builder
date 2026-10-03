@@ -2,7 +2,7 @@
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QListWidget, QListWidgetItem, QSizePolicy, QToolButton, QVBoxLayout, QWidget
 
 from schema.issues import ERROR
 
@@ -23,18 +23,40 @@ def node_path(path):
 class ProblemsPanel(QWidget):
 	activated = Signal(tuple)  # the node path of the clicked problem
 
-	def __init__(self, parent=None):
+	def __init__(self, settings=None, parent=None):
+		"""settings (optional) remembers whether the list is hidden (problems_collapsed)."""
 		super().__init__(parent)
+		self.settings = settings
 		layout = QVBoxLayout(self)
 		layout.setContentsMargins(0, 0, 0, 0)
 		layout.setSpacing(2)
-		self.header = QLabel()
+		# the header says how many problems there are and, when clicked, hides or shows the list
+		self.header = QToolButton()
+		self.header.setAutoRaise(True)
+		self.header.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+		self.header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+		self.header.setStyleSheet("QToolButton { text-align: left; border: none; }")
+		self.header.setToolTip("Show or hide the list")
+		self.header.clicked.connect(lambda: self.set_collapsed(not self.collapsed))
 		layout.addWidget(self.header)
 		self.list = QListWidget()
 		self.list.setMaximumHeight(130)
 		self.list.itemActivated.connect(self._activated)
 		self.list.itemClicked.connect(self._activated)
 		layout.addWidget(self.list)
+		self.collapsed = False
+		self.set_collapsed(bool(getattr(settings, "problems_collapsed", False)), save=False)
+
+	def set_collapsed(self, collapsed, save=True):
+		"""Hide (or show) the list; the header with the counts stays. Remembered in the settings."""
+		self.collapsed = collapsed
+		self.list.setVisible(not collapsed)
+		self.header.setArrowType(Qt.ArrowType.RightArrow if collapsed else Qt.ArrowType.DownArrow)
+		if save and self.settings is not None:
+			try:
+				self.settings.update({"problems_collapsed": collapsed})
+			except (ValueError, OSError):
+				pass  # (it just isn't remembered)
 
 	def show_issues(self, issues, describe):
 		"""issues: [Issue]. describe(path) -> the words that say where it is (quest and task names)."""

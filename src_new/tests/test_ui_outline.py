@@ -125,3 +125,24 @@ def test_item_reward_parts_editor(app):
 	editor.add_item()
 	assert [p.get("slotId") for p in reward["items"]] == [None, "mod_x"]
 	assert P.roots(reward["items"])[0]["_id"] == reward["target"]
+
+
+def test_problems_list_can_be_hidden_and_the_choice_is_remembered(app, tmp_path):
+	from core.settings import Settings
+
+	ini = tmp_path / "settings.ini"
+	ini.write_text("[display]\nshow_all_fields = false\n", encoding="utf-8")
+	settings = Settings.load(ini)
+	outline = QuestOutline(None, settings)
+	outline.set_document(Document({"a" * 24: {"QuestName": "x"}}))
+	outline.show()
+	assert outline.problems.list.isVisible() and not settings.problems_collapsed
+	outline.problems.header.click()
+	assert not outline.problems.list.isVisible() and outline.problems.header.text()  # (the counts stay)
+	assert settings.problems_collapsed and "problems_collapsed = true" in ini.read_text(encoding="utf-8")
+	assert Settings.load(ini).problems_collapsed
+	again = QuestOutline(None, Settings.load(ini))
+	again.show()
+	assert not again.problems.list.isVisible()  # (a new window starts the way it was left)
+	again.problems.header.click()
+	assert again.problems.list.isVisible()

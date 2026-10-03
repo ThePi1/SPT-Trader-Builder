@@ -90,7 +90,7 @@ class QuestOutline(QWidget):
 		self.tree.setIndentation(16)
 		self.tree.currentItemChanged.connect(self._selected)
 		lay.addWidget(self.tree, 1)
-		self.problems = ProblemsPanel()
+		self.problems = ProblemsPanel(settings)
 		self.problems.activated.connect(self._jump)
 		lay.addWidget(self.problems)
 		self._check_timer = QTimer(self)

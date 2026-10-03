@@ -45,6 +45,7 @@ SETTINGS = (
 	Setting("defaults", "trader", "text", ""),
 	Setting("display", "show_all_fields", "bool", False),
 	Setting("display", "show_json_preview", "bool", False),
+	Setting("display", "problems_collapsed", "bool", False),  # (set by the Problems header, not in the dialog)
 	Setting("updates", "version_file", "path", "data/version.txt"),
 	Setting("updates", "version_url", "url", "https://raw.githubusercontent.com/ThePi1/SPT-Trader-Builder/main/src/data/version.txt"),
 	Setting("updates", "project_url", "url", "https://github.com/ThePi1/SPT-Trader-Builder"),
