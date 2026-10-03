@@ -52,7 +52,7 @@ class Document:
 
 	@property
 	def dirty(self):
-		return self.data != self._saved
+		return not _same(self.data, self._saved)
 
 	@property
 	def name(self):
@@ -67,7 +67,7 @@ class Document:
 		node = _get(self.data, path)
 		before = copy.deepcopy(node)
 		edit(node)
-		if node == before:
+		if _same(node, before):
 			return False
 		self._record(label, path, before, note=note)
 		return True
@@ -185,6 +185,11 @@ def _get(data, path):
 	for part in path:
 		data = data[part]
 	return data
+
+
+def _same(a, b):
+	"""Equal, and for a dict also in the same order of keys (the order of the quests in a file matters)."""
+	return a == b and (not isinstance(a, dict) or list(a) == list(b))
 
 
 def _swap(node, new):
