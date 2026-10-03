@@ -43,4 +43,3 @@ The tests that check against the base game use the game data bundled in `data/da
 - `ui/`: the window, the outline editor, the generated forms, dialogs.
 - `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source) and `schema/vanilla_profile.json`
   (from the base game's quests).
-- `PLAN.md`: the implementation plan.
