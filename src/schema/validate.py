@@ -116,7 +116,7 @@ def _check_task(task, timing, path, ids, task_ids, gamedata):
 	if kind == "CounterCreator":
 		counter = task.get("counter")
 		if not isinstance(counter, dict):
-			issues.append(Issue(ERROR, path + ("counter",), "An in-raid objective needs a 'counter' with its steps."))
+			issues.append(Issue(ERROR, path + ("counter",), "A Counter needs a 'counter' with its steps."))
 		else:
 			if not counter.get("id"):
 				issues.append(Issue(WARNING, path + ("counter", "id"), "The counter has no id."))

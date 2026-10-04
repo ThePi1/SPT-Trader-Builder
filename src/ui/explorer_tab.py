@@ -70,7 +70,7 @@ class BrowsePage(QWidget, Ui_BrowseForm):
 				self.table.setItem(r, c, cell)
 		managed = ", ".join(spec.managed)
 		if managed:
-			self.where.setText((self.where.text() + "   " if self.where.text() else "") + f"Filled in by the app: {managed}")
+			self.where.setText((self.where.text() + "\n" if self.where.text() else "") + f"Filled in by the app: {managed}")
 
 
 class CheckPage(QWidget, Ui_CheckForm):

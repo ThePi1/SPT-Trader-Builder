@@ -89,7 +89,7 @@ _add(Spec(
 ))
 
 _add(Spec(
-	"reward", "AssortmentUnlock", "Unlock a trader item", (
+	"reward", "AssortmentUnlock", "Assort unlock", (
 		Field("traderId", "Trader", REF, ref=TRADER, required=True),
 		Field("loyaltyLevel", "Trader level", INT, 1, minimum=1, maximum=4),
 		Field("items", "Item", REWARD_ITEMS, required=True),
@@ -102,7 +102,7 @@ _add(Spec(
 ))
 
 _add(Spec(
-	"reward", "TraderUnlock", "Unlock a trader", (Field("target", "Trader", REF, ref=TRADER, required=True),) + _COMMON,
+	"reward", "TraderUnlock", "Trader unlock", (Field("target", "Trader", REF, ref=TRADER, required=True),) + _COMMON,
 	_base("TraderUnlock", target=""),
 	vanilla_timing_use=(SUCCESS,), managed=MANAGED, summary=lambda item, names: f"Unlock {names.trader(item.get('target', ''))}",
 	note="Makes a locked trader available.",
@@ -151,7 +151,7 @@ _add(Spec(
 	_base("TraderStandingRestore", target="", value=0),
 	vanilla_timing_use=(SUCCESS,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Restore {names.trader(item.get('target', ''))} standing",
-	note="Resets a trader's standing.",
+	note="Sets a trader's standing to a specific value. This is only used once in SPT - for Make Amends, a Mechanic / Lightkeeper quest. SPT server code itself says it's not implemented, so I would not suggest using this.",
 ))
 
 _add(Spec(

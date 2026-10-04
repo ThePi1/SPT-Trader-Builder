@@ -72,7 +72,7 @@ def _add(spec):
 
 
 _add(Spec(
-	"task", "CounterCreator", "In-raid objective", (
+	"task", "CounterCreator", "Counter (subtask container)", (
 		Field("type", "Kind", CHOICE, "Elimination", choices="quest_types", open=True),
 		Field("value", "How many", INT, 1, minimum=0),
 		Field("oneSessionOnly", "In one raid", BOOL, False),
@@ -89,7 +89,7 @@ _add(Spec(
 	),
 	vanilla_timing_use=(FINISH, FAIL), managed=("conditionType", "id", "dynamicLocale", "counter"), summary=_counter,
 	fresh_ids=("counter.id",),
-	note="Something to do during a raid: kill, visit a place, survive. The steps are its subtasks.",
+	note="Counter (CounterCreator) acts as a container for certain kinds of triggers (subtasks). It counts instances of a new, composite trigger. For the value tracked to increment, the action that corresponds to the logical AND of all subtasks has to be fulfilled.",
 ))
 
 _add(Spec(
@@ -109,11 +109,11 @@ _add(Spec(
 		onlyFoundInRaid=False, target=[], value=1,
 	),
 	vanilla_timing_use=(FINISH,), managed=MANAGED, summary=_find,
-	note="Have items in the stash or found in raid.",
+	note="Have items in either the stash or player inventory.",
 ))
 
 _add(Spec(
-	"task", "LeaveItemAtLocation", "Place items", _item_fields((
+	"task", "LeaveItemAtLocation", "Leave items at location", _item_fields((
 		Field("zoneId", "Place", TEXT, ""),
 		Field("plantTime", "Time to place (seconds)", INT, 10, minimum=0),
 	)),
@@ -123,11 +123,11 @@ _add(Spec(
 	),
 	vanilla_timing_use=(FINISH, FAIL), managed=MANAGED,
 	summary=lambda item, names: f"Place {item.get('value', 1)}x {names.items(item.get('target', []))}",
-	note="Put items down at a spot on a map.",
+	note="Place items in the specified zone.",
 ))
 
 _add(Spec(
-	"task", "PlaceBeacon", "Place a marker", (
+	"task", "PlaceBeacon", "Place marker", (
 		Field("target", "Marker items", IDLIST, ref=ITEM, required=True),
 		Field("zoneId", "Place", TEXT, ""),
 		Field("plantTime", "Time to place (seconds)", INT, 30, minimum=0),
@@ -137,7 +137,7 @@ _add(Spec(
 	_base("PlaceBeacon", plantTime=30, target=["5991b51486f77447b112d44f"], value=1, zoneId=""),
 	vanilla_timing_use=(FINISH,), managed=MANAGED,
 	summary=lambda item, names: f"Place {names.items(item.get('target', []))}",
-	note="Plant a marker or radio repeater at a spot on a map.",
+	note="Plant a marker (or radio repeater) at a spot on a map.",
 ))
 
 _add(Spec(
@@ -153,7 +153,7 @@ _add(Spec(
 ))
 
 _add(Spec(
-	"task", "Quest", "Another quest", (
+	"task", "Quest", "Quest state", (
 		Field("target", "Quest", REF, ref=QUEST, required=True),
 		Field("status", "Must be", LIST, [4], choices="quest_status"),
 		Field("availableAfter", "Wait (seconds)", INT, 0, minimum=0),
@@ -163,7 +163,7 @@ _add(Spec(
 	_base("Quest", availableAfter=0, dispersion=0, status=[4], target=""),
 	vanilla_timing_use=(START, FAIL, FINISH), managed=MANAGED,
 	summary=lambda item, names: f"Quest {names.quest(item.get('target', ''))}: {_status_text(item.get('status'))}",
-	note="Another quest must be in a given state, such as completed.",
+	note="Another quest must be in the specified state.",
 ))
 
 
@@ -223,7 +223,7 @@ _add(Spec(
 	),
 	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Sell {item.get('value', 1)} roubles' worth to {names.trader(item.get('traderId', ''))}",
-	note="Sell items to a trader for a total amount.",
+	note="Sell a certain number of specified items to a trader.",
 ))
 
 _VALUE_OBJECT_KEYS = (
@@ -258,7 +258,7 @@ _add(Spec(
 	"task", "WeaponAssembly", "Build a weapon", _weapon_fields(), _weapon_assembly_base(),
 	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Build {names.items(item.get('target', []))}",
-	note="Hand in a weapon built to a set of requirements.",
+	note="Build and hand in a weapon with the specified requirements.",
 ))
 
 _add(Spec(
@@ -271,7 +271,7 @@ _add(Spec(
 	_base("HideoutArea", areaType=0, compareMethod=">=", value=1),
 	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Hideout area {item.get('areaType')} level {compare_text(item.get('compareMethod'))} {item.get('value')}",
-	note="A hideout area must reach a level.",
+	note="Have a hideout area at a certain level.",
 ))
 
 _add(Spec(
@@ -284,11 +284,11 @@ _add(Spec(
 	_base("GlobalVariableValue", compareMethod="==", target="", value=1),
 	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Game variable {short(item.get('target', ''), 12)} {compare_text(item.get('compareMethod'))} {item.get('value')}",
-	note="A value the game keeps must match.",
+	note="Check a game variable. Note - not exactly sure how this works. It doesn't seem to be implemented server-side, so it likely checks a client-side value, if at all. It's only used in the Game Review Part 1-3 quests, which are event quests that may or may not still exist. Recommend not using.",
 ))
 
 _add(Spec(
-	"task", "VisitPlace", "Visit a place", (
+	"task", "VisitPlace", "Visit zone (unused)", (
 		Field("target", "Place", TEXT, ""),
 		Field("value", "How many", INT, 1, minimum=0),
 		_LINKED, _ORDER,
@@ -296,5 +296,5 @@ _add(Spec(
 	_base("VisitPlace", target="", value=1),
 	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Visit {item.get('target')}",
-	note="Visit a place (used outside a raid counter by a few quests).",
+	note="Top-level condition used to track zone visiting. This is only used by the Secret Benefactor quest and is not implemented in the SPT server. Do not use.",
 ))

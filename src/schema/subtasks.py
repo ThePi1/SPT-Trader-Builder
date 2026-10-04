@@ -1,4 +1,4 @@
-"""Subtasks: the steps of a Counter ("In-raid objective") task, in its ``counter.conditions`` list."""
+"""Subtasks: the steps of a Counter task, in its ``counter.conditions`` list."""
 
 from schema.common import compare_object, compare_text, count, flag, short
 from schema.fields import (
@@ -82,35 +82,35 @@ _add(Spec(
 ))
 
 _add(Spec(
-	"subtask", "VisitPlace", "Visit a place", (Field("target", "Place", TEXT, ""),),
+	"subtask", "VisitPlace", "Visit zone", (Field("target", "Place", TEXT, ""),),
 	_base("VisitPlace", target="", value=1),
 	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"Visit {item.get('target', '')}",
 	note="Reach a trigger zone on the map.",
 ))
 
 _add(Spec(
-	"subtask", "InZone", "Be in a place", (Field("zoneIds", "Places", LIST, []),),
+	"subtask", "InZone", "Inside zone", (Field("zoneIds", "Places", LIST, []),),
 	_base("InZone", zoneIds=[]),
 	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"In {short(', '.join(item.get('zoneIds', [])), 30)}",
 	note="Be inside one of the trigger zones.",
 ))
 
 _add(Spec(
-	"subtask", "Location", "On a map", (Field("target", "Maps", LIST, [], choices="locations", open=True),),
+	"subtask", "Location", "Location (map)", (Field("target", "Maps", LIST, [], choices="locations", open=True),),
 	_base("Location", target=[]),
 	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: f"On {', '.join(item.get('target', []))}",
 	note="The raid must be on one of these maps.",
 ))
 
 _add(Spec(
-	"subtask", "ExitStatus", "How the raid ends", (Field("status", "Result", LIST, [], choices="exit_status"),),
+	"subtask", "ExitStatus", "Exit status", (Field("status", "Result", LIST, [], choices="exit_status"),),
 	_base("ExitStatus", status=[]),
 	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: f"Raid ends: {', '.join(item.get('status', []))}",
 	note="The raid must end in one of these ways.",
 ))
 
 _add(Spec(
-	"subtask", "ExitName", "Leave by an exit", (Field("exitName", "Exit", TEXT, ""),),
+	"subtask", "ExitName", "Exit name", (Field("exitName", "Exit", TEXT, ""),),
 	_base("ExitName", exitName=""),
 	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"Exit {item.get('exitName', '')}",
 	note="Leave the map through a named exit.",
