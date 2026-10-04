@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ImportForm</class>
+ <widget class="QDialog" name="ImportForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>760</width>
+    <height>460</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Import files</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="introLabel">
+     <property name="text">
+      <string>These are added to what is open. Your files are not changed until you save.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="table">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
+     </property>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>Import</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>File</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>New</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Already there</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Notes</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="policyBox">
+     <property name="title">
+      <string>When something is already there</string>
+     </property>
+     <layout class="QHBoxLayout" name="policyLayout">
+      <item>
+       <widget class="QRadioButton" name="keepRadio">
+        <property name="text">
+         <string>Keep what I have</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="replaceRadio">
+        <property name="text">
+         <string>Use the imported one</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="bothRadio">
+        <property name="text">
+         <string>Keep both (the imported one gets a new id)</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="everythingBox">
+     <property name="text">
+      <string>Import all the text of locale files, not only the text of the quests</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="summaryLabel">
+     <property name="styleSheet">
+      <string notr="true">color: #808080;</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttons">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>table</tabstop>
+  <tabstop>keepRadio</tabstop>
+  <tabstop>replaceRadio</tabstop>
+  <tabstop>bothRadio</tabstop>
+  <tabstop>everythingBox</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttons</sender>
+   <signal>accepted()</signal>
+   <receiver>ImportForm</receiver>
+   <slot>accept()</slot>
+  </connection>
+  <connection>
+   <sender>buttons</sender>
+   <signal>rejected()</signal>
+   <receiver>ImportForm</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>

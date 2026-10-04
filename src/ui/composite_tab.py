@@ -1,0 +1,182 @@
+"""The composite items tab: items made of parts that you save once and reuse in rewards and trader offers.
+
+Your saved items are listed first and can be edited. The base game's own composite items are in a
+separate read-only list; copy one to make it yours.
+"""
+
+import copy
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QInputDialog, QLabel, QListWidgetItem, QMessageBox, QPushButton, QWidget
+
+from core import library as library_module
+from schema import assort as assort_schema
+from schema.common import Names
+from ui.compiled.ui_composite_tab import Ui_CompositeForm
+from ui.forms import Context
+from ui.parts_editor import PartsEditor
+from ui.quest_outline import JsonDialog, _clear
+
+ROLE = Qt.ItemDataRole.UserRole
+
+
+class CompositeTab(QWidget, Ui_CompositeForm):
+	"""The layout is ui/designer/composite_tab.ui: the two lists with their buttons, and the pane for the editor."""
+
+	def __init__(self, library, gamedata=None, picker=None, parent=None):
+		super().__init__(parent)
+		self.setupUi(self)
+		self.library, self.gamedata, self.picker = library, gamedata, picker
+		self.editor = None
+		self.mine.currentItemChanged.connect(self._select)
+		self.vanilla.currentItemChanged.connect(self._select_vanilla)
+		for button, slot in (
+			(self.newButton, self.new), (self.renameButton, self.rename), (self.deleteButton, self.delete),
+			(self.copyButton, self.copy_vanilla),
+		):
+			button.clicked.connect(lambda _checked=False, slot=slot: slot())
+		self.splitter.setSizes([300, 600])
+		self.refresh()
+
+	def _ctx(self):
+		return Context(self.gamedata, Names(self.gamedata), self.picker, self.library)
+
+	def refresh(self, select=None):
+		keep = select or self.current_id()
+		self.mine.blockSignals(True)
+		self.mine.clear()
+		for entry_id, name in self.library.names():
+			item = QListWidgetItem(name or "(unnamed)")
+			item.setData(ROLE, entry_id)
+			self.mine.addItem(item)
+		self.mine.blockSignals(False)
+		self.vanilla.clear()
+		presets = self.gamedata.item_presets if self.gamedata is not None else {}
+		for preset_id, preset in sorted(presets.items(), key=lambda kv: kv[1].get("_name", "").lower()):
+			item = QListWidgetItem(preset.get("_name", preset_id))
+			item.setData(ROLE, preset_id)
+			self.vanilla.addItem(item)
+		row = next((i for i in range(self.mine.count()) if self.mine.item(i).data(ROLE) == keep), 0)
+		if self.mine.count():
+			self.mine.setCurrentRow(row)
+		self._select(self.mine.currentItem(), None)
+
+	def current_id(self):
+		item = self.mine.currentItem()
+		return item.data(ROLE) if item else None
+
+	def _clear_right(self):
+		_clear(self.right_layout)
+
+	def _deselect(self, view):
+		"""Clear the selection of one of the two lists without running its handler."""
+		view.blockSignals(True)
+		view.setCurrentRow(-1)
+		view.clearSelection()
+		view.blockSignals(False)
+
+	def _select_vanilla(self, item, _previous=None):
+		"""A base game item: show its parts like one of mine, but read only (copy it to change it)."""
+		if item is None:
+			return
+		self._deselect(self.mine)
+		self._clear_right()
+		preset = self.gamedata.item_presets[item.data(ROLE)]
+		self.problem = QLabel()
+		self.editor = PartsEditor(library_module.preset_parts(preset), self._ctx())
+		self.editor.set_read_only(True)
+		note = QLabel("This is one of the base game's items, so it can't be changed here. Use Make my own copy to edit a copy.")
+		note.setStyleSheet("color: #808080;")
+		note.setWordWrap(True)
+		self.right_layout.addWidget(QLabel(f"<b>{preset.get('_name', '')}</b>  (base game item, read only)"))
+		self.right_layout.addWidget(self.editor)
+		self.right_layout.addWidget(note)
+		self.right_layout.addLayout(self._json_row("View as JSON...", lambda preset=preset: self.view_json(preset)))
+		self.right_layout.addStretch(1)
+
+	def _select(self, item, _previous):
+		if item is not None:
+			self._deselect(self.vanilla)
+		self._clear_right()
+		self.editor = None
+		if item is None:
+			hint = QLabel("Press New to build an item from parts, or copy one of the base game's.")
+			hint.setStyleSheet("color: #808080;")
+			self.right_layout.addWidget(hint)
+			self.right_layout.addStretch(1)
+			return
+		entry = self.library.entries[item.data(ROLE)]
+		self.problem = QLabel()
+		self.problem.setStyleSheet("color: #b9770e;")
+		self.editor = PartsEditor(entry["items"], self._ctx())
+		self.editor.changed.connect(lambda e=entry, i=item.data(ROLE): self._changed(i))
+		self.right_layout.addWidget(QLabel(f"<b>{entry.get('name', '')}</b>"))
+		self.right_layout.addWidget(self.editor)
+		self.right_layout.addWidget(self.problem)
+		self.right_layout.addLayout(self._json_row("Edit as JSON...", lambda i=item.data(ROLE): self.edit_json(i)))
+		self.right_layout.addStretch(1)
+		self._check(entry)
+
+	def _json_row(self, text, slot):
+		"""A row with one button on the left, like the quests' Edit as JSON."""
+		self.json_button = QPushButton(text)
+		self.json_button.clicked.connect(lambda _checked=False: slot())
+		row = QHBoxLayout()
+		row.addWidget(self.json_button)
+		row.addStretch(1)
+		return row
+
+	def edit_json(self, entry_id):
+		"""Edit one of my items as JSON: its name and its parts, as they are saved."""
+		dialog = JsonDialog(copy.deepcopy(self.library.entries[entry_id]), self)
+		if not dialog.exec() or dialog.result_value is None:
+			return False
+		if not self.library.replace(entry_id, dialog.result_value):
+			QMessageBox.warning(self, "Edit as JSON", "An item needs a list of parts under \"items\".")
+			return False
+		self.refresh(entry_id)
+		return True
+
+	def view_json(self, preset):
+		"""Look at a base game item as the game has it (it can't be changed)."""
+		JsonDialog(copy.deepcopy(preset), self, read_only=True).exec()
+
+	def _check(self, entry):
+		issues = assort_schema.validate_composite(entry)
+		self.problem.setText("\n".join(i.message for i in issues[:3]))
+
+	def _changed(self, entry_id):
+		self.library.update(entry_id)
+		self._check(self.library.entries[entry_id])
+
+	def new(self):
+		name, ok = QInputDialog.getText(self, "New item", "Name:")
+		if ok and name.strip():
+			entry_id = self.library.add(name.strip(), [])
+			self.refresh(entry_id)
+
+	def rename(self):
+		entry_id = self.current_id()
+		if entry_id is None:
+			return
+		name, ok = QInputDialog.getText(self, "Rename", "Name:", text=self.library.entries[entry_id].get("name", ""))
+		if ok and name.strip():
+			self.library.update(entry_id, name=name.strip())
+			self.refresh(entry_id)
+
+	def delete(self):
+		entry_id = self.current_id()
+		if entry_id is None:
+			return
+		name = self.library.entries[entry_id].get("name", "this item")
+		if QMessageBox.question(self, "Delete", f"Delete \"{name}\" from your saved items?") == QMessageBox.StandardButton.Yes:
+			self.library.remove(entry_id)
+			self.refresh()
+
+	def copy_vanilla(self):
+		item = self.vanilla.currentItem()
+		if item is None or self.gamedata is None:
+			return
+		preset = self.gamedata.item_presets[item.data(ROLE)]
+		entry_id = self.library.add(preset.get("_name", "Copy"), library_module.preset_parts(preset))
+		self.refresh(entry_id)

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FileSegmentForm</class>
+ <widget class="QFrame" name="FileSegmentForm">
+  <property name="cursor">
+   <cursorShape>PointingHandCursor</cursorShape>
+  </property>
+  <property name="focusPolicy">
+   <enum>Qt::StrongFocus</enum>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">#FileSegmentForm { border-right: 1px solid palette(mid); } #FileSegmentForm:focus, #FileSegmentForm:hover { background: palette(midlight); }</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>10</number>
+   </property>
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>10</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="titleRow" stretch="1,0">
+     <item>
+      <widget class="QLabel" name="titleLabel">
+       <property name="text">
+        <string>Quests</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="stateLabel">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="fileLabel">
+     <property name="styleSheet">
+      <string notr="true">color: #808080;</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

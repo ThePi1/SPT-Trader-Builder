@@ -1,5 +1,7 @@
 __pycache__
 local_dev
-src/data/datafiles.json
-src/trader_builder.log*
 .pytest_cache/
+src/data/my_items.json
+src/spt_trader_builder.log*
+src/dist/
+src/build/

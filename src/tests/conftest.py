@@ -1,88 +1,47 @@
-"""Shared test setup.
+"""Shared test data: the base game's own files, which are known to be valid.
 
-Tests import from ``src/`` but run with an unrelated working directory (to prove
-the app doesn't depend on it), and Qt is forced into offscreen mode so no real
-windows are needed.
+The quests and the English text come from the game data bundled with the app (data/database,
+copied from SPT 4.0.13 by tools/bundle_database.py). The trader files are fixtures: Mechanic's assort
+(589 offers) and every trader's quest locks (tests/fixtures/questassort), because the bundle does not
+hold the trader folders.
 """
 
 import json
-import os
-import re
-import sys
 from pathlib import Path
 
 import pytest
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
-SRC = Path(__file__).resolve().parent.parent  # the tests live in src/tests
-GOLDEN = Path(__file__).resolve().parent / "golden"
-sys.path.insert(0, str(SRC))
+DATABASE = Path(__file__).resolve().parents[1] / "data" / "database"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+MECHANIC = "5a7c2eca46aef81a7ca2145d"
 
 
-@pytest.fixture(autouse=True)
-def _run_from_elsewhere(monkeypatch, tmp_path):
-	# The app must not depend on the current working directory.
-	monkeypatch.chdir(tmp_path)
+def _load(path):
+	return json.loads(Path(path).read_bytes().decode("utf-8-sig"))
 
 
 @pytest.fixture(scope="session")
-def qapp():
-	from PySide6.QtWidgets import QApplication
-
-	return QApplication.instance() or QApplication([])
+def vanilla_quests():
+	return _load(DATABASE / "templates" / "quests.json")
 
 
-@pytest.fixture
-def fixed_ids(monkeypatch):
-	"""Make generated IDs deterministic (000...001, 000...002, ...)."""
-	import secrets
-
-	counter = iter(range(1, 10_000))
-	monkeypatch.setattr(secrets, "token_hex", lambda nbytes: f"{next(counter):0{nbytes * 2}x}")
+@pytest.fixture(scope="session")
+def vanilla_locale():
+	return _load(DATABASE / "locales" / "global" / "en.json")
 
 
-@pytest.fixture
-def config(tmp_path):
-	"""A Config loaded from throwaway copies of the settings files, so tests can save settings safely."""
-	import shutil
-
-	from modules.config import load_config
-	from modules.paths import DATA_DIR
-
-	settings = tmp_path / "settings.ini"
-	box_fields = tmp_path / "box_fields.json"
-	shutil.copy(DATA_DIR / "settings.ini", settings)
-	shutil.copy(DATA_DIR / "box_fields.json", box_fields)
-	return load_config(settings, box_fields)
+@pytest.fixture(scope="session")
+def vanilla_assort():
+	return _load(FIXTURES / "assort_mechanic.json")
 
 
-@pytest.fixture
-def main_window(qapp, fixed_ids, config):
-	from modules.state import AppState
-	from modules.windows.main_window import Gui_MainWindow
-
-	win = Gui_MainWindow(AppState.load(config))
-	yield win
-	for w in win.windows:
-		w.close()
-	win.close()
+@pytest.fixture(scope="session")
+def vanilla_questassort():
+	"""Mechanic's quest locks: {started, success, fail: {offer id: quest id}}."""
+	return _load(FIXTURES / "questassort" / f"{MECHANIC}.json")
 
 
-@pytest.fixture
-def check_golden():
-	"""Compare a JSON-able object to src/tests/golden/<name>.json.
-
-	Run with UPDATE_GOLDEN=1 to (re)write the golden file instead.
-	"""
-
-	def _check(name, obj):
-		path = GOLDEN / f"{name}.json"
-		text = json.dumps(obj, indent=2, sort_keys=True) + "\n"
-		if os.environ.get("UPDATE_GOLDEN"):
-			path.write_text(text, encoding="utf-8")
-			return
-		assert path.exists(), f"missing golden file {path} (run with UPDATE_GOLDEN=1)"
-		assert text == path.read_text(encoding="utf-8")
-
-	return _check
+@pytest.fixture(scope="session")
+def vanilla_questassorts():
+	"""Every trader's quest locks in tests/fixtures/questassort: {trader id: {started, success, fail}}."""
+	return {path.stem: _load(path) for path in sorted((FIXTURES / "questassort").glob("*.json"))}

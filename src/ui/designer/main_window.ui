@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindowForm</class>
+ <widget class="QMainWindow" name="MainWindowForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1100</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SPT Trader Builder</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="centralLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QTabWidget" name="tabs">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="page_quests">
+       <attribute name="title">
+        <string>Quests</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_locale">
+       <attribute name="title">
+        <string>Locale</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_trader">
+       <attribute name="title">
+        <string>Trader</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_composite">
+       <attribute name="title">
+        <string>Composite items</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_find_ids">
+       <attribute name="title">
+        <string>Find IDs</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="page_explorer">
+       <attribute name="title">
+        <string>Schema Explorer</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menuQuests">
+     <property name="title">
+      <string>&amp;Quests</string>
+     </property>
+     <addaction name="actionNewQuests"/>
+     <addaction name="actionOpenQuests"/>
+     <addaction name="actionImportQuests"/>
+     <addaction name="separator"/>
+     <addaction name="actionSaveQuests"/>
+     <addaction name="actionSaveQuestsAs"/>
+     <addaction name="separator"/>
+     <addaction name="actionExportQuests"/>
+    </widget>
+    <widget class="QMenu" name="menuLocale">
+     <property name="title">
+      <string>&amp;Locale</string>
+     </property>
+     <addaction name="actionNewLocale"/>
+     <addaction name="actionOpenLocale"/>
+     <addaction name="actionImportLocale"/>
+     <addaction name="separator"/>
+     <addaction name="actionSaveLocale"/>
+     <addaction name="actionSaveLocaleAs"/>
+    </widget>
+    <widget class="QMenu" name="menuAssort">
+     <property name="title">
+      <string>&amp;Trader assort</string>
+     </property>
+     <addaction name="actionAssortNew"/>
+     <addaction name="actionAssortOpen"/>
+     <addaction name="actionAssortImport"/>
+     <addaction name="separator"/>
+     <addaction name="actionAssortSave"/>
+     <addaction name="actionAssortSaveAs"/>
+    </widget>
+    <widget class="QMenu" name="menuLocks">
+     <property name="title">
+      <string>Quest &amp;assort</string>
+     </property>
+     <addaction name="actionLocksNew"/>
+     <addaction name="actionLocksOpen"/>
+     <addaction name="actionLocksImport"/>
+     <addaction name="separator"/>
+     <addaction name="actionLocksSave"/>
+     <addaction name="actionLocksSaveAs"/>
+    </widget>
+    <addaction name="actionImportFiles"/>
+    <addaction name="separator"/>
+    <addaction name="menuQuests"/>
+    <addaction name="menuLocale"/>
+    <addaction name="menuAssort"/>
+    <addaction name="menuLocks"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>&amp;Settings</string>
+    </property>
+    <addaction name="actionSettings"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionUpdates"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuSettings"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <action name="actionNewQuests">
+   <property name="text">
+    <string>New (empty)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionOpenQuests">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionImportQuests">
+   <property name="text">
+    <string>Import...</string>
+   </property>
+  </action>
+  <action name="actionSaveQuests">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSaveQuestsAs">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionNewLocale">
+   <property name="text">
+    <string>New (empty)</string>
+   </property>
+  </action>
+  <action name="actionOpenLocale">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionImportLocale">
+   <property name="text">
+    <string>Import...</string>
+   </property>
+  </action>
+  <action name="actionSaveLocale">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+S</string>
+   </property>
+  </action>
+  <action name="actionSaveLocaleAs">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionAssortNew">
+   <property name="text">
+    <string>New (empty)</string>
+   </property>
+  </action>
+  <action name="actionAssortOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionAssortImport">
+   <property name="text">
+    <string>Import...</string>
+   </property>
+  </action>
+  <action name="actionAssortSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionAssortSaveAs">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionLocksNew">
+   <property name="text">
+    <string>New (empty)</string>
+   </property>
+  </action>
+  <action name="actionLocksOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionLocksImport">
+   <property name="text">
+    <string>Import...</string>
+   </property>
+  </action>
+  <action name="actionLocksSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionLocksSaveAs">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionImportFiles">
+   <property name="text">
+    <string>&amp;Import files...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
+   </property>
+  </action>
+  <action name="actionExportQuests">
+   <property name="text">
+    <string>&amp;Export selected quests...</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+F4</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>&amp;Undo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>&amp;Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>&amp;Settings...</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="actionUpdates">
+   <property name="text">
+    <string>Check for &amp;updates</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

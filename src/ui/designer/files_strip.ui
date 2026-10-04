@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FilesStripForm</class>
+ <widget class="QFrame" name="FilesStripForm">
+  <property name="styleSheet">
+   <string notr="true">#FilesStripForm { border-top: 1px solid palette(mid); }</string>
+  </property>
+  <layout class="QHBoxLayout" name="segmentsLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
