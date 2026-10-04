@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 
 from core.paths import APP_DIR
 
-# Next to the program: src_new/ when running from source, next to the .exe when packaged
+# Next to the program: src/ when running from source, next to the .exe when packaged
 LOG_FILE = APP_DIR / "spt_builder.log"
 
 _FORMAT = "%(asctime)s %(levelname)-7s %(name)s: %(message)s"

@@ -5,7 +5,7 @@ short lists of values) which values occur.
 Writes schema/vanilla_profile.json, which the validator uses to warn about anything unlike
 the base game, and the Schema Explorer shows. Run it again when the game data changes.
 
-Usage (from src_new):
+Usage (from src):
     python tools/profile_samples.py <database folder or a folder holding quests.json> [assort.json ...]
 """
 

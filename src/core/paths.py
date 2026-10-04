@@ -1,6 +1,6 @@
 """Where the app's files live, independent of the current working directory.
 
-``APP_DIR`` is the folder holding ``data/``: the ``src_new/`` folder when running from source,
+``APP_DIR`` is the folder holding ``data/``: the ``src/`` folder when running from source,
 or the folder containing the .exe when packaged with PyInstaller (``data/`` ships next to it).
 """
 
@@ -10,7 +10,7 @@ from pathlib import Path
 if getattr(sys, "frozen", False):
 	APP_DIR = Path(sys.executable).resolve().parent
 else:
-	APP_DIR = Path(__file__).resolve().parent.parent  # this file is src_new/core/paths.py
+	APP_DIR = Path(__file__).resolve().parent.parent  # this file is src/core/paths.py
 
 DATA_DIR = APP_DIR / "data"
 

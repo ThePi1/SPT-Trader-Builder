@@ -6,7 +6,7 @@ these C# records when it loads them. A key the record marks ``required`` that is
 a value of the wrong type, stops the file from loading; a key the record doesn't have is
 ignored. So the records are the exact rules for "the server can load this".
 
-Usage (from src_new):
+Usage (from src):
     python tools/extract_server_models.py <path to a server-csharp checkout>
 
 The checkout used for SPT 4.0.13 is commit 2891fd41fd07b6150a2192ac0d24adb93eb72862.
