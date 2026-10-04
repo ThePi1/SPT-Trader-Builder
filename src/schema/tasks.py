@@ -35,7 +35,7 @@ def _base(condition_type, **keys):
 
 
 _VISIBLE = Field("visibilityConditions", "Only show after", VISIBILITY)
-_LINKED = Field("parentId", "Linked task", REF, ref=TASK, advanced=True)
+_LINKED = Field("parentId", "Linked condition", REF, ref=TASK, advanced=True)
 _ORDER = Field("index", "Order", INT, 0, advanced=True, minimum=0)
 
 

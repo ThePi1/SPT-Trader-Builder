@@ -7,7 +7,7 @@ Build quests, quest text and trader offers for SPT mods.
 
 ## What it does
 
-- Make quests, with their objectives and rewards
+- Make quests, with their conditions and rewards
 - Write the quest text (names, descriptions, messages)
 - Build what a trader sells, and lock items behind quests
 - Warn you about mistakes as you work
@@ -29,8 +29,8 @@ python ./src/main.py (mac/linux)
 ```
 ## Quick start
 
-1. Click **New quest** and fill in the form on the right.
-2. Click **Add** to give the quest objectives (tasks) and rewards.
+1. Click **Add > New quest** and fill in the form on the right.
+2. Select the quest and click **Add** to give it conditions and rewards.
 3. Open the **Locale** tab to write the quest's name and description. **Add all missing fields** creates the empty entries for you.
 4. Choose **File > Quests > Save as...** to save the quest file.
 
@@ -38,12 +38,12 @@ The **Problems** list at the bottom left tells you what still needs fixing. Clic
 
 ## Sections
 
-- **Quests**: your quests, with their objectives and rewards. Use the search box to find a quest by name, and the **+** and **−** buttons to open or close everything.
+- **Quests**: your quests, with their conditions and rewards. Use the search box to find a quest by name, and the **+** and **−** buttons to open or close everything.
 - **Locale**: the text the game shows for your quests.
 - **Trader**: what a trader sells, at what price and trader level, and which quest unlocks each item. Pick the trader at the top so quest unlocks can be added.
 - **Composite items**: items made of parts, like a gun with its mods. Save one once and reuse it in rewards and trader offers. The game's own items are listed too: you can look at them, and make your own copy to change.
 - **Find IDs**: search for items, quests, traders and more, and copy their ids.
-- **Schema Explorer**: shows what each kind of objective and reward is made of, and can check any file for mistakes.
+- **Schema Explorer**: shows what each kind of condition and reward is made of, and can check any file for mistakes.
 
 ## Your files
 

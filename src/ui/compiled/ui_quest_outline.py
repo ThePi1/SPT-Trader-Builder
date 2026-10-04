@@ -40,11 +40,6 @@ class Ui_OutlineForm(object):
         self.tools.setSpacing(3)
         self.tools.setObjectName(u"tools")
         self.tools.setContentsMargins(-1, 0, -1, -1)
-        self.new_quest_button = QPushButton(self.leftPane)
-        self.new_quest_button.setObjectName(u"new_quest_button")
-
-        self.tools.addWidget(self.new_quest_button)
-
         self.add_button = QToolButton(self.leftPane)
         self.add_button.setObjectName(u"add_button")
         sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
@@ -69,7 +64,6 @@ class Ui_OutlineForm(object):
         self.tools.setStretch(0, 1)
         self.tools.setStretch(1, 1)
         self.tools.setStretch(2, 1)
-        self.tools.setStretch(3, 1)
 
         self.leftLayout.addLayout(self.tools)
 
@@ -142,7 +136,6 @@ class Ui_OutlineForm(object):
     # setupUi
 
     def retranslateUi(self, OutlineForm):
-        self.new_quest_button.setText(QCoreApplication.translate("OutlineForm", u"New quest", None))
         self.add_button.setText(QCoreApplication.translate("OutlineForm", u"Add ", None))
         self.copy_button.setText(QCoreApplication.translate("OutlineForm", u"Copy", None))
         self.delete_button.setText(QCoreApplication.translate("OutlineForm", u"Delete", None))

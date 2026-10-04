@@ -346,7 +346,7 @@ def test_the_quests_tab_has_no_up_or_down_buttons(app):
 
 	outline = make_outline(app)
 	assert not hasattr(outline, "up_button") and not hasattr(outline, "down_button") and not hasattr(outline, "move_selected")
-	assert [b.text() for b in outline.leftPane.findChildren(QPushButton)] == ["New quest", "Copy", "Delete"]  # (and the Add drop-down)
+	assert [b.text() for b in outline.leftPane.findChildren(QPushButton)] == ["Copy", "Delete"]  # (and the Add drop-down: New quest is in it)
 
 
 def test_the_tooltips_of_the_expand_and_collapse_buttons_are_not_bold(app):

@@ -44,7 +44,7 @@ def test_each_needed_field_and_finish_task_is_reported_when_absent_or_blank():
 			assert any("Text missing for" in m for m in text_problems(quest, locale)), field
 			assert list(L.missing_keys({quest["_id"]: quest}, locale)) == [L.quest_key(quest["_id"], field)]
 	locale = text_for(quest, *NEEDED)
-	assert any("task has no text" in m for m in text_problems(quest, locale))
+	assert any("condition has no text" in m for m in text_problems(quest, locale))
 	assert L.missing_keys({quest["_id"]: quest}, locale) == {task_id: "task"}
 
 

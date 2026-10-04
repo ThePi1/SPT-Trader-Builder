@@ -76,7 +76,7 @@ class TaskTextPanel(QGroupBox):
 		layout = QVBoxLayout(self)
 		layout.addWidget(TextBox(doc, task_id, True))
 		if timing == "Fail":
-			hint = QLabel("Optional for tasks that fail the quest.")
+			hint = QLabel("Optional for conditions that fail the quest.")
 			hint.setStyleSheet("color: #808080;")
 			layout.addWidget(hint)
 

@@ -72,8 +72,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.add_menu.aboutToShow.connect(self._fill_add_menu)
 		self.add_button.setMenu(self.add_menu)
 		for button, slot in (
-			(self.new_quest_button, self.add_quest), (self.copy_button, self.copy_selected),
-			(self.delete_button, self.delete_selected),
+			(self.copy_button, self.copy_selected), (self.delete_button, self.delete_selected),
 		):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.tree.currentItemChanged.connect(self._selected)
@@ -301,6 +300,10 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 	def _context_actions(self, item):
 		"""[(text, what to do)] for the right-click menu on this tree item. "Add" is the Add button's menu; Copy and Delete are the buttons' own actions on the item."""
 		actions = []
+		if item is None:  # (blank space: nothing selected, so Add offers only a new quest)
+			self.tree.clearSelection()
+			self.tree.setCurrentItem(None)
+			return [("Add", self.add_menu)]
 		if item is not None:
 			address = item.data(0, ROLE)
 			quest_id = address.path[0]
@@ -438,7 +441,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			return self._show_hint("Add a quest to begin, or open a quest file.")
 		address = item.data(0, ROLE)
 		if address.kind == "group":
-			return self._show_hint("Press Add to put a " + ("task" if address.group == "task" else "reward") + " here." if address.group != "rewards" else "The rewards of this quest, by when they are given.")
+			return self._show_hint("Press Add to put a " + ("condition" if address.group == "task" else "reward") + " here." if address.group != "rewards" else "The rewards of this quest, by when they are given.")
 		data = _get(self.doc.data, address.path)
 		spec = QUEST if address.kind == "quest" else registry.spec_of(data, address.kind)
 		qpath = address.path[:1]
@@ -500,16 +503,44 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			self.doc.change("Edit as JSON", lambda node: _replace(node, value), path=address.path)
 
 	# --- adding, copying, deleting, moving --------------------------------------------------
+	def add_choices(self, address):
+		"""What the Add menu offers for the selected item: the kinds to add ("subtask", "task" for a condition,
+		"reward"), in menu order. Nothing selected (None) offers only a new quest, which is always offered."""
+		if address is None:
+			return []
+		if address.kind == "quest":
+			return ["task", "reward"]
+		if address.kind == "group":
+			return ["task"] if address.group == "task" else ["reward"]
+		if address.kind == "reward":
+			return ["reward"]
+		if address.kind == "subtask" or self._counter_path(address) is not None:
+			return ["subtask", "task"]  # (a subtask goes under the Counter, a condition in the Counter's list)
+		return ["task"]
+
+	def _add_timing(self, address, group):
+		"""The list a new condition or reward goes in: the list that is open, else Finish (conditions) or Success (rewards)."""
+		if group == "task" and address.group in ("task", "subtask") and address.timing:
+			return address.timing
+		if group == "reward" and address.group == "reward" and address.timing:
+			return address.timing
+		return "Finish" if group == "task" else "Success"
+
 	def _fill_add_menu(self):
 		self.add_menu.clear()
-		address = self._current()
-		if address is None:
-			return
-		if self._counter_path(address) is not None:
-			sub = self.add_menu.addMenu("Subtask (in this counter)")
-			for spec in registry.kinds("subtask"):
-				sub.addAction(spec.label, lambda s=spec: self.add_item("subtask", s.kind))
-		for group, heading in (("task", "Task"), ("reward", "Reward")):
+		address = self._current() if self.tree.selectedItems() else None
+		if self.doc is not None:
+			self.add_menu.addAction("New quest", lambda: self.add_quest())
+		choices = self.add_choices(address)
+		if choices:
+			self.add_menu.addSeparator()
+		for group in choices:
+			if group == "subtask":
+				sub = self.add_menu.addMenu("Subtask (in this counter)")
+				for spec in registry.kinds("subtask"):
+					sub.addAction(spec.label, lambda s=spec: self.add_item("subtask", s.kind))
+				continue
+			heading = "Condition" if group == "task" else "Reward"
 			menu = self.add_menu.addMenu(heading)
 			common = registry.kinds(group, common_only=True)
 			for spec in common:
@@ -560,7 +591,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			path = self._counter_path(address)
 			self.doc.change("Add subtask", lambda items: items.append(item), path=path)
 			return self._select_key(("subtask", path + (len(_get(self.doc.data, path)) - 1,)))
-		timing = address.timing if address.group == group and address.timing else spec.default_timing()
+		timing = self._add_timing(address, group)
 		path = task_path(qid, timing) if group == "task" else reward_path(qid, timing)
 		container = self.doc.data[qid].get("conditions" if group == "task" else "rewards")
 		key = path[-1]

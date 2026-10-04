@@ -301,7 +301,8 @@ def test_the_context_menu_offers_export_and_removing_a_files_quests(window, tmp_
 	quest_item(window, Q2).setSelected(True)
 	assert outline._context_actions(quest_item(window, Q2))[3][0] == "Export 2 selected quests..."
 	assert outline.selected_quest_ids() == [Q1, Q2] and outline._current().path[0] == Q2  # (the menu acts on the clicked quest, and the selection stays)
-	assert outline._context_actions(None) == []  # (a click on empty space)
+	blank = outline._context_actions(None)  # (a click on empty space: nothing is selected, Add offers a new quest)
+	assert [t for t, _s in blank] == ["Add"] and not outline.tree.selectedItems()
 
 
 def test_removing_the_quests_imported_from_a_file(window, tmp_path, monkeypatch):

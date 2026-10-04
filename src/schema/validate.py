@@ -97,22 +97,22 @@ def _remember_id(ids, value, path, issues, what):
 def _check_task(task, timing, path, ids, task_ids, gamedata):
 	issues = []
 	if not isinstance(task, dict):
-		return [Issue(ERROR, path, "A task must be an object.")]
+		return [Issue(ERROR, path, "A condition must be an object.")]
 	_remember_id(ids, task.get("id"), path + ("id",), issues, "task")
 	kind = registry.kind_of(task, "task")
 	spec = registry.spec_of(task, "task")
 	if not registry.is_known(task, "task"):
-		issues.append(Issue(WARNING, path + ("conditionType",), f"'{kind}' is not a task kind this app knows; it is kept as it is."))
+		issues.append(Issue(WARNING, path + ("conditionType",), f"'{kind}' is not a condition kind this app knows; it is kept as it is."))
 		return issues
 	if timing is not None and spec.vanilla_timing_use and timing not in spec.vanilla_timing_use:
 		where = {"Start": "start", "Finish": "finish", "Fail": "fail"}[timing]
-		issues.append(Issue(WARNING, path, f"The base game never puts a '{spec.label}' task in the {where} list."))
+		issues.append(Issue(WARNING, path, f"The base game never puts a '{spec.label}' condition in the {where} list."))
 	issues += _profile_check(task, "task", kind, path, skip=("visibilityConditions", "counter"))
 	issues += _check_choices(task, spec, path, gamedata)
 	issues += _check_required(task, spec, path)
 	for j, visible in enumerate(task.get("visibilityConditions") or []):
 		if isinstance(visible, dict) and visible.get("target") not in task_ids:
-			issues.append(Issue(ERROR, path + ("visibilityConditions", j, "target"), "This points at a task that isn't in the quest."))
+			issues.append(Issue(ERROR, path + ("visibilityConditions", j, "target"), "This points at a condition that isn't in the quest."))
 	if kind == "CounterCreator":
 		counter = task.get("counter")
 		if not isinstance(counter, dict):
@@ -296,7 +296,7 @@ def validate_quest_locale(quests, locale):
 			if not locale_schema.is_needed(what) or locale.get(key):
 				continue  # (text that isn't needed is never a problem, blank or not there)
 			if what == "task":
-				issues.append(Issue(WARNING, _task_path(quest_id, quest, key), "This task has no text yet; the game would show its raw id."))
+				issues.append(Issue(WARNING, _task_path(quest_id, quest, key), "This condition has no text yet; the game would show its raw id."))
 			else:
 				lacking.append(_label(what))
 		if lacking:
@@ -321,4 +321,4 @@ def _label(field):
 
 
 def _what(what):
-	return "a task" if what == "task" else f"'{what}'"
+	return "a condition" if what == "task" else f"'{what}'"

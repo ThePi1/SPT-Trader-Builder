@@ -43,8 +43,8 @@ def test_new_quest_task_reward_are_valid(app):
 	for kind in ("HandoverItem", "Level", "CounterCreator"):
 		add_to_quest(outline, "task", kind)
 	add_to_quest(outline, "reward", "Experience")
-	counter = outline.tree.currentItem()
-	outline.tree.setCurrentItem(next(i for i in outline._walk() if i.data(0, ROLE).kind == "task" and i.data(0, ROLE).path[-1] == 1))
+	counter = next(i for i in outline._walk() if i.data(0, ROLE).kind == "task" and i.data(0, ROLE).path[-1] == 2)  # (all in Finish)
+	outline.tree.setCurrentItem(counter)
 	outline.add_item("subtask", "Kills")
 	fix_trader(doc)
 	assert not errors(validate.validate_quests(doc.data))
@@ -162,14 +162,14 @@ def test_only_show_after_offers_the_other_tasks_of_the_quest(app):
 	add_to_quest(outline, "task", "Level")
 	add_to_quest(outline, "task", "HandoverItem")
 	hand_over = outline.tree.currentItem()
-	task_id = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["id"]
+	task_id = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][1]["id"]  # (both go in Finish: the second is the hand over)
 	pane = outline.pane
 	control = next(w for w in pane.findChildren(forms.VisibilityControl))
 	assert [tid for tid, _label in control.ctx.tasks] != [] and task_id not in [tid for tid, _l in control.ctx.tasks]
 	assert any("Level" in label for _tid, label in control.ctx.tasks)
 	control.combo.setCurrentIndex(0)
 	control._add()
-	conditions = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["visibilityConditions"]
+	conditions = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][1]["visibilityConditions"]
 	assert len(conditions) == 1 and conditions[0]["target"] == control.ctx.tasks[0][0]
 
 
@@ -190,17 +190,18 @@ def test_a_task_goes_in_the_list_that_is_open_even_if_the_base_game_never_does_t
 	fix_trader(doc)
 	issues = validate.validate_quests(doc.data)
 	assert not errors(issues)  # (it only warns)
-	assert any("never puts a 'Player level' task in the finish list" in i.message for i in issues)
+	assert any("never puts a 'Player level' condition in the finish list" in i.message for i in issues)
 
 
-def test_a_new_item_with_no_list_open_goes_in_the_one_the_base_game_uses_most(app):
+def test_with_the_quest_selected_a_new_condition_goes_in_finish_and_a_new_reward_in_success(app):
 	outline, doc = make()
 	outline.add_quest()
 	quest = next(iter(doc.data.values()))
-	add_to_quest(outline, "task", "Level")
-	add_to_quest(outline, "task", "HandoverItem")
+	add_to_quest(outline, "task", "Level")  # (the base game puts it in Start; Add always uses Finish)
+	add_to_quest(outline, "task", "Quest")
 	add_to_quest(outline, "reward", "TraderStanding")
-	assert len(quest["conditions"]["AvailableForStart"]) == 1 and len(quest["conditions"]["AvailableForFinish"]) == 1
+	assert [t["conditionType"] for t in quest["conditions"]["AvailableForFinish"]] == ["Level", "Quest"]
+	assert not quest["conditions"]["AvailableForStart"] and not quest["conditions"]["Fail"]
 	assert len(quest["rewards"]["Success"]) == 1
 
 
