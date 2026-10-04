@@ -113,7 +113,7 @@
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">font-weight: bold; font-size: 14px;</string>
+            <string notr="true">QToolButton { font-weight: bold; font-size: 14px; }</string>
            </property>
            <property name="toolTip">
             <string>Expand all</string>
@@ -135,7 +135,7 @@
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">font-weight: bold; font-size: 14px;</string>
+            <string notr="true">QToolButton { font-weight: bold; font-size: 14px; }</string>
            </property>
            <property name="toolTip">
             <string>Collapse all</string>

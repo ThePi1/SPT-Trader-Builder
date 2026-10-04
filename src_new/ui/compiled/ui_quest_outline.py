@@ -85,7 +85,7 @@ class Ui_OutlineForm(object):
         self.expandAllButton = QToolButton(self.leftPane)
         self.expandAllButton.setObjectName(u"expandAllButton")
         self.expandAllButton.setMinimumSize(QSize(24, 24))
-        self.expandAllButton.setStyleSheet(u"font-weight: bold; font-size: 14px;")
+        self.expandAllButton.setStyleSheet(u"QToolButton { font-weight: bold; font-size: 14px; }")
         self.expandAllButton.setAutoRaise(True)
 
         self.searchRow.addWidget(self.expandAllButton)
@@ -93,7 +93,7 @@ class Ui_OutlineForm(object):
         self.collapseAllButton = QToolButton(self.leftPane)
         self.collapseAllButton.setObjectName(u"collapseAllButton")
         self.collapseAllButton.setMinimumSize(QSize(24, 24))
-        self.collapseAllButton.setStyleSheet(u"font-weight: bold; font-size: 14px;")
+        self.collapseAllButton.setStyleSheet(u"QToolButton { font-weight: bold; font-size: 14px; }")
         self.collapseAllButton.setAutoRaise(True)
 
         self.searchRow.addWidget(self.collapseAllButton)

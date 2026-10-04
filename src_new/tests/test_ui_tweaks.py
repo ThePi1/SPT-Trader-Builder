@@ -335,3 +335,24 @@ def test_the_quests_tab_has_no_up_or_down_buttons(app):
 	outline = make_outline(app)
 	assert not hasattr(outline, "up_button") and not hasattr(outline, "down_button") and not hasattr(outline, "move_selected")
 	assert [b.text() for b in outline.leftPane.findChildren(QPushButton)] == ["New quest", "Copy", "Delete"]  # (and the Add drop-down)
+
+
+def test_the_tooltips_of_the_expand_and_collapse_buttons_are_not_bold(app):
+	from PySide6.QtCore import QPoint
+	from PySide6.QtTest import QTest
+	from PySide6.QtWidgets import QToolTip
+
+	outline = make_outline(app)
+	for button, text in ((outline.expandAllButton, "Expand all"), (outline.collapseAllButton, "Collapse all")):
+		tip = None
+		for _try in range(5):  # (the first tooltip shown in a process can take a moment to appear)
+			QToolTip.hideText()
+			QToolTip.showText(button.mapToGlobal(QPoint(5, 5)), button.toolTip(), button)
+			QTest.qWait(150)
+			tips = [w for w in QApplication.topLevelWidgets() if w.metaObject().className() == "QTipLabel" and w.isVisible() and w.text() == text]
+			if tips:
+				tip = tips[0]
+				break
+		assert tip is not None, text
+		assert not tip.font().bold() and tip.font().pointSizeF() == outline.font().pointSizeF()  # (normal text, normal size)
+	assert outline.expandAllButton.styleSheet().startswith("QToolButton {")  # (the bold is for the button alone)
