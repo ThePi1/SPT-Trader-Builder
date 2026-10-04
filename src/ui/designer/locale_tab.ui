@@ -45,7 +45,7 @@
      <item>
       <widget class="QPushButton" name="addMissingButton">
        <property name="text">
-        <string>Add missing text</string>
+        <string>Add all missing fields</string>
        </property>
       </widget>
      </item>

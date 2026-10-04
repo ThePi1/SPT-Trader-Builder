@@ -93,7 +93,7 @@ class Ui_LocaleForm(object):
     def retranslateUi(self, LocaleForm):
         self.search.setPlaceholderText(QCoreApplication.translate("LocaleForm", u"Search the text, keys or quest names", None))
         self.note.setText("")
-        self.addMissingButton.setText(QCoreApplication.translate("LocaleForm", u"Add missing text", None))
+        self.addMissingButton.setText(QCoreApplication.translate("LocaleForm", u"Add all missing fields", None))
         self.addEntryButton.setText(QCoreApplication.translate("LocaleForm", u"Add an entry...", None))
         self.deleteButton.setText(QCoreApplication.translate("LocaleForm", u"Delete", None))
         self.fixSpellingButton.setText(QCoreApplication.translate("LocaleForm", u"Fix old spellings", None))

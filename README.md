@@ -31,7 +31,7 @@ python ./src/main.py (mac/linux)
 
 1. Click **New quest** and fill in the form on the right.
 2. Click **Add** to give the quest objectives (tasks) and rewards.
-3. Open the **Locale** tab to write the quest's name and description. **Add missing text** creates the empty entries for you.
+3. Open the **Locale** tab to write the quest's name and description. **Add all missing fields** creates the empty entries for you.
 4. Choose **File > Quests > Save as...** to save the quest file.
 
 The **Problems** list at the bottom left tells you what still needs fixing. Click it to open it, and click a problem to jump to it.

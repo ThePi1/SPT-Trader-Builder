@@ -4,9 +4,11 @@ The quest JSON holds no text, only keys. A quest's own keys are ``"<quest id> <f
 (its ``name``, ``description``, ...); a task's key is its id. The text is in a locale file: a
 flat ``{key: text}`` JSON, one file per language.
 
-What the base game does (checked against its en.json): every quest has text for the fields in
-QUEST_TEXT_USED and never for the three optional ones; every Finish task has text, Start tasks
-have none (the game writes their text itself), Fail tasks sometimes do.
+What the base game does (checked against its en.json): every quest has an entry for each field in
+QUEST_TEXT_USED and never for the three optional ones. Only the fields marked ``needed`` (name,
+description, successMessageText) and the Finish tasks are always filled in: the replies and the
+failure message are present but blank in most quests. Start tasks have no text (the game writes it
+itself), Fail tasks sometimes do. Only the needed text counts as missing (see is_needed).
 """
 
 from dataclasses import dataclass
@@ -60,6 +62,11 @@ def task_text_needed(timing):
 	return {"Finish": "needed", "Fail": "optional"}.get(timing, "none")
 
 
+def is_needed(what):
+	"""True for text that has to be filled in: a quest field marked needed, or a task ('task')."""
+	return what == "task" or what in QUEST_TEXT_NEEDED
+
+
 def quest_tasks(quest):
 	"""[(task id, timing, task)] for the tasks of a quest that can have text, with the timing
 	as 'Start' / 'Finish' / 'Fail'."""
@@ -93,11 +100,14 @@ def quest_entries(quest, texts=None, optional=False):
 
 
 def missing_keys(quests, locale, optional=False):
-	"""The keys the quests need that the locale lacks or leaves blank, as {key: what}."""
+	"""The text the quests need that the locale lacks or leaves blank, as {key: what}.
+
+	Only the needed text (see is_needed) counts. optional=True also counts the optional fields and
+	the Fail tasks."""
 	missing = {}
 	for quest in quests.values():
 		for key, what in keys_for_quest(quest, optional):
-			if not locale.get(key):
+			if (optional or is_needed(what)) and not locale.get(key):
 				missing[key] = what
 	return missing
 

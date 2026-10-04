@@ -293,10 +293,8 @@ def validate_quest_locale(quests, locale):
 			continue
 		lacking = []
 		for key, what in locale_schema.keys_for_quest(quest):
-			text = locale.get(key)
-			missing = text is None or (text == "" and (what == "task" or what in locale_schema.QUEST_TEXT_NEEDED))
-			if not missing:
-				continue
+			if not locale_schema.is_needed(what) or locale.get(key):
+				continue  # (text that isn't needed is never a problem, blank or not there)
 			if what == "task":
 				issues.append(Issue(WARNING, _task_path(quest_id, quest, key), "This task has no text yet; the game would show its raw id."))
 			else:
