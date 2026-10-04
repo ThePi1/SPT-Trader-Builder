@@ -88,7 +88,7 @@ cd src
 python tools/build.py
 ```
 
-The finished program is in `src/dist/SPTTraderBuilder/`. That folder holds `SPTTraderBuilder.exe`, the `data` folder and `LICENSE`. To make a release, zip the whole `SPTTraderBuilder` folder.
+The finished program is in `src/dist/SPTTraderBuilder/`. That folder holds `SPTTraderBuilder.exe`, the `lib` folder (the program needs it to run), the `data` folder and `LICENSE`. To make a release, zip the whole `SPTTraderBuilder` folder.
 
 To check everything first, run `python -m pytest -q tests` from the `src` folder.
 

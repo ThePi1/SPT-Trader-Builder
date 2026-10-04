@@ -1,7 +1,8 @@
 """Build the Windows program:  python tools/build.py   (needs: pip install pyinstaller)
 
-Makes dist/SPTTraderBuilder/ with the program, a data/ folder next to it (settings.ini, the bundled
-game data, your saved items) and LICENSE (the MIT License and the notice for the SPT files; it must go with the program).
+Makes dist/SPTTraderBuilder/ with the program, a lib/ folder (Python and Qt; PyInstaller calls it _internal
+unless told otherwise), a data/ folder next to it (settings.ini, the bundled game data, your saved items) and
+LICENSE (the MIT License and the notice for the SPT files; it must go with the program).
 Run tools/bundle_database.py first to include the game data.
 """
 
@@ -13,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 NAME = "SPTTraderBuilder"
+CONTENTS_DIR = "lib"  # the folder for everything but the .exe and our own data/ (PyInstaller's default is _internal)
 LICENSE_FILE = ROOT.parent / "LICENSE"  # in the root of the repository
 
 
@@ -26,6 +28,7 @@ def main():
 		sys.exit(f"{LICENSE_FILE} is missing: the build has to include it.")
 	subprocess.check_call([
 		sys.executable, "-m", "PyInstaller", "--noconfirm", "--windowed", "--name", NAME,
+		"--contents-directory", CONTENTS_DIR,
 		"--paths", str(ROOT), "--distpath", str(ROOT / "dist"), "--workpath", str(ROOT / "build"),
 		"--specpath", str(ROOT / "build"), "--icon", str(ROOT / "data" / "icon.ico"),
 		# the schema's two JSON files are read next to the schema code
