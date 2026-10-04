@@ -79,8 +79,6 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.tree.currentItemChanged.connect(self._selected)
 		self.search.textChanged.connect(lambda _text: self.apply_filter())
-		self.up_button.setToolTip("Move the selected quest, task, subtask or reward up")
-		self.down_button.setToolTip("Move the selected quest, task, subtask or reward down")
 		self.expandAllButton.clicked.connect(lambda _checked=False: self.expand_all())
 		self.collapseAllButton.clicked.connect(lambda _checked=False: self.collapse_all())
 		self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -265,7 +263,6 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 				self.tree.setCurrentItem(self.tree.topLevelItem(0))
 			else:
 				self._show_hint("Add a quest to begin, or open a quest file.")
-		self._update_move_buttons()
 
 	def _build_quest(self, qid, quest):
 		root = self._add_item(self.tree, "", Address("quest", (qid,)), bold=True)
@@ -369,7 +366,6 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 				self.tree.setCurrentItem(first_shown)
 				if first_shown is None:
 					self._show_hint("No quest matches the search.")
-		self._update_move_buttons()
 
 	def set_sources(self, sources):
 		"""Show which file each imported quest came from (quest id -> file name)."""
@@ -429,7 +425,6 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 
 	def _selected(self, item, _previous):
 		self._update_json()
-		self._update_move_buttons()
 		self._clear_pane()
 		if item is None:
 			return self._show_hint("Add a quest to begin, or open a quest file.")
@@ -612,57 +607,10 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		list_path, index = address.path[:-1], address.path[-1]
 		self.doc.change("Delete", lambda items: items.pop(index), path=list_path)
 
-	def _visible_quest_ids(self):
-		"""The ids of the quests shown in the tree (the search may hide some), in order."""
-		return [
-			self.tree.topLevelItem(i).data(0, ROLE).path[0] for i in range(self.tree.topLevelItemCount())
-			if not self.tree.topLevelItem(i).isHidden()
-		]
-
-	def _can_move(self, address):
-		"""(can move up, can move down) for the selected node: a quest among the shown quests, or an item in its list."""
-		if address is None or address.kind == "group" or self.doc is None:
-			return False, False
-		try:
-			if address.kind == "quest":
-				shown = self._visible_quest_ids()
-				if address.path[0] not in shown:
-					return False, False
-				i = shown.index(address.path[0])
-				return i > 0, i < len(shown) - 1
-			items = _get(self.doc.data, address.path[:-1])
-			return address.path[-1] > 0, address.path[-1] < len(items) - 1
-		except (KeyError, IndexError, TypeError):
-			return False, False
-
-	def _update_move_buttons(self):
-		up, down = self._can_move(self._current())
-		self.up_button.setEnabled(up)
-		self.down_button.setEnabled(down)
-
-	def _move_quest(self, quest_id, offset):
-		"""Move a quest past the next quest that is shown (so it works while the search hides some)."""
-		shown = self._visible_quest_ids()
-		if quest_id not in shown or not 0 <= shown.index(quest_id) + offset < len(shown):
-			return
-		neighbour = shown[shown.index(quest_id) + offset]
-		order = [q for q in self.doc.data if q != quest_id]
-		order.insert(order.index(neighbour) + (1 if offset > 0 else 0), quest_id)
-
-		def reorder(data):
-			items = {q: data[q] for q in order}
-			data.clear()
-			data.update(items)
-
-		self.doc.change("Move quest", reorder)
-		self._select_key(("quest", (quest_id,)))
-
 	def move_selected(self, offset):
 		address = self._current()
-		if address is None or address.kind == "group":
+		if address is None or address.kind in ("group", "quest"):
 			return
-		if address.kind == "quest":
-			return self._move_quest(address.path[0], offset)
 		list_path, index = address.path[:-1], address.path[-1]
 		result = []
 		self.doc.change("Move", lambda items: result.append(move(items, index, offset)), path=list_path)
