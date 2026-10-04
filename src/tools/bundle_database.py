@@ -3,7 +3,7 @@ app can show item and trader names without the user choosing a folder.
 
     python tools/bundle_database.py "I:\\Games\\SPT-4-0-13-BASE-COPY\\SPT\\SPT_Data\\database" [--languages en,ru]
 
-The source folder is only read. The locations folder is never touched. globals.json is cut down
+The source folder is only read. The locations and traders folders are never touched (the traders come from data/traders.json). globals.json is cut down
 to the composite items (ItemPresets).
 """
 
@@ -40,13 +40,6 @@ def bundle(source, target, languages):
 		(target / GLOBALS).parent.mkdir(parents=True, exist_ok=True)
 		write_json(target / GLOBALS, {"ItemPresets": read_json(globals_file).get("ItemPresets", {})})
 		copied.append(GLOBALS)
-	# each trader's base.json (their name and levels) and questassort.json (which offers a quest unlocks; small)
-	for name in ("base.json", "questassort.json"):
-		for found in sorted((source / "traders").glob(f"*/{name}")):
-			out = target / "traders" / found.parent.name / name
-			out.parent.mkdir(parents=True, exist_ok=True)
-			shutil.copyfile(found, out)
-			copied.append(str(out.relative_to(target)))
 	return copied
 
 

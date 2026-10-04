@@ -1,8 +1,9 @@
 """Shared test data: the base game's own files, which are known to be valid.
 
-The quests, the English text and the quest locks come from the game data bundled with the app
-(data/database, copied from SPT 4.0.13 by tools/bundle_database.py). The one trader assort
-(Mechanic's, 589 offers) is a fixture, because the bundle leaves the big assort files out.
+The quests and the English text come from the game data bundled with the app (data/database,
+copied from SPT 4.0.13 by tools/bundle_database.py). The trader files are fixtures: Mechanic's assort
+(589 offers) and every trader's quest locks (tests/fixtures/questassort), because the bundle does not
+hold the trader folders.
 """
 
 import json
@@ -37,10 +38,10 @@ def vanilla_assort():
 @pytest.fixture(scope="session")
 def vanilla_questassort():
 	"""Mechanic's quest locks: {started, success, fail: {offer id: quest id}}."""
-	return _load(DATABASE / "traders" / MECHANIC / "questassort.json")
+	return _load(FIXTURES / "questassort" / f"{MECHANIC}.json")
 
 
 @pytest.fixture(scope="session")
 def vanilla_questassorts():
-	"""Every trader's quest locks that the bundle has: {trader id: {started, success, fail}}."""
-	return {path.parent.name: _load(path) for path in sorted((DATABASE / "traders").glob("*/questassort.json"))}
+	"""Every trader's quest locks in tests/fixtures/questassort: {trader id: {started, success, fail}}."""
+	return {path.stem: _load(path) for path in sorted((FIXTURES / "questassort").glob("*.json"))}

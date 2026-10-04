@@ -24,7 +24,6 @@ EQUIPMENT_PRESETS = "templates/defaultEquipmentPresets.json"
 GLOBALS = "globals.json"
 HIDEOUT_AREAS = "hideout/areas.json"
 LANGUAGES = "locales/languages.json"
-TRADERS_DIR = "traders"
 
 
 def locale_file(language):
@@ -114,25 +113,12 @@ class GameData:
 
 	@cached_property
 	def traders(self):
-		"""{trader id: name}. From each traders/<id>/base.json, named from the locale; the
-		app's own list fills in traders the folder doesn't have."""
-		names = {}
-		for folder in (self.database_dir, self.fallback_dir):
-			if folder is None or not (folder / TRADERS_DIR).is_dir():
-				continue
-			for base_file in sorted((folder / TRADERS_DIR).glob("*/base.json")):
-				trader_id = base_file.parent.name
-				if trader_id in names:
-					continue
-				try:
-					base = read_json(base_file)
-				except (OSError, ValueError) as e:
-					log.warning(f"Could not read {base_file}: {e}")
-					continue
-				names[trader_id] = self.locale.get(f"{trader_id} Nickname") or base.get("nickname") or trader_id
-		for name, trader_id in read_json(DATA_DIR / "traders.json").items():
-			names.setdefault(trader_id, name)
-		return names
+		"""{trader id: name}, from the app's own list (data/traders.json). The name is the trader's nickname in
+		the chosen language where the locale has it. A trader that is not in that list can still be used by id."""
+		return {
+			trader_id: self.locale.get(f"{trader_id} Nickname") or name
+			for name, trader_id in read_json(DATA_DIR / "traders.json").items()
+		}
 
 	@cached_property
 	def locations(self):

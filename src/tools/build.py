@@ -1,7 +1,8 @@
 """Build the Windows program:  python tools/build.py   (needs: pip install pyinstaller)
 
-Makes dist/SPTQuestBuilder/ with the program and a data/ folder next to it (settings.ini, the bundled
-game data, your saved items). Run tools/bundle_database.py first to include the game data.
+Makes dist/SPTQuestBuilder/ with the program, a data/ folder next to it (settings.ini, the bundled
+game data, your saved items) and LICENSE (the MIT License and the notice for the SPT files; it must go with the program).
+Run tools/bundle_database.py first to include the game data.
 """
 
 import os
@@ -12,9 +13,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 NAME = "SPTQuestBuilder"
+LICENSE_FILE = ROOT.parent / "LICENSE"  # in the root of the repository
+
+
+def add_license(out):
+	"""Copy LICENSE next to the built program. Raises FileNotFoundError if there is no LICENSE."""
+	shutil.copyfile(LICENSE_FILE, Path(out) / LICENSE_FILE.name)
 
 
 def main():
+	if not LICENSE_FILE.is_file():
+		sys.exit(f"{LICENSE_FILE} is missing: the build has to include it.")
 	subprocess.check_call([
 		sys.executable, "-m", "PyInstaller", "--noconfirm", "--windowed", "--name", NAME,
 		"--paths", str(ROOT), "--distpath", str(ROOT / "dist"), "--workpath", str(ROOT / "build"),
@@ -29,6 +38,7 @@ def main():
 	if data.exists():
 		shutil.rmtree(data)
 	shutil.copytree(ROOT / "data", data, ignore=shutil.ignore_patterns("my_items.json"))
+	add_license(out)
 	print(f"Built {out}")
 
 

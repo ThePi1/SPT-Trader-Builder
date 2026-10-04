@@ -7,8 +7,10 @@ Work in progress. Everything for the rebuild lives in this folder; the old progr
     pip install -r requirements.txt
     python main.py
 
-In Settings > Game data, point "SPT database folder" at your SPT_Data/database folder to see item and trader names
-(it is only read, never changed).
+In Settings > Game data, point "SPT database folder" at your SPT_Data/database folder to use your own game files (items,
+quests and text, in the language you choose) instead of the copy that comes with the program. It is only read, never
+changed. The list of traders is the program's own (`data/traders.json`); a trader that isn't in it can still be used by
+its id (paste it into the trader box).
 
 ## Tabs
 
@@ -53,8 +55,8 @@ equal for a released build, and change `version_url`'s path when the rebuild tak
 
     python -m pytest -q
 
-The tests that check against the base game use the game data bundled in `data/database` (and one trader assort in
-`tests/fixtures`), so they run anywhere.
+The tests that check against the base game use the game data bundled in `data/database` (and one trader assort and every
+trader's quest assort in `tests/fixtures`), so they run anywhere.
 
 ## Layout
 

@@ -39,7 +39,7 @@ If you're not developing on Windows feel free to skip this (or make an analogue 
 ## Tests
 From the repository root:
 
-    pip install -r requirements-dev.txt
+    pip install -r requirements.txt
     python -m pytest src/tests
 
 `src/tests/test_builders.py` and `src/tests/test_state.py` test the JSON builders and shared state directly.
