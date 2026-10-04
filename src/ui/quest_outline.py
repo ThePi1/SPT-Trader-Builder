@@ -506,7 +506,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		if address is None:
 			return
 		if self._counter_path(address) is not None:
-			sub = self.add_menu.addMenu("Subtask (in this objective)")
+			sub = self.add_menu.addMenu("Subtask (in this counter)")
 			for spec in registry.kinds("subtask"):
 				sub.addAction(spec.label, lambda s=spec: self.add_item("subtask", s.kind))
 		for group, heading in (("task", "Task"), ("reward", "Reward")):

@@ -145,7 +145,7 @@ _add(Spec(
 ))
 
 _add(Spec(
-	"reward", "TraderStandingRestore", "Restore trader standing", (
+	"reward", "TraderStandingRestore", "Restore trader standing (unused)", (
 		Field("target", "Trader", REF, ref=TRADER), Field("value", "Value", NUMBER, 0),
 	) + _COMMON,
 	_base("TraderStandingRestore", target="", value=0),

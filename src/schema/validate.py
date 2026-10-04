@@ -122,7 +122,7 @@ def _check_task(task, timing, path, ids, task_ids, gamedata):
 				issues.append(Issue(WARNING, path + ("counter", "id"), "The counter has no id."))
 			subs = counter.get("conditions") or []
 			if not subs:
-				issues.append(Issue(WARNING, path + ("counter", "conditions"), "This objective has no steps yet. Add a subtask, such as Kill enemies."))
+				issues.append(Issue(WARNING, path + ("counter", "conditions"), "This Counter has no steps yet. Add a subtask, such as Kill enemies."))
 			for k, sub in enumerate(subs):
 				issues += _check_subtask(sub, timing, path + ("counter", "conditions", k), ids, gamedata)
 	return issues
