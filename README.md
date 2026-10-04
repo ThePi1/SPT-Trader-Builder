@@ -80,7 +80,7 @@ When you update, keep a copy of `data/settings.ini` (your settings) and `data/my
 
 ## Build
 
-To build the program yourself (Windows, Python 3.11), run these from the main folder of the repository:
+To build the program yourself (Windows), run these from the main folder of the repository:
 
 ```
 pip install -r requirements.txt
