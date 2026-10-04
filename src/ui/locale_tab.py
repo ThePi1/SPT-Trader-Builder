@@ -127,11 +127,12 @@ class LocaleTab(QWidget, Ui_LocaleForm):
 		return self.model.locale
 
 	def add_missing(self):
-		missing = L.missing_keys(self.model.quests.data, self.doc.data)
+		"""Add an empty entry for every text field the open quests can have (the optional ones too), then show them."""
+		missing = L.missing_keys(self.model.quests.data, self.doc.data, optional=True)
 		for key in missing:
 			if key not in self.doc.data:
-				self.doc.set_value("Add missing text", (key,), "")
-		self.mode.setCurrentIndex(self.mode.findData("missing"))
+				self.doc.set_value("Add all missing fields", (key,), "")
+		self.mode.setCurrentIndex(self.mode.findData("mine"))  # (the "missing" list only shows the needed text)
 		self.refresh()
 
 	def add_entry(self):

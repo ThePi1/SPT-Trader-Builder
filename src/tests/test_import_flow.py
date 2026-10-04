@@ -293,14 +293,16 @@ def test_the_context_menu_offers_export_and_removing_a_files_quests(window, tmp_
 	window._set_quests(Document({Q3: quest(Q3, "Mine", T3)}))
 	window.import_files(files(tmp_path)[:2])
 	outline = window.quest_outline
-	ends = ["Expand all", "Collapse all"]
-	assert [t for t, _s in outline._context_actions(quest_item(window, Q3))] == ["Export this quest..."] + ends
-	assert [t for t, _s in outline._context_actions(quest_item(window, Q1))] == ["Export this quest...", "Remove the quests imported from kappa.json"] + ends
+	start = ["Add", "Copy", "Delete"]
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q3))] == start + ["Export this quest..."]
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q1))] == start + ["Export this quest...", "Remove the quests imported from kappa.json"]
 	outline.tree.clearSelection()
 	quest_item(window, Q1).setSelected(True)
 	quest_item(window, Q2).setSelected(True)
-	assert outline._context_actions(quest_item(window, Q2))[0][0] == "Export 2 selected quests..."
-	assert [t for t, _s in outline._context_actions(None)] == ends  # (a click on empty space)
+	assert outline._context_actions(quest_item(window, Q2))[3][0] == "Export 2 selected quests..."
+	assert outline.selected_quest_ids() == [Q1, Q2] and outline._current().path[0] == Q2  # (the menu acts on the clicked quest, and the selection stays)
+	blank = outline._context_actions(None)  # (a click on empty space: nothing is selected, Add offers a new quest)
+	assert [t for t, _s in blank] == ["Add"] and not outline.tree.selectedItems()
 
 
 def test_removing_the_quests_imported_from_a_file(window, tmp_path, monkeypatch):
@@ -439,3 +441,32 @@ def test_the_strip_calls_the_quest_locks_section_quest_assort(window):
 	assert "Quest assort" in window.files_strip.segment("locks").titleLabel.text()
 	assert "Quest locks" not in window.files_strip.segment("locks").titleLabel.text()
 	assert window.menuLocks.title().replace("&", "") == "Quest assort"
+
+
+def test_the_unsaved_changes_question_names_the_kind_of_file(window, monkeypatch, tmp_path):
+	asked = []
+
+	def answer(parent, title, text, *args, **kwargs):
+		asked.append((title, text))
+		return dialogs.QMessageBox.StandardButton.Discard
+
+	monkeypatch.setattr("ui.main_window.QMessageBox.question", answer)
+	window._set_quests(Document({Q3: quest(Q3, "Mine", T3)}))
+	window.quests.set_value("Edit", (Q3, "QuestName"), "Changed")
+	window.new_quests()
+	window.locale.set_value("Edit", ("a",), "b")
+	window.new_locale()
+	window.assort.set_value("Edit", ("extra",), 1)
+	window._new_other("assort")
+	window.locks.set_value("Edit", ("extra",), 1)
+	window._new_other("locks")
+	assert asked == [
+		("Unsaved changes", "Save your changes to quest file Untitled?"), ("Unsaved changes", "Save your changes to locale file Untitled?"),
+		("Unsaved changes", "Save your changes to trader assort file Untitled?"), ("Unsaved changes", "Save your changes to quest assort file Untitled?"),
+	]
+	path = tmp_path / "kappa.json"
+	path.write_text(json.dumps({Q3: quest(Q3, "Mine", T3)}), encoding="utf-8")
+	window._set_quests(Document.open(path))
+	window.quests.set_value("Edit", (Q3, "QuestName"), "Changed")
+	window.new_quests()
+	assert asked[-1][1] == "Save your changes to quest file kappa.json?"

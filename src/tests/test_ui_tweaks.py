@@ -213,7 +213,7 @@ def test_the_type_list_has_no_rare_tag_and_a_line_says_whether_it_is_common(app)
 	assert "not commonly used." in page.commonLabel.text().replace("<b>", "").replace("</b>", "")
 	page.tree.setCurrentItem(None)
 	assert page.commonLabel.text() == ""
-	# it sits under the "Can be used" / "Filled in by the app" line
+	# it sits under the "Used in base SPT for" / "Filled in by the app" line
 	layout = page.column
 	order = [layout.itemAt(i).widget() for i in range(layout.count())]
 	assert order.index(page.commonLabel) == order.index(page.where) + 1
@@ -309,13 +309,25 @@ def test_collapsing_moves_the_open_item_to_its_quest(app):
 	assert outline._current().kind == "quest"  # (not hidden away inside a folded quest)
 
 
-def test_the_context_menu_has_the_same_two_actions_and_they_work(app):
-	outline = make_outline(app)
-	actions = dict(outline._context_actions(None))
-	actions["Collapse all"]()
-	assert expanded_counts(outline)[0] == 0
-	actions["Expand all"]()
-	assert expanded_counts(outline)[0] == expanded_counts(outline)[1]
+def test_the_context_menu_has_add_copy_and_delete_that_do_what_the_buttons_do(app):
+	from PySide6.QtWidgets import QMenu
+
+	outline = QuestOutline(None, None)
+	outline.set_document(Document({IDS["Debut"]: quest_with_tasks(IDS["Debut"], "Debut")}))
+	task = next(i for i in outline._walk() if i.data(0, 256).kind == "task")
+	actions = dict(outline._context_actions(task))
+	assert list(actions)[:3] == ["Add", "Copy", "Delete"] and "Expand all" not in actions and "Collapse all" not in actions
+	assert outline._current().kind == "task" and outline._current().key() == task.data(0, 256).key()  # (the clicked item)
+	assert isinstance(actions["Add"], QMenu) and actions["Add"] is outline.add_menu  # (the Add button's menu)
+	assert actions["Copy"] == outline.copy_selected and actions["Delete"] == outline.delete_selected
+	quest = next(iter(outline.doc.data.values()))
+	before = sum(len(v) for v in quest["conditions"].values())
+	actions["Copy"]()
+	assert sum(len(v) for v in quest["conditions"].values()) == before + 1
+	actions["Delete"]()
+	assert sum(len(v) for v in quest["conditions"].values()) == before
+	group = next(i for i in outline._walk() if i.data(0, 256).kind == "group")  # (the tree was rebuilt)
+	assert list(dict(outline._context_actions(group)))[:2] == ["Add", "Export this quest..."]  # (a group has nothing to copy or delete)
 
 
 def test_a_collapsed_quest_stays_collapsed_when_the_quests_change(app):
@@ -334,7 +346,7 @@ def test_the_quests_tab_has_no_up_or_down_buttons(app):
 
 	outline = make_outline(app)
 	assert not hasattr(outline, "up_button") and not hasattr(outline, "down_button") and not hasattr(outline, "move_selected")
-	assert [b.text() for b in outline.leftPane.findChildren(QPushButton)] == ["New quest", "Copy", "Delete"]  # (and the Add drop-down)
+	assert [b.text() for b in outline.leftPane.findChildren(QPushButton)] == ["Copy", "Delete"]  # (and the Add drop-down: New quest is in it)
 
 
 def test_the_tooltips_of_the_expand_and_collapse_buttons_are_not_bold(app):

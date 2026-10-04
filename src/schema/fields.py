@@ -53,12 +53,18 @@ class Spec:
 	label: str  # short, plain English
 	fields: tuple  # the Fields with a control
 	base: dict  # a new item: every key with its default, in the order they are written
-	timings: tuple = ()  # where it may sit: for tasks Start / Finish / Fail, for rewards Success / Started / Fail
+	vanilla_timing_use: tuple = ()  # the lists the base game's quests put this kind in, most used first (tasks: Start / Finish / Fail, rewards: Success / Started / Fail). Only a note: nothing stops it sitting in another list. Empty: no base quest uses it
 	managed: tuple = ()  # keys the app fills in itself (ids, the type): never shown as fields
 	summary: Callable = None  # (item, names) -> text for the outline
 	common: bool = True  # False: a less common kind: it is listed under "Less common" in the Add menu, after the others
 	note: str = ""  # one plain sentence about the kind, for the Schema Explorer
 	fresh_ids: tuple = ()  # more keys that get a new id when a new item is made ("counter.id")
+
+	def default_timing(self):
+		"""The list a new item goes in when none is picked: the one the base game uses most, else Finish (Success for rewards)."""
+		if self.vanilla_timing_use:
+			return self.vanilla_timing_use[0]
+		return "Success" if self.group == "reward" else "Finish"
 
 	def field(self, key):
 		for f in self.fields:

@@ -23,6 +23,12 @@ def app():
 	return QApplication.instance() or QApplication([])
 
 
+def add_to_quest(outline, group, kind):
+	"""Add with the quest row selected (no list chosen), so the item goes where the base game usually puts it."""
+	outline.tree.setCurrentItem(outline.tree.topLevelItem(0))
+	outline.add_item(group, kind)
+
+
 def make(data=None):
 	outline = QuestOutline()
 	doc = Document(data if data is not None else {})
@@ -35,10 +41,10 @@ def test_new_quest_task_reward_are_valid(app):
 	outline.add_quest()
 	assert len(doc.data) == 1
 	for kind in ("HandoverItem", "Level", "CounterCreator"):
-		outline.add_item("task", kind)
-	outline.add_item("reward", "Experience")
-	counter = outline.tree.currentItem()
-	outline.tree.setCurrentItem(next(i for i in outline._walk() if i.data(0, ROLE).kind == "task" and i.data(0, ROLE).path[-1] == 1))
+		add_to_quest(outline, "task", kind)
+	add_to_quest(outline, "reward", "Experience")
+	counter = next(i for i in outline._walk() if i.data(0, ROLE).kind == "task" and i.data(0, ROLE).path[-1] == 2)  # (all in Finish)
+	outline.tree.setCurrentItem(counter)
 	outline.add_item("subtask", "Kills")
 	fix_trader(doc)
 	assert not errors(validate.validate_quests(doc.data))
@@ -153,15 +159,60 @@ def test_only_show_after_offers_the_other_tasks_of_the_quest(app):
 
 	outline, doc = make()
 	outline.add_quest()
-	outline.add_item("task", "Level")
-	outline.add_item("task", "HandoverItem")
+	add_to_quest(outline, "task", "Level")
+	add_to_quest(outline, "task", "HandoverItem")
 	hand_over = outline.tree.currentItem()
-	task_id = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["id"]
+	task_id = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][1]["id"]  # (both go in Finish: the second is the hand over)
 	pane = outline.pane
 	control = next(w for w in pane.findChildren(forms.VisibilityControl))
 	assert [tid for tid, _label in control.ctx.tasks] != [] and task_id not in [tid for tid, _l in control.ctx.tasks]
 	assert any("Level" in label for _tid, label in control.ctx.tasks)
 	control.combo.setCurrentIndex(0)
 	control._add()
-	conditions = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["visibilityConditions"]
+	conditions = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][1]["visibilityConditions"]
 	assert len(conditions) == 1 and conditions[0]["target"] == control.ctx.tasks[0][0]
+
+
+def select_group(outline, kind, timing):
+	outline.tree.setCurrentItem(next(
+		i for i in outline._walk() if i.data(0, ROLE).kind == "group" and i.data(0, ROLE).group == kind and i.data(0, ROLE).timing == timing
+	))
+
+
+def test_a_task_goes_in_the_list_that_is_open_even_if_the_base_game_never_does_that(app):
+	outline, doc = make()
+	outline.add_quest()
+	quest = next(iter(doc.data.values()))
+	select_group(outline, "task", "Finish")
+	outline.add_item("task", "Level")  # (the base game only puts Player level in Start)
+	assert [t["conditionType"] for t in quest["conditions"]["AvailableForFinish"]] == ["Level"]
+	assert not quest["conditions"]["AvailableForStart"]
+	fix_trader(doc)
+	issues = validate.validate_quests(doc.data)
+	assert not errors(issues)  # (it only warns)
+	assert any("never puts a 'Player level' condition in the finish list" in i.message for i in issues)
+
+
+def test_with_the_quest_selected_a_new_condition_goes_in_finish_and_a_new_reward_in_success(app):
+	outline, doc = make()
+	outline.add_quest()
+	quest = next(iter(doc.data.values()))
+	add_to_quest(outline, "task", "Level")  # (the base game puts it in Start; Add always uses Finish)
+	add_to_quest(outline, "task", "Quest")
+	add_to_quest(outline, "reward", "TraderStanding")
+	assert [t["conditionType"] for t in quest["conditions"]["AvailableForFinish"]] == ["Level", "Quest"]
+	assert not quest["conditions"]["AvailableForStart"] and not quest["conditions"]["Fail"]
+	assert len(quest["rewards"]["Success"]) == 1
+
+
+def test_the_when_row_offers_every_list(app):
+	from PySide6.QtWidgets import QComboBox
+
+	outline, doc = make()
+	outline.add_quest()
+	outline.add_item("task", "Level")
+	combos = outline.findChildren(QComboBox)
+	assert any([c.itemText(i) for i in range(c.count())] == ["Start", "Finish", "Fail"] for c in combos)
+	outline.add_item("reward", "Experience")
+	combos = outline.findChildren(QComboBox)
+	assert any([c.itemText(i) for i in range(c.count())] == ["Success", "Started", "Fail"] for c in combos)

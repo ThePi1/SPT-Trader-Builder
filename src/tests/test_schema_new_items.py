@@ -34,7 +34,7 @@ def test_new_quest_text_keys_point_at_its_id():
 def test_new_task_is_valid(kind):
 	spec = tasks.TASKS[kind]
 	task = registry.new_item("task", kind)
-	quest = quest_with(task, {"Finish": "Finish", "Start": "Start", "Fail": "Fail"}[spec.timings[0]])
+	quest = quest_with(task, spec.default_timing())
 	issues = validate.validate_quest(quest)
 	assert not errors(issues), [str(i) for i in errors(issues)]
 
@@ -63,7 +63,7 @@ def test_new_subtask_is_valid_and_vanilla_like(kind):
 def test_new_reward_is_valid_and_vanilla_like(kind):
 	spec = rewards.REWARDS[kind]
 	reward = registry.new_item("reward", kind)
-	quest = quest_with(reward=reward, reward_timing=spec.timings[0])
+	quest = quest_with(reward=reward, reward_timing=spec.default_timing())
 	assert not errors(validate.validate_quest(quest))
 	profile = validate.profile().get(f"reward:{kind}")
 	if profile:

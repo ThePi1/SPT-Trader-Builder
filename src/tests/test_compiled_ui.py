@@ -185,7 +185,8 @@ def test_the_outline_buttons_do_what_they_say(app, monkeypatch):
 	monkeypatch.setattr("ui.quest_outline.QMessageBox.question", lambda *a, **k: QMessageBox.StandardButton.Yes)
 	outline, first = _outline(app)
 	outline._select_key(("quest", (first,)))
-	outline.new_quest_button.click()
+	outline._fill_add_menu()
+	next(a for a in outline.add_menu.actions() if a.text() == "New quest").trigger()  # (Add > New quest)
 	assert len(outline.doc.data) == 3 and outline.doc.data[outline._current().path[0]]["QuestName"] == "New quest"
 	outline._select_key(("quest", (first,)))
 	outline.copy_button.click()
@@ -260,7 +261,7 @@ def test_the_button_row_fills_the_width_in_equal_parts(app):
 	outline.resize(1800, 700)
 	outline.splitter.setSizes([1200, 500])  # (wide enough that the buttons have room to spare)
 	app.processEvents()
-	buttons = [outline.new_quest_button, outline.add_button, outline.copy_button, outline.delete_button]
+	buttons = [outline.add_button, outline.copy_button, outline.delete_button]
 	margins = outline.leftLayout.contentsMargins()
 	assert buttons[0].geometry().left() == margins.left()
 	assert buttons[-1].geometry().right() + 1 == outline.leftPane.width() - margins.right()

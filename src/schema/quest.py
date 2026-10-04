@@ -68,7 +68,7 @@ QUEST = Spec(
 	"quest", "quest", "Quest", QUEST_FIELDS, BASE,
 	managed=("_id", "conditions", "rewards") + TEXT_POINTER_KEYS,
 	summary=lambda item, names: item.get("QuestName") or "(unnamed quest)",
-	note="One quest: who gives it, where, its tasks and its rewards.",
+	note="A quest, given by a trader. This holds conditions and rewards.",
 )
 
 

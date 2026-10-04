@@ -7,8 +7,10 @@ questassort.json is ``{started, success, fail}``, each ``{offer id: quest id}``:
 unlocked when the quest is started / completed, or locked when it fails.
 """
 
+from core import parts as P
 from core.ids import new_id
 from schema import server
+from schema.copying import with_new_ids
 from schema.issues import ERROR, WARNING, Issue
 
 ROOT = "hideout"
@@ -48,6 +50,16 @@ def new_offer(tpl, price=1, currency=MONEY["roubles"], level=1, stack=9999999, r
 		upd.update(BuyRestrictionMax=restriction, BuyRestrictionCurrent=0)
 	root = {"_id": ids(), "_tpl": tpl, "parentId": ROOT, "slotId": ROOT, "upd": upd}
 	return [root], [[{"count": price, "_tpl": currency}]], level
+
+
+def new_offer_from_parts(parts, price=1, currency=MONEY["roubles"], level=1, stack=9999999, ids=new_id):
+	"""(items, barter list, level) for a new offer of a composite item sold for money. The offer is the first main
+	part with everything attached to it; the parts are copied with new ids."""
+	copy = with_new_ids(parts, ids)
+	main = P.roots(copy)[0]
+	main.update(parentId=ROOT, slotId=ROOT, upd={**(main.get("upd") or {}), "UnlimitedCount": True, "StackObjectsCount": stack})
+	items = offer_parts({"items": copy}, main["_id"])
+	return items, [[{"count": price, "_tpl": currency}]], level
 
 
 def add_offer(assort, items, barter, level):

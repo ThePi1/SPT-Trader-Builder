@@ -21,12 +21,8 @@ class LookupView(QWidget, Ui_LookupForm):
 		super().__init__(parent)
 		self.setupUi(self)
 		self.rows, self.kinds, self.settings = rows, tuple(kinds) if kinds else None, settings
-		self.filter.addItem("Everything", None)
-		present = {r.kind for r in rows}
-		for kind, label in lookup.KIND_LABEL.items():
-			if kind in present and (not self.kinds or kind in self.kinds):
-				self.filter.addItem(label, kind)
-		self.filter.setVisible(show_filter and self.filter.count() > 2)
+		self.show_filter = show_filter
+		self._fill_filter()
 		self.table.setSelectionMode(
 			QAbstractItemView.SelectionMode.ExtendedSelection if multi else QAbstractItemView.SelectionMode.SingleSelection
 		)
@@ -41,6 +37,25 @@ class LookupView(QWidget, Ui_LookupForm):
 		self.filter.currentIndexChanged.connect(lambda _i: self.refresh())
 		self.table.itemDoubleClicked.connect(lambda _i: self.picked.emit(self.selected_ids()))
 		self.search.returnPressed.connect(self._enter)
+		self.refresh()
+
+	def _fill_filter(self):
+		"""The type filter lists the kinds the rows have (and only if there is more than one)."""
+		keep = self.filter.currentData()
+		self.filter.blockSignals(True)
+		self.filter.clear()
+		self.filter.addItem("Everything", None)
+		present = {r.kind for r in self.rows}
+		for kind, label in lookup.KIND_LABEL.items():
+			if kind in present and (not self.kinds or kind in self.kinds):
+				self.filter.addItem(label, kind)
+		self.filter.setCurrentIndex(max(0, self.filter.findData(keep)))
+		self.filter.blockSignals(False)
+		self.filter.setVisible(self.show_filter and self.filter.count() > 2)
+
+	def set_rows(self, rows):
+		self.rows = rows
+		self._fill_filter()
 		self.refresh()
 
 	def refresh(self):
@@ -81,7 +96,7 @@ class PickerDialog(QDialog, Ui_PickerForm):
 		self.setupUi(self)
 		self.setWindowTitle(title)
 		self.ids = []
-		self.view = LookupView(rows, kinds, multi, show_filter=False, settings=settings)
+		self.view = LookupView(rows, kinds, multi, show_filter=len(kinds or ()) > 1, settings=settings)  # (a type filter when it offers several kinds)
 		self.verticalLayout.insertWidget(0, self.view, 1)
 		self.view.picked.connect(self._picked)
 		self.view.search.setFocus()
@@ -113,5 +128,4 @@ class LookupTab(QWidget, Ui_LookupTabForm):
 			QGuiApplication.clipboard().setText("\n".join(self.view.table.item(r, column).text() for r in rows))
 
 	def set_rows(self, rows):
-		self.view.rows = rows
-		self.view.refresh()
+		self.view.set_rows(rows)

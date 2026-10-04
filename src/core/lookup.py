@@ -3,12 +3,12 @@ game has (plus the quests being edited), searchable by name or id. No Qt."""
 
 from dataclasses import dataclass
 
-ITEM, QUEST, TRADER, MAP, ACHIEVEMENT, CUSTOMIZATION, PRESET = (
-	"item", "quest", "trader", "map", "achievement", "customization", "composite",
+ITEM, QUEST, TRADER, MAP, ACHIEVEMENT, CUSTOMIZATION, MINE, PRESET = (
+	"item", "quest", "trader", "map", "achievement", "customization", "my_composite", "composite",
 )
 KIND_LABEL = {
 	ITEM: "Item", QUEST: "Quest", TRADER: "Trader", MAP: "Map", ACHIEVEMENT: "Achievement",
-	CUSTOMIZATION: "Clothing", PRESET: "Vanilla composite item",
+	CUSTOMIZATION: "Clothing", MINE: "Your composite item", PRESET: "Vanilla composite item",
 }
 
 
@@ -36,8 +36,21 @@ def _item_rows(gamedata):
 	return rows
 
 
-def build_rows(gamedata, quests=None, kinds=None):
-	"""Every Row for the kinds asked for (all if None). quests is {id: quest} being edited; they come first."""
+def library_rows(library):
+	"""The user's saved composite items (core.library.Library), as rows."""
+	if library is None:
+		return []
+	return [Row(i, name, MINE, _parts(library.entries[i].get("items"))) for i, name in library.names()]
+
+
+def _parts(items):
+	count = len(items) if isinstance(items, list) else 0
+	return f"{count} part{'' if count == 1 else 's'}"
+
+
+def build_rows(gamedata, quests=None, kinds=None, library=None):
+	"""Every Row for the kinds asked for (all if None). quests is {id: quest} being edited; they come first,
+	then the saved composite items of the library, if given."""
 	want = set(kinds) if kinds else set(KIND_LABEL)
 	rows = []
 	seen = set()
@@ -62,8 +75,10 @@ def build_rows(gamedata, quests=None, kinds=None):
 			Row(i, gamedata.locale.get(f"{i} Name") or c.get("_name", ""), CUSTOMIZATION, c.get("_props", {}).get("BodyPart", ""))
 			for i, c in gamedata.customization.items() if isinstance(c, dict) and c.get("_type") == "Item"
 		]
+	if MINE in want:
+		rows += library_rows(library)
 	if PRESET in want:
-		rows += [Row(i, p.get("_name", ""), PRESET) for i, p in gamedata.item_presets.items() if isinstance(p, dict)]
+		rows += [Row(i, p.get("_name", ""), PRESET, _parts(p.get("_items"))) for i, p in gamedata.item_presets.items() if isinstance(p, dict)]
 	return rows
 
 

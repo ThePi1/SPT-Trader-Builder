@@ -19,7 +19,7 @@ def app():
 
 
 def make(assort=None):
-	picks = {"item": ["a" * 24], "quest": ["b" * 24]}
+	picks = {"item": ["a" * 24], "part": ["a" * 24], "quest": ["b" * 24]}
 	assort_doc = Document(assort or A.empty_assort())
 	locks = Document(A.empty_questassort())
 	tab = AssortTab(assort_doc, locks, None, lambda ref, multi, parent: picks[ref])

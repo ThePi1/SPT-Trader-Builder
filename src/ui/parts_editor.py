@@ -39,8 +39,7 @@ class PartsEditor(QWidget):
 		more.setText("More")
 		more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 		menu = QMenu(more)
-		menu.addAction("Add a saved item...", self.add_saved)
-		menu.addAction("Add a vanilla composite item...", self.add_vanilla)
+		menu.addAction("Add a composite item...", self.add_composite)
 		menu.addSeparator()
 		menu.addAction("Save these as my item...", self.save_to_library)
 		more.setMenu(menu)
@@ -208,10 +207,15 @@ class PartsEditor(QWidget):
 
 	# --- adding and removing ----------------------------------------------------------------
 	def add_item(self):
-		ids = self.ctx.pick("item", True, self)
+		"""Search items (and composite items) and add what is chosen. A composite item is added whole, as its own part."""
+		ids = self.ctx.pick("part", True, self)
 		parent = self._current()
 		last = None
 		for tpl in ids:
+			composite = self._composite_parts(tpl)
+			if composite is not None:
+				self._append(composite)
+				continue
 			if parent is None:
 				last = P.add_part(self.parts, tpl)
 				continue
@@ -245,25 +249,30 @@ class PartsEditor(QWidget):
 		self.rebuild(new_parts[0]["_id"] if new_parts else None)
 		self._emit()
 
-	def add_saved(self):
+	def add_composite(self):
+		"""Search the saved composite items and the game's, and add all the parts of the one chosen."""
 		lib = self.ctx.library
-		if lib is None or not lib.entries:
-			QMessageBox.information(self, "Saved items", "You haven't saved any items yet. Use More > Save these as my item.")
-			return
-		names = lib.names()
-		label, ok = QInputDialog.getItem(self, "Add a saved item", "Item:", [n for _i, n in names], 0, False)
-		if ok:
-			self._append(lib.parts_of(names[[n for _i, n in names].index(label)][0]))
-
-	def add_vanilla(self):
 		presets = self.ctx.gamedata.item_presets if self.ctx.gamedata is not None else {}
-		if not presets:
-			QMessageBox.information(self, "Vanilla composite items", "No game data is loaded. Set the SPT database folder in Settings.")
+		if not (lib and lib.entries) and not presets:
+			QMessageBox.information(
+				self, "Composite items",
+				"There are no composite items yet. Save your own with More > Save these as my item, or set the SPT database folder in Settings for the game's.",
+			)
 			return
-		entries = sorted(((p.get("_name", ""), pid) for pid, p in presets.items()), key=lambda x: x[0].lower())
-		label, ok = QInputDialog.getItem(self, "Add a vanilla composite item", "Item:", [f"{n}  ({pid[:6]})" for n, pid in entries], 0, False)
-		if ok:
-			self._append(library_module.preset_parts(presets[entries[[f"{n}  ({pid[:6]})" for n, pid in entries].index(label)][1]]))
+		for entry_id in self.ctx.pick("composite", False, self):
+			parts = self._composite_parts(entry_id)
+			if parts is not None:
+				self._append(parts)
+
+	def _composite_parts(self, entry_id):
+		"""A copy (new ids) of the parts of a saved or vanilla composite item with this id, or None if it isn't one."""
+		lib = self.ctx.library
+		presets = self.ctx.gamedata.item_presets if self.ctx.gamedata is not None else {}
+		if lib is not None and entry_id in lib.entries:
+			return lib.parts_of(entry_id)
+		if entry_id in presets:
+			return library_module.preset_parts(presets[entry_id])
+		return None
 
 	def save_to_library(self):
 		lib = self.ctx.library

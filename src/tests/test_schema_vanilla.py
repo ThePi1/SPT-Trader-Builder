@@ -36,3 +36,25 @@ def test_every_vanilla_task_is_a_known_kind(vanilla_quests):
 				if not registry.is_known(reward, "reward"):
 					unknown.add("reward " + reward["type"])
 	assert not unknown, unknown
+
+
+def test_vanilla_timing_use_is_exactly_what_the_base_quests_do(vanilla_quests):
+	from schema import registry
+	from schema.choices import TASK_TIMING_OF
+
+	seen = {"task": {}, "subtask": {}, "reward": {}}  # kind -> the lists the base game puts it in
+	for quest in vanilla_quests.values():
+		for list_key, tasks in quest["conditions"].items():
+			for task in tasks:
+				seen["task"].setdefault(task["conditionType"], set()).add(TASK_TIMING_OF[list_key])
+				for sub in (task.get("counter") or {}).get("conditions", []):
+					seen["subtask"].setdefault(sub["conditionType"], set()).add(TASK_TIMING_OF[list_key])
+		for list_key, rewards in quest["rewards"].items():
+			for reward in rewards:
+				seen["reward"].setdefault(reward["type"], set()).add(list_key)
+	wrong = {}
+	for group, specs in registry.GROUPS.items():
+		for kind, spec in specs.items():
+			if set(spec.vanilla_timing_use) != seen[group].get(kind, set()):
+				wrong[f"{group} {kind}"] = (spec.vanilla_timing_use, sorted(seen[group].get(kind, ())))
+	assert not wrong, wrong

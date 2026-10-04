@@ -93,18 +93,25 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	# --- finding ids --------------------------------------------------------------------------
 	def rows(self, kinds=None):
-		"""Everything searchable (the game's data, then the quests being edited), for the kinds asked for."""
+		"""Everything searchable (the game's data, then the quests and saved composite items being edited), for the kinds asked for."""
 		if self._base_rows is None:
 			self._base_rows = [] if self.gamedata is None else lookup.build_rows(
-				self.gamedata, kinds=tuple(k for k in lookup.KIND_LABEL if k != lookup.QUEST)
+				self.gamedata, kinds=tuple(k for k in lookup.KIND_LABEL if k not in (lookup.QUEST, lookup.MINE))
 			)
 		mine = lookup.build_rows(self.gamedata, quests=self.quests.data, kinds=(lookup.QUEST,)) if self.gamedata is not None else []
-		rows = mine + self._base_rows
+		rows = mine + lookup.library_rows(self.library) + self._base_rows
 		return [r for r in rows if not kinds or r.kind in kinds]
 
 	def pick(self, ref, multi=False, parent=None):
-		title = {"item": "Find an item", "quest": "Find a quest", "achievement": "Find an achievement", "customization": "Find clothing"}.get(ref, "Find")
-		dialog = PickerDialog(self.rows((ref,)), (ref,), title, multi, self.settings, parent or self)
+		title = {
+			"item": "Find an item", "quest": "Find a quest", "achievement": "Find an achievement", "customization": "Find clothing",
+			"composite": "Find a composite item", "part": "Find an item",
+		}.get(ref, "Find")
+		kinds = {
+			"composite": (lookup.MINE, lookup.PRESET),  # (saved ones and the game's)
+			"part": (lookup.ITEM, lookup.MINE, lookup.PRESET),  # (what a list of item parts can take)
+		}.get(ref, (ref,))
+		dialog = PickerDialog(self.rows(kinds), kinds, title, multi, self.settings, parent or self)
 		return dialog.ids if dialog.exec() else []
 
 	def _tab_changed(self, index):
@@ -201,7 +208,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		if not doc.dirty:
 			return True
 		answer = QMessageBox.question(
-			self, "Unsaved changes", f"Save your changes to {doc.name}?",
+			self, "Unsaved changes", f"Save your changes to {label} file {doc.name}?",
 			QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
 		)
 		if answer == QMessageBox.StandardButton.Save:

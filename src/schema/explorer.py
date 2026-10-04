@@ -12,7 +12,7 @@ KIND_WORDS = {
 	F.OBJECT: "A few settings", F.REWARD_ITEMS: "Item parts", F.VISIBILITY: "Conditions", F.JSON: "Anything (JSON)",
 }
 GROUP_TITLES = (
-	("quest", "Quest"), ("task", "Tasks"), ("subtask", "Subtasks (steps of an in-raid objective)"), ("reward", "Rewards"),
+	("quest", "Quest"), ("task", "Conditions"), ("subtask", "Subtasks (steps inside a counter)"), ("reward", "Rewards"),
 )
 FILE_KINDS = (
 	("quests", "Quests"), ("locale", "Locale"), ("assort", "Trader assort"), ("questassort", "Quest assort"),
