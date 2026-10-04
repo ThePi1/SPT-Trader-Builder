@@ -17,6 +17,13 @@ Build quests, quest text and trader offers for SPT mods.
 
 While the included data is from SPT 4.0.13, this should work with later versions as well.
 
+To run from source:
+```
+pip install -r requirements.txt
+# then:
+python .\src\main.py (win)
+python ./src/main.py (mac/linux)
+```
 ## Quick start
 
 1. Click **New quest** and fill in the form on the right.
