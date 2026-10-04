@@ -104,7 +104,7 @@ def _check_task(task, timing, path, ids, task_ids, gamedata):
 	if not registry.is_known(task, "task"):
 		issues.append(Issue(WARNING, path + ("conditionType",), f"'{kind}' is not a task kind this app knows; it is kept as it is."))
 		return issues
-	if timing is not None and spec.timings and timing not in spec.timings:
+	if timing is not None and spec.vanilla_timing_use and timing not in spec.vanilla_timing_use:
 		where = {"Start": "start", "Finish": "finish", "Fail": "fail"}[timing]
 		issues.append(Issue(WARNING, path, f"The base game never puts a '{spec.label}' task in the {where} list."))
 	issues += _profile_check(task, "task", kind, path, skip=("visibilityConditions", "counter"))
@@ -153,7 +153,7 @@ def _check_reward(reward, list_key, path, ids, gamedata):
 	if not registry.is_known(reward, "reward"):
 		issues.append(Issue(WARNING, path + ("type",), f"'{kind}' is not a reward kind this app knows; it is kept as it is."))
 		return issues
-	if spec.timings and list_key not in spec.timings:
+	if spec.vanilla_timing_use and list_key not in spec.vanilla_timing_use:
 		issues.append(Issue(WARNING, path, f"The base game never gives a '{spec.label}' reward in the {list_key} list."))
 	issues += _profile_check(reward, "reward", kind, path, skip=("items",))
 	issues += _check_choices(reward, spec, path, gamedata)

@@ -54,7 +54,10 @@ class BrowsePage(QWidget, Ui_BrowseForm):
 			return
 		self.title.setText(spec.label)
 		self.note.setText(spec.note)
-		self.where.setText(("Can be used: " + ", ".join(spec.timings)) if spec.timings else "")
+		if spec.group in ("task", "subtask", "reward"):
+			self.where.setText("Used in base SPT for: " + (", ".join(spec.vanilla_timing_use) or "nothing"))
+		else:
+			self.where.setText("")
 		self.commonLabel.setText("This type is marked as commonly used." if spec.common else "This type is marked as <b>not</b> commonly used.")
 		rows = explorer.field_rows(spec)
 		mark = getattr(self.settings, "mark_uncommon_fields", True)

@@ -7,7 +7,7 @@ changes under it (add, delete, undo); it only refreshes its labels while a form 
 
 import json
 
-from PySide6.QtCore import QTimer, Qt, Signal
+from PySide6.QtCore import QItemSelectionModel, QTimer, Qt, Signal
 from PySide6.QtWidgets import (
 	QComboBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMenu, QMessageBox, QPlainTextEdit, QPushButton,
 	QTreeWidgetItem, QVBoxLayout, QWidget,
@@ -299,20 +299,26 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		return [q for q in (self.doc.data if self.doc else {}) if q in chosen]
 
 	def _context_actions(self, item):
-		"""[(text, what to do)] for the right-click menu on this tree item."""
+		"""[(text, what to do)] for the right-click menu on this tree item. "Add" is the Add button's menu; Copy and Delete are the buttons' own actions on the item."""
 		actions = []
 		if item is not None:
-			quest_id = item.data(0, ROLE).path[0]
+			address = item.data(0, ROLE)
+			quest_id = address.path[0]
 			if quest_id not in self.selected_quest_ids():
 				self.tree.setCurrentItem(item)
 				self.tree.clearSelection()
 				item.setSelected(True)
+			else:
+				self.tree.setCurrentItem(item, 0, QItemSelectionModel.SelectionFlag.NoUpdate)  # (the buttons' item, without dropping a multiple selection)
+			actions.append(("Add", self.add_menu))
+			if address.kind != "group":
+				actions += [("Copy", self.copy_selected), ("Delete", self.delete_selected)]
 			count = len(self.selected_quest_ids())
 			actions.append((f"Export {count} selected quests..." if count > 1 else "Export this quest...", self.export_requested.emit))
 			source = self.sources.get(quest_id)
 			if source:
 				actions.append((f"Remove the quests imported from {source}", lambda source=source: self.remove_from_source(source)))
-		return actions + [("Expand all", self.expand_all), ("Collapse all", self.collapse_all)]
+		return actions
 
 	def _context_menu(self, pos):
 		actions = self._context_actions(self.tree.itemAt(pos))
@@ -320,7 +326,10 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			return
 		menu = QMenu(self.tree)
 		for text, slot in actions:
-			menu.addAction(text).triggered.connect(lambda _checked=False, slot=slot: slot())
+			if isinstance(slot, QMenu):
+				menu.addMenu(slot).setText(text)
+			else:
+				menu.addAction(text).triggered.connect(lambda _checked=False, slot=slot: slot())
 		menu.exec(self.tree.viewport().mapToGlobal(pos))
 
 	def remove_from_source(self, source):
@@ -441,7 +450,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			note.setWordWrap(True)
 			note.setStyleSheet("color: #808080;")
 			self.pane_layout.addWidget(note)
-		if address.kind in ("task", "reward") and len(spec.timings) > 1:
+		if address.kind in ("task", "reward"):
 			self.pane_layout.addLayout(self._timing_row(address, spec))
 		own_id = data.get("id") if isinstance(data, dict) else None
 		form = FormWidget(spec, self._ctx(qpath[0] if qpath else None, own_id), show_advanced=bool(self.settings and self.settings.show_all_fields))
@@ -466,8 +475,9 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		row = QHBoxLayout()
 		row.addWidget(QLabel("When"))
 		combo = QComboBox()
-		combo.addItems(spec.timings)
-		if address.timing not in spec.timings:
+		lists = TASK_TIMINGS if address.kind == "task" else REWARD_TIMINGS
+		combo.addItems(lists)  # (any list: what the base game does is only a note)
+		if address.timing not in lists:
 			combo.addItem(address.timing)
 		combo.setCurrentText(address.timing)
 		combo.activated.connect(lambda _i: self.retime(address, combo.currentText()))
@@ -550,7 +560,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			path = self._counter_path(address)
 			self.doc.change("Add subtask", lambda items: items.append(item), path=path)
 			return self._select_key(("subtask", path + (len(_get(self.doc.data, path)) - 1,)))
-		timing = address.timing if address.group == group and address.timing in spec.timings else spec.timings[0]
+		timing = address.timing if address.group == group and address.timing else spec.default_timing()
 		path = task_path(qid, timing) if group == "task" else reward_path(qid, timing)
 		container = self.doc.data[qid].get("conditions" if group == "task" else "rewards")
 		key = path[-1]

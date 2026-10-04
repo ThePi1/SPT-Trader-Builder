@@ -23,6 +23,12 @@ def app():
 	return QApplication.instance() or QApplication([])
 
 
+def add_to_quest(outline, group, kind):
+	"""Add with the quest row selected (no list chosen), so the item goes where the base game usually puts it."""
+	outline.tree.setCurrentItem(outline.tree.topLevelItem(0))
+	outline.add_item(group, kind)
+
+
 def make(data=None):
 	outline = QuestOutline()
 	doc = Document(data if data is not None else {})
@@ -35,8 +41,8 @@ def test_new_quest_task_reward_are_valid(app):
 	outline.add_quest()
 	assert len(doc.data) == 1
 	for kind in ("HandoverItem", "Level", "CounterCreator"):
-		outline.add_item("task", kind)
-	outline.add_item("reward", "Experience")
+		add_to_quest(outline, "task", kind)
+	add_to_quest(outline, "reward", "Experience")
 	counter = outline.tree.currentItem()
 	outline.tree.setCurrentItem(next(i for i in outline._walk() if i.data(0, ROLE).kind == "task" and i.data(0, ROLE).path[-1] == 1))
 	outline.add_item("subtask", "Kills")
@@ -153,8 +159,8 @@ def test_only_show_after_offers_the_other_tasks_of_the_quest(app):
 
 	outline, doc = make()
 	outline.add_quest()
-	outline.add_item("task", "Level")
-	outline.add_item("task", "HandoverItem")
+	add_to_quest(outline, "task", "Level")
+	add_to_quest(outline, "task", "HandoverItem")
 	hand_over = outline.tree.currentItem()
 	task_id = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["id"]
 	pane = outline.pane
@@ -165,3 +171,47 @@ def test_only_show_after_offers_the_other_tasks_of_the_quest(app):
 	control._add()
 	conditions = doc.data[next(iter(doc.data))]["conditions"]["AvailableForFinish"][0]["visibilityConditions"]
 	assert len(conditions) == 1 and conditions[0]["target"] == control.ctx.tasks[0][0]
+
+
+def select_group(outline, kind, timing):
+	outline.tree.setCurrentItem(next(
+		i for i in outline._walk() if i.data(0, ROLE).kind == "group" and i.data(0, ROLE).group == kind and i.data(0, ROLE).timing == timing
+	))
+
+
+def test_a_task_goes_in_the_list_that_is_open_even_if_the_base_game_never_does_that(app):
+	outline, doc = make()
+	outline.add_quest()
+	quest = next(iter(doc.data.values()))
+	select_group(outline, "task", "Finish")
+	outline.add_item("task", "Level")  # (the base game only puts Player level in Start)
+	assert [t["conditionType"] for t in quest["conditions"]["AvailableForFinish"]] == ["Level"]
+	assert not quest["conditions"]["AvailableForStart"]
+	fix_trader(doc)
+	issues = validate.validate_quests(doc.data)
+	assert not errors(issues)  # (it only warns)
+	assert any("never puts a 'Player level' task in the finish list" in i.message for i in issues)
+
+
+def test_a_new_item_with_no_list_open_goes_in_the_one_the_base_game_uses_most(app):
+	outline, doc = make()
+	outline.add_quest()
+	quest = next(iter(doc.data.values()))
+	add_to_quest(outline, "task", "Level")
+	add_to_quest(outline, "task", "HandoverItem")
+	add_to_quest(outline, "reward", "TraderStanding")
+	assert len(quest["conditions"]["AvailableForStart"]) == 1 and len(quest["conditions"]["AvailableForFinish"]) == 1
+	assert len(quest["rewards"]["Success"]) == 1
+
+
+def test_the_when_row_offers_every_list(app):
+	from PySide6.QtWidgets import QComboBox
+
+	outline, doc = make()
+	outline.add_quest()
+	outline.add_item("task", "Level")
+	combos = outline.findChildren(QComboBox)
+	assert any([c.itemText(i) for i in range(c.count())] == ["Start", "Finish", "Fail"] for c in combos)
+	outline.add_item("reward", "Experience")
+	combos = outline.findChildren(QComboBox)
+	assert any([c.itemText(i) for i in range(c.count())] == ["Success", "Started", "Fail"] for c in combos)

@@ -87,7 +87,7 @@ _add(Spec(
 		"CounterCreator", completeInSeconds=0, counter={"conditions": [], "id": ""}, doNotResetIfCounterCompleted=False,
 		isNecessary=False, isResetOnConditionFailed=False, oneSessionOnly=False, type="Elimination", value=1,
 	),
-	timings=(FINISH, FAIL), managed=("conditionType", "id", "dynamicLocale", "counter"), summary=_counter,
+	vanilla_timing_use=(FINISH, FAIL), managed=("conditionType", "id", "dynamicLocale", "counter"), summary=_counter,
 	fresh_ids=("counter.id",),
 	note="Something to do during a raid: kill, visit a place, survive. The steps are its subtasks.",
 ))
@@ -98,7 +98,7 @@ _add(Spec(
 		"HandoverItem", dogtagLevel=0, isEncoded=False, maxDurability=100, minDurability=0, onlyFoundInRaid=False,
 		target=[], value=1,
 	),
-	timings=(FINISH,), managed=MANAGED, summary=_hand_over,
+	vanilla_timing_use=(FINISH,), managed=MANAGED, summary=_hand_over,
 	note="Give items to the trader.",
 ))
 
@@ -108,7 +108,7 @@ _add(Spec(
 		"FindItem", countInRaid=False, dogtagLevel=0, isEncoded=False, maxDurability=100, minDurability=0,
 		onlyFoundInRaid=False, target=[], value=1,
 	),
-	timings=(FINISH,), managed=MANAGED, summary=_find,
+	vanilla_timing_use=(FINISH,), managed=MANAGED, summary=_find,
 	note="Have items in the stash or found in raid.",
 ))
 
@@ -121,7 +121,7 @@ _add(Spec(
 		"LeaveItemAtLocation", dogtagLevel=0, isEncoded=False, maxDurability=100, minDurability=0, onlyFoundInRaid=False,
 		plantTime=10, target=[], value=1, zoneId="",
 	),
-	timings=(FINISH, FAIL), managed=MANAGED,
+	vanilla_timing_use=(FINISH, FAIL), managed=MANAGED,
 	summary=lambda item, names: f"Place {item.get('value', 1)}x {names.items(item.get('target', []))}",
 	note="Put items down at a spot on a map.",
 ))
@@ -135,7 +135,7 @@ _add(Spec(
 		_VISIBLE, _LINKED, _ORDER,
 	),
 	_base("PlaceBeacon", plantTime=30, target=["5991b51486f77447b112d44f"], value=1, zoneId=""),
-	timings=(FINISH,), managed=MANAGED,
+	vanilla_timing_use=(FINISH,), managed=MANAGED,
 	summary=lambda item, names: f"Place {names.items(item.get('target', []))}",
 	note="Plant a marker or radio repeater at a spot on a map.",
 ))
@@ -147,7 +147,7 @@ _add(Spec(
 		_ORDER,
 	),
 	_base("Level", compareMethod=">=", value=1),
-	timings=(START,), managed=MANAGED,
+	vanilla_timing_use=(START,), managed=MANAGED,
 	summary=lambda item, names: f"Level {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="The player must be at this level.",
 ))
@@ -161,7 +161,7 @@ _add(Spec(
 		_LINKED, _ORDER,
 	),
 	_base("Quest", availableAfter=0, dispersion=0, status=[4], target=""),
-	timings=(START, FINISH, FAIL), managed=MANAGED,
+	vanilla_timing_use=(START, FAIL, FINISH), managed=MANAGED,
 	summary=lambda item, names: f"Quest {names.quest(item.get('target', ''))}: {_status_text(item.get('status'))}",
 	note="Another quest must be in a given state, such as completed.",
 ))
@@ -180,7 +180,7 @@ _add(Spec(
 		_VISIBLE, _ORDER,
 	),
 	_base("TraderLoyalty", compareMethod=">=", target="", value=2),
-	timings=(FINISH, START), managed=MANAGED,
+	vanilla_timing_use=(FINISH, START), managed=MANAGED,
 	summary=lambda item, names: f"{names.trader(item.get('target', ''))} level {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="A trader's loyalty level must reach this.",
 ))
@@ -193,7 +193,7 @@ _add(Spec(
 		_ORDER,
 	),
 	_base("TraderStanding", compareMethod=">=", target="", value=0),
-	timings=(START, FINISH, FAIL), managed=MANAGED,
+	vanilla_timing_use=(START, FAIL, FINISH), managed=MANAGED,
 	summary=lambda item, names: f"{names.trader(item.get('target', ''))} standing {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="A trader's standing must reach this.",
 ))
@@ -206,7 +206,7 @@ _add(Spec(
 		_VISIBLE, _ORDER,
 	),
 	_base("Skill", compareMethod=">=", target="Sniper", value=1),
-	timings=(FINISH,), managed=MANAGED,
+	vanilla_timing_use=(FINISH,), managed=MANAGED,
 	summary=lambda item, names: f"{item.get('target')} {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="A skill must reach this level.",
 ))
@@ -221,7 +221,7 @@ _add(Spec(
 		"SellItemToTrader", dogtagLevel=0, isEncoded=False, maxDurability=100, minDurability=0, onlyFoundInRaid=False,
 		target=[], traderId="", value=1,
 	),
-	timings=(FINISH,), managed=MANAGED, common=False,
+	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Sell {item.get('value', 1)} roubles' worth to {names.trader(item.get('traderId', ''))}",
 	note="Sell items to a trader for a total amount.",
 ))
@@ -256,7 +256,7 @@ def _weapon_assembly_base():
 
 _add(Spec(
 	"task", "WeaponAssembly", "Build a weapon", _weapon_fields(), _weapon_assembly_base(),
-	timings=(FINISH,), managed=MANAGED, common=False,
+	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Build {names.items(item.get('target', []))}",
 	note="Hand in a weapon built to a set of requirements.",
 ))
@@ -269,7 +269,7 @@ _add(Spec(
 		_ORDER,
 	),
 	_base("HideoutArea", areaType=0, compareMethod=">=", value=1),
-	timings=(FINISH,), managed=MANAGED, common=False,
+	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Hideout area {item.get('areaType')} level {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="A hideout area must reach a level.",
 ))
@@ -282,7 +282,7 @@ _add(Spec(
 		_ORDER,
 	),
 	_base("GlobalVariableValue", compareMethod="==", target="", value=1),
-	timings=(FINISH,), managed=MANAGED, common=False,
+	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Game variable {short(item.get('target', ''), 12)} {compare_text(item.get('compareMethod'))} {item.get('value')}",
 	note="A value the game keeps must match.",
 ))
@@ -294,7 +294,7 @@ _add(Spec(
 		_LINKED, _ORDER,
 	),
 	_base("VisitPlace", target="", value=1),
-	timings=(FINISH,), managed=MANAGED, common=False,
+	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
 	summary=lambda item, names: f"Visit {item.get('target')}",
 	note="Visit a place (used outside a raid counter by a few quests).",
 ))

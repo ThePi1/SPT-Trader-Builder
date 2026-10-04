@@ -71,48 +71,48 @@ def _kills_text(item, names):
 
 _add(Spec(
 	"subtask", "Kills", "Kill enemies", _weapon_filters(False), _weapon_base("Kills", 0),
-	timings=("Finish", "Fail"), managed=MANAGED, summary=_kills_text,
+	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=_kills_text,
 	note="Kill a kind of enemy, optionally with a weapon, from a distance, or in a body part.",
 ))
 
 _add(Spec(
 	"subtask", "Shots", "Hit enemies", _weapon_filters(True), _weapon_base("Shots", 1),
-	timings=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: "Hit " + _kills_text(item, names)[5:],
+	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: "Hit " + _kills_text(item, names)[5:],
 	note="Land shots on a kind of enemy (not necessarily killing them).",
 ))
 
 _add(Spec(
 	"subtask", "VisitPlace", "Visit a place", (Field("target", "Place", TEXT, ""),),
 	_base("VisitPlace", target="", value=1),
-	timings=("Finish",), managed=MANAGED, summary=lambda item, names: f"Visit {item.get('target', '')}",
+	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"Visit {item.get('target', '')}",
 	note="Reach a trigger zone on the map.",
 ))
 
 _add(Spec(
 	"subtask", "InZone", "Be in a place", (Field("zoneIds", "Places", LIST, []),),
 	_base("InZone", zoneIds=[]),
-	timings=("Finish",), managed=MANAGED, summary=lambda item, names: f"In {short(', '.join(item.get('zoneIds', [])), 30)}",
+	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"In {short(', '.join(item.get('zoneIds', [])), 30)}",
 	note="Be inside one of the trigger zones.",
 ))
 
 _add(Spec(
 	"subtask", "Location", "On a map", (Field("target", "Maps", LIST, [], choices="locations", open=True),),
 	_base("Location", target=[]),
-	timings=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: f"On {', '.join(item.get('target', []))}",
+	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: f"On {', '.join(item.get('target', []))}",
 	note="The raid must be on one of these maps.",
 ))
 
 _add(Spec(
 	"subtask", "ExitStatus", "How the raid ends", (Field("status", "Result", LIST, [], choices="exit_status"),),
 	_base("ExitStatus", status=[]),
-	timings=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: f"Raid ends: {', '.join(item.get('status', []))}",
+	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: f"Raid ends: {', '.join(item.get('status', []))}",
 	note="The raid must end in one of these ways.",
 ))
 
 _add(Spec(
 	"subtask", "ExitName", "Leave by an exit", (Field("exitName", "Exit", TEXT, ""),),
 	_base("ExitName", exitName=""),
-	timings=("Finish",), managed=MANAGED, summary=lambda item, names: f"Exit {item.get('exitName', '')}",
+	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"Exit {item.get('exitName', '')}",
 	note="Leave the map through a named exit.",
 ))
 
@@ -123,14 +123,14 @@ _add(Spec(
 		Field("IncludeNotEquippedItems", "Count items not worn", BOOL, False, advanced=True),
 	),
 	_base("Equipment", IncludeNotEquippedItems=False, equipmentExclusive=[], equipmentInclusive=[]),
-	timings=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: "Wear equipment",
+	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: "Wear equipment",
 	note="Go in wearing certain items. A group needs all of its items, and any one group is enough.",
 ))
 
 _add(Spec(
 	"subtask", "LaunchFlare", "Launch a flare", (Field("target", "Place", TEXT, ""),),
 	_base("LaunchFlare", target=""),
-	timings=("Finish",), managed=MANAGED, summary=lambda item, names: f"Flare at {item.get('target', '')}",
+	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"Flare at {item.get('target', '')}",
 	note="Fire a flare in a trigger zone.",
 ))
 
@@ -145,55 +145,55 @@ _add(Spec(
 		"HealthEffect", bodyPartsWithEffects=[{"bodyParts": [], "effects": []}], energy={"compareMethod": ">=", "value": 0},
 		hydration={"compareMethod": ">=", "value": 0}, time={"compareMethod": ">=", "value": 0},
 	),
-	timings=("Finish",), managed=MANAGED, summary=lambda item, names: "Have a health effect",
+	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: "Have a health effect",
 	note="Have effects (like bleeding) on body parts for some time.",
 ))
 
 _add(Spec(
 	"subtask", "HealthBuff", "Have a buff", (Field("target", "Buffs", LIST, [], choices="buffs", open=True),),
 	_base("HealthBuff", target=[]),
-	timings=("Finish",), managed=MANAGED, summary=lambda item, names: f"Buff {', '.join(item.get('target', []))}",
+	vanilla_timing_use=("Finish",), managed=MANAGED, summary=lambda item, names: f"Buff {', '.join(item.get('target', []))}",
 	note="Have a stimulant or other buff active.",
 ))
 
 # --- less common kinds ---------------------------------------------------------------------------
 
 
-def _compare_value(condition_type, label, note, value=1, **extra):
+def _compare_value(condition_type, label, note, value=1, used=("Finish", "Fail"), **extra):
 	return Spec(
 		"subtask", condition_type, label, (
 			Field("compareMethod", "Is", CHOICE, ">=", choices="compare"),
 			Field("value", "Value", INT, value, minimum=0),
 		) + tuple(extra.get("fields", ())),
 		_base(condition_type, compareMethod=">=", value=value, **extra.get("base", {})),
-		timings=("Finish", "Fail"), managed=MANAGED, common=False,
+		vanilla_timing_use=used, managed=MANAGED, common=False,
 		summary=lambda item, names, label=label: f"{label} {compare_text(item.get('compareMethod'))} {item.get('value')}",
 		note=note,
 	)
 
 
-_add(_compare_value("Time", "Raid time", "How long the raid has lasted."))
+_add(_compare_value("Time", "Raid time", "How long the raid has lasted.", used=("Finish",)))
 _add(_compare_value("ArenaMatchPlace", "Arena place", "Finish an Arena match in a place."))
-_add(_compare_value("ArenaPlayerInTeamPlace", "Arena place in team", "Place within the team in Arena."))
+_add(_compare_value("ArenaPlayerInTeamPlace", "Arena place in team", "Place within the team in Arena.", used=("Finish",)))
 _add(_compare_value(
 	"UseItem", "Use items", "Use items a number of times.",
-	fields=(Field("target", "Items", IDLIST, [], ref=ITEM),), base={"target": []},
+	fields=(Field("target", "Items", IDLIST, [], ref=ITEM),), base={"target": []}, used=("Fail",),
 ))
 _add(Spec(
 	"subtask", "ArenaGameMode", "Arena game mode", (Field("target", "Modes", LIST, [], choices="arena_game_modes", open=True),),
 	_base("ArenaGameMode", target=[]),
-	timings=("Finish", "Fail"), managed=MANAGED, common=False, summary=lambda item, names: f"Arena {', '.join(item.get('target', []))}",
+	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, common=False, summary=lambda item, names: f"Arena {', '.join(item.get('target', []))}",
 	note="Play an Arena game mode.",
 ))
 _add(Spec(
 	"subtask", "ArenaRankingMode", "Arena ranking mode", (Field("target", "Modes", LIST, []),),
 	_base("ArenaRankingMode", target=[]),
-	timings=("Finish", "Fail"), managed=MANAGED, common=False, summary=lambda item, names: "Arena ranking mode",
+	vanilla_timing_use=(), managed=MANAGED, common=False, summary=lambda item, names: "Arena ranking mode",
 	note="Play an Arena ranking mode.",
 ))
 _add(Spec(
 	"subtask", "UnderArtilleryFire", "Under artillery fire", (),
 	_base("UnderArtilleryFire"),
-	timings=("Finish",), managed=MANAGED, common=False, summary=lambda item, names: "Survive artillery fire",
+	vanilla_timing_use=("Finish",), managed=MANAGED, common=False, summary=lambda item, names: "Survive artillery fire",
 	note="Be under artillery fire.",
 ))
