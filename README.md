@@ -78,6 +78,26 @@ Restart the program after changing the folder or the language.
 
 When you update, keep a copy of `data/settings.ini` (your settings) and `data/my_items.json` (your saved composite items) before you replace the old folder, then put them back.
 
+## Build
+
+To build the program yourself (Windows, Python 3.11), run these from the main folder of the repository:
+
+```
+pip install -r requirements.txt
+cd src
+python tools/build.py
+```
+
+The finished program is in `src/dist/SPTTraderBuilder/`. That folder holds `SPTTraderBuilder.exe`, the `data` folder and `LICENSE`. To make a release, zip the whole `SPTTraderBuilder` folder.
+
+To check everything first, run `python -m pytest -q tests` from the `src` folder.
+
+To refresh the included game data from a newer SPT before building, run this once from the `src` folder:
+
+```
+python tools/bundle_database.py "C:\path\to\SPT_Data\database"
+```
+
 ## Credits and license
 
-The program's own code is under the MIT License. It also includes game data from [Single Player Tarkov](https://github.com/sp-tarkov/server-csharp) (SPT), which is licensed under CC BY-NC-SA 4.0, so that data can't be used commercially. The SPT Trader Builder Team is not associated with the SPT project. See [LICENSE](LICENSE) for the full details.
+The program's own code is under the MIT License. It also includes game data from [Single Player Tarkov](https://github.com/sp-tarkov/server-csharp) (SPT), which is licensed under CC BY-NC-SA 4.0. The SPT Trader Builder Team is not associated with the SPT project. See [LICENSE](LICENSE) for the full details.
