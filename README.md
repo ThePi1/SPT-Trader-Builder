@@ -1,6 +1,8 @@
 # SPT Trader Builder
 
 Build quests, quest text and trader offers for SPT mods.
+<img width="1093" height="725" alt="image" src="https://github.com/user-attachments/assets/aefd4e70-f978-4119-875a-197bc7f835aa" />
+
 
 ## What it does
 
