@@ -183,7 +183,7 @@ class Ui_MainWindowForm(object):
     # setupUi
 
     def retranslateUi(self, MainWindowForm):
-        MainWindowForm.setWindowTitle(QCoreApplication.translate("MainWindowForm", u"SPT Quest Builder", None))
+        MainWindowForm.setWindowTitle(QCoreApplication.translate("MainWindowForm", u"SPT Trader Builder", None))
         self.actionNewQuests.setText(QCoreApplication.translate("MainWindowForm", u"New (empty)", None))
 #if QT_CONFIG(shortcut)
         self.actionNewQuests.setShortcut(QCoreApplication.translate("MainWindowForm", u"Ctrl+N", None))

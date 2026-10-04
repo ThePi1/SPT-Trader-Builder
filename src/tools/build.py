@@ -1,6 +1,6 @@
 """Build the Windows program:  python tools/build.py   (needs: pip install pyinstaller)
 
-Makes dist/SPTQuestBuilder/ with the program, a data/ folder next to it (settings.ini, the bundled
+Makes dist/SPTTraderBuilder/ with the program, a data/ folder next to it (settings.ini, the bundled
 game data, your saved items) and LICENSE (the MIT License and the notice for the SPT files; it must go with the program).
 Run tools/bundle_database.py first to include the game data.
 """
@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-NAME = "SPTQuestBuilder"
+NAME = "SPTTraderBuilder"
 LICENSE_FILE = ROOT.parent / "LICENSE"  # in the root of the repository
 
 

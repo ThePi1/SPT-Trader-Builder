@@ -1,4 +1,4 @@
-# SPT Quest Builder
+# SPT Trader Builder
 
 A tool for building SPT Quests/Assorts.
 

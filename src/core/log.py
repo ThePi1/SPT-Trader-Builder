@@ -7,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 from core.paths import APP_DIR
 
 # Next to the program: src/ when running from source, next to the .exe when packaged
-LOG_FILE = APP_DIR / "spt_builder.log"
+LOG_FILE = APP_DIR / "spt_trader_builder.log"
 
 _FORMAT = "%(asctime)s %(levelname)-7s %(name)s: %(message)s"
 
@@ -15,14 +15,14 @@ _FORMAT = "%(asctime)s %(levelname)-7s %(name)s: %(message)s"
 def setup_logging():
 	"""Log INFO and above to the console. Safe to call more than once."""
 	root = logging.getLogger()
-	if getattr(root, "_spt_builder_configured", False):
+	if getattr(root, "_spt_trader_builder_configured", False):
 		return
 	root.setLevel(logging.DEBUG)
 	console = logging.StreamHandler()
 	console.setLevel(logging.INFO)
 	console.setFormatter(logging.Formatter(_FORMAT))
 	root.addHandler(console)
-	root._spt_builder_configured = True
+	root._spt_trader_builder_configured = True
 
 
 def set_debug_logging(enabled, log_file=None):
@@ -32,12 +32,12 @@ def set_debug_logging(enabled, log_file=None):
 	repeat; if the file can't be opened an OSError is raised and nothing is changed.
 	"""
 	root = logging.getLogger()
-	current = getattr(root, "_spt_builder_file_handler", None)
+	current = getattr(root, "_spt_trader_builder_file_handler", None)
 	if not enabled:
 		if current is not None:
 			root.removeHandler(current)
 			current.close()
-			root._spt_builder_file_handler = None
+			root._spt_trader_builder_file_handler = None
 		return
 	log_file = log_file or LOG_FILE
 	if current is not None and current.baseFilename == os.path.abspath(log_file):
@@ -50,5 +50,5 @@ def set_debug_logging(enabled, log_file=None):
 		root.removeHandler(current)
 		current.close()
 	root.addHandler(handler)
-	root._spt_builder_file_handler = handler
+	root._spt_trader_builder_file_handler = handler
 	logging.getLogger(__name__).info(f"Debug logging to {log_file}")

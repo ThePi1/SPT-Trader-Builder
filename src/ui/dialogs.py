@@ -12,7 +12,7 @@ from ui.compiled.ui_about_dialog import Ui_AboutForm
 from ui.compiled.ui_settings_dialog import Ui_SettingsForm
 from ui.compiled.ui_updates_dialog import Ui_UpdatesForm
 
-APP_NAME = "SPT Quest Builder"
+APP_NAME = "SPT Trader Builder"
 
 
 def _link(url):
@@ -61,7 +61,7 @@ _LABELS = {
 	"project_url": "Project address",
 }
 _TIPS = {
-	"debug_logging": "Writes spt_builder.log next to the program, for troubleshooting.",
+	"debug_logging": "Writes spt_trader_builder.log next to the program, for troubleshooting.",
 	"copy_locale_to_all_languages": "When you save the locale file, also add the text of the open quests to the other languages' files in the same folder. Entries those files already have are kept.",
 	"save_asks_for_file": "Save normally writes to the file that was opened or last saved to. Turn this on to choose a file name every time (the dialog starts at that file).",
 	"database_folder": "Your SPT_Data/database folder. Empty uses the data that comes with the program. It is only read, never changed.",

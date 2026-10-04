@@ -1,6 +1,6 @@
-# SPT Quest Builder (rebuild)
+# SPT Trader Builder
 
-Work in progress. Everything for the rebuild lives in this folder; the old program in `src/` is untouched.
+Work in progress.
 
 ## Run
 
