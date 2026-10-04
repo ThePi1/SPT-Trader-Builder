@@ -273,7 +273,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 			button.clicked.connect(lambda _c=False, t=tpl: self._add_price(offer_id, [t]))
 			row.addWidget(button)
 		find = QPushButton("Item...")
-		find.clicked.connect(lambda: self._add_price(offer_id, self.picker("item", True, self) if self.picker else []))
+		find.clicked.connect(lambda: self._add_price(offer_id, self._ctx().pick_item_ids(True, self)))
 		remove = QPushButton("Remove")
 		remove.clicked.connect(lambda: self._remove_price(offer_id, table.currentRow()))
 		row.addWidget(find)
@@ -423,10 +423,11 @@ class AssortTab(QWidget, Ui_AssortForm):
 
 	# --- add, copy, delete ------------------------------------------------------------------
 	def add_offer(self):
-		ids = self.picker("item", True, self) if self.picker else []
+		ctx = self._ctx()
 		last = None
-		for tpl in ids:
-			items, barter, level = A.new_offer(tpl)
+		for picked in ctx.pick("part", True, self):  # (items, and composite items, which are sold whole)
+			parts = ctx.composite_parts(picked)
+			items, barter, level = A.new_offer_from_parts(parts) if parts else A.new_offer(picked)
 			self._edit("Add offer", lambda d, i=items, b=barter, l=level: A.add_offer(d, i, b, l))
 			last = items[0]["_id"]
 		if last:

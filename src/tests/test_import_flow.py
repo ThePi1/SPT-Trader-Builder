@@ -440,3 +440,32 @@ def test_the_strip_calls_the_quest_locks_section_quest_assort(window):
 	assert "Quest assort" in window.files_strip.segment("locks").titleLabel.text()
 	assert "Quest locks" not in window.files_strip.segment("locks").titleLabel.text()
 	assert window.menuLocks.title().replace("&", "") == "Quest assort"
+
+
+def test_the_unsaved_changes_question_names_the_kind_of_file(window, monkeypatch, tmp_path):
+	asked = []
+
+	def answer(parent, title, text, *args, **kwargs):
+		asked.append((title, text))
+		return dialogs.QMessageBox.StandardButton.Discard
+
+	monkeypatch.setattr("ui.main_window.QMessageBox.question", answer)
+	window._set_quests(Document({Q3: quest(Q3, "Mine", T3)}))
+	window.quests.set_value("Edit", (Q3, "QuestName"), "Changed")
+	window.new_quests()
+	window.locale.set_value("Edit", ("a",), "b")
+	window.new_locale()
+	window.assort.set_value("Edit", ("extra",), 1)
+	window._new_other("assort")
+	window.locks.set_value("Edit", ("extra",), 1)
+	window._new_other("locks")
+	assert asked == [
+		("Unsaved changes", "Save your changes to quest file Untitled?"), ("Unsaved changes", "Save your changes to locale file Untitled?"),
+		("Unsaved changes", "Save your changes to trader assort file Untitled?"), ("Unsaved changes", "Save your changes to quest assort file Untitled?"),
+	]
+	path = tmp_path / "kappa.json"
+	path.write_text(json.dumps({Q3: quest(Q3, "Mine", T3)}), encoding="utf-8")
+	window._set_quests(Document.open(path))
+	window.quests.set_value("Edit", (Q3, "QuestName"), "Changed")
+	window.new_quests()
+	assert asked[-1][1] == "Save your changes to quest file kappa.json?"

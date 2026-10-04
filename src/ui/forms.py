@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 	QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
+from core import parts as P
 from core.ids import new_id
 from schema import choices as choice_lists
 from schema import fields as F
@@ -45,6 +46,27 @@ class Context:
 		if self.picker is None:
 			return []
 		return self.picker(ref, multi, parent)
+
+	def composite_parts(self, entry_id):
+		"""The parts of the saved or vanilla composite item with this id (as stored), or None if there isn't one."""
+		if self.library is not None and entry_id in self.library.entries:
+			return self.library.entries[entry_id].get("items")
+		presets = self.gamedata.item_presets if self.gamedata is not None else {}
+		if entry_id in presets:
+			return presets[entry_id].get("_items")
+		return None
+
+	def pick_item_ids(self, multi=False, parent=None):
+		"""Item ids chosen in the Find an item window, which lists items and composite items. A composite item
+		gives the id of its main item (its root part's template), as the game's own files do: a list of ids can't
+		hold its parts, and the composite's own id is not an item id."""
+		ids = []
+		for picked in self.pick("part", multi, parent):
+			parts = self.composite_parts(picked)
+			for tpl in [p.get("_tpl", "") for p in P.roots(parts)] if parts is not None else [picked]:
+				if tpl and tpl not in ids:
+					ids.append(tpl)
+		return ids
 
 	def task_label(self, task_id):
 		"""Words for a task of the quest being edited ('' if it isn't one)."""
@@ -172,7 +194,7 @@ class RefControl(Control):
 			self.box.addWidget(find)
 
 	def _find(self):
-		ids = self.ctx.pick(self.field.ref, False, self)
+		ids = self.ctx.pick_item_ids(False, self) if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, False, self)
 		if ids:
 			self.entry.setText(ids[0])
 			self._edited(ids[0])
@@ -258,7 +280,7 @@ class ListControl(Control):
 		self.edited.emit(list(self.values))
 
 	def _find(self):
-		ids = self.ctx.pick(self.field.ref, True, self)
+		ids = self.ctx.pick_item_ids(True, self) if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, True, self)
 		if ids:
 			self.values.extend(i for i in ids if i not in self.values)
 			self._fill()
@@ -342,7 +364,7 @@ class GroupsControl(Control):
 		self.edited.emit([list(g) for g in self.groups])
 
 	def _find(self):
-		ids = self.ctx.pick(F.ITEM, True, self)
+		ids = self.ctx.pick_item_ids(True, self)
 		if ids:
 			self.entry.setText(", ".join(ids))
 
