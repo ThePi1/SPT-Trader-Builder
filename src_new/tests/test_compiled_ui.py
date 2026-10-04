@@ -191,10 +191,6 @@ def test_the_outline_buttons_do_what_they_say(app, monkeypatch):
 	outline.copy_button.click()
 	assert [q["QuestName"] for q in outline.doc.data.values()].count("First (copy)") == 1
 	outline._select_key(("task", (first, "conditions", "AvailableForFinish", 0)))
-	outline.down_button.click()
-	assert [t["value"] for t in outline.doc.data[first]["conditions"]["AvailableForFinish"]] == [9, 5]
-	outline.up_button.click()
-	assert [t["value"] for t in outline.doc.data[first]["conditions"]["AvailableForFinish"]] == [5, 9]
 	outline.delete_button.click()
 	assert [t["value"] for t in outline.doc.data[first]["conditions"]["AvailableForFinish"]] == [9]
 	outline._select_key(("quest", (first,)))
@@ -264,7 +260,7 @@ def test_the_button_row_fills_the_width_in_equal_parts(app):
 	outline.resize(1800, 700)
 	outline.splitter.setSizes([1200, 500])  # (wide enough that the buttons have room to spare)
 	app.processEvents()
-	buttons = [outline.new_quest_button, outline.add_button, outline.copy_button, outline.delete_button, outline.up_button, outline.down_button]
+	buttons = [outline.new_quest_button, outline.add_button, outline.copy_button, outline.delete_button]
 	margins = outline.leftLayout.contentsMargins()
 	assert buttons[0].geometry().left() == margins.left()
 	assert buttons[-1].geometry().right() + 1 == outline.leftPane.width() - margins.right()

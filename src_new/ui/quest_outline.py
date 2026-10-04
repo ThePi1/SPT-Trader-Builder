@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 	QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
-from core.documents import duplicate, move
+from core.documents import duplicate
 from core.ids import new_id
 from schema import choices, copying, registry
 from schema import locale as L
@@ -73,8 +73,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.add_button.setMenu(self.add_menu)
 		for button, slot in (
 			(self.new_quest_button, self.add_quest), (self.copy_button, self.copy_selected),
-			(self.delete_button, self.delete_selected), (self.up_button, lambda: self.move_selected(-1)),
-			(self.down_button, lambda: self.move_selected(1)),
+			(self.delete_button, self.delete_selected),
 		):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.tree.currentItemChanged.connect(self._selected)
@@ -606,15 +605,6 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			return
 		list_path, index = address.path[:-1], address.path[-1]
 		self.doc.change("Delete", lambda items: items.pop(index), path=list_path)
-
-	def move_selected(self, offset):
-		address = self._current()
-		if address is None or address.kind in ("group", "quest"):
-			return
-		list_path, index = address.path[:-1], address.path[-1]
-		result = []
-		self.doc.change("Move", lambda items: result.append(move(items, index, offset)), path=list_path)
-		self._select_key((address.kind, list_path + (result[0],)))
 
 	def retime(self, address, timing):
 		qid = address.path[0]

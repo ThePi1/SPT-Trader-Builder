@@ -43,7 +43,7 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QHBoxLayout" name="tools" stretch="1,1,1,1,1,1">
+        <layout class="QHBoxLayout" name="tools" stretch="1,1,1,1">
          <property name="spacing">
           <number>3</number>
          </property>
@@ -84,20 +84,6 @@
           <widget class="QPushButton" name="delete_button">
            <property name="text">
             <string>Delete</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="up_button">
-           <property name="text">
-            <string>Up</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="down_button">
-           <property name="text">
-            <string>Down</string>
            </property>
           </widget>
          </item>

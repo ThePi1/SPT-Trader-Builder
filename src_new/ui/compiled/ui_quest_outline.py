@@ -66,22 +66,10 @@ class Ui_OutlineForm(object):
 
         self.tools.addWidget(self.delete_button)
 
-        self.up_button = QPushButton(self.leftPane)
-        self.up_button.setObjectName(u"up_button")
-
-        self.tools.addWidget(self.up_button)
-
-        self.down_button = QPushButton(self.leftPane)
-        self.down_button.setObjectName(u"down_button")
-
-        self.tools.addWidget(self.down_button)
-
         self.tools.setStretch(0, 1)
         self.tools.setStretch(1, 1)
         self.tools.setStretch(2, 1)
         self.tools.setStretch(3, 1)
-        self.tools.setStretch(4, 1)
-        self.tools.setStretch(5, 1)
 
         self.leftLayout.addLayout(self.tools)
 
@@ -160,8 +148,6 @@ class Ui_OutlineForm(object):
         self.add_button.setText(QCoreApplication.translate("OutlineForm", u"Add ", None))
         self.copy_button.setText(QCoreApplication.translate("OutlineForm", u"Copy", None))
         self.delete_button.setText(QCoreApplication.translate("OutlineForm", u"Delete", None))
-        self.up_button.setText(QCoreApplication.translate("OutlineForm", u"Up", None))
-        self.down_button.setText(QCoreApplication.translate("OutlineForm", u"Down", None))
         self.search.setPlaceholderText(QCoreApplication.translate("OutlineForm", u"Search quests by name", None))
 #if QT_CONFIG(tooltip)
         self.expandAllButton.setToolTip(QCoreApplication.translate("OutlineForm", u"Expand all", None))

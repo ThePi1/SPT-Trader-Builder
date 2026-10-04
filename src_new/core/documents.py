@@ -198,16 +198,7 @@ def _swap(node, new):
 	return node
 
 
-# --- list helpers for the outline: move / duplicate / remove inside a list ------------------
-
-def move(items, index, offset):
-	"""Move items[index] by offset places; returns the new index (unchanged if it can't move)."""
-	new = index + offset
-	if not 0 <= new < len(items):
-		return index
-	items.insert(new, items.pop(index))
-	return new
-
+# --- list helper for the outline: duplicate inside a list ------------------------------------
 
 def duplicate(items, index, fresh=None):
 	"""Insert a copy after items[index] and return it; fresh(copy) may give it new ids."""

@@ -45,10 +45,8 @@ def test_listener_called():
 
 
 def test_list_helpers():
-	items = [1, 2, 3]
-	assert documents.move(items, 0, 1) == 1 and items == [2, 1, 3]
-	assert documents.move(items, 0, -1) == 0
 	assert documents.duplicate([{"id": 1}], 0, lambda c: c.update(id=2)) == {"id": 2}
+	assert not hasattr(documents, "move")  # (nothing moves items up or down any more)
 
 
 def test_scoped_change_and_undo():

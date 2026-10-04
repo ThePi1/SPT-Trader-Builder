@@ -56,7 +56,7 @@ def test_counter_subtasks_and_undo(app):
 	assert counter["counter"]["conditions"] == [] or quest["conditions"]["AvailableForFinish"][0]["counter"]["conditions"] == []
 
 
-def test_copy_delete_move_retime(app):
+def test_copy_delete_retime(app):
 	outline, doc = make()
 	outline.add_quest()
 	outline.add_item("reward", "Experience")
@@ -64,7 +64,6 @@ def test_copy_delete_move_retime(app):
 	quest = next(iter(doc.data.values()))
 	rewards = quest["rewards"]["Success"]
 	assert len(rewards) == 2 and rewards[0]["id"] != rewards[1]["id"]
-	outline.move_selected(-1)
 	outline.retime(outline._current(), "Started")
 	assert len(quest["rewards"]["Started"]) == 1
 	outline.delete_selected()
