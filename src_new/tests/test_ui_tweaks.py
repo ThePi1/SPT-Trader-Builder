@@ -355,4 +355,5 @@ def test_the_tooltips_of_the_expand_and_collapse_buttons_are_not_bold(app):
 				break
 		assert tip is not None, text
 		assert not tip.font().bold() and tip.font().pointSizeF() == outline.font().pointSizeF()  # (normal text, normal size)
-	assert outline.expandAllButton.styleSheet().startswith("QToolButton {")  # (the bold is for the button alone)
+	for button in (outline.expandAllButton, outline.collapseAllButton):  # (the + and - are in the normal font too)
+		assert button.styleSheet() == "" and not button.font().bold() and button.font().pointSizeF() == 9.0
