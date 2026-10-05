@@ -67,7 +67,8 @@ def test_adding_the_unlock_puts_a_matching_reward_in_the_quest(app):
 	assert reward["type"] == "AssortmentUnlock" and reward["traderId"] == TRADER and reward["loyaltyLevel"] == 2
 	assert A.reward_root(reward)["_tpl"] == TPL
 	assert A.lock_problems(quests_doc.data, locks.data, assort_doc.data, TRADER) == []
-	assert 'Linked quest "Test Quest" gives this unlock.' in labels(tab) and "Add unlock to the quest" not in buttons(tab)
+	assert any(text.startswith('Linked quest "Test Quest" gives this unlock.') and text.endswith("It is the same as the offer.") for text in labels(tab))
+	assert "Add unlock to the quest" not in buttons(tab) and "Update preview" not in buttons(tab)
 	assert "to check" not in tab.note.text()
 	quests_doc.undo()  # (one step in the quests' undo history)
 	assert quests_doc.data[QID]["rewards"]["Success"] == []
@@ -138,4 +139,4 @@ def test_a_quest_with_no_name_is_shown_by_its_id(app):
 	buttons(tab)["Add unlock to the quest"].click()
 	quests_doc.data[QID].pop("QuestName")
 	tab.refresh(offer)
-	assert f'Linked quest "{QID}" gives this unlock.' in labels(tab)
+	assert any(text.startswith(f'Linked quest "{QID}" gives this unlock.') for text in labels(tab))

@@ -366,7 +366,17 @@ class AssortTab(QWidget, Ui_AssortForm):
 				d.setdefault(lock_value, {})[offer_id] = quest_id
 
 		self._edit("Change quest lock", edit, doc=self.locks)
+		self._add_missing_unlock(offer_id, lock_value, quest_id)
 		self.refresh(offer_id)
+
+	def _add_missing_unlock(self, offer_id, lock_value, quest_id):
+		"""Locking an offer to an open quest gives the quest its Assort unlock preview when it has none yet."""
+		quests = self.quests()
+		quest = quests.get(quest_id) if quests and quest_id else None
+		if quest is None or lock_value not in A.UNLOCKED_BY or not self.trader_id:
+			return
+		if A.find_unlock(quest, lock_value, A.offer_tpl(self.doc.data, offer_id), self.trader_id) is None:
+			self._add_unlock(offer_id, lock_value, quest_id)
 
 	# --- the link between a quest lock and the quest's unlock reward ---------------------------------
 	def _unlock_row(self, offer_id, lock, quest_id):
@@ -391,8 +401,10 @@ class AssortTab(QWidget, Ui_AssortForm):
 						"That quest isn't in the open quest file, the base game or the reference files." if self.gamedata is not None
 						else "That quest isn't in the open quest file."
 					)
-			elif A.find_unlock(quest, lock, tpl, self.trader_id or None):
-				label.setText(f'Linked quest "{quest.get("QuestName") or quest_id}" gives this unlock.')
+			elif (reward := A.find_unlock(quest, lock, tpl, self.trader_id or None)) is not None:
+				label.setText(f'Linked quest "{quest.get("QuestName") or quest_id}" gives this unlock. ' + self._preview_text(offer_id, reward))
+				if A.preview_differences(self.doc.data, offer_id, reward, self.trader_id or None):
+					button, action = "Update preview", lambda: self._update_preview(offer_id, quest_id, reward.get("id"))
 			else:
 				label.setText("The quest doesn't unlock this item yet.")
 				button, action = "Add unlock to the quest", lambda: self._add_unlock(offer_id, lock, quest_id)
@@ -414,6 +426,32 @@ class AssortTab(QWidget, Ui_AssortForm):
 			push.clicked.connect(lambda _c=False: action())
 			row.addWidget(push)
 		return holder
+
+	def _preview_text(self, offer_id, reward):
+		"""The preview the quest shows for this offer, and how it differs from the offer."""
+		names = self._names()
+		root = A.reward_root(reward) or {}
+		text = (
+			f"Preview in the quest: {names.trader(reward.get('traderId', '')) or 'no trader'}, level {reward.get('loyaltyLevel')}, "
+			f"{names.item(root.get('_tpl', ''))} ({A.parts_word(len(reward.get('items') or []))})."
+		)
+		found = A.preview_differences(self.doc.data, offer_id, reward, self.trader_id or None)
+		return text + (" It differs from the offer: " + "; ".join(found) + "." if found else " It is the same as the offer.")
+
+	def _update_preview(self, offer_id, quest_id, reward_id):
+		"""Bring the quest's unlock preview in line with the offer (the offer is what the trader really sells)."""
+		doc = self.quests_document() if self.quests_document else None
+		if doc is None or quest_id not in doc.data:
+			return
+
+		def edit(quest):
+			for rewards in (quest.get("rewards") or {}).values():
+				for reward in rewards or []:
+					if isinstance(reward, dict) and reward.get("id") == reward_id:
+						A.refresh_unlock(reward, self.doc.data, offer_id, self.trader_id or None)
+
+		doc.change("Update preview", edit, path=(quest_id,))
+		self.refresh(offer_id)
 
 	def _add_unlock(self, offer_id, status, quest_id):
 		"""Give the locking quest an unlock reward for this offer's item (same mods, trader and level)."""

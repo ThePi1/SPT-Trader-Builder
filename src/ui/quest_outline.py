@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 
 from core.documents import duplicate
 from core.ids import new_id
+from schema import assort as assort_schema
 from schema import choices, copying, registry
 from schema import locale as L
 from schema.common import Names
@@ -27,6 +28,7 @@ from ui.compiled.ui_quest_outline import Ui_OutlineForm
 from ui.problems import ERROR_COLOR, WARNING_COLOR, ProblemsPanel, node_path
 from ui.forms import Context, FormWidget
 from ui.text_panels import QuestTextPanel, TaskTextPanel, task_has_text
+from ui.unlock_panel import UnlockOfferPanel
 
 ROLE = Qt.ItemDataRole.UserRole
 TASK_TIMINGS = tuple(t for t, _k in choices.TASK_TIMINGS)
@@ -64,6 +66,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		super().__init__(parent)
 		self.gamedata, self.settings, self.doc = gamedata, settings, None
 		self.library = None  # the user's saved composite items
+		self.assort_source = None  # () -> (the open trader assort, the quest locks, the trader's id): set by the window
 		self.locale = None  # the open locale Document, for the text boxes
 		self.sources = {}  # quest id -> the file it was imported from, shown next to the quest
 		self.picker = None  # (ref kind, multi, parent) -> [ids]: the window's search dialog
@@ -468,6 +471,10 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			self.pane_layout.addWidget(note)
 		if address.kind in ("task", "reward"):
 			self.pane_layout.addLayout(self._timing_row(address, spec))
+		if address.kind == "reward" and spec.kind == "AssortmentUnlock":
+			panel = self._unlock_panel(address, data)
+			if panel is not None:
+				self.pane_layout.addWidget(panel)
 		own_id = data.get("id") if isinstance(data, dict) else None
 		form = FormWidget(spec, self._ctx(qpath[0] if qpath else None, own_id), show_advanced=bool(self.settings and self.settings.show_all_fields))
 		form.bind(data)
@@ -486,6 +493,27 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		row.addStretch(1)
 		self.pane_layout.addLayout(row)
 		self.pane_layout.addStretch(1)
+
+	def _unlock_panel(self, address, reward):
+		"""What the open trader assort says about an Assort unlock's preview, with buttons to fill or update it (None: no assort to look in)."""
+		source = self.assort_source() if self.assort_source else None
+		if source is None:
+			return None
+		assort, locks, trader_id = source
+		names = self._ctx().names
+		levels = assort.get("loyal_level_items", {})
+		offers = [
+			(offer, f"{names.item(assort_schema.offer_tpl(assort, offer))} - level {levels.get(offer, '?')}")
+			for offer in assort_schema.offer_ids(assort)
+		]
+		state = assort_schema.unlock_state(assort, locks, address.path[0], address.timing, reward, trader_id or None)
+
+		def bring(label):
+			def run(offer_id):
+				self.doc.change(label, lambda node: assort_schema.refresh_unlock(node, assort, offer_id, trader_id or None), path=address.path)
+			return run
+
+		return UnlockOfferPanel(state, offers, bring("Fill the preview from an offer"), bring("Update the preview"))
 
 	def _timing_row(self, address, spec):
 		row = QHBoxLayout()

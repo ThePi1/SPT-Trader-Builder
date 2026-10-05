@@ -70,6 +70,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline = QuestOutline(gamedata, settings)
 		self.quest_outline.set_document(self.quests)
 		self.quest_outline.picker = self.pick
+		self.quest_outline.assort_source = lambda: (self.assort.data, self.locks.data, self.assort_tab.trader_id)
 		self.quest_outline.locale = self.locale
 		self.locale_tab = LocaleTab(self.locale, self.quests, settings)
 		self._base_rows = None

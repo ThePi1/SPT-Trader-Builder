@@ -254,6 +254,112 @@ def unlock_reward(assort, offer_id, trader_id, level=None, ids=new_id):
 	return reward
 
 
+# --- does a reward's preview match an offer? ---------------------------------------------------
+# A reward's item is only the preview the client shows. The offer lives in the trader assort; the two are compared by
+# shape (items, slots and mods, never ids). In the base game 212 of 236 unlock previews are exactly their offer and the
+# rest are the bare main item.
+
+def structure(parts, root_id):
+	"""The shape of a multi-part item, ignoring ids: (item, slot, its mods in order of shape...), the main part first."""
+	kids = {}
+	for part in parts:
+		kids.setdefault(part.get("parentId"), []).append(part)
+
+	def shape(part, top):
+		return (part.get("_tpl", ""), "" if top else part.get("slotId", ""), tuple(sorted(shape(c, False) for c in kids.get(part.get("_id"), []))))
+
+	root = next((p for p in parts if p.get("_id") == root_id), None)
+	return shape(root, True) if root else None
+
+
+def offer_structure(assort, offer_id):
+	return structure(offer_parts(assort, offer_id), offer_id)
+
+
+def reward_structure(reward):
+	root = reward_root(reward)
+	return structure(reward.get("items") or [], root["_id"]) if root else None
+
+
+def offers_matching(assort, reward):
+	"""(exact, same_item): the offers whose parts are the reward's parts, and the others that sell the same main item."""
+	shape, root = reward_structure(reward), reward_root(reward)
+	if shape is None:
+		return [], []
+	exact, same_item = [], []
+	for offer in offer_ids(assort):
+		if offer_structure(assort, offer) == shape:
+			exact.append(offer)
+		elif offer_tpl(assort, offer) == root.get("_tpl"):
+			same_item.append(offer)
+	return exact, same_item
+
+
+def parts_word(count):
+	return f"{count} part{'' if count == 1 else 's'}"
+
+
+def preview_differences(assort, offer_id, reward, trader_id=None):
+	"""How the reward's preview differs from the offer, as short phrases ([] when it is the same)."""
+	root = reward_root(reward)
+	if root is None:
+		return ["the preview has no item"]
+	found = []
+	if root.get("_tpl") != offer_tpl(assort, offer_id):
+		found.append("a different main item")
+	elif reward_structure(reward) != offer_structure(assort, offer_id):
+		found.append(f"{parts_word(len(reward.get('items') or []))} in the preview, {parts_word(len(offer_parts(assort, offer_id)))} in the offer")
+	level = assort.get("loyal_level_items", {}).get(offer_id)
+	if level is not None and reward.get("loyaltyLevel") != level:
+		found.append(f"level {reward.get('loyaltyLevel')} in the quest, {level} in the offer")
+	if trader_id and reward.get("traderId") != trader_id:
+		found.append("another trader")
+	return found
+
+
+def refresh_unlock(reward, assort, offer_id, trader_id=None, ids=new_id):
+	"""Make the reward's preview the offer's: its parts (with ids of their own), main part and level, and the trader when
+	it is known. The reward's other keys stay as they are."""
+	fresh = unlock_reward(assort, offer_id, trader_id or reward.get("traderId", ""), ids=ids)
+	reward.update(items=fresh["items"], target=fresh["target"], loyaltyLevel=fresh["loyaltyLevel"])
+	if trader_id:
+		reward["traderId"] = trader_id
+	return reward
+
+
+def unlock_state(assort, locks, quest_id, timing, reward, trader_id=None):
+	"""What the open trader assort says about a reward's preview: (tone, message, offer id or None, differs).
+	tone is "ok", "note" or "warn"; offer id is the offer the preview belongs to (the one locked to the quest, else the
+	only offer that matches); differs says whether the preview is not the same as that offer."""
+	offers = offer_ids(assort)
+	if not offers:
+		return "note", "No trader assort is open, so the preview can't be compared with an offer.", None, False
+	status = next((s for s, when in LOCK_TIMING.items() if when == timing and s in UNLOCKED_BY), None)
+	locked = [o for o in offers if status and (locks.get(status) or {}).get(o) == quest_id]
+	exact, same_item = offers_matching(assort, reward)
+	owner = next((o for o in locked if o in exact), None) or next((o for o in locked if o in exact + same_item), None)
+	if owner is None and len(exact) == 1:
+		owner = exact[0]
+	if owner is None and not exact and len(same_item) == 1:
+		owner = same_item[0]
+	if owner is not None and owner in locked:
+		found = preview_differences(assort, owner, reward, trader_id)
+		if not found:
+			return "ok", "The preview is the same as the offer locked to this quest.", owner, False
+		return "note", "The offer locked to this quest differs from the preview: " + "; ".join(found) + ".", owner, True
+	if exact:
+		where = "None of them is locked to this quest." if len(exact) > 1 else "It is not locked to this quest."
+		return "note", f"The trader assort has {len(exact)} offer{'' if len(exact) == 1 else 's'} for these parts. {where}", owner, False
+	if same_item:
+		return (
+			"note",
+			f"The trader assort sells this item, but with different parts ({parts_word(len(offer_parts(assort, same_item[0])))} in the offer, "
+			f"{parts_word(len(reward.get('items') or []))} in the preview). A preview showing only the main item is how some base game quests do it.",
+			owner, bool(owner),
+		)
+	return "warn", "The trader assort has no offer for this item, so the player would be unlocking nothing.", None, False
+
+
 # --- composite items: a saved multi-part item (a weapon with mods) ---------------------------
 
 def new_composite(name, parts):
