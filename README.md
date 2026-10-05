@@ -38,7 +38,7 @@ The **Problems** list at the bottom left tells you what still needs fixing. Clic
 
 ## Sections
 
-- **Quests**: your quests, with their conditions and rewards. Use the search box to find a quest by name, and the **+** and **−** buttons to open or close everything.
+- **Quests**: your quests, with their conditions and rewards. Use the search box to find a quest by name, and the **+** and **−** buttons to open or close everything. The **▲** and **▼** buttons (or Alt+Up and Alt+Down) move the selected quests, conditions or rewards up and down: the order of the quests in the file is the order the game shows them.
 - **Locale**: the text the game shows for your quests.
 - **Trader**: what a trader sells, at what price and trader level, and which quest unlocks each item. Pick the trader at the top so quest unlocks can be added.
 - **Composite items**: items made of parts, like a gun with its mods. Save one once and reuse it in rewards and trader offers. The game's own items are listed too: you can look at them, and make your own copy to change.

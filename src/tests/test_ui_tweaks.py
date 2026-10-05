@@ -341,12 +341,13 @@ def test_a_collapsed_quest_stays_collapsed_when_the_quests_change(app):
 	assert [k for k, v in states.items() if v] == [opened, ("quest", ("f" * 24,))]  # (the new quest starts open, the others stay shut)
 
 
-def test_the_quests_tab_has_no_up_or_down_buttons(app):
+def test_the_quests_tab_has_small_move_buttons_beside_the_search(app):
 	from PySide6.QtWidgets import QPushButton
 
 	outline = make_outline(app)
-	assert not hasattr(outline, "up_button") and not hasattr(outline, "down_button") and not hasattr(outline, "move_selected")
 	assert [b.text() for b in outline.leftPane.findChildren(QPushButton)] == ["Copy", "Delete"]  # (and the Add drop-down: New quest is in it)
+	assert outline.moveUpButton.toolTip() == "Move up (Alt+Up)" and outline.moveDownButton.toolTip() == "Move down (Alt+Down)"
+	assert outline.moveUpButton.autoRaise() and outline.moveDownButton.autoRaise()  # (flat, like the + and - pair)
 
 
 def test_the_tooltips_of_the_expand_and_collapse_buttons_are_not_bold(app):

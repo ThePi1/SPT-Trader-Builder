@@ -52,7 +52,7 @@ class Document:
 
 	@property
 	def dirty(self):
-		return self.data != self._saved
+		return not _same(self.data, self._saved)
 
 	@property
 	def name(self):
@@ -67,7 +67,7 @@ class Document:
 		node = _get(self.data, path)
 		before = copy.deepcopy(node)
 		edit(node)
-		if node == before:
+		if _same(node, before):
 			return False
 		self._record(label, path, before, note=note)
 		return True
@@ -83,7 +83,7 @@ class Document:
 			return False
 		path, before = self._watched
 		node = _get(self.data, path)
-		if node == before:
+		if _same(node, before):
 			return False
 		merge = coalesce is not None and self._undo and self._undo[-1][3] == (path, coalesce)
 		if merge:
@@ -179,6 +179,11 @@ class Document:
 	def _notify(self):
 		for callback in list(self._listeners):
 			callback(self)
+
+
+def _same(a, b):
+	"""Equal, and for a dict also in the same order of keys (the order of the quests in a file matters)."""
+	return a == b and (not isinstance(a, dict) or list(a) == list(b))
 
 
 def _get(data, path):
