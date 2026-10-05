@@ -69,7 +69,7 @@ def action(win, name):
 def test_the_menu_bar_has_the_four_menus_with_their_entries(window):
 	assert [a.text() for a in window.menubar.actions()] == ["&File", "&Edit", "&Settings", "&Help"]
 	file_entries = [a.text().replace("&", "") for a in window.menuFile.actions() if not a.isSeparator()]
-	assert file_entries == ["Import files...", "Quests", "Locale", "Trader assort", "Quest assort", "Exit"]
+	assert file_entries == ["Import files...", "Quests", "Locale", "Trader assort", "Quest assort", "References", "Exit"]
 	section = ["New (empty)", "Open...", "Import...", "Save", "Save as..."]
 	for menu in (window.menuLocale, window.menuAssort, window.menuLocks):
 		assert [a.text() for a in menu.actions() if not a.isSeparator()] == section

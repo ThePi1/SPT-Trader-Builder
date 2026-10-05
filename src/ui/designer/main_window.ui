@@ -120,12 +120,21 @@
      <addaction name="actionLocksSave"/>
      <addaction name="actionLocksSaveAs"/>
     </widget>
+    <widget class="QMenu" name="menuReferences">
+     <property name="title">
+      <string>&amp;References</string>
+     </property>
+     <addaction name="actionAddReferences"/>
+     <addaction name="actionManageReferences"/>
+     <addaction name="actionReloadReferences"/>
+    </widget>
     <addaction name="actionImportFiles"/>
     <addaction name="separator"/>
     <addaction name="menuQuests"/>
     <addaction name="menuLocale"/>
     <addaction name="menuAssort"/>
     <addaction name="menuLocks"/>
+    <addaction name="menuReferences"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -267,6 +276,30 @@
   <action name="actionLocksSaveAs">
    <property name="text">
     <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionAddReferences">
+   <property name="text">
+    <string>&amp;Add reference files...</string>
+   </property>
+   <property name="toolTip">
+    <string>Files that are only looked at (other mods' quests, items, traders), never edited or saved</string>
+   </property>
+  </action>
+  <action name="actionManageReferences">
+   <property name="text">
+    <string>&amp;Manage reference files...</string>
+   </property>
+   <property name="toolTip">
+    <string>See, remove or reload the reference files</string>
+   </property>
+  </action>
+  <action name="actionReloadReferences">
+   <property name="text">
+    <string>&amp;Reload reference files</string>
+   </property>
+   <property name="toolTip">
+    <string>Read the reference files again</string>
    </property>
   </action>
   <action name="actionImportFiles">

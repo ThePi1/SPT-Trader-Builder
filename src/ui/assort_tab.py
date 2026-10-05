@@ -53,7 +53,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 		self.splitter.setSizes([420, 520])
 		# which trader this assort is for: needed to link offers and quest rewards
 		self.trader.addItem("(not set)", "")
-		for trader_id, name in (gamedata.traders.items() if gamedata is not None else ()):
+		for trader_id, name in (gamedata.all_traders().items() if gamedata is not None else ()):
 			self.trader.addItem(name, trader_id)
 		self.trader.setCurrentIndex(0)
 		self.trader.activated.connect(lambda _i: self._trader_changed())

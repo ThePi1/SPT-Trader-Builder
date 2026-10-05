@@ -43,6 +43,7 @@ The **Problems** list at the bottom left tells you what still needs fixing. Clic
 - **Trader**: what a trader sells, at what price and trader level, and which quest unlocks each item. Pick the trader at the top so quest unlocks can be added.
 - **Composite items**: items made of parts, like a gun with its mods. Save one once and reuse it in rewards and trader offers. The game's own items are listed too: you can look at them, and make your own copy to change.
 - **Find IDs**: search for items, quests, traders and more, and copy their ids.
+- **References** (the last part of the bar along the bottom): other files that you only want to look things up in, such as another mod's quests, items or trader. They are never edited, saved or merged, but their names show up and their ids can be found in Find IDs and the Find windows. Add them from **File > References**, by dragging files in and choosing **Use as references only**, or in the Manage window.
 - **Schema Explorer**: shows what each kind of condition and reward is made of, and can check any file for mistakes.
 
 ## Your files
@@ -86,7 +87,7 @@ Restart the program after changing the folder or the language.
 - **Help > Check for updates** tells you if there is a newer release.
 - Found a problem or have an idea? [Open an issue](https://github.com/ThePi1/SPT-Trader-Builder/issues). If something goes wrong, turn on **Write a detailed log** in Settings and attach the `spt_trader_builder.log` file that appears next to the program.
 
-When you update, keep a copy of `data/settings.ini` (your settings) and `data/my_items.json` (your saved composite items) before you replace the old folder, then put them back.
+When you update, keep a copy of `data/settings.ini` (your settings), `data/my_items.json` (your saved composite items) and `data/references.json` (your list of reference files) before you replace the old folder, then put them back.
 
 ## Build
 

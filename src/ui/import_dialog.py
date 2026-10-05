@@ -28,7 +28,11 @@ class ImportDialog(QDialog, Ui_ImportForm):
 		self.setupUi(self)
 		self.items, self.workspace = items, workspace
 		self.plan = None
+		self.use_as_references = False  # (set by the "Use as references only" button)
 		self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Import")
+		self.referenceButton = self.buttons.addButton("Use as references only", QDialogButtonBox.ButtonRole.ActionRole)
+		self.referenceButton.setToolTip("Keep these files for looking up ids only: nothing is merged into the files you have open")
+		self.referenceButton.clicked.connect(self._use_as_references)
 		self.table.setRowCount(len(items))
 		self.combos = []
 		for row, item in enumerate(items):
@@ -62,6 +66,10 @@ class ImportDialog(QDialog, Ui_ImportForm):
 	@property
 	def policy(self):
 		return M.REPLACE if self.replaceRadio.isChecked() else M.BOTH if self.bothRadio.isChecked() else M.KEEP
+
+	def _use_as_references(self):
+		self.use_as_references = True
+		self.accept()
 
 	def chosen_items(self):
 		"""The items as the table has them now: kind and include as the user set them."""

@@ -17,6 +17,7 @@ from core.export import export_selection
 from core.locale_copy import copy_to_other_languages
 from core.documents import Document
 from core.paths import ICON_FILE
+from core.references import References
 from ui import dialogs, updates
 from core.library import Library
 from schema import assort as assort_schema
@@ -28,6 +29,7 @@ from ui.explorer_tab import ExplorerTab
 from ui.export_dialog import ExportDialog
 from ui.files_strip import FilesStrip
 from ui.import_dialog import ImportDialog
+from ui.references_dialog import ReferencesDialog
 from ui.locale_tab import LocaleTab
 from ui.lookup_view import LookupTab, PickerDialog
 from ui.quest_outline import QuestOutline
@@ -58,6 +60,9 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.update_status = updates.pending_status(settings)
 		self._workers = []
 		self.quest_sources = {}  # quest id -> the file it was imported from
+		self.references = References(language=settings.language)  # files that are only looked at
+		if gamedata is not None:
+			gamedata.references = self.references
 		self.quests = Document({})
 		self.locale = Document({})
 		self.assort = Document(assort_schema.empty_assort())
@@ -81,7 +86,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			"page_composite": self.composite_tab, "page_find_ids": self.lookup_tab, "page_explorer": self.explorer_tab,
 		})
 		self.tabs.currentChanged.connect(self._tab_changed)
-		self.files_strip = FilesStrip([(key, title) for key, title, _label, _kind in KINDS])
+		self.files_strip = FilesStrip([(key, title) for key, title, _label, _kind in KINDS] + [("references", "References")])
 		self.centralLayout.addWidget(self.files_strip)
 		for doc in (self.quests, self.locale, self.assort, self.locks):
 			doc.on_change(self._doc_changed)
@@ -96,9 +101,12 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		"""Everything searchable (the game's data, then the quests and saved composite items being edited), for the kinds asked for."""
 		if self._base_rows is None:
 			self._base_rows = [] if self.gamedata is None else lookup.build_rows(
-				self.gamedata, kinds=tuple(k for k in lookup.KIND_LABEL if k not in (lookup.QUEST, lookup.MINE))
+				self.gamedata, kinds=tuple(k for k in lookup.KIND_LABEL if k not in (lookup.QUEST, lookup.MINE, lookup.REF_QUEST)),
+				references=self.references,
 			)
-		mine = lookup.build_rows(self.gamedata, quests=self.quests.data, kinds=(lookup.QUEST,)) if self.gamedata is not None else []
+		mine = lookup.build_rows(
+			self.gamedata, quests=self.quests.data, kinds=(lookup.QUEST, lookup.REF_QUEST), references=self.references,
+		) if self.gamedata is not None else []
 		rows = mine + lookup.library_rows(self.library) + self._base_rows
 		return [r for r in rows if not kinds or r.kind in kinds]
 
@@ -109,7 +117,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		}.get(ref, "Find")
 		kinds = {
 			"composite": (lookup.MINE, lookup.PRESET),  # (saved ones and the game's)
-			"part": (lookup.ITEM, lookup.MINE, lookup.PRESET),  # (what a list of item parts can take)
+			"part": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET),  # (what a list of item parts can take)
+			"item": (lookup.ITEM, lookup.REF_ITEM), "quest": (lookup.QUEST, lookup.REF_QUEST),  # (the game's, and the reference files')
 		}.get(ref, (ref,))
 		dialog = PickerDialog(self.rows(kinds), kinds, title, multi, self.settings, parent or self)
 		return dialog.ids if dialog.exec() else []
@@ -149,6 +158,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			menu.addSeparator()
 			menu.addAction(save)
 			menu.addAction(save_as)
+		reference_menu = self.files_strip.segment("references").menu
+		for action, slot in (
+			(self.actionAddReferences, self.add_references), (self.actionManageReferences, self.manage_references),
+			(self.actionReloadReferences, self.reload_references),
+		):
+			action.triggered.connect(lambda _checked=False, slot=slot: slot())
+			reference_menu.addAction(action)
 		for action, slot in (
 			(self.actionImportFiles, self.import_any), (self.actionExit, self.close), (self.actionUndo, self.undo),
 			(self.actionRedo, self.redo), (self.actionSettings, self.show_settings), (self.actionAbout, self.show_about),
@@ -191,6 +207,41 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			return sum(len(v) for v in data.values() if isinstance(v, dict))
 		return len(data)
 
+	# --- reference files ----------------------------------------------------------------------
+	def add_references(self, paths=None):
+		if paths is None:
+			paths, _ = QFileDialog.getOpenFileNames(self, "Add reference files", "", JSON_FILTER)
+		if not paths:
+			return None
+		added, skipped = self.references.add(paths)
+		self._references_changed()
+		text = f"Added {len(added)} reference file{'' if len(added) == 1 else 's'}."
+		if skipped:
+			text += f" Left out: {', '.join(f'{name} ({why})' for name, why in skipped[:3])}" + (" ..." if len(skipped) > 3 else "")
+		self.statusBar().showMessage(text, 15000)
+		return added
+
+	def manage_references(self):
+		dialog = ReferencesDialog(self.references, self)
+		dialog.changed.connect(self._references_changed)
+		dialog.import_requested.connect(lambda paths: QTimer.singleShot(0, lambda: self.import_files(paths)))
+		dialog.exec()
+
+	def reload_references(self):
+		self.references.reload()
+		self._references_changed()
+		self.statusBar().showMessage("Reference files read again.", 8000)
+
+	def _references_changed(self):
+		"""The reference files changed: names, checks and the id lists have to look again."""
+		self._base_rows = None
+		if self.tabs.currentWidget() is self.lookup_tab:
+			self.lookup_tab.set_rows(self.rows())
+		self.quest_outline.rebuild()
+		self.quest_outline.check()
+		self.assort_tab.refresh(self.assort_tab.current_id())
+		self._doc_changed()
+
 	def _refresh_strip(self):
 		for key, _title, _label, _kind in KINDS:
 			doc, count, names = getattr(self, key), self._count(key), self.imported_files(key)
@@ -201,6 +252,11 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 				file_text = ("not saved yet" if count else "empty") + (f" \u00b7 {imports}" if imports else "")
 			state, tone = ("unsaved", "warn") if doc.dirty else (("saved", "ok") if doc.path else ("", "muted"))
 			self.files_strip.segment(key).set_info(count, state, tone, file_text, str(doc.path) if doc.path else "")
+		files = self.references.files
+		names = "\n".join(ref.name for ref in files)
+		self.files_strip.segment("references").set_info(
+			len(files), "", "muted", (f"{len(files)} file{'' if len(files) == 1 else 's'} to look things up in" if files else "none (for looking things up only)"), names,
+		)
 
 	# --- files ------------------------------------------------------------------------------
 	def _confirm_discard(self, doc, label):
@@ -380,7 +436,11 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 					item.include = False
 					item.error = f"This looks like a {M.KIND_LABEL[item.kind].lower()} file."
 		dialog = ImportDialog(items, self._workspace(), self)
-		if not dialog.exec() or dialog.plan is None:
+		accepted = dialog.exec()
+		if accepted and dialog.use_as_references:  # (kept for looking up ids; nothing is merged)
+			self.add_references([str(i.path) for i in items if i.path is not None and not i.error.startswith("Couldn't")])
+			return None
+		if not accepted or dialog.plan is None:
 			return None
 		return self.apply_import(dialog.plan, dialog.chosen_items())
 
