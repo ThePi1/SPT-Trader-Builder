@@ -128,7 +128,9 @@ def validate_assort(assort):
 	return issues
 
 
-def validate_questassort(data, assort=None, quest_ids=None):
+def validate_questassort(data, assort=None, quest_ids=None, knows_quest=None):
+	"""Problems in a quest assort file. quest_ids: the quests that are open; knows_quest(id): True for a quest the game
+	or a reference file has. A quest is only reported when neither knows it (and at least one of them was given)."""
 	issues = []
 	if not isinstance(data, dict):
 		return [Issue(ERROR, (), "This should be an object with started, success and fail.")]
@@ -144,8 +146,10 @@ def validate_questassort(data, assort=None, quest_ids=None):
 		for offer, quest in (data.get(lock) or {}).items():
 			if roots is not None and offer not in roots:
 				issues.append(Issue(WARNING, (lock, offer), "This offer isn't in the assort."))
-			if quest_ids is not None and quest not in quest_ids:
-				issues.append(Issue(WARNING, (lock, offer), "This quest isn't known."))
+			if (quest_ids is not None or knows_quest is not None) and not (
+				(quest_ids is not None and quest in quest_ids) or (knows_quest is not None and knows_quest(quest))
+			):
+				issues.append(Issue(WARNING, (lock, offer), "This quest isn't known (it isn't in the open quests, the base game or the reference files)."))
 	return issues
 
 

@@ -383,7 +383,14 @@ class AssortTab(QWidget, Ui_AssortForm):
 		if lock in A.UNLOCKED_BY and quest_id:
 			quest = quests.get(quest_id)
 			if quest is None:
-				label.setText("That quest isn't in the open quest file.")
+				source = self.gamedata.quest_source(quest_id) if self.gamedata is not None else ""
+				if source:  # (a quest from the base game or a reference file: nothing is wrong, its unlock is in that file)
+					label.setText(f"This quest is in {source}, not in the open quest file.")
+				else:
+					label.setText(
+						"That quest isn't in the open quest file, the base game or the reference files." if self.gamedata is not None
+						else "That quest isn't in the open quest file."
+					)
 			elif A.find_unlock(quest, lock, tpl, self.trader_id or None):
 				label.setText(f'Linked quest "{quest.get("QuestName") or quest_id}" gives this unlock.')
 			else:

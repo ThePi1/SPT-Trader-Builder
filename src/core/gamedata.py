@@ -169,5 +169,13 @@ class GameData:
 	def knows_item(self, tpl):
 		return tpl in self.items or (self.references is not None and self.references.knows_item(tpl))
 
+	def quest_source(self, quest_id):
+		"""Where a quest that is not in the open file comes from: 'the base game', the name of the reference file, or ''."""
+		if quest_id in self.vanilla_quests:
+			return "the base game"
+		if self.references is not None and self.references.knows_quest(quest_id):
+			return self.references.index["quests"][quest_id][1]
+		return ""
+
 	def knows_quest(self, quest_id):
 		return quest_id in self.vanilla_quests or (self.references is not None and self.references.knows_quest(quest_id))
