@@ -71,6 +71,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.sources = {}  # quest id -> the file it was imported from, shown next to the quest
 		self.picker = None  # (ref kind, multi, parent) -> [ids]: the window's search dialog
 		self._editing = False
+		self._unlock = None  # (the unlock panel of the open reward and its address, while there is one)
 		self.setupUi(self)  # (the layout: the buttons, tree, form pane and JSON view are in ui/designer/quest_outline.ui)
 		self.add_menu = QMenu(self.add_button)
 		self.add_menu.aboutToShow.connect(self._fill_add_menu)
@@ -453,6 +454,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 	def _selected(self, item, _previous):
 		self._update_json()
 		self._clear_pane()
+		self._unlock = None
 		if item is None:
 			return self._show_hint("Add a quest to begin, or open a quest file.")
 		address = item.data(0, ROLE)
@@ -475,6 +477,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			panel = self._unlock_panel(address, data)
 			if panel is not None:
 				self.pane_layout.addWidget(panel)
+				self._unlock = (panel, address)
 		own_id = data.get("id") if isinstance(data, dict) else None
 		form = FormWidget(spec, self._ctx(qpath[0] if qpath else None, own_id), show_advanced=bool(self.settings and self.settings.show_all_fields))
 		form.bind(data)
@@ -494,6 +497,10 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.pane_layout.addLayout(row)
 		self.pane_layout.addStretch(1)
 
+	def _unlock_state(self, address, reward, source):
+		assort, locks, trader_id = source
+		return assort_schema.unlock_state(assort, locks, address.path[0], address.timing, reward, trader_id or None)
+
 	def _unlock_panel(self, address, reward):
 		"""What the open trader assort says about an Assort unlock's preview, with buttons to fill or update it (None: no assort to look in)."""
 		source = self.assort_source() if self.assort_source else None
@@ -506,7 +513,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			(offer, f"{names.item(assort_schema.offer_tpl(assort, offer))} - level {levels.get(offer, '?')}")
 			for offer in assort_schema.offer_ids(assort)
 		]
-		state = assort_schema.unlock_state(assort, locks, address.path[0], address.timing, reward, trader_id or None)
+		state = self._unlock_state(address, reward, source)
 
 		def bring(label):
 			def run(offer_id):
@@ -535,6 +542,17 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			self.doc.touch(f"Edit {key}", coalesce=(address.path, key))
 		finally:
 			self._editing = False
+		self._refresh_unlock_state(address)
+
+	def _refresh_unlock_state(self, address):
+		"""The preview of the open Assort unlock was edited: its panel says what the assort makes of it now."""
+		source = self.assort_source() if self.assort_source else None
+		if self._unlock is None or source is None or self._unlock[1].key() != address.key():
+			return
+		try:
+			self._unlock[0].set_state(self._unlock_state(address, _get(self.doc.data, address.path), source))
+		except RuntimeError:  # (the panel is already gone)
+			self._unlock = None
 
 	def edit_json(self, address):
 		data = _get(self.doc.data, address.path)
