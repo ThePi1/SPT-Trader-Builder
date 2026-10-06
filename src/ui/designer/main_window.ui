@@ -55,6 +55,11 @@
         <string>Composite items</string>
        </attribute>
       </widget>
+      <widget class="QWidget" name="page_quest_graph">
+       <attribute name="title">
+        <string>Quest Graph</string>
+       </attribute>
+      </widget>
       <widget class="QWidget" name="page_find_ids">
        <attribute name="title">
         <string>Find IDs</string>

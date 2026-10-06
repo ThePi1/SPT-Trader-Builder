@@ -218,7 +218,8 @@ def test_the_tabs_come_from_the_ui_file_and_hold_the_real_widgets(window):
 
 	expected = [
 		("Quests", window.quest_outline), ("Locale", window.locale_tab), ("Trader", window.assort_tab),
-		("Composite items", window.composite_tab), ("Find IDs", window.lookup_tab), ("Schema Explorer", window.explorer_tab),
+		("Composite items", window.composite_tab), ("Quest Graph", window.graph_tab), ("Find IDs", window.lookup_tab),
+		("Schema Explorer", window.explorer_tab),
 	]
 	assert [(window.tabs.tabText(i), window.tabs.widget(i)) for i in range(window.tabs.count())] == expected
 	assert isinstance(window.tabs, QTabWidget) and window.tabs.currentIndex() == 0
