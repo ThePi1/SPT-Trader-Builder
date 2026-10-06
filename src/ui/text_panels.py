@@ -32,6 +32,13 @@ class TextBox(QWidget):
 	def _show(self, text):
 		(self.edit.setPlainText if isinstance(self.edit, QPlainTextEdit) else self.edit.setText)(text)
 
+	def set_text(self, text):
+		"""Replace the text (as if it was typed): it is written to the locale."""
+		self._loading = True
+		self._show(text)
+		self._loading = False
+		self._edited(text)
+
 	def _edited(self, text):
 		if self._loading:
 			return
@@ -74,7 +81,8 @@ class TaskTextPanel(QGroupBox):
 	def __init__(self, doc, task_id, timing, parent=None):
 		super().__init__("Locale", parent)
 		layout = QVBoxLayout(self)
-		layout.addWidget(TextBox(doc, task_id, True))
+		self.text = TextBox(doc, task_id, True)
+		layout.addWidget(self.text)
 		if timing == "Fail":
 			hint = QLabel("Optional for conditions that fail the quest.")
 			hint.setStyleSheet("color: #808080;")

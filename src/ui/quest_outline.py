@@ -484,18 +484,33 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.doc.watch(qpath)
 		form.field_changed.connect(lambda key, a=address: self._form_edited(a, key))
 		self.pane_layout.addWidget(form)
+		text_panel = None
 		if self.locale is not None:
 			if address.kind == "quest":
 				self.pane_layout.addWidget(QuestTextPanel(self.locale, data))
 			elif address.kind == "task" and task_has_text(address.timing) and data.get("id"):
-				self.pane_layout.addWidget(TaskTextPanel(self.locale, data["id"], address.timing))
+				text_panel = TaskTextPanel(self.locale, data["id"], address.timing)
+				self.pane_layout.addWidget(text_panel)
 		json_button = QPushButton("Edit as JSON...")
 		json_button.clicked.connect(lambda: self.edit_json(address))
 		row = QHBoxLayout()
 		row.addWidget(json_button)
+		if text_panel is not None and spec.kind in ("FindItem", "HandoverItem", "Skill"):
+			generate = QPushButton("Generate locale")
+			generate.setToolTip("Write the text of this task from what it asks for: Find (or Hand over) the item's name, with 'in raid' when it has to be found in raid; or reach the skill's level")
+			generate.clicked.connect(lambda _c=False: self._generate_text(address, text_panel))
+			row.addWidget(generate)
 		row.addStretch(1)
 		self.pane_layout.addLayout(row)
 		self.pane_layout.addStretch(1)
+
+	def _generate_text(self, address, panel):
+		"""Put the words for this Find or Hand over task in its locale box."""
+		text = L.generated_task_text(_get(self.doc.data, address.path), self._names())
+		if not text:
+			QMessageBox.information(self, "Generate locale", "Choose the item (or the skill) first: the text is made from its name.")
+			return
+		panel.text.set_text(text)
 
 	def _unlock_state(self, address, reward, source):
 		assort, locks, trader_id = source
