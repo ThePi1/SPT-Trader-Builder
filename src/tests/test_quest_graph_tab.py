@@ -280,6 +280,26 @@ def test_dragging_from_the_background_moves_the_view_too(app, tmp_path):
 	tab.close()
 
 
+def test_the_view_has_room_to_bring_any_quest_to_the_middle_even_when_all_of_it_is_in_view(app, tmp_path):
+	tab = make(tmp_path)
+	view = tab.view
+	for zoom_first in (None, 0.3, 2.0):
+		view.fit()
+		if zoom_first:
+			view.zoom_by(zoom_first / view.zoom())
+		assert all(bar.maximum() > bar.minimum() for bar in (view.horizontalScrollBar(), view.verticalScrollBar()))  # (after Fit too)
+		for item in view.graph_scene.items_by_id.values():
+			view.centerOn(item)
+			middle = view.mapToScene(view.viewport().rect().center())
+			assert middle.x() == pytest.approx(item.pos().x() + 95, abs=3 / view.zoom()) and middle.y() == pytest.approx(item.pos().y() + 23, abs=3 / view.zoom())
+	view.fit()
+	before = view.mapToScene(view.viewport().rect().center())
+	view.zoom_by(1.5)
+	after = view.mapToScene(view.viewport().rect().center())
+	assert (after.x(), after.y()) == pytest.approx((before.x(), before.y()), abs=5)  # (zooming does not throw the picture elsewhere)
+	tab.close()
+
+
 # --- in the window ----------------------------------------------------------------------------------------------------
 
 @pytest.fixture

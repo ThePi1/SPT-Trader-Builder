@@ -323,6 +323,7 @@ class GraphView(QGraphicsView):
 		self.viewport().setCursor(Qt.CursorShape.OpenHandCursor)
 		self._press = None  # (the left press that may become a click or a pan: the event, then where the scroll bars were)
 		self._panning = False
+		self._padding = False
 		self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
 		self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
 		self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.SmartViewportUpdate)
@@ -341,11 +342,14 @@ class GraphView(QGraphicsView):
 		self.graph_scene = GraphScene(graph, layout, trader_names, hues, self.dark)
 		self.graph_scene.selectionChanged.connect(self._selection_changed)
 		self.graph_scene.activated.connect(self.node_activated)
+		self.setSceneRect(QRectF())  # (the room the last picture had is not this one's)
 		self.setScene(self.graph_scene)
 		if old is not None:
 			old.deleteLater()
 		if fit:
 			self.fit()
+		else:
+			self._pad()
 
 	def _selection_changed(self):
 		scene = self.graph_scene
@@ -365,6 +369,7 @@ class GraphView(QGraphicsView):
 	def zoom_by(self, factor):
 		target = min(MAX_ZOOM, max(MIN_ZOOM, self.zoom() * factor))
 		self.scale(target / self.zoom(), target / self.zoom())
+		self._pad()
 
 	def mousePressEvent(self, event):
 		if event.button() != Qt.MouseButton.LeftButton or (self.ITEMS_BLOCK_PANNING and self.itemAt(event.position().toPoint()) is not None):
@@ -419,6 +424,25 @@ class GraphView(QGraphicsView):
 			self.resetTransform()
 		elif self.zoom() < MIN_ZOOM:
 			self.zoom_by(MIN_ZOOM / self.zoom())
+		self._pad()
+
+	def _pad(self):
+		"""Give the view room to move: half a screen beyond the drawing on every side, so any quest can be brought to the middle (also when all of it is in view)."""
+		scene = self.graph_scene
+		if scene is None or self._padding:
+			return
+		self._padding = True
+		try:
+			middle = self.mapToScene(self.viewport().rect().center())  # (what is in the middle stays there)
+			across, down = self.viewport().width() / 2 / self.zoom(), self.viewport().height() / 2 / self.zoom()
+			self.setSceneRect(scene.sceneRect().adjusted(-across, -down, across, down))
+			self.centerOn(middle)
+		finally:
+			self._padding = False
+
+	def resizeEvent(self, event):
+		super().resizeEvent(event)
+		self._pad()
 
 	def select(self, quest_id, center=True):
 		"""Select this quest (and bring it to the middle). False if it isn't drawn."""
