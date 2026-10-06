@@ -188,6 +188,17 @@ class References:
 					traders[trader_id] = (ref.data.get("nickname") or ref.data.get("name") or "", ref.name)
 		return {"locale": locale, "quests": quests, "templates": templates, "assort_tpls": assort_tpls, "offers": offers, "traders": traders}
 
+	def quest_data(self):
+		"""{quest id: (the quest, the file it is in)} of every quest in the reference files (the first file wins)."""
+		self.read_all()
+		found = {}
+		for ref in self.files:
+			if ref.kind == QUESTS:
+				for quest_id, quest in ref.data.items():
+					if isinstance(quest, dict) and quest_id not in found:
+						found[quest_id] = (quest, ref.name)
+		return found
+
 	# names and "do you know this id"
 	def quest_name(self, quest_id):
 		index = self.index
