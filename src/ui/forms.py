@@ -57,12 +57,12 @@ class Context:
 			return presets[entry_id].get("_items")
 		return None
 
-	def pick_item_ids(self, multi=False, parent=None):
+	def pick_item_ids(self, multi=False, parent=None, ref="part"):
 		"""Item ids chosen in the Find an item window, which lists items and composite items. A composite item
 		gives the id of its main item (its root part's template), as the game's own files do: a list of ids can't
 		hold its parts, and the composite's own id is not an item id."""
 		ids = []
-		for picked in self.pick("part", multi, parent):
+		for picked in self.pick(ref, multi, parent):  # (ref "item": items only, no composite items to choose)
 			parts = self.composite_parts(picked)
 			for tpl in [p.get("_tpl", "") for p in P.roots(parts)] if parts is not None else [picked]:
 				if tpl and tpl not in ids:

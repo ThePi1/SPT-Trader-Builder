@@ -209,7 +209,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 		layout.addWidget(QLabel(f"<b>{self._names().item(root.get('_tpl', ''))}</b>"))
 		# the item and its mods
 		offer_parts = copy.deepcopy(A.offer_parts(data, offer_id))  # edited here, written back through the document
-		editor = PartsEditor(offer_parts, self._ctx())
+		editor = PartsEditor(offer_parts, self._ctx(), offer=True)
 		editor.changed.connect(lambda: self._parts_changed(offer_id, offer_parts))
 		box = QGroupBox("Item")
 		QVBoxLayout(box).addWidget(editor)
@@ -266,6 +266,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 
 	def _parts_changed(self, offer_id, offer_parts):
 		main_removed = not any(p.get("_id") == offer_id for p in offer_parts)
+		was = A.offer_tpl(self.doc.data, offer_id)
 		if main_removed and QMessageBox.question(
 			self, "Delete offer", "The main item is the offer itself: removing it deletes the whole offer, with its price and quest lock. Delete it?",
 		) != QMessageBox.StandardButton.Yes:
@@ -286,6 +287,8 @@ class AssortTab(QWidget, Ui_AssortForm):
 		if main_removed:
 			self._edit("Remove quest lock", lambda d: [d.get(s, {}).pop(offer_id, None) for s in A.QUEST_LOCKS], doc=self.locks)
 			self.refresh()
+		elif A.offer_tpl(self.doc.data, offer_id) != was:  # (a new main item: the title, the list and the quest status all follow it)
+			self.refresh(offer_id)
 
 	# --- price ------------------------------------------------------------------------------
 	def _price_box(self, offer_id):
@@ -445,6 +448,10 @@ class AssortTab(QWidget, Ui_AssortForm):
 				label.setText(f'Linked quest "{quest.get("QuestName") or quest_id}" gives this unlock. ' + self._preview_text(offer_id, reward))
 				if A.preview_differences(self.doc.data, offer_id, reward, self.trader_id or None):
 					button, action = "Update preview", lambda: self._update_preview(offer_id, quest_id, reward.get("id"))
+			elif (stale := self._stale_preview(quest, lock, quest_id)) is not None:
+				shows = self._names().item((A.reward_root(stale) or {}).get("_tpl", ""))
+				label.setText(f"The quest's unlock preview shows another item ({shows}), not this one.")
+				button, action = "Update preview", lambda: self._update_preview(offer_id, quest_id, stale.get("id"))
 			else:
 				label.setText("The quest doesn't unlock this item yet.")
 				button, action = "Add unlock to the quest", lambda: self._add_unlock(offer_id, lock, quest_id)
@@ -466,6 +473,12 @@ class AssortTab(QWidget, Ui_AssortForm):
 			push.clicked.connect(lambda _c=False: action())
 			row.addWidget(push)
 		return holder
+
+	def _stale_preview(self, quest, lock, quest_id):
+		"""An unlock reward of this quest (at this trader, for this lock) whose item no offer locked to the quest sells: the preview
+		of an offer whose main item was changed. None if there isn't one."""
+		sold = {A.offer_tpl(self.doc.data, o) for o, q in (self.locks.data.get(lock) or {}).items() if q == quest_id}
+		return next((r for _q, status, r, tpl in A.unlocks({quest_id: quest}, self.trader_id or None) if status == lock and tpl not in sold), None)
 
 	def _preview_text(self, offer_id, reward):
 		"""The preview the quest shows for this offer, and how it differs from the offer."""
