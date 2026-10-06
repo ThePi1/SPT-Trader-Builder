@@ -28,6 +28,10 @@ class Names:
 		name = self.quest_names.get(quest_id) or (self.gamedata.quest_name(quest_id) if self.gamedata is not None else "")
 		return name or short(quest_id, 12)
 
+	def location(self, location_id):
+		"""A map's name (the id when it isn't a known map)."""
+		return (self.gamedata.locations.get(location_id) if self.gamedata is not None else None) or str(location_id)
+
 	def items(self, tpls, limit=2):
 		names = [self.item(t) for t in tpls[:limit]]
 		if len(tpls) > limit:
