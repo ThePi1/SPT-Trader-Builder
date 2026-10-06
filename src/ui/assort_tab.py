@@ -39,6 +39,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 		self.setupUi(self)
 		self.doc, self.locks = assort_doc, locks_doc
 		self.gamedata, self.picker, self.library = gamedata, picker, library
+		self._lock_holder = None
 		self.quests = quests or (lambda: {})
 		self.quests_document = quests_document
 		self._editing = False
@@ -103,6 +104,8 @@ class AssortTab(QWidget, Ui_AssortForm):
 			doc.touch(label, coalesce=coalesce)
 		finally:
 			self._editing = False
+		if doc is self.doc or doc is self.locks:
+			self._refresh_summary()
 
 	# --- the list ---------------------------------------------------------------------------
 	def _lock_of(self, offer_id):
@@ -129,16 +132,9 @@ class AssortTab(QWidget, Ui_AssortForm):
 		level = self.levelFilter.currentData()
 		self.list.blockSignals(True)
 		self.list.clear()
-		names = self._names()
 		data = self.doc.data
-		total = 0
 		for offer_id in A.offer_ids(data):
-			part = P.find(data["items"], offer_id)
-			lock, quest = self._lock_of(offer_id)
-			text = f"{names.item(part.get('_tpl', ''))}  -  {self._price_text(offer_id)}  -  level {data.get('loyal_level_items', {}).get(offer_id, '?')}"
-			if lock:
-				text += "  [quest]"
-			total += 1
+			text = self._row_text(offer_id)
 			if words and not all(w in text.lower() for w in words):
 				continue
 			if level is not None and data.get("loyal_level_items", {}).get(offer_id) != level:
@@ -147,13 +143,40 @@ class AssortTab(QWidget, Ui_AssortForm):
 			item.setData(ROLE, offer_id)
 			self.list.addItem(item)
 		self.list.blockSignals(False)
-		problems = self._lock_problems()
-		self.note.setText(f"{self.list.count()} of {total} offers." + (f" {len(problems)} quest unlock(s) to check." if problems else ""))
-		self.note.setToolTip("\n".join(i.message for i in problems[:30]))
+		self._update_note()
 		row = next((i for i in range(self.list.count()) if self.list.item(i).data(ROLE) == keep), 0)
 		if self.list.count():
 			self.list.setCurrentRow(row)
 		self._select(self.list.currentItem(), None)
+
+	def _row_text(self, offer_id):
+		"""The offer's line in the list: its item, price and level, and [quest] when it is locked to a quest."""
+		data = self.doc.data
+		part = P.find(data["items"], offer_id)
+		text = f"{self._names().item(part.get('_tpl', ''))}  -  {self._price_text(offer_id)}  -  level {data.get('loyal_level_items', {}).get(offer_id, '?')}"
+		return text + ("  [quest]" if self._lock_of(offer_id)[0] else "")
+
+	def _update_note(self):
+		"""The line under the list: how many offers are shown, and how many quest unlocks don't add up."""
+		problems = self._lock_problems()
+		total = len(A.offer_ids(self.doc.data))
+		self.note.setText(f"{self.list.count()} of {total} offers." + (f" {len(problems)} quest unlock(s) to check." if problems else ""))
+		self.note.setToolTip("\n".join(i.message for i in problems[:30]))
+
+	def _refresh_summary(self):
+		"""After an edit that leaves the form as it is: the open offer's line in the list, the note under the list and the
+		quest box (whether its quest still gives this unlock) show what the data says now."""
+		offer_id = self.current_id()
+		if offer_id is None or offer_id not in A.offer_ids(self.doc.data):
+			return
+		for row in range(self.list.count()):
+			if self.list.item(row).data(ROLE) == offer_id:
+				self.list.item(row).setText(self._row_text(offer_id))
+		self._update_note()
+		holder = self._lock_holder
+		if holder is not None:
+			_clear(holder.layout())
+			holder.layout().addWidget(self._lock_box(offer_id))
 
 	def current_id(self):
 		item = self.list.currentItem()
@@ -169,6 +192,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 	# --- the offer --------------------------------------------------------------------------
 	def _select(self, item, _previous):
 		_clear(self.right_layout)
+		self._lock_holder = None
 		if item is None:
 			hint = QLabel("Press Add offer... to put an item on sale.")
 			hint.setStyleSheet("color: #808080;")
@@ -213,7 +237,10 @@ class AssortTab(QWidget, Ui_AssortForm):
 			entry.textEdited.connect(lambda text, k=key: self._upd_number(offer_id, k, text, entry))
 			form.addRow(label, entry)
 		layout.addLayout(form)
-		layout.addWidget(self._lock_box(offer_id))
+		self._lock_holder = QWidget()  # (the quest box is rebuilt in here when an edit changes what it says)
+		QVBoxLayout(self._lock_holder).setContentsMargins(0, 0, 0, 0)
+		self._lock_holder.layout().addWidget(self._lock_box(offer_id))
+		layout.addWidget(self._lock_holder)
 		layout.addStretch(1)
 
 	def _upd_number(self, offer_id, key, text, entry):
@@ -238,14 +265,27 @@ class AssortTab(QWidget, Ui_AssortForm):
 		)
 
 	def _parts_changed(self, offer_id, offer_parts):
+		main_removed = not any(p.get("_id") == offer_id for p in offer_parts)
+		if main_removed and QMessageBox.question(
+			self, "Delete offer", "The main item is the offer itself: removing it deletes the whole offer, with its price and quest lock. Delete it?",
+		) != QMessageBox.StandardButton.Yes:
+			self.refresh(offer_id)  # (put the item back: the form shows what the file has)
+			return
+
 		def edit(data):
 			gone = {p["_id"] for p in A.offer_parts(data, offer_id)}
 			data["items"] = [p for p in data["items"] if p["_id"] not in gone] + [dict(p) for p in offer_parts]
 			root = P.find(data["items"], offer_id)
 			if root is not None:
 				root["parentId"] = root["slotId"] = A.ROOT
+			else:  # (no main item, no offer: its price and level go too)
+				data.get("barter_scheme", {}).pop(offer_id, None)
+				data.get("loyal_level_items", {}).pop(offer_id, None)
 
-		self._edit("Change item", edit)
+		self._edit("Delete offer" if main_removed else "Change item", edit)
+		if main_removed:
+			self._edit("Remove quest lock", lambda d: [d.get(s, {}).pop(offer_id, None) for s in A.QUEST_LOCKS], doc=self.locks)
+			self.refresh()
 
 	# --- price ------------------------------------------------------------------------------
 	def _price_box(self, offer_id):
