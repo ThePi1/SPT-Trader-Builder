@@ -78,6 +78,7 @@ Open **Settings > Settings...** to change:
 - **Language for names**: only English is included. Other languages need the folder above.
 - **New quests**: the icon, side and trader new quests start with.
 - **Always ask for a file name when saving**: by default, Save writes to the file you opened.
+- **Enable debug options**: adds a **Debug** menu next to Help. Its two tools save a new, cleaned-up trader assort file or quest assort file made only from what the program knows (the open assort's offers; the links to known offers and quests). Nothing you have open is changed.
 - **Load last files on open**: when the program starts, open the quest, locale, trader assort and quest assort files that were open when you last closed it. It asks the same questions as File > Open, such as which trader an assort is for. Imported files are not reopened. Off unless you turn it on.
 - **Copy locale into every language file**: when you save the locale, also add your quests' text to the other languages' files in the same folder.
 

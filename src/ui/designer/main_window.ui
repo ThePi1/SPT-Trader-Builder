@@ -158,10 +158,18 @@
     <addaction name="actionAbout"/>
     <addaction name="actionUpdates"/>
    </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>&amp;Debug</string>
+    </property>
+    <addaction name="actionRegenerateAssort"/>
+    <addaction name="actionRegenerateLocks"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuDebug"/>
   </widget>
   <action name="actionNewQuests">
    <property name="text">
@@ -347,6 +355,22 @@
   <action name="actionAbout">
    <property name="text">
     <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="actionRegenerateAssort">
+   <property name="text">
+    <string>Regenerate trader assort using known data...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save a new trader assort file made only from the offers the program knows: their items, prices and levels</string>
+   </property>
+  </action>
+  <action name="actionRegenerateLocks">
+   <property name="text">
+    <string>Regenerate quest assort using known data...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save a new quest assort file with only the links to offers and quests the program knows</string>
    </property>
   </action>
   <action name="actionUpdates">

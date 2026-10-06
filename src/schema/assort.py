@@ -7,6 +7,8 @@ questassort.json is ``{started, success, fail}``, each ``{offer id: quest id}``:
 unlocked when the quest is started / completed, or locked when it fails.
 """
 
+import copy
+
 from core import parts as P
 from core.ids import new_id
 from schema import server
@@ -358,6 +360,62 @@ def unlock_state(assort, locks, quest_id, timing, reward, trader_id=None):
 			owner, bool(owner),
 		)
 	return "warn", "The trader assort has no offer for this item, so the player would be unlocking nothing.", None, False
+
+
+# --- rebuilding files from what is known (the Debug menu) ---------------------------------------
+
+def regenerate_assort(assort):
+	"""(a new trader assort made only of the offers in this one, what was left out as a list of phrases).
+
+	An offer is its main item, everything attached to it, its price and its level. What is left out is whatever isn't part
+	of an offer: items that hang off nothing, prices and levels of items that aren't offers, and keys the assort model has
+	no use for. A price or level an offer doesn't have is not made up."""
+	new = {"items": [], "barter_scheme": {}, "loyal_level_items": {}}
+	kept = set()
+	for offer in offer_ids(assort):
+		for part in offer_parts(assort, offer):
+			if part["_id"] not in kept:
+				kept.add(part["_id"])
+				new["items"].append(copy.deepcopy(part))
+		if offer in (assort.get("barter_scheme") or {}):
+			new["barter_scheme"][offer] = copy.deepcopy(assort["barter_scheme"][offer])
+		if offer in (assort.get("loyal_level_items") or {}):
+			new["loyal_level_items"][offer] = assort["loyal_level_items"][offer]
+	if "nextResupply" in assort:
+		new["nextResupply"] = assort["nextResupply"]
+	left_out = []
+	loose = [p for p in assort.get("items", []) if isinstance(p, dict) and p.get("_id") not in kept]
+	if loose:
+		left_out.append(f"{len(loose)} item{' that is' if len(loose) == 1 else 's that are'} not part of an offer")
+	prices = [k for k in (assort.get("barter_scheme") or {}) if k not in new["barter_scheme"]]
+	levels = [k for k in (assort.get("loyal_level_items") or {}) if k not in new["loyal_level_items"]]
+	if prices:
+		left_out.append(f"{len(prices)} price{' of something that is' if len(prices) == 1 else 's of things that are'} not an offer")
+	if levels:
+		left_out.append(f"{len(levels)} level{' of something that is' if len(levels) == 1 else 's of things that are'} not an offer")
+	extra = [k for k in assort if k not in new]
+	if extra:
+		left_out.append("the keys " + ", ".join(extra))
+	return new, left_out
+
+
+def regenerate_questassort(locks, offers, knows_quest):
+	"""(a new quest assort file with only the links whose offer is in offers and whose quest knows_quest(id) accepts,
+	the links that were left out as [(section, offer id, quest id, why)]). Sections other than started, success and fail go too."""
+	new = empty_questassort()
+	dropped = []
+	for section, links in (locks or {}).items():
+		if section not in QUEST_LOCKS:
+			dropped.append((section, "", "", "not a section SPT uses"))
+			continue
+		for offer, quest in (links or {}).items():
+			if offer not in offers:
+				dropped.append((section, offer, quest, "no such offer in the trader assort"))
+			elif not knows_quest(quest):
+				dropped.append((section, offer, quest, "the quest is not known"))
+			else:
+				new[section][offer] = quest
+	return new, dropped
 
 
 # --- composite items: a saved multi-part item (a weapon with mods) ---------------------------

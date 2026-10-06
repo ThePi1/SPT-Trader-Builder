@@ -45,6 +45,7 @@ _LABELS = {
 	"copy_locale_to_all_languages": "Copy locale into every language file",
 	"save_asks_for_file": "Always ask for a file name when saving",
 	"load_last_files": "Load last files on open",
+	"enable_debug_options": "Enable debug options",
 	"database_folder": "SPT database folder",
 	"language": "Language for names",
 	"quest_icon": "Icon",
@@ -66,6 +67,7 @@ _TIPS = {
 	"copy_locale_to_all_languages": "When you save the locale file, also add the text of the open quests to the other languages' files in the same folder. Entries those files already have are kept.",
 	"save_asks_for_file": "Save normally writes to the file that was opened or last saved to. Turn this on to choose a file name every time (the dialog starts at that file).",
 	"load_last_files": "When the program starts, open the quest, locale, trader assort and quest assort files that were open when you last closed it. It asks the same questions as File > Open (the trader, for an assort). Imported files are not reopened.",
+	"enable_debug_options": "Adds a Debug menu next to Help, with tools for checking and rebuilding files. They only write the new files you choose.",
 	"database_folder": "Your SPT_Data/database folder. Empty uses the data that comes with the program. It is only read, never changed.",
 	"language": "Language used for item and trader names (en, ru, de, ...).",
 	"quest_icon": "The icon new quests start with.",
@@ -77,7 +79,7 @@ _TIPS = {
 	"explorer_max_problems": "The most problems listed after checking a file in the Schema Explorer.",
 }
 _TABS = (
-	("General", ("debug_logging", "copy_locale_to_all_languages", "save_asks_for_file", "load_last_files", "show_all_fields", "show_json_preview", "mark_uncommon_fields")),
+	("General", ("debug_logging", "copy_locale_to_all_languages", "save_asks_for_file", "load_last_files", "enable_debug_options", "show_all_fields", "show_json_preview", "mark_uncommon_fields")),
 	("Game data", ("database_folder", "language")),
 	("New quests", ("quest_icon", "side", "trader")),
 	("Lists", ("locale_max_entries", "lookup_max_rows", "problems_max_shown", "explorer_max_problems")),

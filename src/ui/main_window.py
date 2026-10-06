@@ -181,7 +181,60 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.actionExportQuests.triggered.connect(lambda _checked=False: self.export_quests())
 		self.quest_outline.export_requested.connect(self.export_quests)
 		self.undo_action, self.redo_action = self.actionUndo, self.actionRedo
+		self.actionRegenerateAssort.triggered.connect(lambda _checked=False: self.debug_regenerate_assort())
+		self.actionRegenerateLocks.triggered.connect(lambda _checked=False: self.debug_regenerate_locks())
+		self.apply_debug_option()
 		self.menuEdit.aboutToShow.connect(self._update_edit_menu)
+
+	def apply_debug_option(self):
+		"""The Debug menu is there only while "Enable debug options" is on."""
+		self.menuDebug.menuAction().setVisible(bool(getattr(self.settings, "enable_debug_options", False)))
+
+	def _folder_of(self, doc):
+		return str(Path(doc.path).parent) if doc.path else ""
+
+	def debug_regenerate_assort(self):
+		"""Debug: save a new trader assort file made only of the offers the program knows (the open assort's offers, with their
+		items, prices and levels). The open assort is not changed."""
+		offers = assort_schema.offer_ids(self.assort.data)
+		if not offers:
+			QMessageBox.information(self, "Regenerate trader assort", "There is no trader assort open yet: open or import one first.")
+			return None
+		path, _ = QFileDialog.getSaveFileName(self, "Save the regenerated trader assort", str(Path(self._folder_of(self.assort)) / "assort.json"), JSON_FILTER)
+		if not path:
+			return None
+		new, left_out = assort_schema.regenerate_assort(self.assort.data)
+		return self._save_debug_file(path, new, f"{len(offers)} offer{'' if len(offers) == 1 else 's'}", left_out)
+
+	def debug_regenerate_locks(self):
+		"""Debug: save a new quest assort file with only the links to offers (in the open trader assort) and quests (open, in the
+		base game or in a reference file) that are known. The open quest assort is not changed."""
+		offers = set(assort_schema.offer_ids(self.assort.data))
+		if not offers:
+			QMessageBox.information(self, "Regenerate quest assort", "There is no trader assort open, so no offer is known and every link would be removed. Open or import one first.")
+			return None
+		path, _ = QFileDialog.getSaveFileName(self, "Save the regenerated quest assort", str(Path(self._folder_of(self.locks)) / "questassort.json"), JSON_FILTER)
+		if not path:
+			return None
+		known = self.quests.data
+		new, dropped = assort_schema.regenerate_questassort(
+			self.locks.data, offers, lambda quest_id: quest_id in known or (self.gamedata is not None and self.gamedata.knows_quest(quest_id)),
+		)
+		kept = sum(len(links) for links in new.values())
+		left_out = [f"{section}: {offer or '(section)'} -> {quest or '-'} ({why})" for section, offer, quest, why in dropped]
+		return self._save_debug_file(path, new, f"{kept} link{'' if kept == 1 else 's'}", left_out)
+
+	def _save_debug_file(self, path, data, what, left_out):
+		try:
+			jsonio.write_json(path, data)
+		except OSError as e:
+			QMessageBox.warning(self, "Save", f"The file could not be saved.\n\n{e}")
+			return None
+		text = f"Saved {what} to {Path(path).name}."
+		if left_out:
+			text += f" Left out: {'; '.join(left_out[:4])}" + (f" (and {len(left_out) - 4} more)" if len(left_out) > 4 else "") + "."
+		self.statusBar().showMessage(text, 20000)
+		return {"path": path, "data": data, "left_out": left_out}
 
 	def _update_edit_menu(self):
 		undo_doc = self._latest()
@@ -596,6 +649,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 				self.update_status = updates.pending_status(self.settings)
 				self.start_update_check()
 			self.quest_outline.apply_settings()
+			self.apply_debug_option()
 			self.explorer_tab.browse.refresh()
 			self.locale_tab.refresh()
 			self.lookup_tab.view.refresh()
