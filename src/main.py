@@ -3,6 +3,7 @@
 import logging
 import sys
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from core.gamedata import GameData
@@ -25,6 +26,7 @@ def main():
 	gamedata = GameData(database, settings.language, BUNDLED_DATABASE_DIR if BUNDLED_DATABASE_DIR.is_dir() else None)
 	window = MainWindow(settings, gamedata)
 	window.show()
+	QTimer.singleShot(0, window.restore_last_files)  # (once the window is up: the files that were open, if that setting is on)
 	return app.exec()
 
 

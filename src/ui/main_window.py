@@ -17,6 +17,7 @@ from core import merge as M
 from core.export import export_selection
 from core.locale_copy import copy_to_other_languages
 from core.documents import Document
+from core.last_files import LastFiles
 from core.paths import ICON_FILE
 from core.references import References
 from ui import dialogs, updates
@@ -43,6 +44,7 @@ KINDS = (
 	("assort", "Trader assort", "trader assort", M.ASSORT), ("locks", "Quest assort", "quest assort", M.LOCKS),
 )
 KEY_OF_KIND = {kind: key for key, _title, _label, kind in KINDS}
+LAST_KEYS = ("quests", "locale", "assort", "locks")  # (the sections whose file is remembered)
 
 
 def app_icon():
@@ -62,6 +64,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self._workers = []
 		self.quest_sources = {}  # quest id -> the file it was imported from
 		self.references = References(language=settings.language)  # files that are only looked at
+		self.last_files = LastFiles()  # the files that are open, kept for "Load last files on open"
+		self._restoring = False
 		if gamedata is not None:
 			gamedata.references = self.references
 		self.quests = Document({})
@@ -279,6 +283,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline.set_document(doc)
 		self.locale_tab.set_documents(self.locale, doc)
 		self._doc_changed()
+		self._remember_files()
 
 	def _set_locale(self, doc):
 		self.locale = doc
@@ -289,17 +294,20 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline.check()
 		self.locale_tab.set_documents(doc, self.quests)
 		self._doc_changed()
+		self._remember_files()
 
 	def _new(self, doc, label, setter):
 		if self._confirm_discard(doc, label):
 			setter(Document({}))
 
-	def _open(self, doc, label, setter):
+	def _open(self, doc, label, setter, path=None):
+		"""Open a file in place of this section's: the one at path, or the one the user picks."""
 		if not self._confirm_discard(doc, label):
 			return
-		path, _ = QFileDialog.getOpenFileName(self, f"Open {label} file", "", JSON_FILTER)
-		if not path:
-			return
+		if path is None:
+			path, _ = QFileDialog.getOpenFileName(self, f"Open {label} file", "", JSON_FILTER)
+			if not path:
+				return
 		try:
 			opened = Document.open(path)
 		except (OSError, ValueError) as e:
@@ -323,9 +331,47 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		except OSError as e:
 			QMessageBox.warning(self, "Save", f"The file could not be saved.\n\n{e}")
 			return False
+		self._remember_files()
 		if doc is self.locale and self.settings.copy_locale_to_all_languages:
 			self.copy_text_to_other_languages()
 		return True
+
+	# --- the files that were open last time ----------------------------------------------------
+	def _remember_files(self):
+		"""Keep the file each section was opened from or saved to, for "Load last files on open" (only while that is on)."""
+		if not getattr(self.settings, "load_last_files", False) or self._restoring:
+			return
+		self.last_files.write({key: str(getattr(self, key).path) if getattr(self, key).path else None for key in LAST_KEYS})
+
+	def restore_last_files(self):
+		"""Open the files that were open when the program was last closed, if the setting is on. They open the way File > Open
+		opens them (so an assort asks which trader it is for). Imported files are not part of this. Returns the paths opened."""
+		if not getattr(self.settings, "load_last_files", False):
+			return []
+		last = self.last_files.read()
+		openers = {
+			"quests": self.open_quests, "locale": self.open_locale,
+			"assort": lambda path: self._open_other("assort", path), "locks": lambda path: self._open_other("locks", path),
+		}
+		opened, missing = [], []
+		self._restoring = True  # (what is kept is only updated when all are done: opening the first must not forget the rest)
+		try:
+			for key in LAST_KEYS:
+				path = last.get(key)
+				if not path:
+					continue
+				if not Path(path).is_file():
+					missing.append(Path(path).name)
+					continue
+				openers[key](path)
+				if getattr(self, key).path == Path(path):
+					opened.append(path)
+		finally:
+			self._restoring = False
+		self._remember_files()
+		if missing:
+			self.statusBar().showMessage(f"Not opened again, because they are gone: {', '.join(missing)}.", 15000)
+		return opened
 
 	def copy_text_to_other_languages(self):
 		"""Add the saved text (that of the open quests, or all of it when no quests are open) to the other
@@ -348,8 +394,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 	def new_quests(self):
 		self._new(self.quests, "quest", self._set_quests)
 
-	def open_quests(self):
-		self._open(self.quests, "quest", self._set_quests)
+	def open_quests(self, path=None):
+		self._open(self.quests, "quest", self._set_quests, path)
 
 	def save_quests(self):
 		return self._save(self.quests, "quest")
@@ -360,8 +406,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 	def new_locale(self):
 		self._new(self.locale, "locale", self._set_locale)
 
-	def open_locale(self):
-		self._open(self.locale, "locale", self._set_locale)
+	def open_locale(self, path=None):
+		self._open(self.locale, "locale", self._set_locale, path)
 
 	def save_locale(self):
 		return self._save(self.locale, "locale")
@@ -376,13 +422,14 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		doc.on_change(self._doc_changed)
 		self.assort_tab.watch(self.assort, self.locks)
 		self._doc_changed()
+		self._remember_files()
 
 	def _new_other(self, name):
 		label, empty = self._OTHER[name]
 		if self._confirm_discard(getattr(self, name), label):
 			self._set_other(name, Document(empty()))
 
-	def _open_other(self, name):
+	def _open_other(self, name, path=None):
 		label, empty = self._OTHER[name]
 
 		def opened(doc):
@@ -390,7 +437,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			if name == "assort":
 				self.ask_trader(doc.path)
 
-		self._open(getattr(self, name), label, opened)
+		self._open(getattr(self, name), label, opened, path)
 
 	def ask_trader(self, path=None):
 		"""Ask which trader an assort file is for (starting from where the file is, else the trader chosen now) and put the
@@ -427,6 +474,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def closeEvent(self, event):
 		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest assort"))):
+			self._remember_files()
 			event.accept()
 		else:
 			event.ignore()

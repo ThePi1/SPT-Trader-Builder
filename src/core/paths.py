@@ -24,6 +24,9 @@ LIBRARY_FILE = DATA_DIR / "my_items.json"
 # The list of reference files (files that are only looked at, never edited)
 REFERENCES_FILE = DATA_DIR / "references.json"
 
+# The files that were open when the program was last closed (the "Load last files on open" setting)
+LAST_FILES_FILE = DATA_DIR / "last_files.json"
+
 SETTINGS_FILE = DATA_DIR / "settings.ini"
 
 # The window icon (also the icon of the packaged .exe)
