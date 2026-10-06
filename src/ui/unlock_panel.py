@@ -13,12 +13,11 @@ class UnlockOfferPanel(QGroupBox):
 
 	def __init__(self, state, offers, on_fill, on_update, parent=None):
 		super().__init__("Trader offer", parent)
-		tone, message, offer_id, differs = state
 		layout = QVBoxLayout(self)
-		self.status = QLabel(message)
+		self.status = QLabel()
 		self.status.setWordWrap(True)
-		self.status.setStyleSheet(f"color: {TONES.get(tone, TONES['note'])};")
 		layout.addWidget(self.status)
+		self.offer_id = None
 		row = QHBoxLayout()
 		self.combo = QComboBox()
 		for offer, text in offers:
@@ -29,10 +28,17 @@ class UnlockOfferPanel(QGroupBox):
 		self.fillButton.clicked.connect(lambda _checked=False: on_fill(self.combo.currentData()))
 		self.updateButton = QPushButton("Update preview")
 		self.updateButton.setToolTip("Make the preview the same as the offer it belongs to")
-		self.updateButton.clicked.connect(lambda _checked=False: on_update(offer_id))
+		self.updateButton.clicked.connect(lambda _checked=False: on_update(self.offer_id))
 		row.addWidget(self.combo, 1)
 		row.addWidget(self.fillButton)
 		row.addWidget(self.updateButton)
 		layout.addLayout(row)
 		# (shown only now it has a parent: a widget with no parent that is shown opens as a window of its own)
-		self.updateButton.setVisible(bool(differs) and offer_id is not None)
+		self.set_state(state)
+
+	def set_state(self, state):
+		"""Show what the assort says now (the preview was edited)."""
+		tone, message, self.offer_id, differs = state
+		self.status.setText(message)
+		self.status.setStyleSheet(f"color: {TONES.get(tone, TONES['note'])};")
+		self.updateButton.setVisible(bool(differs) and self.offer_id is not None)

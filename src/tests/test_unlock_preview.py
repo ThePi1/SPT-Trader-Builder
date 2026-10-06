@@ -164,6 +164,28 @@ def test_the_quests_tab_shows_what_the_assort_says_and_can_fill_or_update_the_pr
 	assert quests.data[QID]["rewards"]["Success"][0]["loyaltyLevel"] == 4
 
 
+def test_the_panel_follows_the_preview_as_its_fields_are_edited(app):
+	assort = assort_with(gun(), gun((OTHER,)))
+	first, second = A.offer_ids(assort)
+	locks = A.empty_questassort()
+	locks["success"][first] = QID
+	reward = A.unlock_reward(assort, first, TRADER)
+	outline, quests = outline_for(assort, locks, reward)
+	box = panel(outline)
+	assert "same as the offer locked" in box.status.text() and box.updateButton.isHidden()
+	form = outline.pane.findChild(forms.FormWidget)
+	level = next(c for c in form.controls if c.field.key == "loyaltyLevel")
+	level.edited.emit(4)  # (the quest's level is changed in the form)
+	assert panel(outline) is box and "level 4 in the quest, 2 in the offer" in box.status.text() and not box.updateButton.isHidden()
+	level.edited.emit(2)
+	assert "same as the offer locked" in box.status.text() and box.updateButton.isHidden()
+	items = next(c for c in form.controls if c.field.key == "items")
+	items.edited.emit(A.offer_parts(assort, second))  # (another item as the preview)
+	assert panel(outline) is box and "differs" in box.status.text() and "same as the offer locked" not in box.status.text()
+	box.updateButton.click()  # (still brings the preview in line with the offer it belongs to)
+	assert quests.data[QID]["rewards"]["Success"][0]["items"][0]["_tpl"] == GUN
+
+
 def test_filling_the_preview_from_any_offer_of_the_open_assort(app):
 	assort = assort_with(gun(), gun((OTHER,)))
 	first, second = A.offer_ids(assort)
