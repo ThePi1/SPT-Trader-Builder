@@ -52,6 +52,23 @@ def _category_rows(gamedata):
 	return rows
 
 
+def category_items(items, category_id):
+	"""The ids of all the items under an item category, at any depth (Handgun: every pistol), in the order of the item templates.
+	items is the game's templates/items.json."""
+	below, found = {category_id}, []
+	grew = True
+	while grew:  # (the categories under it, and the ones under those)
+		grew = False
+		for tpl, node in items.items():
+			if node.get("_type") == "Node" and node.get("_parent") in below and tpl not in below:
+				below.add(tpl)
+				grew = True
+	for tpl, item in items.items():
+		if item.get("_type") == "Item" and item.get("_parent") in below:
+			found.append(tpl)
+	return found
+
+
 def library_rows(library):
 	"""The user's saved composite items (core.library.Library), as rows."""
 	if library is None:

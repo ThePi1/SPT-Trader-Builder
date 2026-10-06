@@ -152,7 +152,10 @@ def test_every_item_list_uses_the_same_window_and_a_composite_gives_its_main_ite
 	single = forms.RefControl(F.Field("target", "Main item", F.REF, "", ref=F.ITEM), ctx)
 	single._find()
 	assert single.entry.text() == "c" * 24
-	assert asked == ["item_id", "item_id", "item_id"]  # (one search window for all of them)
+	assert asked == ["item_list", "item_list", "part"]  # (one search window for the lists, which also list item categories; the single-id box takes items only)
+	categories = forms.ListControl(F.Field("hasItemFromCategory", "Must include one from", F.IDLIST, [], ref=F.ITEM, categories=True), ctx)
+	categories._find()
+	assert asked[-1] == "item_id"  # (the one list that takes item categories lists them too)
 	quest = forms.RefControl(F.Field("target", "Quest", F.REF, "", ref=F.QUEST), ctx)
 	quest._find()
 	assert asked[-1] == F.QUEST  # (other kinds of id keep their own search)
@@ -193,3 +196,76 @@ def test_the_vanilla_ak_102_composite_gives_the_ak_102_item_id():
 	assert composite_id in data.item_presets and composite_id not in data.items  # (a composite's id is not an item id)
 	ctx = Context(data, Names(data), lambda ref, multi, parent: [composite_id])
 	assert ctx.pick_item_ids(False) == [item_id] and item_id in data.items
+
+
+def test_only_the_weapon_assembly_category_list_takes_item_categories():
+	"""Tested in game: a category id in a Kills weapon list or in the equipment lists matches nothing; only hasItemFromCategory uses them."""
+	from schema import registry
+
+	found = [
+		(group, spec.kind, field.key)
+		for group in ("task", "subtask", "reward")
+		for spec in registry.kinds(group)
+		for field in spec.fields
+		if field.categories
+	]
+	assert found == [("task", "WeaponAssembly", "hasItemFromCategory")]
+
+
+HANDGUN = "5447b5cf4bdc2d65278b4567"
+
+
+def test_a_category_picked_for_an_item_list_adds_the_items_under_it_after_asking(monkeypatch):
+	from PySide6.QtWidgets import QApplication, QMessageBox
+
+	from core.paths import BUNDLED_DATABASE_DIR
+	from schema import fields as F
+	from schema.common import Names
+	from ui import forms
+	from ui.forms import Context
+
+	app = QApplication.instance() or QApplication([])
+	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
+	below = lookup.category_items(data.items, HANDGUN)
+	assert len(below) > 5 and all(data.items[i]["_type"] == "Item" for i in below)
+	assert "5448bd6b4bdc2dfc2f8b4569" in below  # (the Makarov PM, a pistol)
+	assert set(below) < set(lookup.category_items(data.items, "5422acb9af1c889c16000029"))  # (Weapon, the category above it, has them and more: at any depth)
+	asked = []
+	answer = [QMessageBox.StandardButton.Yes]
+	monkeypatch.setattr("ui.forms.QMessageBox.question", lambda parent, title, text, *a: asked.append(text) or answer[0])
+	ctx = Context(data, Names(data), lambda ref, multi, parent: [HANDGUN, "5448bd6b4bdc2dfc2f8b4569"])
+	lst = forms.ListControl(F.Field("weapon", "With weapons", F.IDLIST, [], ref=F.ITEM), ctx)
+	lst._find()
+	assert asked == [f"Adding this will instead add {len(below)} child items parented to it. Continue?"]
+	assert lst.values == below  # (each item once: the Makarov was also picked by itself)
+	answer[0] = QMessageBox.StandardButton.No
+	declined = forms.ListControl(F.Field("weapon", "With weapons", F.IDLIST, [], ref=F.ITEM), ctx)
+	declined._find()
+	assert declined.values == ["5448bd6b4bdc2dfc2f8b4569"]  # (No: only the item that was picked on its own)
+	# the list that takes categories keeps them, and a single id box never gets one
+	answer[0] = QMessageBox.StandardButton.Yes
+	asked.clear()
+	native = forms.ListControl(F.Field("hasItemFromCategory", "Must include one from", F.IDLIST, [], ref=F.ITEM, categories=True), ctx)
+	native._find()
+	assert native.values == [HANDGUN, "5448bd6b4bdc2dfc2f8b4569"] and not asked
+	assert forms.RefControl(F.Field("target", "Main item", F.REF, "", ref=F.ITEM), ctx)._item_ref() == "part"
+
+
+def test_a_category_with_no_items_says_so_and_adds_nothing(monkeypatch):
+	from PySide6.QtWidgets import QApplication
+
+	from core.paths import BUNDLED_DATABASE_DIR
+	from schema import fields as F
+	from schema.common import Names
+	from ui import forms
+	from ui.forms import Context
+
+	app = QApplication.instance() or QApplication([])
+	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
+	told = []
+	monkeypatch.setattr("ui.forms.QMessageBox.information", lambda parent, title, text, *a: told.append(text))
+	empty = next(i for i, n in data.items.items() if n["_type"] == "Node" and not lookup.category_items(data.items, i))
+	ctx = Context(data, Names(data), lambda ref, multi, parent: [empty])
+	lst = forms.ListControl(F.Field("weapon", "With weapons", F.IDLIST, [], ref=F.ITEM), ctx)
+	lst._find()
+	assert lst.values == [] and len(told) == 1 and "nothing was added" in told[0]

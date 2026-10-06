@@ -9,10 +9,11 @@ import json
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-	QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPlainTextEdit, QPushButton,
+	QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPlainTextEdit, QPushButton,
 	QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
+from core import lookup
 from core import parts as P
 from core.ids import new_id
 from schema import choices as choice_lists
@@ -58,16 +59,34 @@ class Context:
 		return None
 
 	def pick_item_ids(self, multi=False, parent=None, ref="part"):
-		"""Item ids chosen in the Find an item window, which lists items and composite items (and, for ref "item_id", item categories). A composite item
+		"""Item ids chosen in the Find an item window, which lists items and composite items. A composite item
 		gives the id of its main item (its root part's template), as the game's own files do: a list of ids can't
-		hold its parts, and the composite's own id is not an item id."""
+		hold its parts, and the composite's own id is not an item id.
+		The window also lists item categories for ref "item_id" (the list takes the category's id as it is) and "item_list" (the game
+		takes only items there: after asking, a category gives all the items under it)."""
 		ids = []
+		items = self.gamedata.items if self.gamedata is not None else {}
 		for picked in self.pick(ref, multi, parent):  # (ref "item": items only, no composite items to choose)
-			parts = self.composite_parts(picked)
-			for tpl in [p.get("_tpl", "") for p in P.roots(parts)] if parts is not None else [picked]:
+			if ref == "item_list" and (items.get(picked) or {}).get("_type") == "Node":
+				chosen = self._items_under(picked, parent)
+			else:
+				parts = self.composite_parts(picked)
+				chosen = [p.get("_tpl", "") for p in P.roots(parts)] if parts is not None else [picked]
+			for tpl in chosen:
 				if tpl and tpl not in ids:
 					ids.append(tpl)
 		return ids
+
+	def _items_under(self, category_id, parent):
+		"""The items to add in place of an item category (none if the user says no, or it has none)."""
+		found = lookup.category_items(self.gamedata.items, category_id)
+		if not found:
+			QMessageBox.information(parent, "Item category", f"{self.names.item(category_id)} has no items under it, so nothing was added.")
+			return []
+		answer = QMessageBox.question(
+			parent, "Item category", f"Adding this will instead add {len(found)} child item{'' if len(found) == 1 else 's'} parented to it. Continue?",
+		)
+		return found if answer == QMessageBox.StandardButton.Yes else []
 
 	def task_label(self, task_id):
 		"""Words for a task of the quest being edited ('' if it isn't one)."""
@@ -97,6 +116,11 @@ class Control(QWidget):
 		box = QHBoxLayout(self)
 		box.setContentsMargins(0, 0, 0, 0)
 		self.box = box
+
+	def _item_ref(self):
+		"""Which search an item id field opens. One that lists item categories too: as they are where the game takes them, and as the items
+		under them in a list (the game takes only items there)."""
+		return "item_id" if self.field.categories else "item_list" if self.field.kind in (F.IDLIST, F.GROUPS) else "part"
 
 	def load(self, value):
 		raise NotImplementedError
@@ -195,7 +219,7 @@ class RefControl(Control):
 			self.box.addWidget(find)
 
 	def _find(self):
-		ids = self.ctx.pick_item_ids(False, self, "item_id") if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, False, self)
+		ids = self.ctx.pick_item_ids(False, self, self._item_ref()) if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, False, self)
 		if ids:
 			self.entry.setText(ids[0])
 			self._edited(ids[0])
@@ -281,7 +305,7 @@ class ListControl(Control):
 		self.edited.emit(list(self.values))
 
 	def _find(self):
-		ids = self.ctx.pick_item_ids(True, self, "item_id") if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, True, self)
+		ids = self.ctx.pick_item_ids(True, self, self._item_ref()) if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, True, self)
 		if ids:
 			self.values.extend(i for i in ids if i not in self.values)
 			self._fill()
@@ -365,7 +389,7 @@ class GroupsControl(Control):
 		self.edited.emit([list(g) for g in self.groups])
 
 	def _find(self):
-		ids = self.ctx.pick_item_ids(True, self, "item_id")
+		ids = self.ctx.pick_item_ids(True, self, self._item_ref())
 		if ids:
 			self.entry.setText(", ".join(ids))
 

@@ -244,7 +244,7 @@ def _weapon_fields():
 	return (
 		Field("target", "Weapons", IDLIST, ref=ITEM),
 		Field("containsItems", "Must include", IDLIST, ref=ITEM),
-		Field("hasItemFromCategory", "Must include one from", IDLIST, ref=ITEM),
+		Field("hasItemFromCategory", "Must include one from", IDLIST, ref=ITEM, categories=True),
 	) + tuple(compare_object(key, labels[key]) for key in _VALUE_OBJECT_KEYS)
 
 

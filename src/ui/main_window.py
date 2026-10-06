@@ -124,12 +124,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 	def pick(self, ref, multi=False, parent=None):
 		title = {
 			"item": "Find an item", "quest": "Find a quest", "achievement": "Find an achievement", "customization": "Find clothing",
-			"composite": "Find a composite item", "part": "Find an item", "item_id": "Find an item",
+			"composite": "Find a composite item", "part": "Find an item", "item_id": "Find an item", "item_list": "Find an item",
 		}.get(ref, "Find")
 		kinds = {
 			"composite": (lookup.MINE, lookup.PRESET),  # (saved ones and the game's)
 			"part": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET),  # (what a list of item parts can take)
-			"item_id": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET, lookup.CATEGORY),  # (what a condition's item list can take: categories too)
+			"item_id": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET, lookup.CATEGORY),  # (the list that takes categories as they are)
+			"item_list": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET, lookup.CATEGORY),  # (an item list: a category stands for the items under it)
 			"item": (lookup.ITEM, lookup.REF_ITEM), "quest": (lookup.QUEST, lookup.REF_QUEST),  # (the game's, and the reference files')
 		}.get(ref, (ref,))
 		dialog = PickerDialog(self.rows(kinds), kinds, title, multi, self.settings, parent or self)
