@@ -12,6 +12,7 @@ Items that are identical to what is already there are not clashes; they are skip
 """
 
 import copy
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -191,6 +192,9 @@ class Item:
 	include: bool = True
 
 
+_ID = re.compile(r"[0-9a-fA-F]{24}")
+
+
 def load_items(paths, limit=200):
 	"""Read the files (and the .json files inside folders) as Items; one that can't be read has an error."""
 	files = []
@@ -209,6 +213,20 @@ def load_items(paths, limit=200):
 		kind = explorer.detect_kind(data)
 		items.append(Item(path.name, kind, data, path, "" if kind else "Not a quest, locale, trader assort or quest assort file.", include=bool(kind)))
 	return items
+
+
+def guess_trader(path, known=()):
+	"""The id of the trader a file probably belongs to, from where it is: the base.json next to it, or a folder named with a
+	trader's id (traders/<id>/assort.json, a mod's <id> folder). One of the known ids is preferred. '' if there is no clue."""
+	path = Path(path)
+	try:
+		base = jsonio.read_json(path.parent / "base.json") if (path.parent / "base.json").is_file() else None
+	except (OSError, ValueError):
+		base = None
+	if isinstance(base, dict) and isinstance(base.get("_id"), str) and _ID.fullmatch(base["_id"]):
+		return base["_id"]
+	ids = [folder.name for folder in list(path.parents)[:4] if _ID.fullmatch(folder.name)]
+	return next((i for i in ids if i in known), ids[0] if ids else "")
 
 
 @dataclass

@@ -40,6 +40,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 		self.doc, self.locks = assort_doc, locks_doc
 		self.gamedata, self.picker, self.library = gamedata, picker, library
 		self._lock_holder = None
+		self._asking = False  # (the "change the trader?" question is open)
 		self.quests = quests or (lambda: {})
 		self.quests_document = quests_document
 		self._editing = False
@@ -72,11 +73,54 @@ class AssortTab(QWidget, Ui_AssortForm):
 		return text if re.fullmatch(r"[0-9a-fA-F]{24}", text) else ""
 
 	def _trader_changed(self):
-		"""The trader box was used. Only a different trader changes anything (the box also reports losing focus)."""
-		if self.trader_id == self._last_trader:
+		"""The trader box was used. Only a different trader changes anything (the box also reports losing focus).
+		Changing a trader that is set asks first."""
+		if self._asking:  # (the question took the focus from the box, which reports it is finished: that is not another change)
 			return
-		self._last_trader = self.trader_id
+		new = self.trader_id
+		if new == self._last_trader:
+			return
+		if self._last_trader:
+			self._asking = True
+			try:
+				confirmed = self._confirm_trader_change(self._last_trader, new)
+			finally:
+				self._asking = False
+			if not confirmed:
+				self._show_trader(self._last_trader)
+				return
+		self._last_trader = new
 		self.refresh(self.current_id())
+
+	def set_trader(self, trader_id):
+		"""Put this trader in the Trader box (asking first when another trader is set). True if the box shows it now."""
+		self._show_trader(trader_id)
+		self._trader_changed()
+		return self.trader_id == trader_id
+
+	def _show_trader(self, trader_id):
+		"""Show a trader in the box without that counting as the user changing it."""
+		for widget in (self.trader, self.trader.lineEdit()):
+			widget.blockSignals(True)
+		index = self.trader.findData(trader_id)
+		if index >= 0:
+			self.trader.setCurrentIndex(index)
+		else:
+			self.trader.setEditText(trader_id)
+		for widget in (self.trader, self.trader.lineEdit()):
+			widget.blockSignals(False)
+
+	def _trader_name(self, trader_id):
+		index = self.trader.findData(trader_id)
+		return self.trader.itemText(index) if index >= 0 else (trader_id or "(not set)")
+
+	def _confirm_trader_change(self, old, new):
+		answer = QMessageBox.question(
+			self, "Change trader",
+			f"Change the trader of this assort from {self._trader_name(old)} to {self._trader_name(new)}?\n\n"
+			"The trader decides which quest unlocks the offers are matched with. The offers themselves do not change.",
+		)
+		return answer == QMessageBox.StandardButton.Yes
 
 	# --- documents --------------------------------------------------------------------------
 	def watch(self, assort_doc, locks_doc):
@@ -160,7 +204,10 @@ class AssortTab(QWidget, Ui_AssortForm):
 		"""The line under the list: how many offers are shown, and how many quest unlocks don't add up."""
 		problems = self._lock_problems()
 		total = len(A.offer_ids(self.doc.data))
-		self.note.setText(f"{self.list.count()} of {total} offers." + (f" {len(problems)} quest unlock(s) to check." if problems else ""))
+		self.note.setText(
+			f"{self.list.count()} of {total} offers." + ("" if self.trader_id else " No trader has been chosen.")
+			+ (f" {len(problems)} quest unlock(s) to check." if problems else "")
+		)
 		self.note.setToolTip("\n".join(i.message for i in problems[:30]))
 
 	def _refresh_summary(self):

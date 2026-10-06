@@ -4,11 +4,12 @@ A quest file and a locale file are opened (or started from nothing) and saved on
 there is no project folder.
 """
 
+import re
 from pathlib import Path
 
 from PySide6.QtCore import QThreadPool, QTimer
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QInputDialog, QMainWindow, QMessageBox
 
 from core import lookup
 from core import jsonio
@@ -383,7 +384,30 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def _open_other(self, name):
 		label, empty = self._OTHER[name]
-		self._open(getattr(self, name), label, lambda doc: self._set_other(name, doc))
+
+		def opened(doc):
+			self._set_other(name, doc)
+			if name == "assort":
+				self.ask_trader(doc.path)
+
+		self._open(getattr(self, name), label, opened)
+
+	def ask_trader(self, path=None):
+		"""Ask which trader an assort file is for (starting from where the file is, else the trader chosen now) and put the
+		answer in the Trader box. Cancelling leaves the Trader box as it is."""
+		traders = self.gamedata.all_traders() if self.gamedata is not None else {}
+		current = (M.guess_trader(path, traders) if path else "") or self.assort_tab.trader_id
+		choices = [("(not set)", "")] + [(name, trader_id) for trader_id, name in traders.items()]
+		if current and current not in traders:
+			choices.append((current, current))  # (a trader the list doesn't know: shown by its id)
+		labels = [label for label, _id in choices]
+		start = next((i for i, (_label, trader_id) in enumerate(choices) if trader_id == current), 0)
+		text, ok = QInputDialog.getItem(self, "Trader", "Which trader is this assort for? (You can also paste a trader id.)", labels, start, True)
+		if not ok:
+			return False
+		text = text.strip()
+		chosen = dict(choices).get(text) if text in dict(choices) else (text if re.fullmatch(r"[0-9a-fA-F]{24}", text) else "")
+		return self.assort_tab.set_trader(chosen)
 
 	def _save_other(self, name, as_new=False):
 		return self._save(getattr(self, name), self._OTHER[name][0], as_new)
@@ -435,14 +459,21 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 				if item.kind and item.kind != only:
 					item.include = False
 					item.error = f"This looks like a {M.KIND_LABEL[item.kind].lower()} file."
-		dialog = ImportDialog(items, self._workspace(), self)
+		dialog = ImportDialog(
+			items, self._workspace(), self,
+			traders=self.gamedata.all_traders() if self.gamedata is not None else None, trader=self.assort_tab.trader_id,
+		)
 		accepted = dialog.exec()
 		if accepted and dialog.use_as_references:  # (kept for looking up ids; nothing is merged)
 			self.add_references([str(i.path) for i in items if i.path is not None and not i.error.startswith("Couldn't")])
 			return None
 		if not accepted or dialog.plan is None:
 			return None
-		return self.apply_import(dialog.plan, dialog.chosen_items())
+		trader = dialog.chosen_trader()
+		plan = self.apply_import(dialog.plan, dialog.chosen_items())
+		if trader:  # (the assort that came in is this trader's: the Trader box says so, after asking if another trader is set)
+			self.assort_tab.set_trader(trader)
+		return plan
 
 	def apply_import(self, plan, items):
 		"""Put an import's result in the open sections, one undo step each, and say what happened."""

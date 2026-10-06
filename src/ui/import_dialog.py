@@ -1,6 +1,7 @@
 """The import window: shows what importing the chosen files would do, before anything changes."""
 
 import dataclasses
+import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QComboBox, QDialogButtonBox, QDialog, QTableWidgetItem
@@ -23,10 +24,16 @@ class ImportDialog(QDialog, Ui_ImportForm):
 	"""Items (core.merge.Item) and the workspace ({kind: data}) in; when accepted, .plan says what to apply.
 	The layout is ui/designer/import_dialog.ui; the rows of the table are made here."""
 
-	def __init__(self, items, workspace, parent=None):
+	def __init__(self, items, workspace, parent=None, traders=None, trader=""):
+		"""traders: {id: name} for the Trader box (shown when a trader assort is going in); trader: the id that is chosen now."""
 		super().__init__(parent)
 		self.setupUi(self)
 		self.items, self.workspace = items, workspace
+		self.traderBox.addItem("(not set)", "")
+		for trader_id, name in (traders or {}).items():
+			self.traderBox.addItem(name, trader_id)
+		guess = next((M.guess_trader(i.path, traders or ()) for i in items if i.kind == M.ASSORT and i.path is not None), "")
+		self._show_trader(guess or trader)  # (where the file is says whose it is; else the trader that is chosen now)
 		self.plan = None
 		self.use_as_references = False  # (set by the "Use as references only" button)
 		self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Import")
@@ -71,6 +78,26 @@ class ImportDialog(QDialog, Ui_ImportForm):
 		self.use_as_references = True
 		self.accept()
 
+	def _show_trader(self, trader_id):
+		index = self.traderBox.findData(trader_id)
+		if index >= 0:
+			self.traderBox.setCurrentIndex(index)
+		else:
+			self.traderBox.setEditText(trader_id)
+
+	@property
+	def trader_id(self):
+		"""The trader chosen in the box: one from the list, or a pasted id; '' if none."""
+		text = self.traderBox.currentText().strip()
+		index = self.traderBox.findText(text)
+		if index >= 0:
+			return self.traderBox.itemData(index)
+		return text if re.fullmatch(r"[0-9a-fA-F]{24}", text) else ""
+
+	def chosen_trader(self):
+		"""The trader to use for the assort that is going in ('' when no assort is, or none was chosen)."""
+		return self.trader_id if any(i.kind == M.ASSORT and i.include for i in self.chosen_items()) else ""
+
 	def chosen_items(self):
 		"""The items as the table has them now: kind and include as the user set them."""
 		chosen = []
@@ -83,6 +110,9 @@ class ImportDialog(QDialog, Ui_ImportForm):
 	def refresh(self):
 		chosen = self.chosen_items()
 		self.everythingBox.setEnabled(any(i.kind == M.LOCALE and i.include for i in chosen))
+		assort_going_in = any(i.kind == M.ASSORT and i.include for i in chosen)
+		self.traderLabel.setVisible(assort_going_in)
+		self.traderBox.setVisible(assort_going_in)
 		try:
 			plan = M.plan_import(chosen, self.workspace, self.policy, self.everythingBox.isChecked())
 		except (KeyError, TypeError, AttributeError, ValueError):

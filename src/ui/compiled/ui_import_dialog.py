@@ -16,9 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QApplication, QCheckBox,
-    QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout,
-    QHeaderView, QLabel, QRadioButton, QSizePolicy,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+    QComboBox, QDialog, QDialogButtonBox, QGroupBox,
+    QHBoxLayout, QHeaderView, QLabel, QRadioButton,
+    QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 
 class Ui_ImportForm(object):
     def setupUi(self, ImportForm):
@@ -83,6 +84,27 @@ class Ui_ImportForm(object):
 
         self.verticalLayout.addWidget(self.everythingBox)
 
+        self.traderRow = QHBoxLayout()
+        self.traderRow.setObjectName(u"traderRow")
+        self.traderLabel = QLabel(ImportForm)
+        self.traderLabel.setObjectName(u"traderLabel")
+
+        self.traderRow.addWidget(self.traderLabel)
+
+        self.traderBox = QComboBox(ImportForm)
+        self.traderBox.setObjectName(u"traderBox")
+        self.traderBox.setEditable(True)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.traderBox.sizePolicy().hasHeightForWidth())
+        self.traderBox.setSizePolicy(sizePolicy)
+
+        self.traderRow.addWidget(self.traderBox)
+
+
+        self.verticalLayout.addLayout(self.traderRow)
+
         self.summaryLabel = QLabel(ImportForm)
         self.summaryLabel.setObjectName(u"summaryLabel")
         self.summaryLabel.setStyleSheet(u"color: #808080;")
@@ -128,6 +150,10 @@ class Ui_ImportForm(object):
         self.replaceRadio.setText(QCoreApplication.translate("ImportForm", u"Use the imported one", None))
         self.bothRadio.setText(QCoreApplication.translate("ImportForm", u"Keep both (the imported one gets a new id)", None))
         self.everythingBox.setText(QCoreApplication.translate("ImportForm", u"Import all the text of locale files, not only the text of the quests", None))
+        self.traderLabel.setText(QCoreApplication.translate("ImportForm", u"Trader this assort is for", None))
+#if QT_CONFIG(tooltip)
+        self.traderBox.setToolTip(QCoreApplication.translate("ImportForm", u"The trader whose offers these are. It is put in the Trader box of the Trader tab. You can paste a trader id.", None))
+#endif // QT_CONFIG(tooltip)
         self.summaryLabel.setText("")
     # retranslateUi
 
