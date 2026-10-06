@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPushButton,
-    QSizePolicy, QSpacerItem, QSplitter, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
+    QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
+    QSplitter, QVBoxLayout, QWidget)
 
 class Ui_AssortForm(object):
     def setupUi(self, AssortForm):
@@ -106,12 +106,17 @@ class Ui_AssortForm(object):
 
         self.leftLayout.setStretch(1, 1)
         self.splitter.addWidget(self.leftPane)
-        self.right = QWidget(self.splitter)
+        self.rightScroll = QScrollArea(self.splitter)
+        self.rightScroll.setObjectName(u"rightScroll")
+        self.rightScroll.setFrameShape(QFrame.NoFrame)
+        self.rightScroll.setWidgetResizable(True)
+        self.right = QWidget()
         self.right.setObjectName(u"right")
         self.right_layout = QVBoxLayout(self.right)
         self.right_layout.setObjectName(u"right_layout")
         self.right_layout.setContentsMargins(9, 9, 9, 9)
-        self.splitter.addWidget(self.right)
+        self.rightScroll.setWidget(self.right)
+        self.splitter.addWidget(self.rightScroll)
 
         self.outerLayout.addWidget(self.splitter)
 

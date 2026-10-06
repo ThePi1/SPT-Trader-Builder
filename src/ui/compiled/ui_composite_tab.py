@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QListWidget,
-    QListWidgetItem, QPushButton, QSizePolicy, QSplitter,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
+    QListWidget, QListWidgetItem, QPushButton, QScrollArea,
+    QSizePolicy, QSplitter, QVBoxLayout, QWidget)
 
 class Ui_CompositeForm(object):
     def setupUi(self, CompositeForm):
@@ -82,12 +82,17 @@ class Ui_CompositeForm(object):
         self.leftLayout.setStretch(1, 2)
         self.leftLayout.setStretch(4, 2)
         self.splitter.addWidget(self.leftPane)
-        self.right = QWidget(self.splitter)
+        self.rightScroll = QScrollArea(self.splitter)
+        self.rightScroll.setObjectName(u"rightScroll")
+        self.rightScroll.setFrameShape(QFrame.NoFrame)
+        self.rightScroll.setWidgetResizable(True)
+        self.right = QWidget()
         self.right.setObjectName(u"right")
         self.right_layout = QVBoxLayout(self.right)
         self.right_layout.setObjectName(u"right_layout")
         self.right_layout.setContentsMargins(9, 9, 9, 9)
-        self.splitter.addWidget(self.right)
+        self.rightScroll.setWidget(self.right)
+        self.splitter.addWidget(self.rightScroll)
 
         self.outerLayout.addWidget(self.splitter)
 
