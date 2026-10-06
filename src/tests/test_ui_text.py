@@ -203,3 +203,66 @@ def test_a_skill_level_task_has_a_generate_locale_button_that_fills_its_box(app,
 	outline._select_key(outline._current_key())
 	generate_button(outline).click()
 	assert locale.data[task["id"]] == "Reach the required Bolt-action Rifles skill level"
+
+
+# --- reference locale files in the Locale tab -------------------------------------------------------------------
+
+def reference_tab(tmp_path, locale=None, quests=None):
+	import json
+
+	from core import references as R
+
+	(tmp_path / "en.json").write_text(json.dumps({"ref1": "From a reference", "shared": "Reference version", "ref2 name": "Another"}), encoding="utf-8")
+	(tmp_path / "fr.json").write_text(json.dumps({"ref1": "Depuis une reference", "only_fr": "Seulement"}), encoding="utf-8")
+	references = R.References(tmp_path / "list.json")
+	references.add([tmp_path / "en.json", tmp_path / "fr.json"])
+	locale = locale or Document({"mine": "My text", "shared": "My version"})
+	return LocaleTab(locale, quests or Document({}), references=references), locale
+
+
+def test_reference_locale_entries_are_listed_greyed_out_and_cannot_be_edited(app, tmp_path):
+	from PySide6.QtCore import Qt
+	from PySide6.QtGui import QBrush
+
+	tab, locale = reference_tab(tmp_path)
+	model = tab.model
+	assert model.keys == ["mine", "shared", "ref1", "ref2 name", "only_fr"]  # (the open file's entries, then the references': the open file's version of a key wins)
+	rows = {key: i for i, key in enumerate(model.keys)}
+
+	def at(key, column, role=Qt.ItemDataRole.DisplayRole):
+		return model.data(model.index(rows[key], column), role)
+
+	assert at("ref1", 2) == "From a reference" and at("ref1", 3) == "Reference: en.json" and at("only_fr", 3) == "Reference: fr.json"
+	assert at("mine", 3) == "" and at("shared", 2) == "My version"
+	grey = at("ref1", 2, Qt.ItemDataRole.ForegroundRole)
+	assert isinstance(grey, QBrush) and at("mine", 2, Qt.ItemDataRole.ForegroundRole) is None
+	assert "can't be edited" in at("ref1", 2, Qt.ItemDataRole.ToolTipRole)
+	assert model.flags(model.index(rows["ref1"], 2)) & Qt.ItemFlag.ItemIsEditable == Qt.ItemFlag.NoItemFlags
+	assert model.flags(model.index(rows["mine"], 2)) & Qt.ItemFlag.ItemIsEditable
+	assert not model.setData(model.index(rows["ref1"], 2), "changed") and locale.data == {"mine": "My text", "shared": "My version"}
+	assert model.setData(model.index(rows["mine"], 2), "changed") and locale.data["mine"] == "changed"
+
+
+def test_reference_entries_follow_the_search_and_cannot_be_deleted(app, tmp_path):
+	tab, locale = reference_tab(tmp_path)
+	tab.search.setText("another")
+	assert tab.model.keys == ["ref2 name"]
+	tab.search.setText("")
+	tab.table.selectAll()
+	tab.delete_selected()
+	assert locale.data == {} and "ref1" in tab.model.keys and "mine" not in tab.model.keys  # (only the open file's entries went)
+	assert tab.note.text() == "4 entries."
+
+
+def test_the_filters_that_are_about_the_open_file_leave_the_references_out(app, tmp_path):
+	from schema.quest import make_quest
+
+	quest = make_quest(name="Q")
+	tab, _locale = reference_tab(tmp_path, quests=Document({quest["_id"]: quest}))
+	for mode in ("missing", "unused"):
+		tab.mode.setCurrentIndex(tab.mode.findData(mode))
+		assert not tab.model.reference
+	tab.mode.setCurrentIndex(tab.mode.findData("mine"))
+	assert "ref1" not in tab.model.keys  # (not a text of the open quests)
+	tab.mode.setCurrentIndex(tab.mode.findData("all"))
+	assert "ref1" in tab.model.keys

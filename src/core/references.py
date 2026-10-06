@@ -188,6 +188,20 @@ class References:
 					traders[trader_id] = (ref.data.get("nickname") or ref.data.get("name") or "", ref.name)
 		return {"locale": locale, "quests": quests, "templates": templates, "assort_tpls": assort_tpls, "offers": offers, "traders": traders}
 
+	def locale_entries(self):
+		"""{key: (text, the file it is in)} of every locale file in the list (the file in the chosen language first, then English, then the rest;
+		the first file with a key wins)."""
+		self.read_all()
+		found = {}
+		for ref in sorted(
+			(ref for ref in self.files if ref.kind == LOCALE),
+			key=lambda ref: 0 if ref.path.stem == self.language else 1 if ref.path.stem == "en" else 2,
+		):
+			for key, text in ref.data.items():
+				if isinstance(text, str) and key not in found:
+					found[key] = (text, ref.name)
+		return found
+
 	def quest_data(self):
 		"""{quest id: (the quest, the file it is in)} of every quest in the reference files (the first file wins)."""
 		self.read_all()

@@ -1,14 +1,15 @@
 """The Locale tab: every entry of the locale file, with the quest each one belongs to."""
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
-from PySide6.QtWidgets import QInputDialog, QWidget
+from PySide6.QtGui import QBrush, QPalette
+from PySide6.QtWidgets import QApplication, QInputDialog, QWidget
 
 from core import settings as S
 from core.documents import MISSING
 from schema import locale as L
 from ui.compiled.ui_locale_tab import Ui_LocaleForm
 
-COLUMNS = ("Belongs to", "Key", "Text")
+COLUMNS = ("Belongs to", "Key", "Text", "File")
 FILTERS = (
 	("all", "All text"),
 	("mine", "Text of the quests in the open quest file"),
@@ -18,10 +19,11 @@ FILTERS = (
 
 
 class LocaleModel(QAbstractTableModel):
-	def __init__(self, locale_doc, quests_doc, settings=None):
+	def __init__(self, locale_doc, quests_doc, settings=None, references=None):
 		super().__init__()
-		self.locale, self.quests, self.settings = locale_doc, quests_doc, settings
+		self.locale, self.quests, self.settings, self.references = locale_doc, quests_doc, settings, references
 		self.keys, self.owner = [], {}
+		self.reference = {}  # {key: (text, file name)} of the shown entries that are only in a reference file: they are looked at, not edited
 		self.truncated, self.total = False, 0
 
 	def set_documents(self, locale_doc, quests_doc):
@@ -46,11 +48,15 @@ class LocaleModel(QAbstractTableModel):
 			keys = L.unused_keys(self.quests.data, data)
 		else:
 			keys = list(data)
+		known = self.references.locale_entries() if self.references is not None and mode in ("all", "mine") else {}
+		known = {k: v for k, v in known.items() if k not in data and (mode == "all" or k in owners)}  # (what the open file has is its own: shown as it)
+		keys += list(known)
 		words = text.lower().split()
 		if words:
-			keys = [k for k in keys if all(w in f"{k} {data.get(k, '')} {owners.get(k, '')}".lower() for w in words)]
+			keys = [k for k in keys if all(w in f"{k} {data.get(k) if k in data else known.get(k, ('',))[0]} {owners.get(k, '')}".lower() for w in words)]
 		most = S.limit(self.settings, "locale_max_entries")
 		self.keys, self.owner = keys[:most], owners
+		self.reference = {k: known[k] for k in self.keys if k in known}
 		self.truncated = len(keys) > most
 		self.total = len(keys)
 		self.endResetModel()
@@ -66,22 +72,31 @@ class LocaleModel(QAbstractTableModel):
 			return COLUMNS[section]
 
 	def data(self, index, role=Qt.ItemDataRole.DisplayRole):
-		if not index.isValid() or role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.ToolTipRole):
+		if not index.isValid() or role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.ToolTipRole, Qt.ItemDataRole.ForegroundRole):
 			return None
 		key = self.keys[index.row()]
+		if role == Qt.ItemDataRole.ForegroundRole:  # (an entry of a reference file is greyed out: it can't be edited here)
+			return QBrush(QApplication.palette().color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text)) if key in self.reference else None
 		if index.column() == 0:
 			return self.owner.get(key, "")
 		if index.column() == 1:
 			return key
-		text = self.locale.data.get(key, "")
+		if index.column() == 3:
+			return f"Reference: {self.reference[key][1]}" if key in self.reference else ""
+		text = self.reference[key][0] if key in self.reference else self.locale.data.get(key, "")
+		if role == Qt.ItemDataRole.ToolTipRole and key in self.reference:
+			return f"From the reference file {self.reference[key][1]}. Reference files can't be edited.\n\n{text}"
 		return text if role == Qt.ItemDataRole.EditRole or role == Qt.ItemDataRole.ToolTipRole else text.replace("\n", " ↵ ")
+
+	def is_reference(self, row):
+		return self.keys[row] in self.reference
 
 	def flags(self, index):
 		base = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
-		return base | Qt.ItemFlag.ItemIsEditable if index.column() == 2 else base
+		return base | Qt.ItemFlag.ItemIsEditable if index.column() == 2 and not self.is_reference(index.row()) else base
 
 	def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
-		if role != Qt.ItemDataRole.EditRole or index.column() != 2:
+		if role != Qt.ItemDataRole.EditRole or index.column() != 2 or self.is_reference(index.row()):
 			return False
 		key = self.keys[index.row()]
 		self.locale.set_value("Edit text", (key,), str(value), coalesce=key)
@@ -92,10 +107,10 @@ class LocaleModel(QAbstractTableModel):
 class LocaleTab(QWidget, Ui_LocaleForm):
 	"""The layout is ui/designer/locale_tab.ui: search, mode, table, note, and the four buttons."""
 
-	def __init__(self, locale_doc, quests_doc, settings=None, parent=None):
+	def __init__(self, locale_doc, quests_doc, settings=None, parent=None, references=None):
 		super().__init__(parent)
 		self.setupUi(self)
-		self.model = LocaleModel(locale_doc, quests_doc, settings)
+		self.model = LocaleModel(locale_doc, quests_doc, settings, references)
 		for value, label in FILTERS:
 			self.mode.addItem(label, value)
 		self.table.setModel(self.model)
@@ -143,7 +158,7 @@ class LocaleTab(QWidget, Ui_LocaleForm):
 			self.search.setText(key)
 
 	def delete_selected(self):
-		rows = sorted({i.row() for i in self.table.selectionModel().selectedIndexes()}, reverse=True)
+		rows = sorted({i.row() for i in self.table.selectionModel().selectedIndexes() if not self.model.is_reference(i.row())}, reverse=True)  # (not a reference's entry)
 		for row in rows:
 			self.doc.set_value("Delete entry", (self.model.keys[row],), MISSING)
 		self.refresh()

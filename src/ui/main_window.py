@@ -78,7 +78,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline.picker = self.pick
 		self.quest_outline.assort_source = lambda: (self.assort.data, self.locks.data, self.assort_tab.trader_id)
 		self.quest_outline.locale = self.locale
-		self.locale_tab = LocaleTab(self.locale, self.quests, settings)
+		self.locale_tab = LocaleTab(self.locale, self.quests, settings, references=self.references)
 		self._base_rows = None
 		self.lookup_tab = LookupTab([], settings)
 		self.library = Library()
