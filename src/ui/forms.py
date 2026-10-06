@@ -58,7 +58,7 @@ class Context:
 		return None
 
 	def pick_item_ids(self, multi=False, parent=None, ref="part"):
-		"""Item ids chosen in the Find an item window, which lists items and composite items. A composite item
+		"""Item ids chosen in the Find an item window, which lists items and composite items (and, for ref "item_id", item categories). A composite item
 		gives the id of its main item (its root part's template), as the game's own files do: a list of ids can't
 		hold its parts, and the composite's own id is not an item id."""
 		ids = []
@@ -195,7 +195,7 @@ class RefControl(Control):
 			self.box.addWidget(find)
 
 	def _find(self):
-		ids = self.ctx.pick_item_ids(False, self) if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, False, self)
+		ids = self.ctx.pick_item_ids(False, self, "item_id") if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, False, self)
 		if ids:
 			self.entry.setText(ids[0])
 			self._edited(ids[0])
@@ -281,7 +281,7 @@ class ListControl(Control):
 		self.edited.emit(list(self.values))
 
 	def _find(self):
-		ids = self.ctx.pick_item_ids(True, self) if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, True, self)
+		ids = self.ctx.pick_item_ids(True, self, "item_id") if self.field.ref == F.ITEM else self.ctx.pick(self.field.ref, True, self)
 		if ids:
 			self.values.extend(i for i in ids if i not in self.values)
 			self._fill()
@@ -365,7 +365,7 @@ class GroupsControl(Control):
 		self.edited.emit([list(g) for g in self.groups])
 
 	def _find(self):
-		ids = self.ctx.pick_item_ids(True, self)
+		ids = self.ctx.pick_item_ids(True, self, "item_id")
 		if ids:
 			self.entry.setText(", ".join(ids))
 

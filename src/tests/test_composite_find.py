@@ -152,7 +152,7 @@ def test_every_item_list_uses_the_same_window_and_a_composite_gives_its_main_ite
 	single = forms.RefControl(F.Field("target", "Main item", F.REF, "", ref=F.ITEM), ctx)
 	single._find()
 	assert single.entry.text() == "c" * 24
-	assert asked == ["part", "part", "part"]  # (one search window for all of them)
+	assert asked == ["item_id", "item_id", "item_id"]  # (one search window for all of them)
 	quest = forms.RefControl(F.Field("target", "Quest", F.REF, "", ref=F.QUEST), ctx)
 	quest._find()
 	assert asked[-1] == F.QUEST  # (other kinds of id keep their own search)
