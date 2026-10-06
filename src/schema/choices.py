@@ -144,7 +144,7 @@ def get(name, gamedata=None):
 	if name in _DYNAMIC:
 		return _DYNAMIC[name]()
 	if name == "traders":
-		names = gamedata.traders if gamedata is not None else {}
+		names = gamedata.all_traders() if gamedata is not None else {}
 		return tuple((trader_id, name) for trader_id, name in names.items())
 	if name == "locations":
 		names = gamedata.locations if gamedata is not None else {"any": "Any"}

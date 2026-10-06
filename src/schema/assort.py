@@ -7,6 +7,8 @@ questassort.json is ``{started, success, fail}``, each ``{offer id: quest id}``:
 unlocked when the quest is started / completed, or locked when it fails.
 """
 
+import copy
+
 from core import parts as P
 from core.ids import new_id
 from schema import server
@@ -128,7 +130,9 @@ def validate_assort(assort):
 	return issues
 
 
-def validate_questassort(data, assort=None, quest_ids=None):
+def validate_questassort(data, assort=None, quest_ids=None, knows_quest=None):
+	"""Problems in a quest assort file. quest_ids: the quests that are open; knows_quest(id): True for a quest the game
+	or a reference file has. A quest is only reported when neither knows it (and at least one of them was given)."""
 	issues = []
 	if not isinstance(data, dict):
 		return [Issue(ERROR, (), "This should be an object with started, success and fail.")]
@@ -144,8 +148,10 @@ def validate_questassort(data, assort=None, quest_ids=None):
 		for offer, quest in (data.get(lock) or {}).items():
 			if roots is not None and offer not in roots:
 				issues.append(Issue(WARNING, (lock, offer), "This offer isn't in the assort."))
-			if quest_ids is not None and quest not in quest_ids:
-				issues.append(Issue(WARNING, (lock, offer), "This quest isn't known."))
+			if (quest_ids is not None or knows_quest is not None) and not (
+				(quest_ids is not None and quest in quest_ids) or (knows_quest is not None and knows_quest(quest))
+			):
+				issues.append(Issue(WARNING, (lock, offer), "This quest isn't known (it isn't in the open quests, the base game or the reference files)."))
 	return issues
 
 
@@ -248,6 +254,168 @@ def unlock_reward(assort, offer_id, trader_id, level=None, ids=new_id):
 		level = assort.get("loyal_level_items", {}).get(offer_id, 1)
 	reward.update(traderId=trader_id, loyaltyLevel=level, items=items, target=items[0]["_id"])
 	return reward
+
+
+# --- does a reward's preview match an offer? ---------------------------------------------------
+# A reward's item is only the preview the client shows. The offer lives in the trader assort; the two are compared by
+# shape (items, slots and mods, never ids). In the base game 212 of 236 unlock previews are exactly their offer and the
+# rest are the bare main item.
+
+def structure(parts, root_id):
+	"""The shape of a multi-part item, ignoring ids: (item, slot, its mods in order of shape...), the main part first."""
+	kids = {}
+	for part in parts:
+		kids.setdefault(part.get("parentId"), []).append(part)
+
+	def shape(part, top):
+		return (part.get("_tpl", ""), "" if top else part.get("slotId", ""), tuple(sorted(shape(c, False) for c in kids.get(part.get("_id"), []))))
+
+	root = next((p for p in parts if p.get("_id") == root_id), None)
+	return shape(root, True) if root else None
+
+
+def offer_structure(assort, offer_id):
+	return structure(offer_parts(assort, offer_id), offer_id)
+
+
+def reward_structure(reward):
+	root = reward_root(reward)
+	return structure(reward.get("items") or [], root["_id"]) if root else None
+
+
+def offers_matching(assort, reward):
+	"""(exact, same_item): the offers whose parts are the reward's parts, and the others that sell the same main item."""
+	shape, root = reward_structure(reward), reward_root(reward)
+	if shape is None:
+		return [], []
+	exact, same_item = [], []
+	for offer in offer_ids(assort):
+		if offer_structure(assort, offer) == shape:
+			exact.append(offer)
+		elif offer_tpl(assort, offer) == root.get("_tpl"):
+			same_item.append(offer)
+	return exact, same_item
+
+
+def parts_word(count):
+	return f"{count} part{'' if count == 1 else 's'}"
+
+
+def preview_differences(assort, offer_id, reward, trader_id=None):
+	"""How the reward's preview differs from the offer, as short phrases ([] when it is the same)."""
+	root = reward_root(reward)
+	if root is None:
+		return ["the preview has no item"]
+	found = []
+	if root.get("_tpl") != offer_tpl(assort, offer_id):
+		found.append("a different main item")
+	elif reward_structure(reward) != offer_structure(assort, offer_id):
+		found.append(f"{parts_word(len(reward.get('items') or []))} in the preview, {parts_word(len(offer_parts(assort, offer_id)))} in the offer")
+	level = assort.get("loyal_level_items", {}).get(offer_id)
+	if level is not None and reward.get("loyaltyLevel") != level:
+		found.append(f"level {reward.get('loyaltyLevel')} in the quest, {level} in the offer")
+	if trader_id and reward.get("traderId") != trader_id:
+		found.append("another trader")
+	return found
+
+
+def refresh_unlock(reward, assort, offer_id, trader_id=None, ids=new_id):
+	"""Make the reward's preview the offer's: its parts (with ids of their own), main part and level, and the trader when
+	it is known. The reward's other keys stay as they are."""
+	fresh = unlock_reward(assort, offer_id, trader_id or reward.get("traderId", ""), ids=ids)
+	reward.update(items=fresh["items"], target=fresh["target"], loyaltyLevel=fresh["loyaltyLevel"])
+	if trader_id:
+		reward["traderId"] = trader_id
+	return reward
+
+
+def unlock_state(assort, locks, quest_id, timing, reward, trader_id=None):
+	"""What the open trader assort says about a reward's preview: (tone, message, offer id or None, differs).
+	tone is "ok", "note" or "warn"; offer id is the offer the preview belongs to (the one locked to the quest, else the
+	only offer that matches); differs says whether the preview is not the same as that offer."""
+	offers = offer_ids(assort)
+	if not offers:
+		return "note", "No trader assort is open, so the preview can't be compared with an offer.", None, False
+	status = next((s for s, when in LOCK_TIMING.items() if when == timing and s in UNLOCKED_BY), None)
+	locked = [o for o in offers if status and (locks.get(status) or {}).get(o) == quest_id]
+	exact, same_item = offers_matching(assort, reward)
+	owner = next((o for o in locked if o in exact), None) or next((o for o in locked if o in exact + same_item), None)
+	if owner is None and len(exact) == 1:
+		owner = exact[0]
+	if owner is None and not exact and len(same_item) == 1:
+		owner = same_item[0]
+	if owner is not None and owner in locked:
+		found = preview_differences(assort, owner, reward, trader_id)
+		if not found:
+			return "ok", "The preview is the same as the offer locked to this quest.", owner, False
+		return "note", "The offer locked to this quest differs from the preview: " + "; ".join(found) + ".", owner, True
+	if exact:
+		where = "None of them is locked to this quest." if len(exact) > 1 else "It is not locked to this quest."
+		return "note", f"The trader assort has {len(exact)} offer{'' if len(exact) == 1 else 's'} for these parts. {where}", owner, False
+	if same_item:
+		return (
+			"note",
+			f"The trader assort sells this item, but with different parts ({parts_word(len(offer_parts(assort, same_item[0])))} in the offer, "
+			f"{parts_word(len(reward.get('items') or []))} in the preview).",
+			owner, bool(owner),
+		)
+	return "warn", "The trader assort has no offer for this item, so the player would be unlocking nothing.", None, False
+
+
+# --- rebuilding files from what is known (the Debug menu) ---------------------------------------
+
+def regenerate_assort(assort):
+	"""(a new trader assort made only of the offers in this one, what was left out as a list of phrases).
+
+	An offer is its main item, everything attached to it, its price and its level. What is left out is whatever isn't part
+	of an offer: items that hang off nothing, prices and levels of items that aren't offers, and keys the assort model has
+	no use for. A price or level an offer doesn't have is not made up."""
+	new = {"items": [], "barter_scheme": {}, "loyal_level_items": {}}
+	kept = set()
+	for offer in offer_ids(assort):
+		for part in offer_parts(assort, offer):
+			if part["_id"] not in kept:
+				kept.add(part["_id"])
+				new["items"].append(copy.deepcopy(part))
+		if offer in (assort.get("barter_scheme") or {}):
+			new["barter_scheme"][offer] = copy.deepcopy(assort["barter_scheme"][offer])
+		if offer in (assort.get("loyal_level_items") or {}):
+			new["loyal_level_items"][offer] = assort["loyal_level_items"][offer]
+	if "nextResupply" in assort:
+		new["nextResupply"] = assort["nextResupply"]
+	left_out = []
+	loose = [p for p in assort.get("items", []) if isinstance(p, dict) and p.get("_id") not in kept]
+	if loose:
+		left_out.append(f"{len(loose)} item{' that is' if len(loose) == 1 else 's that are'} not part of an offer")
+	prices = [k for k in (assort.get("barter_scheme") or {}) if k not in new["barter_scheme"]]
+	levels = [k for k in (assort.get("loyal_level_items") or {}) if k not in new["loyal_level_items"]]
+	if prices:
+		left_out.append(f"{len(prices)} price{' of something that is' if len(prices) == 1 else 's of things that are'} not an offer")
+	if levels:
+		left_out.append(f"{len(levels)} level{' of something that is' if len(levels) == 1 else 's of things that are'} not an offer")
+	extra = [k for k in assort if k not in new]
+	if extra:
+		left_out.append("the keys " + ", ".join(extra))
+	return new, left_out
+
+
+def regenerate_questassort(locks, offers, knows_quest):
+	"""(a new quest assort file with only the links whose offer is in offers and whose quest knows_quest(id) accepts,
+	the links that were left out as [(section, offer id, quest id, why)]). Sections other than started, success and fail go too."""
+	new = empty_questassort()
+	dropped = []
+	for section, links in (locks or {}).items():
+		if section not in QUEST_LOCKS:
+			dropped.append((section, "", "", "not a section SPT uses"))
+			continue
+		for offer, quest in (links or {}).items():
+			if offer not in offers:
+				dropped.append((section, offer, quest, "no such offer in the trader assort"))
+			elif not knows_quest(quest):
+				dropped.append((section, offer, quest, "the quest is not known"))
+			else:
+				new[section][offer] = quest
+	return new, dropped
 
 
 # --- composite items: a saved multi-part item (a weapon with mods) ---------------------------

@@ -40,7 +40,7 @@ def main():
 	data = out / "data"
 	if data.exists():
 		shutil.rmtree(data)
-	shutil.copytree(ROOT / "data", data, ignore=shutil.ignore_patterns("my_items.json"))
+	shutil.copytree(ROOT / "data", data, ignore=shutil.ignore_patterns("my_items.json", "references.json", "last_files.json"))
 	add_license(out)
 	print(f"Built {out}")
 

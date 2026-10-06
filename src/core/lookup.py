@@ -6,9 +6,12 @@ from dataclasses import dataclass
 ITEM, QUEST, TRADER, MAP, ACHIEVEMENT, CUSTOMIZATION, MINE, PRESET = (
 	"item", "quest", "trader", "map", "achievement", "customization", "my_composite", "composite",
 )
+# the same things found in the reference files
+REF_ITEM, REF_QUEST, REF_TRADER, REF_OFFER = "ref_item", "ref_quest", "ref_trader", "ref_offer"
 KIND_LABEL = {
 	ITEM: "Item", QUEST: "Quest", TRADER: "Trader", MAP: "Map", ACHIEVEMENT: "Achievement",
 	CUSTOMIZATION: "Clothing", MINE: "Your composite item", PRESET: "Vanilla composite item",
+	REF_ITEM: "Item (reference)", REF_QUEST: "Quest (reference)", REF_TRADER: "Trader (reference)", REF_OFFER: "Trader offer (reference)",
 }
 
 
@@ -48,7 +51,7 @@ def _parts(items):
 	return f"{count} part{'' if count == 1 else 's'}"
 
 
-def build_rows(gamedata, quests=None, kinds=None, library=None):
+def build_rows(gamedata, quests=None, kinds=None, library=None, references=None):
 	"""Every Row for the kinds asked for (all if None). quests is {id: quest} being edited; they come first,
 	then the saved composite items of the library, if given."""
 	want = set(kinds) if kinds else set(KIND_LABEL)
@@ -79,6 +82,16 @@ def build_rows(gamedata, quests=None, kinds=None, library=None):
 		rows += library_rows(library)
 	if PRESET in want:
 		rows += [Row(i, p.get("_name", ""), PRESET, _parts(p.get("_items"))) for i, p in gamedata.item_presets.items() if isinstance(p, dict)]
+	if references is not None:  # (what the reference files know that the game and the open quests do not)
+		if REF_QUEST in want:
+			known = set(quests or {}) | set(gamedata.vanilla_quests)
+			rows += [Row(i, n, REF_QUEST, source) for i, n, source in references.quest_rows() if i not in known]
+		if REF_ITEM in want:
+			rows += [Row(i, n, REF_ITEM, source) for i, n, source in references.item_rows() if i not in gamedata.items]
+		if REF_TRADER in want:
+			rows += [Row(i, n, REF_TRADER, source) for i, n, source in references.trader_rows() if i not in gamedata.traders]
+		if REF_OFFER in want:
+			rows += [Row(i, n, REF_OFFER, source) for i, n, source in references.offer_rows()]
 	return rows
 
 

@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPushButton,
-    QSizePolicy, QSpacerItem, QSplitter, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
+    QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
+    QSplitter, QToolButton, QVBoxLayout, QWidget)
 
 class Ui_AssortForm(object):
     def setupUi(self, AssortForm):
@@ -84,6 +84,23 @@ class Ui_AssortForm(object):
 
         self.leftLayout.addWidget(self.note)
 
+        self.problemsToggle = QToolButton(self.leftPane)
+        self.problemsToggle.setObjectName(u"problemsToggle")
+        self.problemsToggle.setVisible(False)
+        self.problemsToggle.setStyleSheet(u"QToolButton { color: #b9770e; text-align: left; border: none; }")
+        self.problemsToggle.setCheckable(True)
+        self.problemsToggle.setToolButtonStyle(Qt.ToolButtonTextOnly)
+
+        self.leftLayout.addWidget(self.problemsToggle)
+
+        self.problemsList = QListWidget(self.leftPane)
+        self.problemsList.setObjectName(u"problemsList")
+        self.problemsList.setVisible(False)
+        self.problemsList.setMaximumHeight(110)
+        self.problemsList.setWordWrap(True)
+
+        self.leftLayout.addWidget(self.problemsList)
+
         self.buttonRow = QHBoxLayout()
         self.buttonRow.setObjectName(u"buttonRow")
         self.addButton = QPushButton(self.leftPane)
@@ -106,12 +123,17 @@ class Ui_AssortForm(object):
 
         self.leftLayout.setStretch(1, 1)
         self.splitter.addWidget(self.leftPane)
-        self.right = QWidget(self.splitter)
+        self.rightScroll = QScrollArea(self.splitter)
+        self.rightScroll.setObjectName(u"rightScroll")
+        self.rightScroll.setFrameShape(QFrame.NoFrame)
+        self.rightScroll.setWidgetResizable(True)
+        self.right = QWidget()
         self.right.setObjectName(u"right")
         self.right_layout = QVBoxLayout(self.right)
         self.right_layout.setObjectName(u"right_layout")
         self.right_layout.setContentsMargins(9, 9, 9, 9)
-        self.splitter.addWidget(self.right)
+        self.rightScroll.setWidget(self.right)
+        self.splitter.addWidget(self.rightScroll)
 
         self.outerLayout.addWidget(self.splitter)
 
@@ -138,6 +160,10 @@ class Ui_AssortForm(object):
         self.levelFilter.setToolTip(QCoreApplication.translate("AssortForm", u"Show only the offers that unlock at this trader level.", None))
 #endif // QT_CONFIG(tooltip)
         self.note.setText("")
+#if QT_CONFIG(tooltip)
+        self.problemsToggle.setToolTip(QCoreApplication.translate("AssortForm", u"Where the quest locks and the quests' unlock rewards don't agree. Click to see each one.", None))
+#endif // QT_CONFIG(tooltip)
+        self.problemsToggle.setText(QCoreApplication.translate("AssortForm", u"\u25b6", None))
         self.addButton.setText(QCoreApplication.translate("AssortForm", u"Add offer...", None))
         self.copyButton.setText(QCoreApplication.translate("AssortForm", u"Copy", None))
         self.deleteButton.setText(QCoreApplication.translate("AssortForm", u"Delete", None))

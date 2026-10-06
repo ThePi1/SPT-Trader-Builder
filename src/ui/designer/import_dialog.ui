@@ -108,6 +108,30 @@
     </widget>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="traderRow">
+     <item>
+      <widget class="QLabel" name="traderLabel">
+       <property name="text">
+        <string>Trader this assort is for</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="traderBox">
+       <property name="toolTip">
+        <string>The trader whose offers these are. It is put in the Trader box of the Trader tab. You can paste a trader id.</string>
+       </property>
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed"/>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QLabel" name="summaryLabel">
      <property name="styleSheet">
       <string notr="true">color: #808080;</string>

@@ -13,6 +13,11 @@ from schema.fields import (
 
 SUCCESS, STARTED, FAIL = "Success", "Started", "Fail"
 
+UNLOCK_ITEM_HELP = (
+	"The item in the assort unlock reward (in the quest JSON) only controls the preview for the item. "
+	"The actual assort is stored in the trader assort file, and linked to the quest through the quest assort file."
+)
+
 MANAGED = ("type", "id")
 
 
@@ -92,7 +97,7 @@ _add(Spec(
 	"reward", "AssortmentUnlock", "Assort unlock", (
 		Field("traderId", "Trader", REF, ref=TRADER, required=True),
 		Field("loyaltyLevel", "Trader level", INT, 1, minimum=1, maximum=4),
-		Field("items", "Item", REWARD_ITEMS, required=True),
+		Field("items", "Item", REWARD_ITEMS, required=True, help=UNLOCK_ITEM_HELP),
 		Field("target", "Main item id", REF, advanced=True),
 	) + _COMMON,
 	_base("AssortmentUnlock", items=[], loyaltyLevel=1, target="", traderId=""),

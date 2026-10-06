@@ -8,6 +8,7 @@ changes under it (add, delete, undo); it only refreshes its labels while a form 
 import json
 
 from PySide6.QtCore import QItemSelectionModel, QTimer, Qt, Signal
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
 	QComboBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMenu, QMessageBox, QPlainTextEdit, QPushButton,
 	QTreeWidgetItem, QVBoxLayout, QWidget,
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import (
 
 from core.documents import duplicate
 from core.ids import new_id
+from schema import assort as assort_schema
 from schema import choices, copying, registry
 from schema import locale as L
 from schema.common import Names
@@ -26,6 +28,7 @@ from ui.compiled.ui_quest_outline import Ui_OutlineForm
 from ui.problems import ERROR_COLOR, WARNING_COLOR, ProblemsPanel, node_path
 from ui.forms import Context, FormWidget
 from ui.text_panels import QuestTextPanel, TaskTextPanel, task_has_text
+from ui.unlock_panel import UnlockOfferPanel
 
 ROLE = Qt.ItemDataRole.UserRole
 TASK_TIMINGS = tuple(t for t, _k in choices.TASK_TIMINGS)
@@ -63,6 +66,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		super().__init__(parent)
 		self.gamedata, self.settings, self.doc = gamedata, settings, None
 		self.library = None  # the user's saved composite items
+		self.assort_source = None  # () -> (the open trader assort, the quest locks, the trader's id): set by the window
 		self.locale = None  # the open locale Document, for the text boxes
 		self.sources = {}  # quest id -> the file it was imported from, shown next to the quest
 		self.picker = None  # (ref kind, multi, parent) -> [ids]: the window's search dialog
@@ -79,6 +83,13 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.search.textChanged.connect(lambda _text: self.apply_filter())
 		self.expandAllButton.clicked.connect(lambda _checked=False: self.expand_all())
 		self.collapseAllButton.clicked.connect(lambda _checked=False: self.collapse_all())
+		self.moveUpButton.clicked.connect(lambda _checked=False: self.move_selected("up"))
+		self.moveDownButton.clicked.connect(lambda _checked=False: self.move_selected("down"))
+		for keys, how in (("Alt+Up", "up"), ("Alt+Down", "down"), ("Alt+Home", "top"), ("Alt+End", "bottom")):
+			shortcut = QShortcut(QKeySequence(keys), self)
+			shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+			shortcut.activated.connect(lambda how=how: self.move_selected(how))
+		self.tree.itemSelectionChanged.connect(self._update_move_buttons)
 		self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 		self.tree.customContextMenuRequested.connect(self._context_menu)
 		self.problems = ProblemsPanel(settings)  # (under the tree)
@@ -261,6 +272,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 				self.tree.setCurrentItem(self.tree.topLevelItem(0))
 			else:
 				self._show_hint("Add a quest to begin, or open a quest file.")
+		self._update_move_buttons()
 
 	def _build_quest(self, qid, quest):
 		root = self._add_item(self.tree, "", Address("quest", (qid,)), bold=True)
@@ -316,6 +328,9 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			actions.append(("Add", self.add_menu))
 			if address.kind != "group":
 				actions += [("Copy", self.copy_selected), ("Delete", self.delete_selected)]
+			for how, text in (("up", "Move up"), ("down", "Move down"), ("top", "Move to top"), ("bottom", "Move to bottom")):
+				if self.can_move(how):
+					actions.append((text, lambda how=how: self.move_selected(how)))
 			count = len(self.selected_quest_ids())
 			actions.append((f"Export {count} selected quests..." if count > 1 else "Export this quest...", self.export_requested.emit))
 			source = self.sources.get(quest_id)
@@ -377,6 +392,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 				self.tree.setCurrentItem(first_shown)
 				if first_shown is None:
 					self._show_hint("No quest matches the search.")
+		self._update_move_buttons()
 
 	def set_sources(self, sources):
 		"""Show which file each imported quest came from (quest id -> file name)."""
@@ -455,6 +471,10 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 			self.pane_layout.addWidget(note)
 		if address.kind in ("task", "reward"):
 			self.pane_layout.addLayout(self._timing_row(address, spec))
+		if address.kind == "reward" and spec.kind == "AssortmentUnlock":
+			panel = self._unlock_panel(address, data)
+			if panel is not None:
+				self.pane_layout.addWidget(panel)
 		own_id = data.get("id") if isinstance(data, dict) else None
 		form = FormWidget(spec, self._ctx(qpath[0] if qpath else None, own_id), show_advanced=bool(self.settings and self.settings.show_all_fields))
 		form.bind(data)
@@ -473,6 +493,27 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		row.addStretch(1)
 		self.pane_layout.addLayout(row)
 		self.pane_layout.addStretch(1)
+
+	def _unlock_panel(self, address, reward):
+		"""What the open trader assort says about an Assort unlock's preview, with buttons to fill or update it (None: no assort to look in)."""
+		source = self.assort_source() if self.assort_source else None
+		if source is None:
+			return None
+		assort, locks, trader_id = source
+		names = self._ctx().names
+		levels = assort.get("loyal_level_items", {})
+		offers = [
+			(offer, f"{names.item(assort_schema.offer_tpl(assort, offer))} - level {levels.get(offer, '?')}")
+			for offer in assort_schema.offer_ids(assort)
+		]
+		state = assort_schema.unlock_state(assort, locks, address.path[0], address.timing, reward, trader_id or None)
+
+		def bring(label):
+			def run(offer_id):
+				self.doc.change(label, lambda node: assort_schema.refresh_unlock(node, assort, offer_id, trader_id or None), path=address.path)
+			return run
+
+		return UnlockOfferPanel(state, offers, bring("Fill the preview from an offer"), bring("Update the preview"))
 
 	def _timing_row(self, address, spec):
 		row = QHBoxLayout()
@@ -601,6 +642,97 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 
 		self.doc.change(f"Add {spec.label.lower()}", edit, path=(qid,))
 		self._select_key((group, path + (len(_get(self.doc.data, path)) - 1,)))
+
+	# --- moving (the order of the quests in the file is the order the game shows them) ----------
+	def _visible_quest_ids(self):
+		"""The ids of the quests shown in the tree (the search may hide some), in order."""
+		return [
+			self.tree.topLevelItem(i).data(0, ROLE).path[0] for i in range(self.tree.topLevelItemCount())
+			if not self.tree.topLevelItem(i).isHidden()
+		]
+
+	def _selected_quest_rows(self):
+		"""The ids of the quests that are themselves selected (their row, not something inside them), in tree order."""
+		chosen = {item.data(0, ROLE).path[0] for item in self.tree.selectedItems() if item.data(0, ROLE).kind == "quest"}
+		current = self._current()
+		if current is not None and current.kind == "quest":
+			chosen.add(current.path[0])
+		return [q for q in self._visible_quest_ids() if q in chosen]
+
+	@staticmethod
+	def _moved(order, chosen, how):
+		"""order with the chosen ones moved one place up or down (as a block), or to the top or bottom."""
+		order, chosen = list(order), set(chosen)
+		if how == "up":
+			for i in range(1, len(order)):
+				if order[i] in chosen and order[i - 1] not in chosen:
+					order[i - 1], order[i] = order[i], order[i - 1]
+		elif how == "down":
+			for i in range(len(order) - 2, -1, -1):
+				if order[i] in chosen and order[i + 1] not in chosen:
+					order[i], order[i + 1] = order[i + 1], order[i]
+		elif how == "top":
+			order = [q for q in order if q in chosen] + [q for q in order if q not in chosen]
+		else:
+			order = [q for q in order if q not in chosen] + [q for q in order if q in chosen]
+		return order
+
+	def can_move(self, how):
+		"""True if the selected quests, or the selected condition, subtask or reward, can move this way ("up", "down", "top", "bottom")."""
+		address = self._current()
+		if address is None or address.kind == "group" or self.doc is None or not self.tree.selectedItems():
+			return False
+		if address.kind == "quest":
+			shown = self._visible_quest_ids()
+			return self._moved(shown, self._selected_quest_rows(), how) != shown
+		try:
+			items = _get(self.doc.data, address.path[:-1])
+		except (KeyError, IndexError, TypeError):
+			return False
+		index = address.path[-1]
+		return index > 0 if how in ("up", "top") else index < len(items) - 1
+
+	def _update_move_buttons(self):
+		self.moveUpButton.setEnabled(self.can_move("up"))
+		self.moveDownButton.setEnabled(self.can_move("down"))
+
+	def move_selected(self, how):
+		"""Move the selected quests (together), or the selected condition, subtask or reward, one place or to an end.
+		Nothing else changes: a condition's own "Order" (index) is left as it is."""
+		address = self._current()
+		if address is None or not self.can_move(how):
+			return
+		if address.kind == "quest":
+			return self._move_quests(self._selected_quest_rows(), how)
+		list_path, index = address.path[:-1], address.path[-1]
+		count = len(_get(self.doc.data, list_path))
+		target = {"up": index - 1, "down": index + 1, "top": 0, "bottom": count - 1}[how]
+
+		def reorder(items):
+			items.insert(target, items.pop(index))
+
+		self.doc.change("Move", reorder, path=list_path)
+		self._select_key((address.kind, list_path + (target,)))
+
+	def _move_quests(self, chosen, how):
+		shown = self._visible_quest_ids()
+		new_shown = self._moved(shown, chosen, how)
+		order = list(self.doc.data)
+		slots = [i for i, quest_id in enumerate(order) if quest_id in set(shown)]
+		for slot, quest_id in zip(slots, new_shown):  # (the quests the search hides stay where they are)
+			order[slot] = quest_id
+
+		def reorder(data):
+			items = {quest_id: data[quest_id] for quest_id in order}
+			data.clear()
+			data.update(items)
+
+		self.doc.change("Move quests" if len(chosen) > 1 else "Move quest", reorder)
+		self._select_key(("quest", (chosen[0],)))
+		for item in self._walk():
+			address = item.data(0, ROLE)
+			if address.kind == "quest" and address.path[0] in chosen:
+				item.setSelected(True)
 
 	def copy_selected(self):
 		address = self._current()

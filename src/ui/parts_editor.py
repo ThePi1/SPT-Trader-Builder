@@ -19,20 +19,28 @@ ROLE = Qt.ItemDataRole.UserRole
 
 
 class PartsEditor(QWidget):
+	"""offer=True is a trader offer: one main item that can be swapped (New root item...), and the items added go onto it."""
+
 	changed = Signal()
 
-	def __init__(self, parts, ctx, parent=None):
+	def __init__(self, parts, ctx, parent=None, offer=False):
 		super().__init__(parent)
-		self.parts, self.ctx = parts, ctx
+		self.parts, self.ctx, self.offer = parts, ctx, offer
 		self._loading = False
 		self.read_only = False
 		layout = QVBoxLayout(self)
 		layout.setContentsMargins(0, 0, 0, 0)
 		bar = QHBoxLayout()
 		bar.setSpacing(3)
-		self.add_button = QPushButton("Add item...")
-		self.add_button.setToolTip("Add an item. With a part selected it is attached to it (a mod, ammo).")
+		self.add_button = QPushButton("Add child item..." if offer else "Add item...")
+		self.add_button.setToolTip(
+			"Add an item onto the selected part (a mod, ammo); with nothing selected it goes on the main item." if offer
+			else "Add an item. With a part selected it is attached to it (a mod, ammo)."
+		)
 		self.add_button.clicked.connect(self.add_item)
+		self.root_button = QPushButton("New root item...")
+		self.root_button.setToolTip("Swap the main item for another item, or for a composite item. The price, level, stock and quest lock stay; mods that fit the new item stay, and a composite item brings its own.")
+		self.root_button.clicked.connect(self.swap_root)
 		self.remove_button = QPushButton("Remove")
 		self.remove_button.clicked.connect(self.remove_selected)
 		more = self.more_button = QToolButton()
@@ -43,8 +51,9 @@ class PartsEditor(QWidget):
 		menu.addSeparator()
 		menu.addAction("Save these as my item...", self.save_to_library)
 		more.setMenu(menu)
-		for widget in (self.add_button, self.remove_button, more):
-			bar.addWidget(widget)
+		for widget in (self.add_button, self.root_button if offer else None, self.remove_button, more):  # (only an offer has a main item to swap)
+			if widget is not None:
+				bar.addWidget(widget)
 		bar.addStretch(1)
 		layout.addLayout(bar)
 		self.tree = QTreeWidget()
@@ -80,7 +89,7 @@ class PartsEditor(QWidget):
 		"""Show the parts without letting them be changed: the buttons and the fields are disabled, but the tree
 		can still be browsed to see each part's details."""
 		self.read_only = read_only
-		for widget in (self.add_button, self.more_button, self.slot, self.stack, self.found):
+		for widget in (self.add_button, self.root_button, self.more_button, self.slot, self.stack, self.found):
 			widget.setEnabled(not read_only)
 		self.remove_button.setEnabled(not read_only and self.tree.currentItem() is not None)
 
@@ -208,8 +217,10 @@ class PartsEditor(QWidget):
 	# --- adding and removing ----------------------------------------------------------------
 	def add_item(self):
 		"""Search items (and composite items) and add what is chosen. A composite item is added whole, as its own part."""
-		ids = self.ctx.pick("part", True, self)
+		ids = self.ctx.pick("item" if self.offer else "part", True, self)  # (a trader offer takes plain items: its main item is the one thing it is)
 		parent = self._current()
+		if parent is None and self.offer:
+			parent = next(iter(P.roots(self.parts)), None)  # (nothing selected: onto the main item)
 		last = None
 		for tpl in ids:
 			composite = self._composite_parts(tpl)
@@ -228,6 +239,72 @@ class PartsEditor(QWidget):
 		if last is not None:
 			self.rebuild(last["_id"])
 			self._emit()
+
+	def swap_root(self):
+		"""Replace the main item with another one (or with a composite item: its main item and all its mods). The main part
+		keeps its id, stack size and other fields. For an item, the mods stay where the new item has a slot for them and
+		the ones that don't fit are removed (after asking)."""
+		roots = P.roots(self.parts)
+		if len(roots) != 1:
+			return
+		picked = self.ctx.pick("part", False, self)  # (items, and composite items)
+		root = roots[0]
+		if not picked:
+			return
+		built = self._composite_parts(picked[0])
+		if built is not None:
+			return self._swap_root_for(root, built)
+		if picked[0] == root.get("_tpl"):
+			return
+		tpl = picked[0]
+		loose = [
+			child for child in P.children(self.parts, root["_id"])
+			if tpl in self.items and P.fits(self.items, tpl, child.get("slotId", ""), child.get("_tpl", "")) is False
+		]
+		if loose:
+			names = ", ".join(self._name(child.get("_tpl", "")) for child in loose[:5]) + (" ..." if len(loose) > 5 else "")
+			answer = QMessageBox.question(
+				self, "New root item",
+				f"{len(loose)} part{'' if len(loose) == 1 else 's'} (and anything on {'it' if len(loose) == 1 else 'them'}) don't fit {self._name(tpl)} and will be removed: {names}. Continue?",
+			)
+			if answer != QMessageBox.StandardButton.Yes:
+				return
+			for child in loose:
+				P.remove_part(self.parts, child["_id"])
+		root["_tpl"] = tpl
+		self.rebuild(root["_id"])
+		self._emit()
+
+	def _swap_root_for(self, root, built):
+		"""Make the main part the main item of a composite item, with all its mods (the mods it had are replaced)."""
+		main = next(iter(P.roots(built)), None)
+		if main is None:
+			return
+		inside, grew = {main["_id"]}, True
+		while grew:  # (the main item and everything attached to it: a composite can hold other main parts too)
+			grew = False
+			for part in built:
+				if part.get("parentId") in inside and part["_id"] not in inside:
+					inside.add(part["_id"])
+					grew = True
+		old = P.children(self.parts, root["_id"])
+		if old and QMessageBox.question(
+			self, "New root item",
+			f"The composite item replaces the main item and its {len(old)} part{'' if len(old) == 1 else 's'} (with what is on {'it' if len(old) == 1 else 'them'}). Continue?",
+		) != QMessageBox.StandardButton.Yes:
+			return
+		for child in old:
+			P.remove_part(self.parts, child["_id"])
+		root["_tpl"] = main["_tpl"]
+		for key, value in (main.get("upd") or {}).items():
+			root.setdefault("upd", {}).setdefault(key, value)  # (what the part already has stays)
+		for part in built:
+			if part["_id"] in inside and part["_id"] != main["_id"]:
+				if part.get("parentId") == main["_id"]:
+					part["parentId"] = root["_id"]
+				self.parts.append(part)
+		self.rebuild(root["_id"])
+		self._emit()
 
 	def _ask_slot(self, parent, tpl):
 		names = P.slot_names(self.items, parent.get("_tpl", ""))

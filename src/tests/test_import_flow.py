@@ -294,12 +294,14 @@ def test_the_context_menu_offers_export_and_removing_a_files_quests(window, tmp_
 	window.import_files(files(tmp_path)[:2])
 	outline = window.quest_outline
 	start = ["Add", "Copy", "Delete"]
-	assert [t for t, _s in outline._context_actions(quest_item(window, Q3))] == start + ["Export this quest..."]
-	assert [t for t, _s in outline._context_actions(quest_item(window, Q1))] == start + ["Export this quest...", "Remove the quests imported from kappa.json"]
+	# (Q3 is first in the file, so it can only move down; Q1 is in the middle)
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q3))] == start + ["Move down", "Move to bottom"] + ["Export this quest..."]
+	moves = ["Move up", "Move down", "Move to top", "Move to bottom"]
+	assert [t for t, _s in outline._context_actions(quest_item(window, Q1))] == start + moves + ["Export this quest...", "Remove the quests imported from kappa.json"]
 	outline.tree.clearSelection()
 	quest_item(window, Q1).setSelected(True)
 	quest_item(window, Q2).setSelected(True)
-	assert outline._context_actions(quest_item(window, Q2))[3][0] == "Export 2 selected quests..."
+	assert "Export 2 selected quests..." in [t for t, _s in outline._context_actions(quest_item(window, Q2))]
 	assert outline.selected_quest_ids() == [Q1, Q2] and outline._current().path[0] == Q2  # (the menu acts on the clicked quest, and the selection stays)
 	blank = outline._context_actions(None)  # (a click on empty space: nothing is selected, Add offers a new quest)
 	assert [t for t, _s in blank] == ["Add"] and not outline.tree.selectedItems()

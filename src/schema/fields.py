@@ -44,6 +44,7 @@ class Field:
 	minimum: float = None
 	maximum: float = None
 	fields: tuple = ()  # for OBJECT: the fields inside
+	help: str = ""  # a longer explanation, shown by a "?" next to the label
 
 
 @dataclass(frozen=True)

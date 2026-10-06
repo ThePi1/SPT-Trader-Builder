@@ -4,11 +4,12 @@ A quest file and a locale file are opened (or started from nothing) and saved on
 there is no project folder.
 """
 
+import re
 from pathlib import Path
 
 from PySide6.QtCore import QThreadPool, QTimer
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QInputDialog, QMainWindow, QMessageBox
 
 from core import lookup
 from core import jsonio
@@ -16,7 +17,9 @@ from core import merge as M
 from core.export import export_selection
 from core.locale_copy import copy_to_other_languages
 from core.documents import Document
+from core.last_files import LastFiles
 from core.paths import ICON_FILE
+from core.references import References
 from ui import dialogs, updates
 from core.library import Library
 from schema import assort as assort_schema
@@ -28,6 +31,7 @@ from ui.explorer_tab import ExplorerTab
 from ui.export_dialog import ExportDialog
 from ui.files_strip import FilesStrip
 from ui.import_dialog import ImportDialog
+from ui.references_dialog import ReferencesDialog
 from ui.locale_tab import LocaleTab
 from ui.lookup_view import LookupTab, PickerDialog
 from ui.quest_outline import QuestOutline
@@ -40,6 +44,7 @@ KINDS = (
 	("assort", "Trader assort", "trader assort", M.ASSORT), ("locks", "Quest assort", "quest assort", M.LOCKS),
 )
 KEY_OF_KIND = {kind: key for key, _title, _label, kind in KINDS}
+LAST_KEYS = ("quests", "locale", "assort", "locks")  # (the sections whose file is remembered)
 
 
 def app_icon():
@@ -58,6 +63,11 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.update_status = updates.pending_status(settings)
 		self._workers = []
 		self.quest_sources = {}  # quest id -> the file it was imported from
+		self.references = References(language=settings.language)  # files that are only looked at
+		self.last_files = LastFiles()  # the files that are open, kept for "Load last files on open"
+		self._restoring = False
+		if gamedata is not None:
+			gamedata.references = self.references
 		self.quests = Document({})
 		self.locale = Document({})
 		self.assort = Document(assort_schema.empty_assort())
@@ -65,6 +75,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline = QuestOutline(gamedata, settings)
 		self.quest_outline.set_document(self.quests)
 		self.quest_outline.picker = self.pick
+		self.quest_outline.assort_source = lambda: (self.assort.data, self.locks.data, self.assort_tab.trader_id)
 		self.quest_outline.locale = self.locale
 		self.locale_tab = LocaleTab(self.locale, self.quests, settings)
 		self._base_rows = None
@@ -81,7 +92,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			"page_composite": self.composite_tab, "page_find_ids": self.lookup_tab, "page_explorer": self.explorer_tab,
 		})
 		self.tabs.currentChanged.connect(self._tab_changed)
-		self.files_strip = FilesStrip([(key, title) for key, title, _label, _kind in KINDS])
+		self.files_strip = FilesStrip([(key, title) for key, title, _label, _kind in KINDS] + [("references", "References")])
+		self.files_strip.segment("references").fileLabel.setVisible(False)  # (nothing to say under "References" but the count)
 		self.centralLayout.addWidget(self.files_strip)
 		for doc in (self.quests, self.locale, self.assort, self.locks):
 			doc.on_change(self._doc_changed)
@@ -96,9 +108,12 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		"""Everything searchable (the game's data, then the quests and saved composite items being edited), for the kinds asked for."""
 		if self._base_rows is None:
 			self._base_rows = [] if self.gamedata is None else lookup.build_rows(
-				self.gamedata, kinds=tuple(k for k in lookup.KIND_LABEL if k not in (lookup.QUEST, lookup.MINE))
+				self.gamedata, kinds=tuple(k for k in lookup.KIND_LABEL if k not in (lookup.QUEST, lookup.MINE, lookup.REF_QUEST)),
+				references=self.references,
 			)
-		mine = lookup.build_rows(self.gamedata, quests=self.quests.data, kinds=(lookup.QUEST,)) if self.gamedata is not None else []
+		mine = lookup.build_rows(
+			self.gamedata, quests=self.quests.data, kinds=(lookup.QUEST, lookup.REF_QUEST), references=self.references,
+		) if self.gamedata is not None else []
 		rows = mine + lookup.library_rows(self.library) + self._base_rows
 		return [r for r in rows if not kinds or r.kind in kinds]
 
@@ -109,7 +124,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		}.get(ref, "Find")
 		kinds = {
 			"composite": (lookup.MINE, lookup.PRESET),  # (saved ones and the game's)
-			"part": (lookup.ITEM, lookup.MINE, lookup.PRESET),  # (what a list of item parts can take)
+			"part": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET),  # (what a list of item parts can take)
+			"item": (lookup.ITEM, lookup.REF_ITEM), "quest": (lookup.QUEST, lookup.REF_QUEST),  # (the game's, and the reference files')
 		}.get(ref, (ref,))
 		dialog = PickerDialog(self.rows(kinds), kinds, title, multi, self.settings, parent or self)
 		return dialog.ids if dialog.exec() else []
@@ -149,6 +165,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			menu.addSeparator()
 			menu.addAction(save)
 			menu.addAction(save_as)
+		reference_menu = self.files_strip.segment("references").menu
+		for action, slot in (
+			(self.actionAddReferences, self.add_references), (self.actionManageReferences, self.manage_references),
+			(self.actionReloadReferences, self.reload_references),
+		):
+			action.triggered.connect(lambda _checked=False, slot=slot: slot())
+			reference_menu.addAction(action)
 		for action, slot in (
 			(self.actionImportFiles, self.import_any), (self.actionExit, self.close), (self.actionUndo, self.undo),
 			(self.actionRedo, self.redo), (self.actionSettings, self.show_settings), (self.actionAbout, self.show_about),
@@ -158,7 +181,60 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.actionExportQuests.triggered.connect(lambda _checked=False: self.export_quests())
 		self.quest_outline.export_requested.connect(self.export_quests)
 		self.undo_action, self.redo_action = self.actionUndo, self.actionRedo
+		self.actionRegenerateAssort.triggered.connect(lambda _checked=False: self.debug_regenerate_assort())
+		self.actionRegenerateLocks.triggered.connect(lambda _checked=False: self.debug_regenerate_locks())
+		self.apply_debug_option()
 		self.menuEdit.aboutToShow.connect(self._update_edit_menu)
+
+	def apply_debug_option(self):
+		"""The Debug menu is there only while "Enable debug options" is on."""
+		self.menuDebug.menuAction().setVisible(bool(getattr(self.settings, "enable_debug_options", False)))
+
+	def _folder_of(self, doc):
+		return str(Path(doc.path).parent) if doc.path else ""
+
+	def debug_regenerate_assort(self):
+		"""Debug: save a new trader assort file made only of the offers the program knows (the open assort's offers, with their
+		items, prices and levels). The open assort is not changed."""
+		offers = assort_schema.offer_ids(self.assort.data)
+		if not offers:
+			QMessageBox.information(self, "Regenerate trader assort", "There is no trader assort open yet: open or import one first.")
+			return None
+		path, _ = QFileDialog.getSaveFileName(self, "Save the regenerated trader assort", str(Path(self._folder_of(self.assort)) / "assort.json"), JSON_FILTER)
+		if not path:
+			return None
+		new, left_out = assort_schema.regenerate_assort(self.assort.data)
+		return self._save_debug_file(path, new, f"{len(offers)} offer{'' if len(offers) == 1 else 's'}", left_out)
+
+	def debug_regenerate_locks(self):
+		"""Debug: save a new quest assort file with only the links to offers (in the open trader assort) and quests (open, in the
+		base game or in a reference file) that are known. The open quest assort is not changed."""
+		offers = set(assort_schema.offer_ids(self.assort.data))
+		if not offers:
+			QMessageBox.information(self, "Regenerate quest assort", "There is no trader assort open, so no offer is known and every link would be removed. Open or import one first.")
+			return None
+		path, _ = QFileDialog.getSaveFileName(self, "Save the regenerated quest assort", str(Path(self._folder_of(self.locks)) / "questassort.json"), JSON_FILTER)
+		if not path:
+			return None
+		known = self.quests.data
+		new, dropped = assort_schema.regenerate_questassort(
+			self.locks.data, offers, lambda quest_id: quest_id in known or (self.gamedata is not None and self.gamedata.knows_quest(quest_id)),
+		)
+		kept = sum(len(links) for links in new.values())
+		left_out = [f"{section}: {offer or '(section)'} -> {quest or '-'} ({why})" for section, offer, quest, why in dropped]
+		return self._save_debug_file(path, new, f"{kept} link{'' if kept == 1 else 's'}", left_out)
+
+	def _save_debug_file(self, path, data, what, left_out):
+		try:
+			jsonio.write_json(path, data)
+		except OSError as e:
+			QMessageBox.warning(self, "Save", f"The file could not be saved.\n\n{e}")
+			return None
+		text = f"Saved {what} to {Path(path).name}."
+		if left_out:
+			text += f" Left out: {'; '.join(left_out[:4])}" + (f" (and {len(left_out) - 4} more)" if len(left_out) > 4 else "") + "."
+		self.statusBar().showMessage(text, 20000)
+		return {"path": path, "data": data, "left_out": left_out}
 
 	def _update_edit_menu(self):
 		undo_doc = self._latest()
@@ -191,6 +267,41 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			return sum(len(v) for v in data.values() if isinstance(v, dict))
 		return len(data)
 
+	# --- reference files ----------------------------------------------------------------------
+	def add_references(self, paths=None):
+		if paths is None:
+			paths, _ = QFileDialog.getOpenFileNames(self, "Add reference files", "", JSON_FILTER)
+		if not paths:
+			return None
+		added, skipped = self.references.add(paths)
+		self._references_changed()
+		text = f"Added {len(added)} reference file{'' if len(added) == 1 else 's'}."
+		if skipped:
+			text += f" Left out: {', '.join(f'{name} ({why})' for name, why in skipped[:3])}" + (" ..." if len(skipped) > 3 else "")
+		self.statusBar().showMessage(text, 15000)
+		return added
+
+	def manage_references(self):
+		dialog = ReferencesDialog(self.references, self)
+		dialog.changed.connect(self._references_changed)
+		dialog.import_requested.connect(lambda paths: QTimer.singleShot(0, lambda: self.import_files(paths)))
+		dialog.exec()
+
+	def reload_references(self):
+		self.references.reload()
+		self._references_changed()
+		self.statusBar().showMessage("Reference files read again.", 8000)
+
+	def _references_changed(self):
+		"""The reference files changed: names, checks and the id lists have to look again."""
+		self._base_rows = None
+		if self.tabs.currentWidget() is self.lookup_tab:
+			self.lookup_tab.set_rows(self.rows())
+		self.quest_outline.rebuild()
+		self.quest_outline.check()
+		self.assort_tab.refresh(self.assort_tab.current_id())
+		self._doc_changed()
+
 	def _refresh_strip(self):
 		for key, _title, _label, _kind in KINDS:
 			doc, count, names = getattr(self, key), self._count(key), self.imported_files(key)
@@ -201,6 +312,9 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 				file_text = ("not saved yet" if count else "empty") + (f" \u00b7 {imports}" if imports else "")
 			state, tone = ("unsaved", "warn") if doc.dirty else (("saved", "ok") if doc.path else ("", "muted"))
 			self.files_strip.segment(key).set_info(count, state, tone, file_text, str(doc.path) if doc.path else "")
+		files = self.references.files
+		names = "\n".join(ref.name for ref in files)
+		self.files_strip.segment("references").set_info(len(files), "", "muted", "", names or "No reference files yet")  # (the count in the title says it; the file names are the tooltip)
 
 	# --- files ------------------------------------------------------------------------------
 	def _confirm_discard(self, doc, label):
@@ -222,6 +336,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline.set_document(doc)
 		self.locale_tab.set_documents(self.locale, doc)
 		self._doc_changed()
+		self._remember_files()
 
 	def _set_locale(self, doc):
 		self.locale = doc
@@ -232,17 +347,20 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline.check()
 		self.locale_tab.set_documents(doc, self.quests)
 		self._doc_changed()
+		self._remember_files()
 
 	def _new(self, doc, label, setter):
 		if self._confirm_discard(doc, label):
 			setter(Document({}))
 
-	def _open(self, doc, label, setter):
+	def _open(self, doc, label, setter, path=None):
+		"""Open a file in place of this section's: the one at path, or the one the user picks."""
 		if not self._confirm_discard(doc, label):
 			return
-		path, _ = QFileDialog.getOpenFileName(self, f"Open {label} file", "", JSON_FILTER)
-		if not path:
-			return
+		if path is None:
+			path, _ = QFileDialog.getOpenFileName(self, f"Open {label} file", "", JSON_FILTER)
+			if not path:
+				return
 		try:
 			opened = Document.open(path)
 		except (OSError, ValueError) as e:
@@ -266,9 +384,47 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		except OSError as e:
 			QMessageBox.warning(self, "Save", f"The file could not be saved.\n\n{e}")
 			return False
+		self._remember_files()
 		if doc is self.locale and self.settings.copy_locale_to_all_languages:
 			self.copy_text_to_other_languages()
 		return True
+
+	# --- the files that were open last time ----------------------------------------------------
+	def _remember_files(self):
+		"""Keep the file each section was opened from or saved to, for "Load last files on open" (only while that is on)."""
+		if not getattr(self.settings, "load_last_files", False) or self._restoring:
+			return
+		self.last_files.write({key: str(getattr(self, key).path) if getattr(self, key).path else None for key in LAST_KEYS})
+
+	def restore_last_files(self):
+		"""Open the files that were open when the program was last closed, if the setting is on. They open the way File > Open
+		opens them (so an assort asks which trader it is for). Imported files are not part of this. Returns the paths opened."""
+		if not getattr(self.settings, "load_last_files", False):
+			return []
+		last = self.last_files.read()
+		openers = {
+			"quests": self.open_quests, "locale": self.open_locale,
+			"assort": lambda path: self._open_other("assort", path), "locks": lambda path: self._open_other("locks", path),
+		}
+		opened, missing = [], []
+		self._restoring = True  # (what is kept is only updated when all are done: opening the first must not forget the rest)
+		try:
+			for key in LAST_KEYS:
+				path = last.get(key)
+				if not path:
+					continue
+				if not Path(path).is_file():
+					missing.append(Path(path).name)
+					continue
+				openers[key](path)
+				if getattr(self, key).path == Path(path):
+					opened.append(path)
+		finally:
+			self._restoring = False
+		self._remember_files()
+		if missing:
+			self.statusBar().showMessage(f"Not opened again, because they are gone: {', '.join(missing)}.", 15000)
+		return opened
 
 	def copy_text_to_other_languages(self):
 		"""Add the saved text (that of the open quests, or all of it when no quests are open) to the other
@@ -291,8 +447,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 	def new_quests(self):
 		self._new(self.quests, "quest", self._set_quests)
 
-	def open_quests(self):
-		self._open(self.quests, "quest", self._set_quests)
+	def open_quests(self, path=None):
+		self._open(self.quests, "quest", self._set_quests, path)
 
 	def save_quests(self):
 		return self._save(self.quests, "quest")
@@ -303,8 +459,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 	def new_locale(self):
 		self._new(self.locale, "locale", self._set_locale)
 
-	def open_locale(self):
-		self._open(self.locale, "locale", self._set_locale)
+	def open_locale(self, path=None):
+		self._open(self.locale, "locale", self._set_locale, path)
 
 	def save_locale(self):
 		return self._save(self.locale, "locale")
@@ -319,15 +475,39 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		doc.on_change(self._doc_changed)
 		self.assort_tab.watch(self.assort, self.locks)
 		self._doc_changed()
+		self._remember_files()
 
 	def _new_other(self, name):
 		label, empty = self._OTHER[name]
 		if self._confirm_discard(getattr(self, name), label):
 			self._set_other(name, Document(empty()))
 
-	def _open_other(self, name):
+	def _open_other(self, name, path=None):
 		label, empty = self._OTHER[name]
-		self._open(getattr(self, name), label, lambda doc: self._set_other(name, doc))
+
+		def opened(doc):
+			self._set_other(name, doc)
+			if name == "assort":
+				self.ask_trader(doc.path)
+
+		self._open(getattr(self, name), label, opened, path)
+
+	def ask_trader(self, path=None):
+		"""Ask which trader an assort file is for (starting from where the file is, else the trader chosen now) and put the
+		answer in the Trader box. Cancelling leaves the Trader box as it is."""
+		traders = self.gamedata.all_traders() if self.gamedata is not None else {}
+		current = (M.guess_trader(path, traders) if path else "") or self.assort_tab.trader_id
+		choices = [("(not set)", "")] + [(name, trader_id) for trader_id, name in traders.items()]
+		if current and current not in traders:
+			choices.append((current, current))  # (a trader the list doesn't know: shown by its id)
+		labels = [label for label, _id in choices]
+		start = next((i for i, (_label, trader_id) in enumerate(choices) if trader_id == current), 0)
+		text, ok = QInputDialog.getItem(self, "Trader", "Which trader is this assort for? (You can also paste a trader id.)", labels, start, True)
+		if not ok:
+			return False
+		text = text.strip()
+		chosen = dict(choices).get(text) if text in dict(choices) else (text if re.fullmatch(r"[0-9a-fA-F]{24}", text) else "")
+		return self.assort_tab.set_trader(chosen)
 
 	def _save_other(self, name, as_new=False):
 		return self._save(getattr(self, name), self._OTHER[name][0], as_new)
@@ -347,6 +527,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 
 	def closeEvent(self, event):
 		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest assort"))):
+			self._remember_files()
 			event.accept()
 		else:
 			event.ignore()
@@ -379,10 +560,21 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 				if item.kind and item.kind != only:
 					item.include = False
 					item.error = f"This looks like a {M.KIND_LABEL[item.kind].lower()} file."
-		dialog = ImportDialog(items, self._workspace(), self)
-		if not dialog.exec() or dialog.plan is None:
+		dialog = ImportDialog(
+			items, self._workspace(), self,
+			traders=self.gamedata.all_traders() if self.gamedata is not None else None, trader=self.assort_tab.trader_id,
+		)
+		accepted = dialog.exec()
+		if accepted and dialog.use_as_references:  # (kept for looking up ids; nothing is merged)
+			self.add_references([str(i.path) for i in items if i.path is not None and not i.error.startswith("Couldn't")])
 			return None
-		return self.apply_import(dialog.plan, dialog.chosen_items())
+		if not accepted or dialog.plan is None:
+			return None
+		trader = dialog.chosen_trader()
+		plan = self.apply_import(dialog.plan, dialog.chosen_items())
+		if trader:  # (the assort that came in is this trader's: the Trader box says so, after asking if another trader is set)
+			self.assort_tab.set_trader(trader)
+		return plan
 
 	def apply_import(self, plan, items):
 		"""Put an import's result in the open sections, one undo step each, and say what happened."""
@@ -457,6 +649,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 				self.update_status = updates.pending_status(self.settings)
 				self.start_update_check()
 			self.quest_outline.apply_settings()
+			self.apply_debug_option()
 			self.explorer_tab.browse.refresh()
 			self.locale_tab.refresh()
 			self.lookup_tab.view.refresh()

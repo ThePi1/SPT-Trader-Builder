@@ -39,6 +39,8 @@ class AssortTab(QWidget, Ui_AssortForm):
 		self.setupUi(self)
 		self.doc, self.locks = assort_doc, locks_doc
 		self.gamedata, self.picker, self.library = gamedata, picker, library
+		self._lock_holder = None
+		self._asking = False  # (the "change the trader?" question is open)
 		self.quests = quests or (lambda: {})
 		self.quests_document = quests_document
 		self._editing = False
@@ -48,12 +50,15 @@ class AssortTab(QWidget, Ui_AssortForm):
 			self.levelFilter.addItem(f"Level {level}", level)
 		self.levelFilter.currentIndexChanged.connect(lambda _i: self.refresh())
 		self.list.currentItemChanged.connect(self._select)
+		self.problemsToggle.toggled.connect(lambda _checked: self._show_problems())
+		self.problemsList.itemClicked.connect(self._jump_to_problem)
+		self._problems = []
 		for button, slot in ((self.addButton, self.add_offer), (self.copyButton, self.copy_offer), (self.deleteButton, self.delete_offer)):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.splitter.setSizes([420, 520])
 		# which trader this assort is for: needed to link offers and quest rewards
 		self.trader.addItem("(not set)", "")
-		for trader_id, name in (gamedata.traders.items() if gamedata is not None else ()):
+		for trader_id, name in (gamedata.all_traders().items() if gamedata is not None else ()):
 			self.trader.addItem(name, trader_id)
 		self.trader.setCurrentIndex(0)
 		self.trader.activated.connect(lambda _i: self._trader_changed())
@@ -71,11 +76,54 @@ class AssortTab(QWidget, Ui_AssortForm):
 		return text if re.fullmatch(r"[0-9a-fA-F]{24}", text) else ""
 
 	def _trader_changed(self):
-		"""The trader box was used. Only a different trader changes anything (the box also reports losing focus)."""
-		if self.trader_id == self._last_trader:
+		"""The trader box was used. Only a different trader changes anything (the box also reports losing focus).
+		Changing a trader that is set asks first."""
+		if self._asking:  # (the question took the focus from the box, which reports it is finished: that is not another change)
 			return
-		self._last_trader = self.trader_id
+		new = self.trader_id
+		if new == self._last_trader:
+			return
+		if self._last_trader:
+			self._asking = True
+			try:
+				confirmed = self._confirm_trader_change(self._last_trader, new)
+			finally:
+				self._asking = False
+			if not confirmed:
+				self._show_trader(self._last_trader)
+				return
+		self._last_trader = new
 		self.refresh(self.current_id())
+
+	def set_trader(self, trader_id):
+		"""Put this trader in the Trader box (asking first when another trader is set). True if the box shows it now."""
+		self._show_trader(trader_id)
+		self._trader_changed()
+		return self.trader_id == trader_id
+
+	def _show_trader(self, trader_id):
+		"""Show a trader in the box without that counting as the user changing it."""
+		for widget in (self.trader, self.trader.lineEdit()):
+			widget.blockSignals(True)
+		index = self.trader.findData(trader_id)
+		if index >= 0:
+			self.trader.setCurrentIndex(index)
+		else:
+			self.trader.setEditText(trader_id)
+		for widget in (self.trader, self.trader.lineEdit()):
+			widget.blockSignals(False)
+
+	def _trader_name(self, trader_id):
+		index = self.trader.findData(trader_id)
+		return self.trader.itemText(index) if index >= 0 else (trader_id or "(not set)")
+
+	def _confirm_trader_change(self, old, new):
+		answer = QMessageBox.question(
+			self, "Change trader",
+			f"Change the trader of this assort from {self._trader_name(old)} to {self._trader_name(new)}?\n\n"
+			"The trader decides which quest unlocks the offers are matched with. The offers themselves do not change.",
+		)
+		return answer == QMessageBox.StandardButton.Yes
 
 	# --- documents --------------------------------------------------------------------------
 	def watch(self, assort_doc, locks_doc):
@@ -103,6 +151,8 @@ class AssortTab(QWidget, Ui_AssortForm):
 			doc.touch(label, coalesce=coalesce)
 		finally:
 			self._editing = False
+		if doc is self.doc or doc is self.locks:
+			self._refresh_summary()
 
 	# --- the list ---------------------------------------------------------------------------
 	def _lock_of(self, offer_id):
@@ -129,16 +179,9 @@ class AssortTab(QWidget, Ui_AssortForm):
 		level = self.levelFilter.currentData()
 		self.list.blockSignals(True)
 		self.list.clear()
-		names = self._names()
 		data = self.doc.data
-		total = 0
 		for offer_id in A.offer_ids(data):
-			part = P.find(data["items"], offer_id)
-			lock, quest = self._lock_of(offer_id)
-			text = f"{names.item(part.get('_tpl', ''))}  -  {self._price_text(offer_id)}  -  level {data.get('loyal_level_items', {}).get(offer_id, '?')}"
-			if lock:
-				text += "  [quest]"
-			total += 1
+			text = self._row_text(offer_id)
 			if words and not all(w in text.lower() for w in words):
 				continue
 			if level is not None and data.get("loyal_level_items", {}).get(offer_id) != level:
@@ -147,13 +190,64 @@ class AssortTab(QWidget, Ui_AssortForm):
 			item.setData(ROLE, offer_id)
 			self.list.addItem(item)
 		self.list.blockSignals(False)
-		problems = self._lock_problems()
-		self.note.setText(f"{self.list.count()} of {total} offers." + (f" {len(problems)} quest unlock(s) to check." if problems else ""))
-		self.note.setToolTip("\n".join(i.message for i in problems[:30]))
+		self._update_note()
 		row = next((i for i in range(self.list.count()) if self.list.item(i).data(ROLE) == keep), 0)
 		if self.list.count():
 			self.list.setCurrentRow(row)
 		self._select(self.list.currentItem(), None)
+
+	def _row_text(self, offer_id):
+		"""The offer's line in the list: its item, price and level, and [quest] when it is locked to a quest."""
+		data = self.doc.data
+		part = P.find(data["items"], offer_id)
+		text = f"{self._names().item(part.get('_tpl', ''))}  -  {self._price_text(offer_id)}  -  level {data.get('loyal_level_items', {}).get(offer_id, '?')}"
+		return text + ("  [quest]" if self._lock_of(offer_id)[0] else "")
+
+	def _update_note(self):
+		"""The line under the list: how many offers are shown, and how many quest unlocks don't add up."""
+		total = len(A.offer_ids(self.doc.data))
+		self.note.setText(f"{self.list.count()} of {total} offers." + ("" if self.trader_id else " No trader has been chosen."))
+		self._problems = self._lock_problems()
+		self._show_problems()
+
+	def _show_problems(self):
+		"""The "N quest unlock(s) to check" line under the note: an arrow that opens the list of what doesn't agree."""
+		problems = self._problems
+		opened = self.problemsToggle.isChecked()
+		self.problemsToggle.setVisible(bool(problems))
+		self.problemsToggle.setText(f"{'▼' if opened else '▶'} {len(problems)} quest unlock(s) to check")
+		self.problemsList.setVisible(bool(problems) and opened)
+		self.problemsList.clear()
+		for issue in problems:
+			item = QListWidgetItem("• " + issue.message)
+			item.setData(ROLE, issue.path[1] if issue.path and issue.path[0] in A.QUEST_LOCKS and len(issue.path) > 1 else None)  # (the offer it is about)
+			self.problemsList.addItem(item)
+		rows = self.problemsList.count()  # (as tall as its lines, up to five, then it scrolls)
+		self.problemsList.setFixedHeight((self.problemsList.sizeHintForRow(0) if rows else 0) * min(rows, 5) + 2 * self.problemsList.frameWidth() + 2)
+
+	def _jump_to_problem(self, item):
+		"""Clicking a problem that is about an offer opens that offer."""
+		offer_id = item.data(ROLE)
+		if offer_id is not None and offer_id in A.offer_ids(self.doc.data):
+			for row in range(self.list.count()):
+				if self.list.item(row).data(ROLE) == offer_id:
+					self.list.setCurrentRow(row)
+					return
+
+	def _refresh_summary(self):
+		"""After an edit that leaves the form as it is: the open offer's line in the list, the note under the list and the
+		quest box (whether its quest still gives this unlock) show what the data says now."""
+		offer_id = self.current_id()
+		if offer_id is None or offer_id not in A.offer_ids(self.doc.data):
+			return
+		for row in range(self.list.count()):
+			if self.list.item(row).data(ROLE) == offer_id:
+				self.list.item(row).setText(self._row_text(offer_id))
+		self._update_note()
+		holder = self._lock_holder
+		if holder is not None:
+			_clear(holder.layout())
+			holder.layout().addWidget(self._lock_box(offer_id))
 
 	def current_id(self):
 		item = self.list.currentItem()
@@ -169,6 +263,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 	# --- the offer --------------------------------------------------------------------------
 	def _select(self, item, _previous):
 		_clear(self.right_layout)
+		self._lock_holder = None
 		if item is None:
 			hint = QLabel("Press Add offer... to put an item on sale.")
 			hint.setStyleSheet("color: #808080;")
@@ -185,7 +280,7 @@ class AssortTab(QWidget, Ui_AssortForm):
 		layout.addWidget(QLabel(f"<b>{self._names().item(root.get('_tpl', ''))}</b>"))
 		# the item and its mods
 		offer_parts = copy.deepcopy(A.offer_parts(data, offer_id))  # edited here, written back through the document
-		editor = PartsEditor(offer_parts, self._ctx())
+		editor = PartsEditor(offer_parts, self._ctx(), offer=True)
 		editor.changed.connect(lambda: self._parts_changed(offer_id, offer_parts))
 		box = QGroupBox("Item")
 		QVBoxLayout(box).addWidget(editor)
@@ -213,7 +308,10 @@ class AssortTab(QWidget, Ui_AssortForm):
 			entry.textEdited.connect(lambda text, k=key: self._upd_number(offer_id, k, text, entry))
 			form.addRow(label, entry)
 		layout.addLayout(form)
-		layout.addWidget(self._lock_box(offer_id))
+		self._lock_holder = QWidget()  # (the quest box is rebuilt in here when an edit changes what it says)
+		QVBoxLayout(self._lock_holder).setContentsMargins(0, 0, 0, 0)
+		self._lock_holder.layout().addWidget(self._lock_box(offer_id))
+		layout.addWidget(self._lock_holder)
 		layout.addStretch(1)
 
 	def _upd_number(self, offer_id, key, text, entry):
@@ -238,14 +336,30 @@ class AssortTab(QWidget, Ui_AssortForm):
 		)
 
 	def _parts_changed(self, offer_id, offer_parts):
+		main_removed = not any(p.get("_id") == offer_id for p in offer_parts)
+		was = A.offer_tpl(self.doc.data, offer_id)
+		if main_removed and QMessageBox.question(
+			self, "Delete offer", "The main item is the offer itself: removing it deletes the whole offer, with its price and quest lock. Delete it?",
+		) != QMessageBox.StandardButton.Yes:
+			self.refresh(offer_id)  # (put the item back: the form shows what the file has)
+			return
+
 		def edit(data):
 			gone = {p["_id"] for p in A.offer_parts(data, offer_id)}
 			data["items"] = [p for p in data["items"] if p["_id"] not in gone] + [dict(p) for p in offer_parts]
 			root = P.find(data["items"], offer_id)
 			if root is not None:
 				root["parentId"] = root["slotId"] = A.ROOT
+			else:  # (no main item, no offer: its price and level go too)
+				data.get("barter_scheme", {}).pop(offer_id, None)
+				data.get("loyal_level_items", {}).pop(offer_id, None)
 
-		self._edit("Change item", edit)
+		self._edit("Delete offer" if main_removed else "Change item", edit)
+		if main_removed:
+			self._edit("Remove quest lock", lambda d: [d.get(s, {}).pop(offer_id, None) for s in A.QUEST_LOCKS], doc=self.locks)
+			self.refresh()
+		elif A.offer_tpl(self.doc.data, offer_id) != was:  # (a new main item: the title, the list and the quest status all follow it)
+			self.refresh(offer_id)
 
 	# --- price ------------------------------------------------------------------------------
 	def _price_box(self, offer_id):
@@ -366,7 +480,17 @@ class AssortTab(QWidget, Ui_AssortForm):
 				d.setdefault(lock_value, {})[offer_id] = quest_id
 
 		self._edit("Change quest lock", edit, doc=self.locks)
+		self._add_missing_unlock(offer_id, lock_value, quest_id)
 		self.refresh(offer_id)
+
+	def _add_missing_unlock(self, offer_id, lock_value, quest_id):
+		"""Locking an offer to an open quest gives the quest its Assort unlock preview when it has none yet."""
+		quests = self.quests()
+		quest = quests.get(quest_id) if quests and quest_id else None
+		if quest is None or lock_value not in A.UNLOCKED_BY or not self.trader_id:
+			return
+		if A.find_unlock(quest, lock_value, A.offer_tpl(self.doc.data, offer_id), self.trader_id) is None:
+			self._add_unlock(offer_id, lock_value, quest_id)
 
 	# --- the link between a quest lock and the quest's unlock reward ---------------------------------
 	def _unlock_row(self, offer_id, lock, quest_id):
@@ -383,9 +507,22 @@ class AssortTab(QWidget, Ui_AssortForm):
 		if lock in A.UNLOCKED_BY and quest_id:
 			quest = quests.get(quest_id)
 			if quest is None:
-				label.setText("That quest isn't in the open quest file.")
-			elif A.find_unlock(quest, lock, tpl, self.trader_id or None):
-				label.setText(f'Linked quest "{quest.get("QuestName") or quest_id}" gives this unlock.')
+				source = self.gamedata.quest_source(quest_id) if self.gamedata is not None else ""
+				if source:  # (a quest from the base game or a reference file: nothing is wrong, its unlock is in that file)
+					label.setText(f"This quest is in {source}, not in the open quest file.")
+				else:
+					label.setText(
+						"That quest isn't in the open quest file, the base game or the reference files." if self.gamedata is not None
+						else "That quest isn't in the open quest file."
+					)
+			elif (reward := A.find_unlock(quest, lock, tpl, self.trader_id or None)) is not None:
+				label.setText(f'Linked quest "{quest.get("QuestName") or quest_id}" gives this unlock. ' + self._preview_text(offer_id, reward))
+				if A.preview_differences(self.doc.data, offer_id, reward, self.trader_id or None):
+					button, action = "Update preview", lambda: self._update_preview(offer_id, quest_id, reward.get("id"))
+			elif (stale := self._stale_preview(quest, lock, quest_id)) is not None:
+				shows = self._names().item((A.reward_root(stale) or {}).get("_tpl", ""))
+				label.setText(f"The quest's unlock preview shows another item ({shows}), not this one.")
+				button, action = "Update preview", lambda: self._update_preview(offer_id, quest_id, stale.get("id"))
 			else:
 				label.setText("The quest doesn't unlock this item yet.")
 				button, action = "Add unlock to the quest", lambda: self._add_unlock(offer_id, lock, quest_id)
@@ -407,6 +544,38 @@ class AssortTab(QWidget, Ui_AssortForm):
 			push.clicked.connect(lambda _c=False: action())
 			row.addWidget(push)
 		return holder
+
+	def _stale_preview(self, quest, lock, quest_id):
+		"""An unlock reward of this quest (at this trader, for this lock) whose item no offer locked to the quest sells: the preview
+		of an offer whose main item was changed. None if there isn't one."""
+		sold = {A.offer_tpl(self.doc.data, o) for o, q in (self.locks.data.get(lock) or {}).items() if q == quest_id}
+		return next((r for _q, status, r, tpl in A.unlocks({quest_id: quest}, self.trader_id or None) if status == lock and tpl not in sold), None)
+
+	def _preview_text(self, offer_id, reward):
+		"""The preview the quest shows for this offer, and how it differs from the offer."""
+		names = self._names()
+		root = A.reward_root(reward) or {}
+		text = (
+			f"Preview in the quest: {names.trader(reward.get('traderId', '')) or 'no trader'}, level {reward.get('loyaltyLevel')}, "
+			f"{names.item(root.get('_tpl', ''))} ({A.parts_word(len(reward.get('items') or []))})."
+		)
+		found = A.preview_differences(self.doc.data, offer_id, reward, self.trader_id or None)
+		return text + (" It differs from the offer: " + "; ".join(found) + "." if found else " It is the same as the offer.")
+
+	def _update_preview(self, offer_id, quest_id, reward_id):
+		"""Bring the quest's unlock preview in line with the offer (the offer is what the trader really sells)."""
+		doc = self.quests_document() if self.quests_document else None
+		if doc is None or quest_id not in doc.data:
+			return
+
+		def edit(quest):
+			for rewards in (quest.get("rewards") or {}).values():
+				for reward in rewards or []:
+					if isinstance(reward, dict) and reward.get("id") == reward_id:
+						A.refresh_unlock(reward, self.doc.data, offer_id, self.trader_id or None)
+
+		doc.change("Update preview", edit, path=(quest_id,))
+		self.refresh(offer_id)
 
 	def _add_unlock(self, offer_id, status, quest_id):
 		"""Give the locking quest an unlock reward for this offer's item (same mods, trader and level)."""

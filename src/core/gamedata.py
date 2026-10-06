@@ -35,6 +35,7 @@ class GameData:
 		self.database_dir = Path(database_dir) if database_dir else None
 		self.language = language or "en"
 		self.fallback_dir = Path(fallback_dir) if fallback_dir else None
+		self.references = None  # the reference files (core.references.References): what they know is added to the names and checks
 
 	def path(self, relative):
 		"""The file to read for a path inside the database folder, or None if neither folder has it."""
@@ -136,14 +137,45 @@ class GameData:
 		if name:
 			return name
 		item = self.items.get(tpl)
-		return item.get("_name", "") if item else ""
+		if item and item.get("_name"):
+			return item["_name"]
+		return self.references.item_name(tpl) if self.references is not None else ""
 
 	def quest_name(self, quest_id):
 		name = self.locale.get(f"{quest_id} name")
 		if name:
 			return name
 		quest = self.vanilla_quests.get(quest_id)
-		return quest.get("QuestName", "") if quest else ""
+		if quest and quest.get("QuestName"):
+			return quest["QuestName"]
+		return self.references.quest_name(quest_id) if self.references is not None else ""
 
 	def trader_name(self, trader_id):
-		return self.traders.get(trader_id, "")
+		return self.traders.get(trader_id) or (self.references.trader_name(trader_id) if self.references is not None else "")
+
+	# --- what is known (the game's data, and the reference files) ----------------------------
+	def all_traders(self):
+		"""{trader id: name}: the app's list, then the traders in the reference files."""
+		if self.references is None:
+			return self.traders
+		merged = dict(self.traders)
+		for trader_id, name, _source in self.references.trader_rows():
+			merged.setdefault(trader_id, name)
+		return merged
+
+	def knows_trader(self, trader_id):
+		return trader_id in self.traders or (self.references is not None and self.references.knows_trader(trader_id))
+
+	def knows_item(self, tpl):
+		return tpl in self.items or (self.references is not None and self.references.knows_item(tpl))
+
+	def quest_source(self, quest_id):
+		"""Where a quest that is not in the open file comes from: 'the base game', the name of the reference file, or ''."""
+		if quest_id in self.vanilla_quests:
+			return "the base game"
+		if self.references is not None and self.references.knows_quest(quest_id):
+			return self.references.index["quests"][quest_id][1]
+		return ""
+
+	def knows_quest(self, quest_id):
+		return quest_id in self.vanilla_quests or (self.references is not None and self.references.knows_quest(quest_id))

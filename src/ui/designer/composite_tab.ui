@@ -88,21 +88,29 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="right">
-      <layout class="QVBoxLayout" name="right_layout">
-       <property name="leftMargin">
-        <number>9</number>
-       </property>
-       <property name="topMargin">
-        <number>9</number>
-       </property>
-       <property name="rightMargin">
-        <number>9</number>
-       </property>
-       <property name="bottomMargin">
-        <number>9</number>
-       </property>
-      </layout>
+     <widget class="QScrollArea" name="rightScroll">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+       <widget class="QWidget" name="right">
+        <layout class="QVBoxLayout" name="right_layout">
+         <property name="leftMargin">
+          <number>9</number>
+         </property>
+         <property name="topMargin">
+          <number>9</number>
+         </property>
+         <property name="rightMargin">
+          <number>9</number>
+         </property>
+         <property name="bottomMargin">
+          <number>9</number>
+         </property>
+        </layout>
+       </widget>
      </widget>
     </widget>
    </item>

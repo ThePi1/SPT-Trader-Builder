@@ -213,9 +213,9 @@ def _check_choices(item, spec, path, gamedata):
 		for v in values:
 			if not isinstance(v, str) or not v:
 				continue
-			if field.ref == "trader" and v not in gamedata.traders:
+			if field.ref == "trader" and not gamedata.knows_trader(v):
 				issues.append(Issue(WARNING, path + (field.key,), f"Trader {v} isn't in the game data."))
-			elif field.ref == "item" and gamedata.items and v not in gamedata.items:
+			elif field.ref == "item" and gamedata.items and not gamedata.knows_item(v):
 				issues.append(Issue(WARNING, path + (field.key,), f"Item {v} isn't in the game's item list (a custom item?)."))
 	return issues
 

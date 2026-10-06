@@ -65,5 +65,7 @@ def check(data, kind, quests=None, locale=None, gamedata=None):
 	if kind == "assort":
 		return assort_schema.validate_assort(data)
 	if kind == "questassort":
-		return assort_schema.validate_questassort(data, quest_ids=set(quests) if quests else None)
+		return assort_schema.validate_questassort(
+			data, quest_ids=set(quests) if quests else None, knows_quest=gamedata.knows_quest if gamedata is not None else None,
+		)
 	return [Issue(ERROR, (), "This file isn't one the app knows how to check.")]

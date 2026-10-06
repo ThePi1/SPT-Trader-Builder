@@ -18,6 +18,7 @@ from core.ids import new_id
 from schema import choices as choice_lists
 from schema import fields as F
 from schema.common import short
+from ui.help_mark import HelpMark
 from ui.more_button import MoreButton
 
 PICKABLE = (F.ITEM, F.QUEST, F.ACHIEVEMENT, F.CUSTOMIZATION)  # ids the Find... button can search for
@@ -56,12 +57,12 @@ class Context:
 			return presets[entry_id].get("_items")
 		return None
 
-	def pick_item_ids(self, multi=False, parent=None):
+	def pick_item_ids(self, multi=False, parent=None, ref="part"):
 		"""Item ids chosen in the Find an item window, which lists items and composite items. A composite item
 		gives the id of its main item (its root part's template), as the game's own files do: a list of ids can't
 		hold its parts, and the composite's own id is not an item id."""
 		ids = []
-		for picked in self.pick("part", multi, parent):
+		for picked in self.pick(ref, multi, parent):  # (ref "item": items only, no composite items to choose)
 			parts = self.composite_parts(picked)
 			for tpl in [p.get("_tpl", "") for p in P.roots(parts)] if parts is not None else [picked]:
 				if tpl and tpl not in ids:
@@ -568,7 +569,7 @@ class FormWidget(QWidget):
 			control = make_control(field, self.ctx)
 			control.edited.connect(lambda value, key=field.key: self._write(key, value))
 			self.controls.append(control)
-			(more if field.advanced else main).addRow(field.label, control)
+			(more if field.advanced else main).addRow(self._label_for(field), control)
 		outer.addLayout(main)
 		self.more_button = MoreButton("More options", self)  # (given a parent now: with none, setVisible below would open it as a window)
 		self.more_box = QWidget(self)
@@ -585,6 +586,20 @@ class FormWidget(QWidget):
 		outer.addWidget(self.extras)
 		if show_advanced and has_more:
 			self.more_button.setChecked(True)
+
+	@staticmethod
+	def _label_for(field):
+		"""The label of a row: its text, with a ? mark that explains it when the field has a longer explanation."""
+		if not field.help:
+			return field.label
+		holder = QWidget()
+		box = QHBoxLayout(holder)
+		box.setContentsMargins(0, 0, 0, 0)
+		box.setSpacing(4)
+		box.addWidget(QLabel(field.label))
+		box.addWidget(HelpMark(field.help))
+		box.addStretch(1)
+		return holder
 
 	def bind(self, item):
 		self.item = item

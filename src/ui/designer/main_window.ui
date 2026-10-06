@@ -120,12 +120,21 @@
      <addaction name="actionLocksSave"/>
      <addaction name="actionLocksSaveAs"/>
     </widget>
+    <widget class="QMenu" name="menuReferences">
+     <property name="title">
+      <string>&amp;References</string>
+     </property>
+     <addaction name="actionAddReferences"/>
+     <addaction name="actionManageReferences"/>
+     <addaction name="actionReloadReferences"/>
+    </widget>
     <addaction name="actionImportFiles"/>
     <addaction name="separator"/>
     <addaction name="menuQuests"/>
     <addaction name="menuLocale"/>
     <addaction name="menuAssort"/>
     <addaction name="menuLocks"/>
+    <addaction name="menuReferences"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -149,10 +158,18 @@
     <addaction name="actionAbout"/>
     <addaction name="actionUpdates"/>
    </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>&amp;Debug</string>
+    </property>
+    <addaction name="actionRegenerateAssort"/>
+    <addaction name="actionRegenerateLocks"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuDebug"/>
   </widget>
   <action name="actionNewQuests">
    <property name="text">
@@ -269,6 +286,30 @@
     <string>Save as...</string>
    </property>
   </action>
+  <action name="actionAddReferences">
+   <property name="text">
+    <string>&amp;Add reference files...</string>
+   </property>
+   <property name="toolTip">
+    <string>Files that are only looked at (other mods' quests, items, traders), never edited or saved</string>
+   </property>
+  </action>
+  <action name="actionManageReferences">
+   <property name="text">
+    <string>&amp;Manage reference files...</string>
+   </property>
+   <property name="toolTip">
+    <string>See, remove or reload the reference files</string>
+   </property>
+  </action>
+  <action name="actionReloadReferences">
+   <property name="text">
+    <string>&amp;Reload reference files</string>
+   </property>
+   <property name="toolTip">
+    <string>Read the reference files again</string>
+   </property>
+  </action>
   <action name="actionImportFiles">
    <property name="text">
     <string>&amp;Import files...</string>
@@ -314,6 +355,22 @@
   <action name="actionAbout">
    <property name="text">
     <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="actionRegenerateAssort">
+   <property name="text">
+    <string>Regenerate trader assort using known data...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save a new trader assort file made only from the offers the program knows: their items, prices and levels</string>
+   </property>
+  </action>
+  <action name="actionRegenerateLocks">
+   <property name="text">
+    <string>Regenerate quest assort using known data...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save a new quest assort file with only the links to offers and quests the program knows</string>
    </property>
   </action>
   <action name="actionUpdates">

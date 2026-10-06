@@ -90,6 +90,20 @@ class Ui_OutlineForm(object):
 
         self.searchRow.addWidget(self.collapseAllButton)
 
+        self.moveUpButton = QToolButton(self.leftPane)
+        self.moveUpButton.setObjectName(u"moveUpButton")
+        self.moveUpButton.setMinimumSize(QSize(24, 24))
+        self.moveUpButton.setAutoRaise(True)
+
+        self.searchRow.addWidget(self.moveUpButton)
+
+        self.moveDownButton = QToolButton(self.leftPane)
+        self.moveDownButton.setObjectName(u"moveDownButton")
+        self.moveDownButton.setMinimumSize(QSize(24, 24))
+        self.moveDownButton.setAutoRaise(True)
+
+        self.searchRow.addWidget(self.moveDownButton)
+
         self.searchRow.setStretch(0, 1)
 
         self.leftLayout.addLayout(self.searchRow)
@@ -148,6 +162,14 @@ class Ui_OutlineForm(object):
         self.collapseAllButton.setToolTip(QCoreApplication.translate("OutlineForm", u"Collapse all", None))
 #endif // QT_CONFIG(tooltip)
         self.collapseAllButton.setText(QCoreApplication.translate("OutlineForm", u"\u2212", None))
+#if QT_CONFIG(tooltip)
+        self.moveUpButton.setToolTip(QCoreApplication.translate("OutlineForm", u"Move up (Alt+Up)", None))
+#endif // QT_CONFIG(tooltip)
+        self.moveUpButton.setText(QCoreApplication.translate("OutlineForm", u"\u25b2", None))
+#if QT_CONFIG(tooltip)
+        self.moveDownButton.setToolTip(QCoreApplication.translate("OutlineForm", u"Move down (Alt+Down)", None))
+#endif // QT_CONFIG(tooltip)
+        self.moveDownButton.setText(QCoreApplication.translate("OutlineForm", u"\u25bc", None))
         pass
     # retranslateUi
 

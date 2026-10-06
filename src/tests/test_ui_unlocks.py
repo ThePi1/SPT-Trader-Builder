@@ -56,7 +56,7 @@ def test_a_locked_offer_whose_quest_has_no_unlock_offers_to_add_it(app):
 	set_trader(tab)
 	assert "The quest doesn't unlock this item yet." in labels(tab)
 	assert "Add unlock to the quest" in buttons(tab)
-	assert "1 quest unlock(s) to check." in tab.note.text()
+	assert tab.problemsToggle.text().endswith("1 quest unlock(s) to check")
 
 
 def test_adding_the_unlock_puts_a_matching_reward_in_the_quest(app):
@@ -67,7 +67,8 @@ def test_adding_the_unlock_puts_a_matching_reward_in_the_quest(app):
 	assert reward["type"] == "AssortmentUnlock" and reward["traderId"] == TRADER and reward["loyaltyLevel"] == 2
 	assert A.reward_root(reward)["_tpl"] == TPL
 	assert A.lock_problems(quests_doc.data, locks.data, assort_doc.data, TRADER) == []
-	assert 'Linked quest "Test Quest" gives this unlock.' in labels(tab) and "Add unlock to the quest" not in buttons(tab)
+	assert any(text.startswith('Linked quest "Test Quest" gives this unlock.') and text.endswith("It is the same as the offer.") for text in labels(tab))
+	assert "Add unlock to the quest" not in buttons(tab) and "Update preview" not in buttons(tab)
 	assert "to check" not in tab.note.text()
 	quests_doc.undo()  # (one step in the quests' undo history)
 	assert quests_doc.data[QID]["rewards"]["Success"] == []
@@ -104,7 +105,7 @@ def test_a_quest_that_unlocks_the_item_can_be_used_as_its_lock(app):
 	set_trader(tab)
 	assert "Lock this offer to it" in buttons(tab)
 	assert any("Test Quest" in text and "completed" in text for text in labels(tab))
-	assert "1 quest unlock(s) to check." in tab.note.text()
+	assert tab.problemsToggle.text().endswith("1 quest unlock(s) to check")
 	buttons(tab)["Lock this offer to it"].click()
 	assert locks.data["success"] == {offer: QID}
 	assert A.lock_problems(quests_doc.data, locks.data, assort_doc.data, TRADER) == []
@@ -116,7 +117,7 @@ def test_nothing_is_said_without_open_quests(app):
 	locks = Document(A.empty_questassort())
 	locks.data["success"][items[0]["_id"]] = QID
 	tab = AssortTab(assort_doc, locks)
-	assert "quest unlock" not in tab.note.text() and "unlocks this item" not in " ".join(labels(tab))
+	assert tab.problemsToggle.isHidden() and "quest unlock" not in tab.note.text() and "unlocks this item" not in " ".join(labels(tab))
 
 
 def test_a_lock_to_a_quest_that_is_not_open_says_so(app):
@@ -138,4 +139,4 @@ def test_a_quest_with_no_name_is_shown_by_its_id(app):
 	buttons(tab)["Add unlock to the quest"].click()
 	quests_doc.data[QID].pop("QuestName")
 	tab.refresh(offer)
-	assert f'Linked quest "{QID}" gives this unlock.' in labels(tab)
+	assert any(text.startswith(f'Linked quest "{QID}" gives this unlock.') for text in labels(tab))

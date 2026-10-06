@@ -38,11 +38,12 @@ The **Problems** list at the bottom left tells you what still needs fixing. Clic
 
 ## Sections
 
-- **Quests**: your quests, with their conditions and rewards. Use the search box to find a quest by name, and the **+** and **−** buttons to open or close everything.
+- **Quests**: your quests, with their conditions and rewards. Use the search box to find a quest by name, and the **+** and **−** buttons to open or close everything. The **▲** and **▼** buttons (or Alt+Up and Alt+Down) move the selected quests, conditions or rewards up and down: the order of the quests in the file is the order the game shows them.
 - **Locale**: the text the game shows for your quests.
-- **Trader**: what a trader sells, at what price and trader level, and which quest unlocks each item. Pick the trader at the top so quest unlocks can be added.
+- **Trader**: what a trader sells, at what price and trader level, and which quest unlocks each item. Pick the trader at the top so quest unlocks can be added (opening or importing a trader assort asks which trader it is for and fills this in; changing a trader that is set asks first). The item in a quest's **Assort unlock** reward is only a preview of the offer: what the trader really sells is the offer in the trader assort file, linked to the quest through the quest assort file. The program shows whether the two agree, and can bring the preview up to date.
 - **Composite items**: items made of parts, like a gun with its mods. Save one once and reuse it in rewards and trader offers. The game's own items are listed too: you can look at them, and make your own copy to change.
 - **Find IDs**: search for items, quests, traders and more, and copy their ids.
+- **References** (the last part of the bar along the bottom): other files that you only want to look things up in, such as another mod's quests, items or trader. They are never edited, saved or merged, but their names show up and their ids can be found in Find IDs and the Find windows. Add them from **File > References**, by dragging files in and choosing **Use as references only**, or in the Manage window.
 - **Schema Explorer**: shows what each kind of condition and reward is made of, and can check any file for mistakes.
 
 ## Your files
@@ -77,6 +78,8 @@ Open **Settings > Settings...** to change:
 - **Language for names**: only English is included. Other languages need the folder above.
 - **New quests**: the icon, side and trader new quests start with.
 - **Always ask for a file name when saving**: by default, Save writes to the file you opened.
+- **Enable debug options**: adds a **Debug** menu next to Help. Its two tools save a new, cleaned-up trader assort file or quest assort file made only from what the program knows (the open assort's offers; the links to known offers and quests). Nothing you have open is changed.
+- **Load last files on open**: when the program starts, open the quest, locale, trader assort and quest assort files that were open when you last closed it. It asks the same questions as File > Open, such as which trader an assort is for. Imported files are not reopened. Off unless you turn it on.
 - **Copy locale into every language file**: when you save the locale, also add your quests' text to the other languages' files in the same folder.
 
 Restart the program after changing the folder or the language.
@@ -86,7 +89,7 @@ Restart the program after changing the folder or the language.
 - **Help > Check for updates** tells you if there is a newer release.
 - Found a problem or have an idea? [Open an issue](https://github.com/ThePi1/SPT-Trader-Builder/issues). If something goes wrong, turn on **Write a detailed log** in Settings and attach the `spt_trader_builder.log` file that appears next to the program.
 
-When you update, keep a copy of `data/settings.ini` (your settings) and `data/my_items.json` (your saved composite items) before you replace the old folder, then put them back.
+When you update, keep a copy of `data/settings.ini` (your settings), `data/my_items.json` (your saved composite items) and `data/references.json` (your list of reference files) before you replace the old folder, then put them back.
 
 ## Build
 
