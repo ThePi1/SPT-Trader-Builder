@@ -46,7 +46,7 @@ def game(tmp_path):
 	return GameData(tmp_path, "en", None)
 
 
-def make(tmp_path, picked=()):
+def make(tmp_path, picked=(), library=None):
 	"""A locked offer for gun A (with a magazine and a stack of 5) and a quest whose preview is that gun; picks come from `picked`."""
 	parts = [
 		{"_id": "p" + "0" * 23, "_tpl": GUN_A, "parentId": "hideout", "slotId": "hideout", "upd": {"StackObjectsCount": 5, "UnlimitedCount": False}},
@@ -68,7 +68,7 @@ def make(tmp_path, picked=()):
 		asked.append(ref)
 		return [picks.pop(0)] if picks else []
 
-	tab = AssortTab(Document(assort), Document(locks), game(tmp_path), picker, None, lambda: quests.data, lambda: quests)
+	tab = AssortTab(Document(assort), Document(locks), game(tmp_path), picker, library, lambda: quests.data, lambda: quests)
 	tab.trader.setEditText(TRADER)
 	tab._trader_changed()
 	tab.refresh(offer)
@@ -104,7 +104,7 @@ def test_swapping_the_root_keeps_everything_else_and_follows_the_quest(app, tmp_
 	before = [p["_id"] for p in A.offer_parts(tab.doc.data, offer)]
 	assert any(t.endswith("It is the same as the offer.") for t in labels(tab))
 	buttons(tab)["New root item..."].click()
-	assert tab.asked == ["item"]  # (the search offers plain items: a composite item can't be a main item)
+	assert tab.asked == ["part"]  # (the search lists items and composite items)
 	data = tab.doc.data
 	root = A.offer_parts(data, offer)[0]
 	assert root["_id"] == offer and root["_tpl"] == GUN_C and root["upd"]["StackObjectsCount"] == 5  # (same id, same stack)
@@ -133,6 +133,33 @@ def test_mods_that_do_not_fit_the_new_root_are_removed_after_asking(app, tmp_pat
 	buttons(tab)["New root item..."].click()
 	parts = A.offer_parts(tab.doc.data, offer)
 	assert [p["_tpl"] for p in parts] == [GUN_B] and parts[0]["_id"] == offer and tab.doc.data["loyal_level_items"][offer] == 3
+
+
+def test_a_composite_item_becomes_the_new_root_with_its_own_mods(app, tmp_path, monkeypatch):
+	from core.library import Library
+
+	library = Library(tmp_path / "my_items.json")
+	built = library.add("Built C", [
+		{"_id": "c" * 24, "_tpl": GUN_C, "parentId": "hideout", "slotId": "hideout", "upd": {"StackObjectsCount": 1, "FireMode": {"FireMode": "single"}}},
+		{"_id": "d" * 24, "_tpl": STOCK, "parentId": "c" * 24, "slotId": "mod_stock"},
+		{"_id": "e" * 24, "_tpl": MAG, "parentId": "d" * 24, "slotId": "mod_on_stock"},
+	])
+	tab, offer, quests = make(tmp_path, picked=[built], library=library)
+	asked = []
+	monkeypatch.setattr("ui.parts_editor.QMessageBox.question", lambda parent, title, text, *a: asked.append(text) or QMessageBox.StandardButton.Yes)
+	old_mag = A.offer_parts(tab.doc.data, offer)[1]["_id"]
+	buttons(tab)["New root item..."].click()
+	assert len(asked) == 1 and "replaces the main item and its 1 part" in asked[0]  # (the magazine it had)
+	parts = A.offer_parts(tab.doc.data, offer)
+	assert [p["_tpl"] for p in parts] == [GUN_C, STOCK, MAG]
+	assert parts[0]["_id"] == offer and parts[0]["parentId"] == "hideout" and parts[0]["slotId"] == "hideout"
+	assert parts[0]["upd"]["StackObjectsCount"] == 5 and parts[0]["upd"]["FireMode"] == {"FireMode": "single"}  # (our stack, its fire mode)
+	assert parts[1]["parentId"] == offer and parts[2]["parentId"] == parts[1]["_id"] and old_mag not in {p["_id"] for p in parts}
+	assert all(p["_id"] not in ("c" * 24, "d" * 24, "e" * 24) for p in parts)  # (new ids: the saved item is untouched)
+	assert tab.doc.data["barter_scheme"][offer][0][0]["count"] == 777 and tab.doc.data["loyal_level_items"][offer] == 3
+	assert tab.locks.data["success"] == {offer: QID} and not A.validate_assort(tab.doc.data)
+	assert "Gun C" in tab.list.item(0).text() and "The quest's unlock preview shows another item (Gun A), not this one." in labels(tab)
+	assert len(library.entries[built]["items"]) == 3
 
 
 def test_choosing_the_same_item_or_nothing_changes_nothing(app, tmp_path):

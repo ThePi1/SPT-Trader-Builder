@@ -39,7 +39,7 @@ class PartsEditor(QWidget):
 		)
 		self.add_button.clicked.connect(self.add_item)
 		self.root_button = QPushButton("New root item...")
-		self.root_button.setToolTip("Swap the main item for another one. The price, level, stock and quest lock stay, and so do the mods that fit.")
+		self.root_button.setToolTip("Swap the main item for another item, or for a composite item. The price, level, stock and quest lock stay; mods that fit the new item stay, and a composite item brings its own.")
 		self.root_button.clicked.connect(self.swap_root)
 		self.remove_button = QPushButton("Remove")
 		self.remove_button.clicked.connect(self.remove_selected)
@@ -241,16 +241,22 @@ class PartsEditor(QWidget):
 			self._emit()
 
 	def swap_root(self):
-		"""Replace the main item with another one. The main part keeps its id, stack size and other fields; the mods stay
-		where the new item has a slot for them, and the ones that don't fit are removed (after asking)."""
+		"""Replace the main item with another one (or with a composite item: its main item and all its mods). The main part
+		keeps its id, stack size and other fields. For an item, the mods stay where the new item has a slot for them and
+		the ones that don't fit are removed (after asking)."""
 		roots = P.roots(self.parts)
 		if len(roots) != 1:
 			return
-		ids = self.ctx.pick_item_ids(False, self, "item")
+		picked = self.ctx.pick("part", False, self)  # (items, and composite items)
 		root = roots[0]
-		if not ids or ids[0] == root.get("_tpl"):
+		if not picked:
 			return
-		tpl = ids[0]
+		built = self._composite_parts(picked[0])
+		if built is not None:
+			return self._swap_root_for(root, built)
+		if picked[0] == root.get("_tpl"):
+			return
+		tpl = picked[0]
 		loose = [
 			child for child in P.children(self.parts, root["_id"])
 			if tpl in self.items and P.fits(self.items, tpl, child.get("slotId", ""), child.get("_tpl", "")) is False
@@ -266,6 +272,37 @@ class PartsEditor(QWidget):
 			for child in loose:
 				P.remove_part(self.parts, child["_id"])
 		root["_tpl"] = tpl
+		self.rebuild(root["_id"])
+		self._emit()
+
+	def _swap_root_for(self, root, built):
+		"""Make the main part the main item of a composite item, with all its mods (the mods it had are replaced)."""
+		main = next(iter(P.roots(built)), None)
+		if main is None:
+			return
+		inside, grew = {main["_id"]}, True
+		while grew:  # (the main item and everything attached to it: a composite can hold other main parts too)
+			grew = False
+			for part in built:
+				if part.get("parentId") in inside and part["_id"] not in inside:
+					inside.add(part["_id"])
+					grew = True
+		old = P.children(self.parts, root["_id"])
+		if old and QMessageBox.question(
+			self, "New root item",
+			f"The composite item replaces the main item and its {len(old)} part{'' if len(old) == 1 else 's'} (with what is on {'it' if len(old) == 1 else 'them'}). Continue?",
+		) != QMessageBox.StandardButton.Yes:
+			return
+		for child in old:
+			P.remove_part(self.parts, child["_id"])
+		root["_tpl"] = main["_tpl"]
+		for key, value in (main.get("upd") or {}).items():
+			root.setdefault("upd", {}).setdefault(key, value)  # (what the part already has stays)
+		for part in built:
+			if part["_id"] in inside and part["_id"] != main["_id"]:
+				if part.get("parentId") == main["_id"]:
+					part["parentId"] = root["_id"]
+				self.parts.append(part)
 		self.rebuild(root["_id"])
 		self._emit()
 
