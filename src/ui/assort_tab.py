@@ -50,6 +50,9 @@ class AssortTab(QWidget, Ui_AssortForm):
 			self.levelFilter.addItem(f"Level {level}", level)
 		self.levelFilter.currentIndexChanged.connect(lambda _i: self.refresh())
 		self.list.currentItemChanged.connect(self._select)
+		self.problemsToggle.toggled.connect(lambda _checked: self._show_problems())
+		self.problemsList.itemClicked.connect(self._jump_to_problem)
+		self._problems = []
 		for button, slot in ((self.addButton, self.add_offer), (self.copyButton, self.copy_offer), (self.deleteButton, self.delete_offer)):
 			button.clicked.connect(lambda _checked=False, slot=slot: slot())
 		self.splitter.setSizes([420, 520])
@@ -202,13 +205,34 @@ class AssortTab(QWidget, Ui_AssortForm):
 
 	def _update_note(self):
 		"""The line under the list: how many offers are shown, and how many quest unlocks don't add up."""
-		problems = self._lock_problems()
 		total = len(A.offer_ids(self.doc.data))
-		self.note.setText(
-			f"{self.list.count()} of {total} offers." + ("" if self.trader_id else " No trader has been chosen.")
-			+ (f" {len(problems)} quest unlock(s) to check." if problems else "")
-		)
-		self.note.setToolTip("\n".join(i.message for i in problems[:30]))
+		self.note.setText(f"{self.list.count()} of {total} offers." + ("" if self.trader_id else " No trader has been chosen."))
+		self._problems = self._lock_problems()
+		self._show_problems()
+
+	def _show_problems(self):
+		"""The "N quest unlock(s) to check" line under the note: an arrow that opens the list of what doesn't agree."""
+		problems = self._problems
+		opened = self.problemsToggle.isChecked()
+		self.problemsToggle.setVisible(bool(problems))
+		self.problemsToggle.setText(f"{'▼' if opened else '▶'} {len(problems)} quest unlock(s) to check")
+		self.problemsList.setVisible(bool(problems) and opened)
+		self.problemsList.clear()
+		for issue in problems:
+			item = QListWidgetItem("• " + issue.message)
+			item.setData(ROLE, issue.path[1] if issue.path and issue.path[0] in A.QUEST_LOCKS and len(issue.path) > 1 else None)  # (the offer it is about)
+			self.problemsList.addItem(item)
+		rows = self.problemsList.count()  # (as tall as its lines, up to five, then it scrolls)
+		self.problemsList.setFixedHeight((self.problemsList.sizeHintForRow(0) if rows else 0) * min(rows, 5) + 2 * self.problemsList.frameWidth() + 2)
+
+	def _jump_to_problem(self, item):
+		"""Clicking a problem that is about an offer opens that offer."""
+		offer_id = item.data(ROLE)
+		if offer_id is not None and offer_id in A.offer_ids(self.doc.data):
+			for row in range(self.list.count()):
+				if self.list.item(row).data(ROLE) == offer_id:
+					self.list.setCurrentRow(row)
+					return
 
 	def _refresh_summary(self):
 		"""After an edit that leaves the form as it is: the open offer's line in the list, the note under the list and the

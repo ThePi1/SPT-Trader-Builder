@@ -109,6 +109,41 @@
         </widget>
        </item>
        <item>
+        <widget class="QToolButton" name="problemsToggle">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Where the quest locks and the quests' unlock rewards don't agree. Click to see each one.</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QToolButton { color: #b9770e; text-align: left; border: none; }</string>
+         </property>
+         <property name="text">
+          <string>▶</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="toolButtonStyle">
+          <enum>Qt::ToolButtonTextOnly</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListWidget" name="problemsList">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <property name="maximumHeight">
+          <number>110</number>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="buttonRow">
          <item>
           <widget class="QPushButton" name="addButton">

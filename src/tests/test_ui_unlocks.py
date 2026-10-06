@@ -56,7 +56,7 @@ def test_a_locked_offer_whose_quest_has_no_unlock_offers_to_add_it(app):
 	set_trader(tab)
 	assert "The quest doesn't unlock this item yet." in labels(tab)
 	assert "Add unlock to the quest" in buttons(tab)
-	assert "1 quest unlock(s) to check." in tab.note.text()
+	assert tab.problemsToggle.text().endswith("1 quest unlock(s) to check")
 
 
 def test_adding_the_unlock_puts_a_matching_reward_in_the_quest(app):
@@ -105,7 +105,7 @@ def test_a_quest_that_unlocks_the_item_can_be_used_as_its_lock(app):
 	set_trader(tab)
 	assert "Lock this offer to it" in buttons(tab)
 	assert any("Test Quest" in text and "completed" in text for text in labels(tab))
-	assert "1 quest unlock(s) to check." in tab.note.text()
+	assert tab.problemsToggle.text().endswith("1 quest unlock(s) to check")
 	buttons(tab)["Lock this offer to it"].click()
 	assert locks.data["success"] == {offer: QID}
 	assert A.lock_problems(quests_doc.data, locks.data, assort_doc.data, TRADER) == []
@@ -117,7 +117,7 @@ def test_nothing_is_said_without_open_quests(app):
 	locks = Document(A.empty_questassort())
 	locks.data["success"][items[0]["_id"]] = QID
 	tab = AssortTab(assort_doc, locks)
-	assert "quest unlock" not in tab.note.text() and "unlocks this item" not in " ".join(labels(tab))
+	assert tab.problemsToggle.isHidden() and "quest unlock" not in tab.note.text() and "unlocks this item" not in " ".join(labels(tab))
 
 
 def test_a_lock_to_a_quest_that_is_not_open_says_so(app):

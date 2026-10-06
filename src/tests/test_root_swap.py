@@ -113,7 +113,7 @@ def test_swapping_the_root_keeps_everything_else_and_follows_the_quest(app, tmp_
 	assert tab.locks.data["success"] == {offer: QID}
 	assert tab.current_id() == offer and "Gun C" in tab.list.item(0).text() and "level 3" in tab.list.item(0).text()
 	assert "<b>Gun C</b>" in labels(tab)  # (the title of the offer)
-	assert "2 quest unlock(s) to check." in tab.note.text()  # (the offer's quest has no unlock for Gun C, and its unlock is for Gun A)
+	assert tab.problemsToggle.text() == "▶ 2 quest unlock(s) to check"  # (the offer's quest has no unlock for Gun C, and its unlock is for Gun A)
 	assert "The quest's unlock preview shows another item (Gun A), not this one." in labels(tab)
 	assert not A.validate_assort(data)
 	buttons(tab)["Update preview"].click()  # (the quest's preview follows the offer)

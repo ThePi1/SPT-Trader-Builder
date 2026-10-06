@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
     QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QSplitter, QVBoxLayout, QWidget)
+    QSplitter, QToolButton, QVBoxLayout, QWidget)
 
 class Ui_AssortForm(object):
     def setupUi(self, AssortForm):
@@ -84,6 +84,23 @@ class Ui_AssortForm(object):
 
         self.leftLayout.addWidget(self.note)
 
+        self.problemsToggle = QToolButton(self.leftPane)
+        self.problemsToggle.setObjectName(u"problemsToggle")
+        self.problemsToggle.setVisible(False)
+        self.problemsToggle.setStyleSheet(u"QToolButton { color: #b9770e; text-align: left; border: none; }")
+        self.problemsToggle.setCheckable(True)
+        self.problemsToggle.setToolButtonStyle(Qt.ToolButtonTextOnly)
+
+        self.leftLayout.addWidget(self.problemsToggle)
+
+        self.problemsList = QListWidget(self.leftPane)
+        self.problemsList.setObjectName(u"problemsList")
+        self.problemsList.setVisible(False)
+        self.problemsList.setMaximumHeight(110)
+        self.problemsList.setWordWrap(True)
+
+        self.leftLayout.addWidget(self.problemsList)
+
         self.buttonRow = QHBoxLayout()
         self.buttonRow.setObjectName(u"buttonRow")
         self.addButton = QPushButton(self.leftPane)
@@ -143,6 +160,10 @@ class Ui_AssortForm(object):
         self.levelFilter.setToolTip(QCoreApplication.translate("AssortForm", u"Show only the offers that unlock at this trader level.", None))
 #endif // QT_CONFIG(tooltip)
         self.note.setText("")
+#if QT_CONFIG(tooltip)
+        self.problemsToggle.setToolTip(QCoreApplication.translate("AssortForm", u"Where the quest locks and the quests' unlock rewards don't agree. Click to see each one.", None))
+#endif // QT_CONFIG(tooltip)
+        self.problemsToggle.setText(QCoreApplication.translate("AssortForm", u"\u25b6", None))
         self.addButton.setText(QCoreApplication.translate("AssortForm", u"Add offer...", None))
         self.copyButton.setText(QCoreApplication.translate("AssortForm", u"Copy", None))
         self.deleteButton.setText(QCoreApplication.translate("AssortForm", u"Delete", None))

@@ -69,8 +69,11 @@ def test_removing_the_main_item_deletes_the_offer_and_everything_shown_follows(a
 	assert A.offer_ids(data) == [plain_offer] and gun_offer not in data["barter_scheme"] and gun_offer not in data["loyal_level_items"]
 	assert locks["success"] == {} and not A.validate_assort(data)
 	assert tab.list.count() == 1 and tab.current_id() == plain_offer  # (the list, and the offer shown, are the ones that are left)
-	assert tab.note.text() == "1 of 1 offers. 1 quest unlock(s) to check."  # (the quest now unlocks an item that no offer has)
-	assert 'The quest "Test Quest" unlocks an item here, but no offer for it is locked to the quest.' in tab.note.toolTip()
+	assert tab.note.text() == "1 of 1 offers." and tab.problemsToggle.text() == "▶ 1 quest unlock(s) to check"  # (the quest now unlocks an item that no offer has)
+	tab.problemsToggle.setChecked(True)
+	assert [tab.problemsList.item(i).text() for i in range(tab.problemsList.count())] == [
+		'• The quest "Test Quest" unlocks an item here, but no offer for it is locked to the quest.',
+	]
 	assert "Linked quest" not in " ".join(labels(tab))  # (the quest status of the removed offer is gone)
 
 
@@ -107,3 +110,25 @@ def test_changing_the_price_or_level_updates_the_row_in_the_list(app):
 	assert "Dollars" in tab.list.item(0).text()
 	tab._edit("Change level", lambda d: d["loyal_level_items"].__setitem__(gun_offer, 3))
 	assert "level 3" in tab.list.item(0).text() and tab.list.item(0).text().endswith("[quest]")
+
+
+def test_the_quest_unlocks_to_check_are_on_a_line_of_their_own_that_opens_into_a_list(app):
+	tab, gun_offer, plain_offer = make()
+	assert tab.problemsToggle.isHidden() and tab.problemsList.isHidden() and tab.note.text() == "2 of 2 offers."  # (all agree: no line)
+	quests = tab.quests_document()
+	quests.data[QID]["rewards"]["Success"].clear()  # (the quest no longer unlocks the locked offer's item)
+	tab.refresh(gun_offer)
+	assert tab.note.text() == "2 of 2 offers."  # (the note itself does not carry the count any more)
+	assert not tab.problemsToggle.isHidden() and tab.problemsToggle.text() == "▶ 1 quest unlock(s) to check" and tab.problemsList.isHidden()
+	tab.problemsToggle.setChecked(True)  # (the arrow opens the list)
+	assert tab.problemsToggle.text() == "▼ 1 quest unlock(s) to check" and not tab.problemsList.isHidden()
+	assert [tab.problemsList.item(i).text() for i in range(tab.problemsList.count())] == ['• The quest "Test Quest" has no reward that unlocks this item.']
+	tab.list.setCurrentRow(1)
+	assert tab.current_id() == plain_offer
+	tab.problemsList.itemClicked.emit(tab.problemsList.item(0))  # (a problem about an offer opens it)
+	assert tab.current_id() == gun_offer
+	tab.refresh(gun_offer)
+	assert not tab.problemsList.isHidden() and tab.problemsToggle.isChecked()  # (it stays open while it is still needed)
+	quests.data[QID]["rewards"]["Success"].append(A.unlock_reward(tab.doc.data, gun_offer, TRADER))
+	tab.refresh(gun_offer)
+	assert tab.problemsToggle.isHidden() and tab.problemsList.isHidden()  # (nothing left to check)
