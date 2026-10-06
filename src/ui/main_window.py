@@ -34,6 +34,7 @@ from ui.import_dialog import ImportDialog
 from ui.references_dialog import ReferencesDialog
 from ui.locale_tab import LocaleTab
 from ui.lookup_view import LookupTab, PickerDialog
+from ui.quest_graph_tab import QuestGraphTab, Sources
 from ui.quest_outline import QuestOutline
 from ui.tabs import fill_tabs
 
@@ -86,10 +87,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.assort_tab = AssortTab(
 			self.assort, self.locks, gamedata, self.pick, self.library, lambda: self.quests.data, lambda: self.quests
 		)
+		self.graph_tab = QuestGraphTab(self._graph_sources)
+		self.graph_tab.open_requested.connect(self.show_quest)
 		self.explorer_tab = ExplorerTab(lambda: self.quests.data, lambda: self.locale.data, gamedata, settings)
 		fill_tabs(self.tabs, self, {
 			"page_quests": self.quest_outline, "page_locale": self.locale_tab, "page_trader": self.assort_tab,
-			"page_composite": self.composite_tab, "page_find_ids": self.lookup_tab, "page_explorer": self.explorer_tab,
+			"page_composite": self.composite_tab, "page_quest_graph": self.graph_tab, "page_find_ids": self.lookup_tab,
+			"page_explorer": self.explorer_tab,
 		})
 		self.tabs.currentChanged.connect(self._tab_changed)
 		self.files_strip = FilesStrip([(key, title) for key, title, _label, _kind in KINDS] + [("references", "References")])
@@ -130,9 +134,25 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		dialog = PickerDialog(self.rows(kinds), kinds, title, multi, self.settings, parent or self)
 		return dialog.ids if dialog.exec() else []
 
+	def _graph_sources(self):
+		"""What the Quest Graph is built from: the quests open now, the reference files and the base game."""
+		game = self.gamedata
+		return Sources(
+			open_quests=self.quests.data, imported=dict(self.quest_sources), references=self.references,
+			game=game.vanilla_quests if game is not None else {}, trader_names=game.all_traders() if game is not None else {},
+			game_name=game.quest_name if game is not None else (lambda quest_id: ""),
+		)
+
+	def show_quest(self, quest_id):
+		"""Go to the Quests tab and select this quest."""
+		self.tabs.setCurrentWidget(self.quest_outline)
+		self.quest_outline._select_key(("quest", (quest_id,)))
+
 	def _tab_changed(self, index):
 		widget = self.tabs.widget(index)
-		if widget is self.lookup_tab:
+		if widget is self.graph_tab:
+			self.graph_tab.refresh_if_stale()
+		elif widget is self.lookup_tab:
 			self.lookup_tab.set_rows(self.rows())
 		elif widget is self.locale_tab:
 			self.locale_tab.refresh()
@@ -249,6 +269,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.setWindowTitle(dialogs.APP_NAME + ("*" if any(d.dirty for d in self._docs()) else ""))
 
 	def _doc_changed(self, _doc=None):
+		self.graph_tab.invalidate()
 		self._update_title()
 		self._refresh_strip()
 

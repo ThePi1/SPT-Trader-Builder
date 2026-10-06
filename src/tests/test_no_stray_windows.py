@@ -177,3 +177,29 @@ def test_the_assort_unlock_panel_opens_no_stray_windows_in_any_of_its_states(app
 			assert outline.pane.findChild(UnlockOfferPanel) is not None
 			window.close()
 	assert shown == []
+
+
+def test_the_quest_graph_tab_opens_no_stray_windows(app, vanilla_quests):
+	from ui.quest_graph_tab import AROUND, QuestGraphTab, Sources
+
+	with watching(app) as shown:
+		tab = QuestGraphTab(lambda: Sources(game=vanilla_quests, trader_names={"54cb50c76803fa8b248b4571": "Prapor"}))
+		window = hosted(tab)
+		app.processEvents()
+		tab.refresh()
+		debut = next(i for i, n in tab.graph.nodes.items() if n.name == "Debut")
+		tab.view.select(debut)
+		tab.modeBox.setCurrentIndex(tab.modeBox.findData(AROUND))
+		tab.view.select(debut)
+		tab.lanesBox.setChecked(True)
+		tab.failsBox.setChecked(False)
+		tab.search.setText("debut")
+		tab.go_to_match()
+		for zoom in (0.05, 0.4, 1.0):
+			tab.view.resetTransform()
+			tab.view.scale(zoom, zoom)
+			app.processEvents()
+		tab.view.fit()
+		app.processEvents()
+		window.close()
+	assert shown == []
