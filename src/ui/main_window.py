@@ -88,6 +88,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		})
 		self.tabs.currentChanged.connect(self._tab_changed)
 		self.files_strip = FilesStrip([(key, title) for key, title, _label, _kind in KINDS] + [("references", "References")])
+		self.files_strip.segment("references").fileLabel.setVisible(False)  # (nothing to say under "References" but the count)
 		self.centralLayout.addWidget(self.files_strip)
 		for doc in (self.quests, self.locale, self.assort, self.locks):
 			doc.on_change(self._doc_changed)
@@ -255,9 +256,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			self.files_strip.segment(key).set_info(count, state, tone, file_text, str(doc.path) if doc.path else "")
 		files = self.references.files
 		names = "\n".join(ref.name for ref in files)
-		self.files_strip.segment("references").set_info(
-			len(files), "", "muted", (f"{len(files)} file{'' if len(files) == 1 else 's'} to look things up in" if files else "none (for looking things up only)"), names,
-		)
+		self.files_strip.segment("references").set_info(len(files), "", "muted", "", names or "No reference files yet")  # (the count in the title says it; the file names are the tooltip)
 
 	# --- files ------------------------------------------------------------------------------
 	def _confirm_discard(self, doc, label):

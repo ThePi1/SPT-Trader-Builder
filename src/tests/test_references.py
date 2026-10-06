@@ -164,11 +164,12 @@ def window(tmp_path, monkeypatch):
 def test_the_window_has_a_references_part_and_menu(window, tmp_path):
 	files = mod_files(tmp_path / "mod")
 	segment = window.files_strip.segment("references")
-	assert "References" in segment.titleLabel.text() and "none" in segment.fileLabel.text()
+	assert "References" in segment.titleLabel.text() and segment.fileLabel.isHidden() and not segment.fileLabel.text()  # (just the title and the count)
+	assert segment.toolTip() == "No reference files yet"
 	assert [a.text().replace("&", "") for a in window.menuReferences.actions()] == ["Add reference files...", "Manage reference files...", "Reload reference files"]
 	assert [a.text().replace("&", "") for a in segment.menu.actions()] == ["Add reference files...", "Manage reference files...", "Reload reference files"]
 	added = window.add_references([str(files["quests"]), str(files["items"]), str(files["trader"])])
-	assert len(added) == 3 and "3 files" in segment.fileLabel.text() and "quests.json" in segment.toolTip()
+	assert len(added) == 3 and segment.titleLabel.text().endswith("3") and "quests.json" in segment.toolTip()
 	assert json.loads((tmp_path / "references.json").read_text(encoding="utf-8"))["files"][0].endswith("quests.json")
 	assert {QUEST_ID, ITEM_ID, TRADER_ID} <= {r.id for r in window.rows()}  # (Find IDs)
 	assert QUEST_ID in {r.id for r in window.rows(("quest", "ref_quest")) if r.kind == "ref_quest"}
