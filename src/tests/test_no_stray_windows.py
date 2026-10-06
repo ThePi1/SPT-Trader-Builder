@@ -142,3 +142,38 @@ def test_the_main_window_opens_no_stray_windows(app, vanilla_quests, vanilla_loc
 			app.processEvents()
 		window.close()
 	assert shown == []
+
+
+def test_the_assort_unlock_panel_opens_no_stray_windows_in_any_of_its_states(app):
+	"""Its Update preview button is only shown when the preview differs; it used to be shown before it had a parent."""
+	from ui.unlock_panel import UnlockOfferPanel
+
+	gun, mag, other = "1" * 24, "2" * 24, "3" * 24
+	parts = [
+		{"_id": "p" + "0" * 23, "_tpl": gun, "parentId": "hideout", "slotId": "hideout"},
+		{"_id": "p1" + "0" * 22, "_tpl": mag, "parentId": "p" + "0" * 23, "slotId": "mod_magazine"},
+	]
+	assort = A.empty_assort()
+	items, barter, level = A.new_offer_from_parts(parts)
+	A.add_offer(assort, items, barter, level)
+	(offer,) = A.offer_ids(assort)
+	locks = A.empty_questassort()
+	locks["success"][offer] = "a" * 24
+	exact = A.unlock_reward(assort, offer, "t" * 24)
+	different = A.unlock_reward(assort, offer, "t" * 24)
+	different["items"] = different["items"][:1]  # (only the main item)
+	stale_level = A.unlock_reward(assort, offer, "t" * 24)
+	stale_level["loyaltyLevel"] = 4
+	elsewhere = {"items": [{"_id": "z" * 24, "_tpl": other}], "target": "z" * 24, "loyaltyLevel": 1, "traderId": "t" * 24}
+	with watching(app) as shown:
+		for reward, locked in ((exact, True), (different, True), (different, False), (stale_level, True), (elsewhere, False), (exact, False)):
+			quests = Document({"a" * 24: {"_id": "a" * 24, "QuestName": "Q", "rewards": {"Success": [dict(reward, type="AssortmentUnlock", id="r" * 24)], "Started": [], "Fail": []}}})
+			outline = QuestOutline()
+			outline.set_document(quests)
+			outline.assort_source = lambda: (assort, locks if locked else A.empty_questassort(), "t" * 24)
+			window = hosted(outline)
+			outline._select_key(("reward", ("a" * 24, "rewards", "Success", 0)))
+			app.processEvents()
+			assert outline.pane.findChild(UnlockOfferPanel) is not None
+			window.close()
+	assert shown == []

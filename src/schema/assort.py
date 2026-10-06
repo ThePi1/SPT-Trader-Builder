@@ -354,7 +354,7 @@ def unlock_state(assort, locks, quest_id, timing, reward, trader_id=None):
 		return (
 			"note",
 			f"The trader assort sells this item, but with different parts ({parts_word(len(offer_parts(assort, same_item[0])))} in the offer, "
-			f"{parts_word(len(reward.get('items') or []))} in the preview). A preview showing only the main item is how some base game quests do it.",
+			f"{parts_word(len(reward.get('items') or []))} in the preview).",
 			owner, bool(owner),
 		)
 	return "warn", "The trader assort has no offer for this item, so the player would be unlocking nothing.", None, False
