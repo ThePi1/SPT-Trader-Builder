@@ -47,8 +47,9 @@ class PartsEditor(QWidget):
 		more.setText("More")
 		more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 		menu = QMenu(more)
-		menu.addAction("Add a composite item...", self.add_composite)
-		menu.addSeparator()
+		if not offer:  # (a composite item has a main item of its own: a trader offer has one main item, which New root item... swaps for it)
+			menu.addAction("Add a composite item...", self.add_composite)
+			menu.addSeparator()
 		menu.addAction("Save these as my item...", self.save_to_library)
 		more.setMenu(menu)
 		for widget in (self.add_button, self.root_button if offer else None, self.remove_button, more):  # (only an offer has a main item to swap)
@@ -246,6 +247,7 @@ class PartsEditor(QWidget):
 		the ones that don't fit are removed (after asking)."""
 		roots = P.roots(self.parts)
 		if len(roots) != 1:
+			QMessageBox.information(self, "New root item", "This has more than one main item, so there isn't one to swap.")
 			return
 		picked = self.ctx.pick("part", False, self)  # (items, and composite items)
 		root = roots[0]
@@ -255,6 +257,7 @@ class PartsEditor(QWidget):
 		if built is not None:
 			return self._swap_root_for(root, built)
 		if picked[0] == root.get("_tpl"):
+			QMessageBox.information(self, "New root item", f"{self._name(picked[0])} is already the main item, so nothing was changed.")
 			return
 		tpl = picked[0]
 		loose = [

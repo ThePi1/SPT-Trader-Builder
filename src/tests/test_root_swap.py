@@ -162,10 +162,32 @@ def test_a_composite_item_becomes_the_new_root_with_its_own_mods(app, tmp_path, 
 	assert len(library.entries[built]["items"]) == 3
 
 
-def test_choosing_the_same_item_or_nothing_changes_nothing(app, tmp_path):
+def test_an_offer_cannot_get_a_second_main_item_so_new_root_item_always_works(app, tmp_path, monkeypatch):
+	from core.library import Library
+
+	library = Library(tmp_path / "my_items.json")
+	built = library.add("Built C", [
+		{"_id": "c" * 24, "_tpl": GUN_C, "parentId": "hideout", "slotId": "hideout", "upd": {"StackObjectsCount": 1}},
+		{"_id": "d" * 24, "_tpl": STOCK, "parentId": "c" * 24, "slotId": "mod_stock"},
+	])
+	tab, offer, _quests = make(tmp_path, picked=[built], library=library)
+	editor = tab.right.findChild(PartsEditor)
+	assert [a.text() for a in editor.more_button.menu().actions() if not a.isSeparator()] == ["Save these as my item..."]  # (no "Add a composite item...")
+	monkeypatch.setattr("ui.parts_editor.QMessageBox.question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+	buttons(tab)["New root item..."].click()
+	assert [p["_tpl"] for p in A.offer_parts(tab.doc.data, offer)] == [GUN_C, STOCK]
+	assert len([p for p in tab.doc.data["items"] if A.is_root(p)]) == 1  # (and it is still the only offer)
+	other = PartsEditor([], editor.ctx)  # (the other places that edit items still add composite items)
+	assert "Add a composite item..." in [a.text() for a in other.more_button.menu().actions()]
+
+
+def test_choosing_the_same_item_says_so_and_choosing_nothing_changes_nothing(app, tmp_path, monkeypatch):
 	tab, offer, _quests = make(tmp_path, picked=[GUN_A])
+	told = []
+	monkeypatch.setattr("ui.parts_editor.QMessageBox.information", lambda parent, title, text, *a: told.append(text))
 	before = json.dumps(tab.doc.data, sort_keys=True)
 	buttons(tab)["New root item..."].click()  # (the same item)
+	assert told == ["Gun A is already the main item, so nothing was changed."]
 	buttons(tab)["New root item..."].click()  # (cancelled)
 	assert json.dumps(tab.doc.data, sort_keys=True) == before and tab.doc.undo_label is None
 
