@@ -2,7 +2,7 @@
 
 from schema.common import compare_object, compare_text, count, flag, short
 from schema.fields import (
-	BOOL, CHOICE, GROUPS, IDLIST, INT, ITEM, JSON, LIST, OBJECT, TEXT, Field, Spec,
+	BODY_EFFECTS, BOOL, CHOICE, GROUPS, IDLIST, INT, ITEM, JSON, LIST, OBJECT, TEXT, Field, Spec,
 )
 
 MANAGED = ("conditionType", "id", "dynamicLocale")
@@ -136,7 +136,7 @@ _add(Spec(
 
 _add(Spec(
 	"subtask", "HealthEffect", "Have a health effect", (
-		Field("bodyPartsWithEffects", "Effects on body parts", JSON),
+		Field("bodyPartsWithEffects", "Effects on body parts", BODY_EFFECTS),
 		compare_object("energy", "Energy"),
 		compare_object("hydration", "Hydration"),
 		compare_object("time", "For (seconds)", 0),

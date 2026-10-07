@@ -22,6 +22,7 @@ GROUPS = "groups"  # a list of lists of values (mods that must all be present to
 OBJECT = "object"  # a small object with its own fields (see Field.fields)
 REWARD_ITEMS = "reward_items"  # the list of parts of an Item / AssortmentUnlock reward
 VISIBILITY = "visibility"  # "only show after these tasks": a list of {conditionType, id, target}
+BODY_EFFECTS = "body_effects"  # a list of {"bodyParts": [...], "effects": [...]}: the body parts and the effects they must have
 JSON = "json"  # anything else: edited as JSON text
 
 # What an id field refers to (Field.ref)

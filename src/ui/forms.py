@@ -541,8 +541,106 @@ class JsonControl(Control):
 		self._loading = False
 
 
+class BodyEffectsControl(Control):
+	"""Which effects the body parts must have: a list of entries, each with a list of body parts and a list of effects. It is written as
+	the game's list of {"bodyParts": [...], "effects": [...]}. Pick an entry to edit its two lists; Add entry and Remove entry change
+	how many there are."""
+
+	def __init__(self, field, ctx):
+		super().__init__(field, ctx)
+		self.entries = []
+		self._loading = False
+		column = QVBoxLayout()
+		column.setSpacing(2)
+		self.list = QListWidget()
+		self.list.setMinimumHeight(44)
+		self.list.setMaximumHeight(72)
+		self.list.currentRowChanged.connect(self._selected)
+		column.addWidget(self.list)
+		row = QHBoxLayout()
+		row.setSpacing(4)
+		self.add_button, self.remove_button = QPushButton("Add entry"), QPushButton("Remove entry")
+		self.add_button.clicked.connect(self._add)
+		self.remove_button.clicked.connect(self._remove)
+		row.addWidget(self.add_button)
+		row.addWidget(self.remove_button)
+		row.addStretch(1)
+		column.addLayout(row)
+		self.parts = ListControl(F.Field("bodyParts", "Body parts", F.LIST, [], choices="body_parts"), ctx)
+		self.effects = ListControl(F.Field("effects", "Effects", F.LIST, [], choices="effects"), ctx)
+		self.pickers = QWidget()
+		inner = QVBoxLayout(self.pickers)
+		inner.setContentsMargins(0, 0, 0, 0)
+		inner.setSpacing(2)
+		for label, control in (("Body part", self.parts), ("Effects", self.effects)):
+			inner.addWidget(QLabel(label))
+			inner.addWidget(control)
+			control.edited.connect(self._edited)
+		column.addWidget(self.pickers)
+		self.box.addLayout(column, 1)
+		self._update_enabled()
+
+	@staticmethod
+	def _summary(entry):
+		parts = ", ".join(str(p) for p in entry.get("bodyParts") or []) or "no body parts"
+		effects = ", ".join(str(e) for e in entry.get("effects") or []) or "no effects"
+		return f"{parts}: {effects}"
+
+	def _fill(self, select=None):
+		self._loading = True
+		self.list.clear()
+		for entry in self.entries:
+			self.list.addItem(self._summary(entry))
+		if select is not None and 0 <= select < len(self.entries):
+			self.list.setCurrentRow(select)
+		self._loading = False
+		self._selected(self.list.currentRow())
+
+	def _update_enabled(self):
+		row = self.list.currentRow()
+		self.pickers.setEnabled(row >= 0)
+		self.remove_button.setEnabled(row >= 0)
+
+	def _selected(self, row):
+		if self._loading:
+			return
+		entry = self.entries[row] if 0 <= row < len(self.entries) else {}
+		self._loading = True
+		self.parts.load(entry.get("bodyParts"))
+		self.effects.load(entry.get("effects"))
+		self._loading = False
+		self._update_enabled()
+
+	def load(self, value):
+		self.entries = [dict(e) for e in value if isinstance(e, dict)] if isinstance(value, list) else []
+		self._fill(0 if self.entries else None)
+
+	def _emit(self):
+		self.edited.emit([dict(e) for e in self.entries])
+
+	def _edited(self, _value):
+		row = self.list.currentRow()
+		if self._loading or not 0 <= row < len(self.entries):
+			return
+		self.entries[row] = {**self.entries[row], "bodyParts": list(self.parts.values), "effects": list(self.effects.values)}
+		self.list.item(row).setText(self._summary(self.entries[row]))
+		self._emit()
+
+	def _add(self):
+		self.entries.append({"bodyParts": [], "effects": []})
+		self._fill(len(self.entries) - 1)
+		self._emit()
+
+	def _remove(self):
+		row = self.list.currentRow()
+		if 0 <= row < len(self.entries):
+			del self.entries[row]
+			self._fill(min(row, len(self.entries) - 1) if self.entries else None)
+			self._emit()
+
+
 _CONTROLS = {
-	F.TEXT: TextControl, F.MULTILINE: TextControl, F.INT: NumberControl, F.NUMBER: NumberControl, F.BOOL: BoolControl,
+	F.BODY_EFFECTS: BodyEffectsControl, F.TEXT: TextControl, F.MULTILINE: TextControl, F.INT: NumberControl, F.NUMBER: NumberControl, F.BOOL: BoolControl,
 	F.CHOICE: ChoiceControl, F.LIST: ListControl, F.IDLIST: ListControl,
 }
 

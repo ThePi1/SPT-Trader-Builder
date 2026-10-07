@@ -9,7 +9,7 @@ from schema.quest import QUEST
 KIND_WORDS = {
 	F.TEXT: "Text", F.MULTILINE: "Text", F.INT: "Whole number", F.NUMBER: "Number", F.BOOL: "Yes / no",
 	F.CHOICE: "Pick one", F.REF: "An id", F.LIST: "List", F.IDLIST: "List of ids", F.GROUPS: "Groups of values",
-	F.OBJECT: "A few settings", F.REWARD_ITEMS: "Item parts", F.VISIBILITY: "Conditions", F.JSON: "Anything (JSON)",
+	F.OBJECT: "A few settings", F.REWARD_ITEMS: "Item parts", F.VISIBILITY: "Conditions", F.BODY_EFFECTS: "Body parts and effects", F.JSON: "Anything (JSON)",
 }
 GROUP_TITLES = (
 	("quest", "Quest"), ("task", "Conditions"), ("subtask", "Subtasks (steps inside a counter)"), ("reward", "Rewards"),
