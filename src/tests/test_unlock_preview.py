@@ -261,3 +261,21 @@ def test_locking_an_offer_gives_the_quest_its_unlock_preview_when_it_has_none(ap
 	assert len(quests_doc.data[QID]["rewards"]["Success"]) == 1
 	tab._set_lock(offer, "fail", QID)  # (a fail lock has no reward to go with it)
 	assert len(quests_doc.data[QID]["rewards"]["Success"]) == 1 and not quests_doc.data[QID]["rewards"]["Fail"]
+
+
+def test_an_item_rewards_found_in_raid_box_has_a_question_mark_saying_it_is_ignored_except_for_money(app):
+	from schema import registry
+	from ui.parts_editor import PartsEditor
+
+	form = forms.FormWidget(rewards.REWARDS["Item"])
+	form.bind(registry.new_item("reward", "Item"))
+	editor = form.findChild(PartsEditor)
+	marks = editor.detail.findChildren(HelpMark)
+	assert [m.help_text for m in marks] == ["This is ignored except for RUB/USD/EUR rewards."]
+	assert editor.detail.layout().labelForField(marks[0].parentWidget()).text() == "Found in raid"  # (next to that box)
+	# the other places that edit parts have no "?" there: a trader offer, a composite item, the preview of an Assort unlock
+	assert not PartsEditor([], forms.Context()).detail.findChildren(HelpMark)
+	assert not PartsEditor([], forms.Context(), offer=True).detail.findChildren(HelpMark)
+	unlock = forms.FormWidget(rewards.REWARDS["AssortmentUnlock"])
+	unlock.bind(registry.new_item("reward", "AssortmentUnlock"))
+	assert not unlock.findChild(PartsEditor).detail.findChildren(HelpMark)

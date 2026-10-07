@@ -46,6 +46,7 @@ class Field:
 	maximum: float = None
 	fields: tuple = ()  # for OBJECT: the fields inside
 	help: str = ""  # a longer explanation, shown by a "?" next to the label
+	found_help: str = ""  # for REWARD_ITEMS: what a "?" next to each part's Found in raid box says (none: no "?")
 	categories: bool = False  # for an item id list: the game also takes item categories here (only hasItemFromCategory does), so the search lists them
 
 

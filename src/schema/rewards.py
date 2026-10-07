@@ -21,6 +21,9 @@ UNLOCK_ITEM_HELP = (
 MANAGED = ("type", "id")
 
 
+FOUND_IN_RAID_HELP = "This is ignored except for RUB/USD/EUR rewards."
+
+
 def item_count(parts):
 	"""How many items an Item reward gives: the stack sizes of its top-level parts added up (a part with no stack counts as 1). The base game
 	keeps the reward's "value" equal to this in every one of its item rewards. 0 when there are no parts."""
@@ -94,8 +97,8 @@ _add(Spec(
 
 _add(Spec(
 	"reward", "Item", "Items", (
-		Field("items", "Items", REWARD_ITEMS, required=True),
-		Field("findInRaid", "Found in raid", BOOL, True),
+		Field("items", "Items", REWARD_ITEMS, required=True, found_help=FOUND_IN_RAID_HELP),
+		Field("findInRaid", "Found in raid (client display only)", BOOL, True),
 		Field("target", "Main item id", REF, advanced=True),
 		Field("isEncoded", "Encoded", BOOL, False, advanced=True),
 	) + _COMMON,

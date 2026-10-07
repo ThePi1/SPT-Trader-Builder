@@ -508,7 +508,7 @@ class PartsControl(Control):
 			self.editor.setParent(None)
 			self.editor.deleteLater()
 		self.parts = value if isinstance(value, list) else []
-		self.editor = PartsEditor(self.parts, self.ctx)
+		self.editor = PartsEditor(self.parts, self.ctx, found_help=self.field.found_help)
 		self.editor.changed.connect(lambda: self.edited.emit(self.parts))
 		self.box.addWidget(self.editor, 1)
 

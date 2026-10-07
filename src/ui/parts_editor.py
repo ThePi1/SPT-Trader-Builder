@@ -14,6 +14,7 @@ from core import library as library_module
 from core import parts as P
 from schema import choices
 from schema.common import short
+from ui.help_mark import HelpMark
 
 ROLE = Qt.ItemDataRole.UserRole
 
@@ -23,7 +24,7 @@ class PartsEditor(QWidget):
 
 	changed = Signal()
 
-	def __init__(self, parts, ctx, parent=None, offer=False):
+	def __init__(self, parts, ctx, parent=None, offer=False, found_help=""):
 		super().__init__(parent)
 		self.parts, self.ctx, self.offer = parts, ctx, offer
 		self._loading = False
@@ -81,7 +82,16 @@ class PartsEditor(QWidget):
 		self.slot_row_label = QLabel("Slot")
 		form.addRow(self.slot_row_label, self.slot)
 		form.addRow("Stack size", self.stack)
-		form.addRow("Found in raid", self.found)
+		if found_help:  # (a "?" next to the box)
+			holder = QWidget()
+			row = QHBoxLayout(holder)
+			row.setContentsMargins(0, 0, 0, 0)
+			row.addWidget(self.found)
+			row.addWidget(HelpMark(found_help))
+			row.addStretch(1)
+			form.addRow("Found in raid", holder)
+		else:
+			form.addRow("Found in raid", self.found)
 		form.addRow(self.hint)
 		layout.addWidget(self.detail)
 		self.rebuild()
