@@ -78,7 +78,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline.picker = self.pick
 		self.quest_outline.assort_source = lambda: (self.assort.data, self.locks.data, self.assort_tab.trader_id)
 		self.quest_outline.locale = self.locale
-		self.locale_tab = LocaleTab(self.locale, self.quests, settings)
+		self.locale_tab = LocaleTab(self.locale, self.quests, settings, references=self.references)
 		self._base_rows = None
 		self.lookup_tab = LookupTab([], settings)
 		self.library = Library()
@@ -124,11 +124,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 	def pick(self, ref, multi=False, parent=None):
 		title = {
 			"item": "Find an item", "quest": "Find a quest", "achievement": "Find an achievement", "customization": "Find clothing",
-			"composite": "Find a composite item", "part": "Find an item",
+			"composite": "Find a composite item", "part": "Find an item", "item_id": "Find an item", "item_list": "Find an item",
 		}.get(ref, "Find")
 		kinds = {
 			"composite": (lookup.MINE, lookup.PRESET),  # (saved ones and the game's)
 			"part": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET),  # (what a list of item parts can take)
+			"item_id": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET, lookup.CATEGORY),  # (the list that takes categories as they are)
+			"item_list": (lookup.ITEM, lookup.REF_ITEM, lookup.MINE, lookup.PRESET, lookup.CATEGORY),  # (an item list: a category stands for the items under it)
 			"item": (lookup.ITEM, lookup.REF_ITEM), "quest": (lookup.QUEST, lookup.REF_QUEST),  # (the game's, and the reference files')
 		}.get(ref, (ref,))
 		dialog = PickerDialog(self.rows(kinds), kinds, title, multi, self.settings, parent or self)

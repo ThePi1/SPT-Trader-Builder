@@ -14,6 +14,7 @@ from core import library as library_module
 from core import parts as P
 from schema import choices
 from schema.common import short
+from ui.help_mark import HelpMark
 
 ROLE = Qt.ItemDataRole.UserRole
 
@@ -23,7 +24,7 @@ class PartsEditor(QWidget):
 
 	changed = Signal()
 
-	def __init__(self, parts, ctx, parent=None, offer=False):
+	def __init__(self, parts, ctx, parent=None, offer=False, found_help=""):
 		super().__init__(parent)
 		self.parts, self.ctx, self.offer = parts, ctx, offer
 		self._loading = False
@@ -47,8 +48,9 @@ class PartsEditor(QWidget):
 		more.setText("More")
 		more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 		menu = QMenu(more)
-		menu.addAction("Add a composite item...", self.add_composite)
-		menu.addSeparator()
+		if not offer:  # (a composite item has a main item of its own: a trader offer has one main item, which New root item... swaps for it)
+			menu.addAction("Add a composite item...", self.add_composite)
+			menu.addSeparator()
 		menu.addAction("Save these as my item...", self.save_to_library)
 		more.setMenu(menu)
 		for widget in (self.add_button, self.root_button if offer else None, self.remove_button, more):  # (only an offer has a main item to swap)
@@ -80,7 +82,16 @@ class PartsEditor(QWidget):
 		self.slot_row_label = QLabel("Slot")
 		form.addRow(self.slot_row_label, self.slot)
 		form.addRow("Stack size", self.stack)
-		form.addRow("Found in raid", self.found)
+		if found_help:  # (a "?" next to the box)
+			holder = QWidget()
+			row = QHBoxLayout(holder)
+			row.setContentsMargins(0, 0, 0, 0)
+			row.addWidget(self.found)
+			row.addWidget(HelpMark(found_help))
+			row.addStretch(1)
+			form.addRow("Found in raid", holder)
+		else:
+			form.addRow("Found in raid", self.found)
 		form.addRow(self.hint)
 		layout.addWidget(self.detail)
 		self.rebuild()
@@ -246,6 +257,7 @@ class PartsEditor(QWidget):
 		the ones that don't fit are removed (after asking)."""
 		roots = P.roots(self.parts)
 		if len(roots) != 1:
+			QMessageBox.information(self, "New root item", "This has more than one main item, so there isn't one to swap.")
 			return
 		picked = self.ctx.pick("part", False, self)  # (items, and composite items)
 		root = roots[0]
@@ -255,6 +267,7 @@ class PartsEditor(QWidget):
 		if built is not None:
 			return self._swap_root_for(root, built)
 		if picked[0] == root.get("_tpl"):
+			QMessageBox.information(self, "New root item", f"{self._name(picked[0])} is already the main item, so nothing was changed.")
 			return
 		tpl = picked[0]
 		loose = [

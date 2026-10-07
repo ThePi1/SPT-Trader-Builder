@@ -124,9 +124,15 @@ class GameData:
 	@cached_property
 	def locations(self):
 		"""{location id (as quests use it): name}. 'any' means any location."""
-		names = {"any": "Any"}
+		names, keys = {"any": "Any"}, {}
 		for name, location_id in read_json(DATA_DIR / "locations.json").items():
-			names.setdefault(location_id, self.locale.get(f"{location_id} Name") or name)
+			if location_id not in names:
+				names[location_id] = self.locale.get(f"{location_id} Name") or name
+				keys[location_id] = name
+		same = [name for name in names.values()]
+		for location_id, name in list(names.items()):  # (the game calls both Factory maps "Factory": tell them apart by the end of their key)
+			if same.count(name) > 1:
+				names[location_id] = f"{name} ({keys[location_id].rpartition('_')[2]})"
 		return names
 
 	# --- names -------------------------------------------------------------------------

@@ -21,6 +21,22 @@ UNLOCK_ITEM_HELP = (
 MANAGED = ("type", "id")
 
 
+FOUND_IN_RAID_HELP = "This is ignored except for RUB/USD/EUR rewards."
+
+
+def item_count(parts):
+	"""How many items an Item reward gives: the stack sizes of its top-level parts added up (a part with no stack counts as 1). The base game
+	keeps the reward's "value" equal to this in every one of its item rewards. 0 when there are no parts."""
+	known = {p.get("_id") for p in parts if isinstance(p, dict)}
+	total = 0
+	for part in parts:
+		if not isinstance(part, dict) or (part.get("parentId") not in (None, "", "hideout") and part.get("parentId") in known):
+			continue
+		stack = (part.get("upd") or {}).get("StackObjectsCount", 1) if isinstance(part.get("upd") or {}, dict) else 1
+		total += stack if isinstance(stack, (int, float)) and not isinstance(stack, bool) else 1
+	return int(total) if total == int(total) else total
+
+
 def _base(reward_type, **keys):
 	item = {
 		"availableInGameEditions": [],
@@ -81,14 +97,13 @@ _add(Spec(
 
 _add(Spec(
 	"reward", "Item", "Items", (
-		Field("items", "Items", REWARD_ITEMS, required=True),
-		Field("value", "How many", INT, 1, minimum=1),
-		Field("findInRaid", "Found in raid", BOOL, True),
+		Field("items", "Items", REWARD_ITEMS, required=True, found_help=FOUND_IN_RAID_HELP),
+		Field("findInRaid", "Found in raid (client display only)", BOOL, True),
 		Field("target", "Main item id", REF, advanced=True),
 		Field("isEncoded", "Encoded", BOOL, False, advanced=True),
 	) + _COMMON,
 	_base("Item", findInRaid=True, isEncoded=False, items=[], target="", value=1),
-	vanilla_timing_use=(SUCCESS, STARTED), managed=MANAGED,
+	vanilla_timing_use=(SUCCESS, STARTED), managed=MANAGED + ("value",),  # (value follows the stack sizes: see item_count)
 	summary=lambda item, names: f"{item.get('value', 1)}x {_main_item_name(item, names)}",
 	note="Items given to the player. A weapon with mods is one item made of several parts.",
 ))

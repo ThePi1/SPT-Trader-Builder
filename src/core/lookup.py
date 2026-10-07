@@ -1,15 +1,15 @@
-"""Finding ids and names: every item, quest, trader, map, achievement and customization the
+"""Finding ids and names: every item, item category, quest, trader, map, achievement and customization the
 game has (plus the quests being edited), searchable by name or id. No Qt."""
 
 from dataclasses import dataclass
 
-ITEM, QUEST, TRADER, MAP, ACHIEVEMENT, CUSTOMIZATION, MINE, PRESET = (
-	"item", "quest", "trader", "map", "achievement", "customization", "my_composite", "composite",
+ITEM, QUEST, TRADER, MAP, ACHIEVEMENT, CUSTOMIZATION, MINE, PRESET, CATEGORY = (
+	"item", "quest", "trader", "map", "achievement", "customization", "my_composite", "composite", "category",
 )
 # the same things found in the reference files
 REF_ITEM, REF_QUEST, REF_TRADER, REF_OFFER = "ref_item", "ref_quest", "ref_trader", "ref_offer"
 KIND_LABEL = {
-	ITEM: "Item", QUEST: "Quest", TRADER: "Trader", MAP: "Map", ACHIEVEMENT: "Achievement",
+	ITEM: "Item", CATEGORY: "Item category", QUEST: "Quest", TRADER: "Trader", MAP: "Map", ACHIEVEMENT: "Achievement",
 	CUSTOMIZATION: "Clothing", MINE: "Your composite item", PRESET: "Vanilla composite item",
 	REF_ITEM: "Item (reference)", REF_QUEST: "Quest (reference)", REF_TRADER: "Trader (reference)", REF_OFFER: "Trader offer (reference)",
 }
@@ -37,6 +37,36 @@ def _item_rows(gamedata):
 		parent = items.get(item.get("_parent"), {}).get("_name", "")
 		rows.append(Row(tpl, name, ITEM, ", ".join(x for x in (short if short != name else "", parent) if x)))
 	return rows
+
+
+def _category_rows(gamedata):
+	"""The game's item categories (the 'Node' entries of the item templates: Handgun, Assault rifle, ...), which some conditions take
+	as well as items. The detail is the category they are in."""
+	locale, items = gamedata.locale, gamedata.items
+	rows = []
+	for tpl, node in items.items():
+		if node.get("_type") != "Node":
+			continue
+		parent = items.get(node.get("_parent"), {})
+		rows.append(Row(tpl, locale.get(f"{tpl} Name") or node.get("_name", ""), CATEGORY, locale.get(f"{node.get('_parent')} Name") or parent.get("_name", "")))
+	return rows
+
+
+def category_items(items, category_id):
+	"""The ids of all the items under an item category, at any depth (Handgun: every pistol), in the order of the item templates.
+	items is the game's templates/items.json."""
+	below, found = {category_id}, []
+	grew = True
+	while grew:  # (the categories under it, and the ones under those)
+		grew = False
+		for tpl, node in items.items():
+			if node.get("_type") == "Node" and node.get("_parent") in below and tpl not in below:
+				below.add(tpl)
+				grew = True
+	for tpl, item in items.items():
+		if item.get("_type") == "Item" and item.get("_parent") in below:
+			found.append(tpl)
+	return found
 
 
 def library_rows(library):
@@ -67,6 +97,8 @@ def build_rows(gamedata, quests=None, kinds=None, library=None, references=None)
 				rows.append(Row(quest_id, gamedata.quest_name(quest_id), QUEST, gamedata.trader_name(quest.get("traderId", ""))))
 	if ITEM in want:
 		rows += _item_rows(gamedata)
+	if CATEGORY in want:
+		rows += _category_rows(gamedata)
 	if TRADER in want:
 		rows += [Row(i, n, TRADER) for i, n in gamedata.traders.items()]
 	if MAP in want:

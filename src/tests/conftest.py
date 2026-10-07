@@ -20,6 +20,12 @@ def _load(path):
 	return json.loads(Path(path).read_bytes().decode("utf-8-sig"))
 
 
+@pytest.fixture(autouse=True)
+def no_real_reference_files(tmp_path, monkeypatch):
+	"""The reference files the user has added to the program are not part of any test: every test starts with none."""
+	monkeypatch.setattr("core.references.REFERENCES_FILE", tmp_path / "no_references.json")
+
+
 @pytest.fixture(scope="session")
 def vanilla_quests():
 	return _load(DATABASE / "templates" / "quests.json")

@@ -45,6 +45,24 @@ QUEST_TEXT_NEEDED = tuple(f.key for f in QUEST_TEXT if f.needed)
 MISSPELLED = {"successMessagetext": "successMessageText"}
 
 
+def generated_task_text(task, names):
+	"""The words for a Find items, Hand over items or Skill level task: 'Find Salewa first aid kit in raid', 'Hand over Salewa first aid kit',
+	'Reach the required Endurance skill level'. Several items read 'A, B or C'. '' for another kind of task, or one with no item or skill yet.
+	names turns an item id or a skill into its name (schema.common.Names)."""
+	kind = task.get("conditionType")
+	if kind == "Skill":
+		skill = task.get("target")
+		return f"Reach the required {names.skill(skill)} skill level" if isinstance(skill, str) and skill else ""
+	targets = [t for t in task.get("target") or [] if isinstance(t, str) and t]
+	if kind not in ("FindItem", "HandoverItem") or not targets:
+		return ""
+	named = [names.item(t) for t in targets]
+	what = named[0] if len(named) == 1 else ", ".join(named[:-1]) + " or " + named[-1]
+	if kind == "HandoverItem":
+		return f"Hand over {what}"
+	return f"Find {what}" + (" in raid" if task.get("onlyFoundInRaid") else "")
+
+
 def quest_key(quest_id, field):
 	return f"{quest_id} {field}"
 

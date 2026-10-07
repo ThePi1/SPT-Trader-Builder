@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication, QLabel
 
 from core.documents import Document
 from schema import assort as A
+from schema import fields as F
 from schema import locale as L
 from schema import registry
 from ui.assort_tab import AssortTab
@@ -370,3 +371,142 @@ def test_the_tooltips_of_the_expand_and_collapse_buttons_are_not_bold(app):
 		assert not tip.font().bold() and tip.font().pointSizeF() == outline.font().pointSizeF()  # (normal text, normal size)
 	for button in (outline.expandAllButton, outline.collapseAllButton):  # (the + and - are in the normal font too)
 		assert button.styleSheet() == "" and not button.font().bold() and button.font().pointSizeF() == 9.0
+
+
+# --- the health effect subtask: body parts and effects as two lists --------------------------------------------------
+
+def test_the_health_effect_subtask_edits_body_parts_and_effects_as_two_lists(app):
+	from schema import registry
+	from ui import forms
+
+	spec = registry.spec_for("subtask", "HealthEffect")
+	assert spec.field("bodyPartsWithEffects").kind == F.BODY_EFFECTS
+	item = registry.new_item("subtask", "HealthEffect")
+	assert item["bodyPartsWithEffects"] == [{"bodyParts": [], "effects": []}]
+	form = forms.FormWidget(spec)
+	form.bind(item)
+	control = next(c for c in form.controls if c.field.key == "bodyPartsWithEffects")
+	assert not any(isinstance(c, forms.JsonControl) and c.field.key == "bodyPartsWithEffects" for c in form.controls)
+	control.parts.entry.setCurrentIndex(control.parts.entry.findData("Head"))
+	control.parts._add()
+	control.effects.entry.setCurrentIndex(control.effects.entry.findData("Stimulator"))
+	control.effects._add()
+	assert item["bodyPartsWithEffects"] == [{"bodyParts": ["Head"], "effects": ["Stimulator"]}]  # (the game's own shape)
+	assert [control.effects.list.item(i).text() for i in range(control.effects.list.count())] == ["Stimulator"]
+	control.parts.list.setCurrentRow(0)
+	control.parts._remove()
+	assert item["bodyPartsWithEffects"] == [{"bodyParts": [], "effects": ["Stimulator"]}]
+
+
+def test_the_health_effect_subtask_can_have_several_entries(app):
+	from ui import forms
+
+	control = forms.BodyEffectsControl(F.Field("bodyPartsWithEffects", "Effects on body parts", F.BODY_EFFECTS), forms.Context())
+	seen = []
+	control.edited.connect(seen.append)
+	control.load([{"bodyParts": ["Head", "Chest"], "effects": ["Pain"], "other": 1}, {"bodyParts": ["Stomach"], "effects": []}])
+	assert [control.list.item(i).text() for i in range(control.list.count())] == ["Head, Chest: Pain", "Stomach: no effects"]
+	assert control.list.currentRow() == 0 and control.parts.values == ["Head", "Chest"] and control.effects.values == ["Pain"]
+	control.list.setCurrentRow(1)  # (picking an entry shows its lists, and writes nothing)
+	assert control.parts.values == ["Stomach"] and control.effects.values == [] and seen == []
+	control.effects.entry.setCurrentIndex(control.effects.entry.findData("Tremor"))
+	control.effects._add()
+	assert seen[-1] == [{"bodyParts": ["Head", "Chest"], "effects": ["Pain"], "other": 1}, {"bodyParts": ["Stomach"], "effects": ["Tremor"]}]  # (the other entry as it was)
+	assert control.list.item(1).text() == "Stomach: Tremor"
+	control.add_button.click()
+	assert seen[-1][2] == {"bodyParts": [], "effects": []} and control.list.currentRow() == 2 and control.list.item(2).text() == "no body parts: no effects"
+	control.parts.entry.setCurrentIndex(control.parts.entry.findData("Head"))
+	control.parts._add()
+	assert seen[-1][2] == {"bodyParts": ["Head"], "effects": []} and len(seen[-1]) == 3
+	control.list.setCurrentRow(0)
+	control.remove_button.click()
+	assert [e["bodyParts"] for e in seen[-1]] == [["Stomach"], ["Head"]] and control.list.count() == 2 and control.list.currentRow() == 0
+
+
+def test_with_no_entries_the_lists_wait_for_one_to_be_added(app):
+	from ui import forms
+
+	control = forms.BodyEffectsControl(F.Field("bodyPartsWithEffects", "Effects on body parts", F.BODY_EFFECTS), forms.Context())
+	seen = []
+	control.edited.connect(seen.append)
+	for value in (None, [], "text"):
+		control.load(value)
+		assert control.list.count() == 0 and not control.pickers.isEnabled() and not control.remove_button.isEnabled()
+	control.add_button.click()
+	assert seen == [[{"bodyParts": [], "effects": []}]] and control.pickers.isEnabled()
+	control.parts.entry.setCurrentIndex(control.parts.entry.findData("Chest"))
+	control.parts._add()
+	assert seen[-1] == [{"bodyParts": ["Chest"], "effects": []}]
+	control.remove_button.click()
+	assert seen[-1] == [] and not control.pickers.isEnabled()
+
+
+def test_several_health_effect_entries_raise_no_warning(app):
+	import copy
+
+	from core.gamedata import GameData
+	from core.paths import BUNDLED_DATABASE_DIR
+	from schema import validate
+
+	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
+
+	def effects(c):
+		if isinstance(c, dict):
+			if c.get("conditionType") == "HealthEffect":
+				yield c
+			for v in c.values():
+				yield from effects(v)
+		elif isinstance(c, list):
+			for v in c:
+				yield from effects(v)
+
+	quest_id, quest = next((i, q) for i, q in data.vanilla_quests.items() if list(effects(q["conditions"])))
+	before = [i.message for i in validate.validate_quest(copy.deepcopy(quest), quest_id, data)]
+	quest = copy.deepcopy(quest)
+	next(effects(quest["conditions"]))["bodyPartsWithEffects"] = [
+		{"bodyParts": ["Head"], "effects": ["Pain"]}, {"bodyParts": ["Chest", "Stomach"], "effects": ["Tremor", "Stimulator"]}, {"bodyParts": [], "effects": []},
+	]
+	assert [i.message for i in validate.validate_quest(quest, quest_id, data)] == before
+
+
+# --- an Item reward's value follows its stack sizes ---------------------------------------------------------------------
+
+def test_item_count_matches_every_item_reward_of_the_base_game(vanilla_quests):
+	from schema import rewards
+
+	checked = 0
+	for quest in vanilla_quests.values():
+		for given in quest["rewards"].values():
+			for reward in given:
+				if reward["type"] == "Item":
+					assert rewards.item_count(reward["items"]) == reward["value"]
+					checked += 1
+	assert checked > 1500
+	assert rewards.item_count([]) == 0
+	assert rewards.item_count([{"_id": "a", "_tpl": "t"}, {"_id": "b", "_tpl": "t", "parentId": "a", "upd": {"StackObjectsCount": 9}}]) == 1  # (a mod is not counted; no stack is 1)
+	assert rewards.item_count([{"_id": "a", "upd": {"StackObjectsCount": 5}}, {"_id": "b", "parentId": "hideout", "upd": {"StackObjectsCount": 3}}]) == 8
+
+
+def test_the_item_reward_form_has_no_how_many_and_keeps_value_in_step_with_the_stacks(app):
+	from PySide6.QtWidgets import QLabel
+
+	from schema import registry
+	from ui import forms
+
+	spec = registry.spec_for("reward", "Item")
+	assert spec.field("value") is None and "value" in spec.known_keys()  # (not a field, and not an "unknown key")
+	item = registry.new_item("reward", "Item")
+	form = forms.FormWidget(spec)
+	form.bind(item)
+	assert "How many" not in [label.text() for label in form.findChildren(QLabel)]
+	control = next(c for c in form.controls if c.field.key == "items")
+	control.editor.parts.append({"_id": "a" * 24, "_tpl": "b" * 24, "upd": {"StackObjectsCount": 4}})
+	control.editor.changed.emit()
+	assert item["value"] == 4
+	control.editor.parts.append({"_id": "c" * 24, "_tpl": "d" * 24, "upd": {"StackObjectsCount": 2}})
+	control.editor.parts.append({"_id": "e" * 24, "_tpl": "f" * 24, "parentId": "c" * 24, "slotId": "mod_x"})
+	control.editor.changed.emit()
+	assert item["value"] == 6  # (4 + 2; the mod is not an item of its own)
+	item["value"] = 99  # (set by hand in the JSON editor: it stays until the parts change)
+	form.bind(item)
+	assert item["value"] == 99

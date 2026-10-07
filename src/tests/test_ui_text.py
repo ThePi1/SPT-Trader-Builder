@@ -97,3 +97,172 @@ def test_add_all_missing_fields_adds_the_condition_text_the_game_uses(app):
 	locale.data.pop(ids["Fail"])
 	tab.add_missing()
 	assert locale.data[ids["Fail"]] == ""  # (a Fail condition's text is added too)
+
+
+# --- Generate locale (Find items and Hand over items) ------------------------------------------------------------
+
+def names_for(**known):
+	class Names:
+		def item(self, tpl):
+			return known.get(tpl, tpl[:12])
+
+	return Names()
+
+
+def test_the_text_of_a_find_or_hand_over_task_is_made_from_its_items():
+	names = names_for(a="Salewa", b="Bandage", c="Splint")
+	find = {"conditionType": "FindItem", "target": ["a"], "onlyFoundInRaid": False}
+	assert L.generated_task_text(find, names) == "Find Salewa"
+	assert L.generated_task_text({**find, "onlyFoundInRaid": True}, names) == "Find Salewa in raid"
+	assert L.generated_task_text({**find, "conditionType": "HandoverItem", "onlyFoundInRaid": True}, names) == "Hand over Salewa"  # (found in raid is only said for Find)
+	assert L.generated_task_text({**find, "target": ["a", "b", "c"]}, names) == "Find Salewa, Bandage or Splint"
+	assert L.generated_task_text({**find, "target": ["a", "b"], "onlyFoundInRaid": True}, names) == "Find Salewa or Bandage in raid"
+	assert L.generated_task_text({**find, "target": []}, names) == "" and L.generated_task_text({"conditionType": "Kills", "target": ["a"]}, names) == ""
+
+
+def outline_with_task(kind):
+	quests, locale = Document({}), Document({})
+	outline = QuestOutline()
+	outline.locale = locale
+	outline.set_document(quests)
+	outline.add_quest()
+	outline.add_item("task", kind)
+	quest = next(iter(quests.data.values()))
+	task = quest["conditions"]["AvailableForFinish"][0]
+	outline._select_key(("task", (quest["_id"], "conditions", "AvailableForFinish", 0)))
+	return outline, locale, task
+
+
+def generate_button(outline):
+	from PySide6.QtWidgets import QPushButton
+
+	return next((b for b in outline.pane.findChildren(QPushButton) if b.text() == "Generate locale"), None)
+
+
+def test_generate_locale_fills_the_locale_box_of_a_find_task_and_writes_it(app, monkeypatch):
+	from PySide6.QtWidgets import QPlainTextEdit
+
+	outline, locale, task = outline_with_task("FindItem")
+	task["target"] = ["5448bd6b4bdc2dfc2f8b4569"]
+	task["onlyFoundInRaid"] = True
+	outline._select_key(outline._current_key())  # (the form shows the edited task)
+	button = generate_button(outline)
+	assert button is not None
+	told = []
+	monkeypatch.setattr("ui.quest_outline.QMessageBox.information", lambda *a: told.append(a))
+	button.click()
+	assert locale.data[task["id"]] == "Find 5448bd6b4bd... in raid" and not told  # (no game data open: the id stands for the name)
+	assert outline.pane.findChild(QPlainTextEdit).toPlainText() == "Find 5448bd6b4bd... in raid"  # (the box shows it)
+	locale.undo()
+	assert task["id"] not in locale.data
+
+
+def test_generate_locale_on_a_hand_over_task_and_without_an_item(app, monkeypatch):
+	outline, locale, task = outline_with_task("HandoverItem")
+	told = []
+	monkeypatch.setattr("ui.quest_outline.QMessageBox.information", lambda *a: told.append(a[2]))
+	generate_button(outline).click()
+	assert locale.data == {} and told == ["Choose the item (or the skill) first: the text is made from its name."]
+	task["target"] = ["5448bd6b4bdc2dfc2f8b4569"]
+	outline._select_key(outline._current_key())
+	generate_button(outline).click()
+	assert locale.data[task["id"]] == "Hand over 5448bd6b4bd..."
+
+
+def test_only_find_and_hand_over_tasks_have_a_generate_locale_button(app):
+	outline, _locale, _task = outline_with_task("Kills")
+	assert generate_button(outline) is None
+	outline.locale = None
+	outline, _locale, _task = outline_with_task("FindItem")
+	outline.locale = None
+	outline._select_key(outline._current_key())
+	assert generate_button(outline) is None  # (no locale open: nowhere to put the text)
+
+
+def test_the_text_of_a_skill_level_task_names_the_skill_as_the_game_does():
+	from core.gamedata import GameData
+	from core.paths import BUNDLED_DATABASE_DIR
+	from schema.common import PLAIN, Names
+
+	data = Names(GameData(None, "en", BUNDLED_DATABASE_DIR))
+	skill = {"conditionType": "Skill", "target": "Sniper", "value": 7}
+	assert L.generated_task_text(skill, data) == "Reach the required Bolt-action Rifles skill level"  # (the base game's own words for it)
+	assert L.generated_task_text({**skill, "target": "Endurance"}, data) == "Reach the required Endurance skill level"
+	assert L.generated_task_text({**skill, "target": "MadeUp"}, data) == "Reach the required MadeUp skill level"  # (a skill the locale doesn't know: as written)
+	assert L.generated_task_text(skill, PLAIN) == "Reach the required Sniper skill level"  # (no game data: the id)
+	assert L.generated_task_text({**skill, "target": ""}, data) == ""
+
+
+def test_a_skill_level_task_has_a_generate_locale_button_that_fills_its_box(app, monkeypatch):
+	from core.gamedata import GameData
+	from core.paths import BUNDLED_DATABASE_DIR
+
+	outline, locale, task = outline_with_task("Skill")
+	outline.gamedata = GameData(None, "en", BUNDLED_DATABASE_DIR)
+	task["target"] = "Sniper"
+	outline._select_key(outline._current_key())
+	generate_button(outline).click()
+	assert locale.data[task["id"]] == "Reach the required Bolt-action Rifles skill level"
+
+
+# --- reference locale files in the Locale tab -------------------------------------------------------------------
+
+def reference_tab(tmp_path, locale=None, quests=None):
+	import json
+
+	from core import references as R
+
+	(tmp_path / "en.json").write_text(json.dumps({"ref1": "From a reference", "shared": "Reference version", "ref2 name": "Another"}), encoding="utf-8")
+	(tmp_path / "fr.json").write_text(json.dumps({"ref1": "Depuis une reference", "only_fr": "Seulement"}), encoding="utf-8")
+	references = R.References(tmp_path / "list.json")
+	references.add([tmp_path / "en.json", tmp_path / "fr.json"])
+	locale = locale or Document({"mine": "My text", "shared": "My version"})
+	return LocaleTab(locale, quests or Document({}), references=references), locale
+
+
+def test_reference_locale_entries_are_listed_greyed_out_and_cannot_be_edited(app, tmp_path):
+	from PySide6.QtCore import Qt
+	from PySide6.QtGui import QBrush
+
+	tab, locale = reference_tab(tmp_path)
+	model = tab.model
+	assert model.keys == ["mine", "shared", "ref1", "ref2 name", "only_fr"]  # (the open file's entries, then the references': the open file's version of a key wins)
+	rows = {key: i for i, key in enumerate(model.keys)}
+
+	def at(key, column, role=Qt.ItemDataRole.DisplayRole):
+		return model.data(model.index(rows[key], column), role)
+
+	assert at("ref1", 2) == "From a reference" and at("ref1", 3) == "Reference: en.json" and at("only_fr", 3) == "Reference: fr.json"
+	assert at("mine", 3) == "" and at("shared", 2) == "My version"
+	grey = at("ref1", 2, Qt.ItemDataRole.ForegroundRole)
+	assert isinstance(grey, QBrush) and at("mine", 2, Qt.ItemDataRole.ForegroundRole) is None
+	assert "can't be edited" in at("ref1", 2, Qt.ItemDataRole.ToolTipRole)
+	assert model.flags(model.index(rows["ref1"], 2)) & Qt.ItemFlag.ItemIsEditable == Qt.ItemFlag.NoItemFlags
+	assert model.flags(model.index(rows["mine"], 2)) & Qt.ItemFlag.ItemIsEditable
+	assert not model.setData(model.index(rows["ref1"], 2), "changed") and locale.data == {"mine": "My text", "shared": "My version"}
+	assert model.setData(model.index(rows["mine"], 2), "changed") and locale.data["mine"] == "changed"
+
+
+def test_reference_entries_follow_the_search_and_cannot_be_deleted(app, tmp_path):
+	tab, locale = reference_tab(tmp_path)
+	tab.search.setText("another")
+	assert tab.model.keys == ["ref2 name"]
+	tab.search.setText("")
+	tab.table.selectAll()
+	tab.delete_selected()
+	assert locale.data == {} and "ref1" in tab.model.keys and "mine" not in tab.model.keys  # (only the open file's entries went)
+	assert tab.note.text() == "4 entries."
+
+
+def test_the_filters_that_are_about_the_open_file_leave_the_references_out(app, tmp_path):
+	from schema.quest import make_quest
+
+	quest = make_quest(name="Q")
+	tab, _locale = reference_tab(tmp_path, quests=Document({quest["_id"]: quest}))
+	for mode in ("missing", "unused"):
+		tab.mode.setCurrentIndex(tab.mode.findData(mode))
+		assert not tab.model.reference
+	tab.mode.setCurrentIndex(tab.mode.findData("mine"))
+	assert "ref1" not in tab.model.keys  # (not a text of the open quests)
+	tab.mode.setCurrentIndex(tab.mode.findData("all"))
+	assert "ref1" in tab.model.keys
