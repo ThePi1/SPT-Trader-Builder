@@ -467,3 +467,46 @@ def test_several_health_effect_entries_raise_no_warning(app):
 		{"bodyParts": ["Head"], "effects": ["Pain"]}, {"bodyParts": ["Chest", "Stomach"], "effects": ["Tremor", "Stimulator"]}, {"bodyParts": [], "effects": []},
 	]
 	assert [i.message for i in validate.validate_quest(quest, quest_id, data)] == before
+
+
+# --- an Item reward's value follows its stack sizes ---------------------------------------------------------------------
+
+def test_item_count_matches_every_item_reward_of_the_base_game(vanilla_quests):
+	from schema import rewards
+
+	checked = 0
+	for quest in vanilla_quests.values():
+		for given in quest["rewards"].values():
+			for reward in given:
+				if reward["type"] == "Item":
+					assert rewards.item_count(reward["items"]) == reward["value"]
+					checked += 1
+	assert checked > 1500
+	assert rewards.item_count([]) == 0
+	assert rewards.item_count([{"_id": "a", "_tpl": "t"}, {"_id": "b", "_tpl": "t", "parentId": "a", "upd": {"StackObjectsCount": 9}}]) == 1  # (a mod is not counted; no stack is 1)
+	assert rewards.item_count([{"_id": "a", "upd": {"StackObjectsCount": 5}}, {"_id": "b", "parentId": "hideout", "upd": {"StackObjectsCount": 3}}]) == 8
+
+
+def test_the_item_reward_form_has_no_how_many_and_keeps_value_in_step_with_the_stacks(app):
+	from PySide6.QtWidgets import QLabel
+
+	from schema import registry
+	from ui import forms
+
+	spec = registry.spec_for("reward", "Item")
+	assert spec.field("value") is None and "value" in spec.known_keys()  # (not a field, and not an "unknown key")
+	item = registry.new_item("reward", "Item")
+	form = forms.FormWidget(spec)
+	form.bind(item)
+	assert "How many" not in [label.text() for label in form.findChildren(QLabel)]
+	control = next(c for c in form.controls if c.field.key == "items")
+	control.editor.parts.append({"_id": "a" * 24, "_tpl": "b" * 24, "upd": {"StackObjectsCount": 4}})
+	control.editor.changed.emit()
+	assert item["value"] == 4
+	control.editor.parts.append({"_id": "c" * 24, "_tpl": "d" * 24, "upd": {"StackObjectsCount": 2}})
+	control.editor.parts.append({"_id": "e" * 24, "_tpl": "f" * 24, "parentId": "c" * 24, "slotId": "mod_x"})
+	control.editor.changed.emit()
+	assert item["value"] == 6  # (4 + 2; the mod is not an item of its own)
+	item["value"] = 99  # (set by hand in the JSON editor: it stays until the parts change)
+	form.bind(item)
+	assert item["value"] == 99

@@ -18,6 +18,7 @@ from core import parts as P
 from core.ids import new_id
 from schema import choices as choice_lists
 from schema import fields as F
+from schema import rewards as rewards_schema
 from schema.common import short
 from ui.help_mark import HelpMark
 from ui.more_button import MoreButton
@@ -737,6 +738,8 @@ class FormWidget(QWidget):
 			if self.item["target"] not in P.ids_of(value):
 				main = P.roots(value)
 				self.item["target"] = main[0]["_id"] if main else ""
+		if key == "items" and isinstance(value, list) and self.spec.group == "reward" and self.spec.kind == "Item" and rewards_schema.item_count(value):
+			self.item["value"] = rewards_schema.item_count(value)  # (the reward's count follows its stack sizes, as in the base game)
 		self._update_extras()
 		self.field_changed.emit(key)
 		self.changed.emit()
