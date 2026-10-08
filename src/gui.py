@@ -1734,9 +1734,7 @@ class Gui_AssortDlg(QMainWindow):
 		self.ui.ab_condition_box.addItems(self.parent.controller.ab_box_condition_req)
 		self.ui.ab_modslot_combo.addItems(self.parent.controller.ab_box_modslot)
 
-	def onImportAssort(
-		self,
-	):  # AI WRITTEN function purely for ease. I will be coming back to this.
+	def onImportAssort(self):  # AI WRITTEN function purely for ease. I will be coming back to this.
 		table = self.ui.ab_table
 		filename, _ = QFileDialog.getOpenFileName(
 			self, "Import Assort JSON", "", "JSON Files (*.json);;All Files (*)"
