@@ -128,6 +128,7 @@ From WTT-CommonLib (`WTTClientCommonLib.Services.QuestZones`): a zone is a new o
 1. `python -m cli maps import "<game folder>"`. A `FormatError` means the Unity version or a layout changed: dump the failing object's bytes (`SerializedFile.reader`) and re-check the layout, as was done for BoxCollider.
 2. `python -m cli maps verify "<that SPT's SPT_Data/database>"`. Expect only the ids the game itself lacks (in 4.1.6: `bunker2`, `Check_cinema`, `Labs_transits`, `1`). Many missing ids on one map point at `LOCATIONS` (a renamed or new scene folder).
 3. Re-run the tests: `test_importing_a_real_map_finds_its_zones_and_floor` reads the real game when `SPT_GAME` (or the default path in `tests/test_zones.py`) is a game folder.
+4. Refresh the app's game data, base-game profile and server models, and check `data/locations.json` and `data/traders.json` (`src/README.md`, "Game data and building"). Check `cli/server_check` still builds against the new `SPT_Runtime` (its TargetFramework follows the server's .NET version).
 
 ## Checking files with the server's code
 

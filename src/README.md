@@ -48,7 +48,19 @@ equal for a released build, and change `version_url`'s path when the rebuild tak
 
 ## Game data and building
 
-    python tools/bundle_database.py "<your SPT_Data/database folder>" --languages en
+The bundled game data (`data/database`), the base game's profile (`schema/vanilla_profile.json`) and the server's
+models (`schema/server_models.json`) are SPT 4.1.6's. For a new SPT version, refresh all three (with SPT 4.1 the
+database is `<game folder>/SPT_Runtime/SPT_Data/database`):
+
+    python tools/bundle_database.py "<SPT_Data/database folder>" --languages en
+    python tools/profile_samples.py "<SPT_Data/database folder>"
+    ilspycmd -p -o <a new folder> "<game folder>/SPT_Runtime/SPTarkov.Server.Core.dll" -r "<game folder>/SPT_Runtime"
+    python tools/extract_server_models.py <that folder> "SPTarkov.Server.Core.dll of SPT <version> (decompiled)"
+
+(`ilspycmd`: `dotnet tool install -g ilspycmd`; a checkout of the server's source works too.) Then check
+`data/locations.json` (map keys and ids) and `data/traders.json` against the new database, and run the tests: the
+ones that check the base game read the bundled data.
+
     python tools/build.py        (needs pip install pyinstaller; build is untested so far)
 
 ## Test
@@ -74,7 +86,7 @@ trader's quest assort in `tests/fixtures`), so they run anywhere.
   that loads a quests file with the SPT server's own code.
 - `maps/`: the game's maps and quest zones (no Qt): the map import from the game's files, quest zones and their
   checks (also used by the app's Problems list), places found by name (`maps/places.json`) and buildings.
-- `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source) and `schema/vanilla_profile.json`
+- `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source or a decompile of its DLL) and `schema/vanilla_profile.json`
   (from the base game's quests), and compile the Designer files.
 
 ## Changing a window's layout

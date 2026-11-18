@@ -40,7 +40,7 @@ from schema import assort as assort_schema
 KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_files", "game", "spt", "database", "language", "references")
 # Where an SPT install keeps its database, under the game folder (SPT 4.1, then 4.0)
 DATABASE_IN_GAME = ("SPT_Runtime/SPT_Data/database", "SPT_Data/database", "SPT/SPT_Data/database")
-BUNDLED = "the copy bundled with the program (SPT 4.0.13)"
+BUNDLED = "the copy bundled with the program (SPT 4.1.6)"
 
 
 class ProjectError(Exception):

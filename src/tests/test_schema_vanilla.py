@@ -10,9 +10,12 @@ def test_vanilla_quests_have_no_errors(vanilla_quests, vanilla_locale):
 
 
 def test_vanilla_quests_only_have_the_known_oddities(vanilla_quests, vanilla_locale):
-	# the base game reuses a few ids inside one quest; nothing else should be reported
+	# the base game reuses a few ids inside one quest, and SPT 4.1.6's English text lacks one task's line (Last Spurt -
+	# Pioneer's "Locate and obtain the second game disk on Reserve", which 4.0.13 had); nothing else should be reported
 	issues = validate.validate_quests(vanilla_quests, vanilla_locale)
-	assert all("used twice" in i.message for i in issues), "\n".join(str(i) for i in issues[:10])
+	last_spurt_pioneer = "686531bc87eb213a8e078e99"
+	other = [i for i in issues if "used twice" not in i.message and not (i.path[0] == last_spurt_pioneer and "no text" in i.message)]
+	assert not other, "\n".join(str(i) for i in other[:10])
 
 
 def test_vanilla_assort_loads(vanilla_assort):

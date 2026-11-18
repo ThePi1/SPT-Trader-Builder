@@ -18,7 +18,8 @@ Build quests, quest text and trader offers for SPT mods.
 1. Download the latest release from the [Releases page](https://github.com/ThePi1/SPT-Trader-Builder/releases) and unzip it.
 2. Run `SPTTraderBuilder.exe`.
 
-While the included data is from SPT 4.0.13, this should work with later versions as well.
+The included game data is from SPT 4.1.6 (EFT 0.16.9.5). For another SPT version, point **Settings > SPT database folder**
+at that version's `SPT_Data/database` folder.
 
 To run from source:
 ```
@@ -112,10 +113,11 @@ The finished program is in `src/dist/SPTTraderBuilder/`. That folder holds `SPTT
 
 To check everything first, run `python -m pytest -q tests` from the `src` folder.
 
-To refresh the included game data from a newer SPT before building, run this once from the `src` folder:
+To refresh the included game data from a newer SPT before building, run this once from the `src` folder (with SPT 4.1
+the folder is `SPT_Runtime\SPT_Data\database` in the game folder; `src/README.md` lists the other files to refresh):
 
 ```
-python tools/bundle_database.py "C:\path\to\SPT_Data\database"
+python tools/bundle_database.py "C:\path\to\SPT_Runtime\SPT_Data\database"
 ```
 
 ## Credits and license

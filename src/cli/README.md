@@ -40,7 +40,7 @@ traders' quests and text, item templates, WTT `CustomItems` files, trader `base.
 
 What isn't in the project file comes from the app's own settings (`data/settings.ini`: database folder, language,
 new-quest icon and side) and reference list (`data/references.json`), as in the window; with neither, names come from
-the copy of the SPT 4.0.13 database bundled with the program. `project show` says what a project uses. Done when it
+the copy of the SPT 4.1.6 database bundled with the program. `project show` says what a project uses. Done when it
 names the database and references you expect.
 
 ## Using it on another project

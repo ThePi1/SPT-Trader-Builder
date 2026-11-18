@@ -39,7 +39,7 @@ def test_location_conditions_name_maps_by_key():
 	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
 	keys = dict(choices.get("map_keys", data))
 	assert keys["bigmap"] == "Customs" and keys["factory4_night"] == "Factory (night)"
-	assert keys["Sandbox"] != keys["Sandbox_high"]  # (one map, two keys)
+	assert keys["Sandbox"] != keys["Sandbox_high"]  # (Ground Zero, and Ground Zero for level 21 and up: both "Ground Zero")
 	assert registry.spec_for("subtask", "Location").field("target").choices == "map_keys"
 
 
@@ -57,6 +57,7 @@ def test_a_location_condition_with_a_map_id_is_an_error():
 	issues = [i for i in validate.validate_quests({"q1": quest}) if i.path[-1:] == ("target",)]
 	assert len(issues) == 1 and issues[0].level == ERROR and "'bigmap'" in issues[0].message
 	sandbox = dict(quest)
-	task["counter"]["conditions"][1]["target"] = ["653e6760052c01c1c805532f"]
-	message = [i for i in validate.validate_quests({"q1": sandbox}) if i.path[-1:] == ("target",)][0].message
-	assert "'Sandbox' or 'Sandbox_high'" in message
+	for map_id, key in (("653e6760052c01c1c805532f", "'Sandbox'."), ("65b8d6f5cdde2479cb2a3125", "'Sandbox_high'.")):  # (each Ground Zero has its own id)
+		task["counter"]["conditions"][1]["target"] = [map_id]
+		message = [i for i in validate.validate_quests({"q1": sandbox}) if i.path[-1:] == ("target",)][0].message
+		assert message.endswith(f"use {key}"), message

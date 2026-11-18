@@ -1,9 +1,9 @@
 """Shared test data: the base game's own files, which are known to be valid.
 
 The quests and the English text come from the game data bundled with the app (data/database,
-copied from SPT 4.0.13 by tools/bundle_database.py). The trader files are fixtures: Mechanic's assort
+copied from SPT 4.1.6 by tools/bundle_database.py). The trader files are fixtures: Mechanic's assort
 (589 offers) and every trader's quest locks (tests/fixtures/questassort), because the bundle does not
-hold the trader folders.
+hold the trader folders; they are the same in SPT 4.0.13 and 4.1.6.
 """
 
 import json
