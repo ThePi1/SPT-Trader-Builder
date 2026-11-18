@@ -8,6 +8,7 @@ them with --write (otherwise they say what they would do). See cli/README.md.
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -72,12 +73,27 @@ def cmd_find(args):
 	out([{"id": r.id, "name": r.name, "kind": r.kind, "detail": r.detail} for r in found])
 
 
+def _shorthands(kind=None):
+	from cli.spec import SHORTHAND_SHARED, SHORTHANDS
+
+	if kind is None:
+		return [{"kind": k, "note": v["note"]} for k, v in SHORTHANDS.items()]
+	if kind not in SHORTHANDS:
+		raise CommandError(f"{kind} isn't a shorthand. Shorthands: {', '.join(SHORTHANDS)}")
+	return {"kind": kind, "note": SHORTHANDS[kind]["note"], "keys": {**SHORTHANDS[kind]["keys"], **SHORTHAND_SHARED}}
+
+
 def cmd_kinds(args):
 	ws = _workspace(args)
+	if args.group == "shorthand":
+		out(_shorthands(args.kind))
+		return
 	if args.group and args.group not in registry.GROUPS and args.group != "quest":
-		raise CommandError(f"The group must be one of: quest, {', '.join(registry.GROUPS)}")
+		raise CommandError(f"The group must be one of: quest, shorthand, {', '.join(registry.GROUPS)}")
 	if not args.group:
-		out({group: [{"kind": s.kind, "label": s.label, "common": s.common, "note": s.note} for s in registry.kinds(group)] for group in registry.GROUPS})
+		found = {group: [{"kind": s.kind, "label": s.label, "common": s.common, "note": s.note} for s in registry.kinds(group)] for group in registry.GROUPS}
+		found["shorthand"] = _shorthands()
+		out(found)
 		return
 	if not args.kind and args.group != "quest":
 		out([{"kind": s.kind, "label": s.label, "common": s.common, "used_in": list(s.vanilla_timing_use), "note": s.note} for s in registry.kinds(args.group)])
@@ -122,6 +138,46 @@ def _field_info(field, gamedata):
 def _zone_note(group, kind):
 	rule = Z.accepts(group, kind)
 	return None if rule is None else {"key": rule[0], "needs": rule[2]}
+
+
+def cmd_usage(args):
+	from cli import usage as U
+	from cli.spec import _name_of
+
+	ws = _workspace(args)
+	if args.group not in ("task", "subtask", "reward", "quest"):
+		raise CommandError("The group must be task, subtask, reward or quest.")
+	kind = args.kind or "quest"
+	if args.group != "quest" and kind not in registry.GROUPS[args.group]:
+		raise CommandError(f"{kind} isn't a {args.group} kind. Kinds: {', '.join(registry.GROUPS[args.group])}")
+	pairs = U.items_of(ws.gamedata.vanilla_quests, args.group, kind)
+	wheres = [U.parse_where(w) for w in args.where or []]
+	pairs = U.keep(pairs, wheres, args.group, kind)
+	result = {"group": args.group, "kind": kind, "found": len(pairs), "in": "the base game's quests"}
+	if wheres:
+		result["where"] = args.where
+	if not args.field:
+		result["fields"] = U.fields(pairs, args.group, kind)
+		pseudo = {name: words for (g, k, name), (_f, words) in U.PSEUDO.items() if (g, k) == (args.group, kind)}
+		if pseudo:
+			result["worked_out"] = pseudo
+		result["note"] = "Give a field (a dotted path like counter.conditions.0.target) for all its values and quests that use them."
+		out(result)
+		return
+	rows, missing, distinct = U.histogram(pairs, args.field, args.group, kind, args.limit)
+	names = Names(ws.gamedata)
+	for row in rows:
+		value = row["value"]
+		if isinstance(value, str) and value:
+			name = _name_of(value, names, ws)
+			if name:
+				row["name"] = name
+		elif isinstance(value, list) and value and all(isinstance(v, str) for v in value):
+			found = [_name_of(v, names, ws) for v in value]
+			if any(found):
+				row["names"] = [n or v for n, v in zip(found, value)]
+	result.update(field=args.field, values=distinct, without=missing, top=rows)
+	out(result)
 
 
 # --- quests ---------------------------------------------------------------------------------------------
@@ -335,8 +391,8 @@ def _where(ws, path, names):
 	return " > ".join(words)
 
 
-def cmd_check(args):
-	ws = _workspace(args)
+def _all_problems(ws, server=False, spt=None):
+	"""(problems, zone files, the server check's report or None) for every file of the project."""
 	found = _issues(ws)
 	zone_files = []
 	index = ws.zone_index()
@@ -349,14 +405,68 @@ def cmd_check(args):
 			for level, texts in ((ERROR, errors), ("warning", warnings)):
 				for text in texts:
 					found.append({"level": level, "file": path.name, "where": f"zone {zone.id} ({zone.location})", "message": text})
+	report = None
+	if server:
+		from cli import servercheck
+
+		quests_path = ws.path("quests")
+		if quests_path is None or not quests_path.is_file():
+			raise CommandError("--server checks the saved quests file: the project names none, or it hasn't been written yet.")
+		runtime = servercheck.find_runtime(ws, spt)
+		if runtime is None:
+			raise CommandError(
+				"--server needs an SPT install's SPT_Runtime folder (with SPTarkov.Server.Core.dll): give --spt, set \"spt\" or "
+				"\"game\" in the project file, or set SPT_RUNTIME."
+			)
+		report = servercheck.run(quests_path, ws.path("locale"), runtime)
+		report["runtime"] = str(runtime)
+		found += servercheck.problems(report)
+	return found, zone_files, report
+
+
+def cmd_check(args):
+	ws = _workspace(args)
+	found, zone_files, report = _all_problems(ws, args.server, args.spt)
+	index = ws.zone_index()
 	summary = {
 		"errors": sum(1 for f in found if f["level"] == ERROR), "warnings": sum(1 for f in found if f["level"] != ERROR),
 		"maps_imported": index.game_maps, "zone_files": zone_files,
 	}
+	if report is not None:
+		summary["server"] = {k: report[k] for k in ("ok", "quests", "locale_entries", "runtime") if k in report}
 	if not index.game_maps:
 		summary["note"] = "No maps imported, so zone ids that aren't in a zone file aren't checked: run `maps import`."
 	out({"summary": summary, "problems": found[: args.limit] if args.limit else found})
 	return 1 if args.strict and summary["errors"] else 0
+
+
+def cmd_package(args):
+	from cli import package as P
+
+	ws = _workspace(args)
+	if not ws.quests.data:
+		raise CommandError("The project's quests file has no quests to package.")
+	found, _zone_files, _report = _all_problems(ws)
+	errors = [f for f in found if f["level"] == ERROR]
+	files, zones, notes = P.plan(ws, args.out)
+	result = {
+		"folder": str(Path(args.out).resolve()), "files": [str(p) for p in files], "zones": zones, "notes": notes,
+		"errors": len(errors), "warnings": len(found) - len(errors),
+	}
+	if errors and not args.force:
+		result["problems"] = errors[:20]
+		result["note"] = "The project has errors (see `check`), so nothing was written: fix them, or add --force."
+		out(result)
+		return 1
+	if args.write:
+		for path, data in files.items():
+			path.parent.mkdir(parents=True, exist_ok=True)
+			write_json(path, data)
+		result["written"] = True
+	else:
+		result["note"] = "Nothing was written: run it again with --write to write these files."
+	out(result)
+	return 0
 
 
 # --- maps and zones -------------------------------------------------------------------------------------
@@ -505,24 +615,122 @@ def cmd_zones_at(args):
 	out(result)
 
 
+def _imported(index, key):
+	if key not in index.game_maps:
+		raise CommandError(f"{key} hasn't been imported: run `maps import` first.")
+	return index.map(key)
+
+
+def _spot(args, index, key):
+	"""(x, z) from --at, or from --place (the best match of `zones find` on the map)."""
+	if getattr(args, "place", None):
+		from core import places as P
+
+		found = P.find(index, args.place, key, limit=1)
+		if not found:
+			raise CommandError(f"No place called '{args.place}' is known on {key}: try `zones find`.")
+		at = found[0]["at"]
+		return (at[0], at[-1])
+	if not args.at:
+		raise CommandError("Give --at x,z or --place <name>.")
+	return tuple(_point(args.at)[:2])
+
+
+def _next_step(found):
+	at = found.get("at")
+	if not at:
+		return None
+	return f"zones building --map {found['map']} --at={at[0]},{at[-1]}"
+
+
+def cmd_zones_find(args):
+	from core import places as P
+
+	ws, index = _index(args)
+	key = _map_of(args, ws) if args.map else None
+	if not index.game_maps:
+		raise CommandError("No maps are imported: run `maps import` first.")
+	found = P.find(index, args.text, key, args.limit)
+	for f in found:
+		step = _next_step(f)
+		if step:
+			f["next"] = step
+	result = {"found": found}
+	maps = [key] if key else index.game_maps
+	if any(index.map(k).objects is None for k in maps):
+		result["note"] = "Some maps were imported before objects were indexed, so only their areas and the named places are searched: run `maps import` again."
+	if not found:
+		result["note"] = "Nothing matches. Try another word (the game often names places in transliterated Russian: `zones areas`), or `zones objects`."
+	out(result)
+
+
+def cmd_zones_building(args):
+	from core import buildings as B
+
+	ws, index = _index(args)
+	key = _map_of(args, ws)
+	m = _imported(index, key)
+	x, z = _spot(args, index, key)
+	result = B.building_at(m, x, z, args.radius, args.margin)
+	if "zone" in result:
+		zone = result["zone"]
+		result["zone"]["command"] = (
+			f"zones make --map {key} --id <id> --kind visit --at={zone['at']} --size {zone['size']} --yaw {zone['yaw']}"
+			f"  (or: zones make --map {key} --id <id> --kind visit --at={x},{z} --building)"
+		)
+	if args.picture:
+		from cli.render import render
+		from core import geometry as G
+
+		shown = list(index.on(key))
+		center, radius = (x, z), args.radius / 2
+		if "outline" in result:
+			o, zone = result["outline"], result["zone"]
+			size = [float(v) for v in zone["size"].split(",")]
+			box = G.Box((o["center"][0], (zone["bottom"] + zone["top"]) / 2, o["center"][1]), size, G.yaw_rotation(zone["yaw"]))
+			shown.append(Z.Zone("building", key, M.VISIT, box, "(new)"))
+			center, radius = tuple(o["center"]), max(size[0], size[2]) / 2 + 8
+		render(args.picture, m.navmesh, shown, center, radius, floor=args.floor, areas=m.areas)
+		result["picture"] = str(Path(args.picture).resolve())
+	out(result)
+
+
 def cmd_zones_make(args):
 	ws, index = _index(args)
+	key = _map_of(args, ws)
 	point = _point(args.at)
 	x, z = point[0], point[1]
 	y = point[2] if len(point) > 2 else args.y
 	size = _point(args.size, 3) if args.size else (4.0, 3.0, 4.0)
+	yaw = args.yaw if args.yaw is not None else 0.0
+	building = None
+	if args.building:
+		from core import buildings as B
+
+		building = B.building_at(_imported(index, key), x, z, margin=args.margin)
+		if "zone" not in building:
+			raise CommandError("No building outline was found here: " + " ".join(building.get("notes", [])))
+		bx, bz, by = (float(v) for v in building["zone"]["at"].split(","))
+		x, z, y = bx, bz, by if y is None else y
+		size = _point(args.size, 3) if args.size else [float(v) for v in building["zone"]["size"].split(",")]
+		yaw = args.yaw if args.yaw is not None else building["zone"]["yaw"]
 	try:
-		record, zone, notes = Z.make_zone(index, args.id, _map_of(args, ws), args.kind, x, z, y, size, args.yaw, args.name)
+		record, zone, notes = Z.make_zone(index, args.id, key, args.kind, x, z, y, size, yaw, args.name)
 	except ValueError as e:
 		raise CommandError(str(e)) from e
 	index.add([zone])
 	errors, warnings = Z.check_zone(zone, index)
 	result = {"zone": record, "notes": notes, "errors": errors, "warnings": warnings}
+	if building is not None:
+		result["building"] = {k: building[k] for k in ("outline", "storeys") if k in building}
+		result["notes"] = notes + [n for n in building.get("notes", []) if "below the ground" in n]
 	if args.picture:
 		from cli.render import render
 
 		m = index.map(zone.location)
-		render(args.picture, m.navmesh, index.on(zone.location), (x, z), args.radius, highlight=(zone.id,), areas=m.areas, floor=zone.box.center[1] if args.one_floor else None)
+		standing = zone.box.center[1] - zone.box.size[1] / 2 + Z.SINK  # (the floor it stands on)
+		radius = args.radius if not args.building else max(args.radius, max(zone.box.size[0], zone.box.size[2]) / 2 + 8)
+		render(args.picture, m.navmesh, index.on(zone.location), (x, z), radius, highlight=(zone.id,), areas=m.areas, floor=standing if args.one_floor else None)
 		result["picture"] = str(Path(args.picture).resolve())
 	if args.write:
 		path = Path(args.file) if args.file else ws.path("zones")
@@ -553,9 +761,31 @@ def cmd_zones_check(args):
 			results.append({"file": path.name, "level": problem.level, "where": list(problem.path), "message": problem.message})
 		for zone in [z for z in index.zones if z.source == path.name]:
 			errors, warnings = Z.check_zone(zone, index)
-			if errors or warnings or args.all:
-				results.append({"file": path.name, "zone": zone.id, "map": zone.location, "errors": errors, "warnings": warnings})
+			if errors or warnings or args.all or args.rooms:
+				entry = {"file": path.name, "zone": zone.id, "map": zone.location, "errors": errors, "warnings": warnings}
+				if args.rooms:
+					entry["covers"] = _covers(index, zone)
+				results.append(entry)
 	out({"maps_imported": index.game_maps, "results": results})
+
+
+def _covers(index, zone):
+	"""The rooms (named objects) inside a zone, and the floor heights it spans, for `zones check --rooms`."""
+	from core import buildings as B
+
+	if zone.location not in index.game_maps:
+		return {"note": f"{zone.location} isn't imported."}
+	m = index.map(zone.location)
+	rooms = B.rooms_covered(m.objects, zone.box)
+	_hits, _total, heights = m.navmesh.floor_in_box(zone.box)
+	smallest = min(B.MIN_STOREY, zone.box.size[0] * zone.box.size[2] * 0.3)  # (a small zone's floor is all one storey)
+	covers = {"floors": [s["height"] for s in B.storeys_of(heights, 0.25, smallest)]}
+	if rooms is None:
+		covers["note"] = "The map was imported before objects were indexed: run `maps import` again for its rooms."
+	else:
+		covers["storeys_named"] = sorted({r["floor"] for r in rooms if r["floor"] is not None})
+		covers["rooms"] = [r["name"] for r in rooms][:60]
+	return covers
 
 
 def cmd_zones_render(args):
@@ -595,6 +825,9 @@ def cmd_areas(args):
 def cmd_objects(args):
 	ws, index = _index(args)
 	key = _map_of(args, ws)
+	if not args.live and key in index.game_maps and index.map(key).objects is not None:
+		out(index.map(key).objects.search(args.text, args.limit))
+		return
 	game = args.game or str(ws.path("game") or "") or (index.map(key).record.get("source") if key in index.game_maps else None)
 	if not game:
 		raise CommandError("Give --game (the game's folder) or import the map first.")
@@ -603,8 +836,16 @@ def cmd_objects(args):
 
 # --- the parser -----------------------------------------------------------------------------------------
 
+class _Parser(argparse.ArgumentParser):
+	"""argparse, taking coordinates that start with a minus (--at -60,-20) as values rather than as unknown options."""
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self._negative_number_matcher = re.compile(r"^-\d+$|^-\d*\.\d+$|^-?\d*\.?\d+(,-?\d*\.?\d+)+$")
+
+
 def parser():
-	p = argparse.ArgumentParser(prog="python -m cli", description="Make and check SPT quests and quest zones. Prints JSON.")
+	p = _Parser(prog="python -m cli", description="Make and check SPT quests and quest zones. Prints JSON.")
 	p.add_argument("--project", help=f"the project file (JSON) naming the files to work on; default: ${PROJECT_ENV}")
 	p.add_argument("--maps", help="the folder of imported maps (default: data/maps)")
 	sub = p.add_subparsers(dest="command", required=True)
@@ -615,10 +856,18 @@ def parser():
 	c.add_argument("--limit", type=int, default=20)
 	c.set_defaults(run=cmd_find)
 
-	c = sub.add_parser("kinds", help="the condition / reward kinds, or the fields of one kind")
-	c.add_argument("group", nargs="?", help="task, subtask, reward or quest")
+	c = sub.add_parser("kinds", help="the condition / reward kinds and spec shorthands, or the fields of one kind")
+	c.add_argument("group", nargs="?", help="task, subtask, reward, quest or shorthand")
 	c.add_argument("kind", nargs="?")
 	c.set_defaults(run=cmd_kinds)
+
+	c = sub.add_parser("usage", help="how the base game's quests fill in a kind's fields, with quests that use each value")
+	c.add_argument("group", help="task, subtask, reward or quest")
+	c.add_argument("kind", nargs="?", help="the condition or reward kind (none for quest)")
+	c.add_argument("field", nargs="?", help="a field, or dotted path (counter.conditions.0.target); none for a summary of every field")
+	c.add_argument("--where", action="append", help="only items with path=value (value as JSON: 5, true, \"Survived\"), or with path at all; repeatable")
+	c.add_argument("--limit", type=int, default=15)
+	c.set_defaults(run=cmd_usage)
 
 	q = sub.add_parser("quest", help="list, show, add, update or remove quests").add_subparsers(dest="action", required=True)
 	c = q.add_parser("list")
@@ -643,7 +892,15 @@ def parser():
 	c = sub.add_parser("check", help="every problem in the project's files (quests, text, assort, locks, zones)")
 	c.add_argument("--limit", type=int, default=0)
 	c.add_argument("--strict", action="store_true", help="exit with 1 when there are errors")
+	c.add_argument("--server", action="store_true", help="also load the saved quests and text with the SPT server's own code (needs dotnet)")
+	c.add_argument("--spt", help="for --server: the SPT install's SPT_Runtime folder, or the folder holding it")
 	c.set_defaults(run=cmd_check)
+
+	c = sub.add_parser("package", help="write the project's quests, text, locks and zones as a mod's db folder for WTT-CommonLib")
+	c.add_argument("--out", required=True, help="the mod's folder (db/CustomQuests and db/CustomQuestZones go in it)")
+	c.add_argument("--write", action="store_true")
+	c.add_argument("--force", action="store_true", help="write it even when the project has errors")
+	c.set_defaults(run=cmd_package)
 
 	m = sub.add_parser("maps", help="import the game's maps, or list them").add_subparsers(dest="action", required=True)
 	c = m.add_parser("import", help="read the game's maps (zones, floors, areas) into data/maps")
@@ -675,6 +932,20 @@ def parser():
 	c.add_argument("--radius", type=float, default=20.0)
 	c.add_argument("--limit", type=int, default=15)
 	c.set_defaults(run=cmd_zones_at)
+	c = z.add_parser("find", help="places by the name players use (White Knight, dorms, gas station): named places, areas, objects")
+	c.add_argument("text")
+	c.add_argument("--map", help="only this map (default: every imported map)")
+	c.add_argument("--limit", type=int, default=10)
+	c.set_defaults(run=cmd_zones_find)
+	c = z.add_parser("building", help="the building at a spot: outline, angle, storeys, rooms, and a zone covering it")
+	c.add_argument("--map", required=True)
+	c.add_argument("--at", help="x,z of a spot in or near the building")
+	c.add_argument("--place", help="instead of --at: a place's name (as `zones find` takes it)")
+	c.add_argument("--radius", type=float, default=40.0, help="how far around the spot to look (metres)")
+	c.add_argument("--margin", type=float, default=1.0, help="metres the suggested zone reaches past the outline")
+	c.add_argument("--picture", help="also draw it to this PNG (the suggested zone in green)")
+	c.add_argument("--floor", type=float, help="for --picture: only the floor near this height")
+	c.set_defaults(run=cmd_zones_building)
 	c = z.add_parser("make", help="a new custom zone standing on the floor, checked")
 	c.add_argument("--map", required=True)
 	c.add_argument("--id", required=True)
@@ -682,7 +953,9 @@ def parser():
 	c.add_argument("--at", required=True, help="x,z or x,z,y (y picks the floor nearest that height)")
 	c.add_argument("--y", type=float)
 	c.add_argument("--size", help="width,height,depth in metres (default 4,3,4)")
-	c.add_argument("--yaw", type=float, default=0.0, help="turn in degrees, clockwise from north")
+	c.add_argument("--yaw", type=float, help="turn in degrees, clockwise from north (default 0)")
+	c.add_argument("--building", action="store_true", help="cover the whole building at --at: its outline, angle and every storey (see `zones building`)")
+	c.add_argument("--margin", type=float, default=1.0, help="for --building: metres past the outline")
 	c.add_argument("--name", help="ZoneName (default: the id)")
 	c.add_argument("--picture", help="also draw it to this PNG")
 	c.add_argument("--radius", type=float, default=25.0, help="for --picture")
@@ -695,6 +968,7 @@ def parser():
 	c = z.add_parser("check", help="check custom zone files")
 	c.add_argument("files", nargs="*")
 	c.add_argument("--all", action="store_true", help="list zones without problems too")
+	c.add_argument("--rooms", action="store_true", help="also list the rooms (named objects) and floors inside each zone")
 	c.set_defaults(run=cmd_zones_check)
 	c = z.add_parser("render", help="draw part of a map to a PNG")
 	c.add_argument("--map", required=True)
@@ -711,10 +985,11 @@ def parser():
 	c.add_argument("--map", required=True)
 	c.add_argument("text", nargs="?")
 	c.set_defaults(run=cmd_areas)
-	c = z.add_parser("objects", help="find objects by name in the game's files (slow: reads the map's scenes)")
+	c = z.add_parser("objects", help="find objects by name (in the imported map's object index; --live reads the game's files)")
 	c.add_argument("--map", required=True)
 	c.add_argument("text")
 	c.add_argument("--game")
+	c.add_argument("--live", action="store_true", help="read the game's files instead of the index (slow)")
 	c.add_argument("--limit", type=int, default=50)
 	c.set_defaults(run=cmd_objects)
 	return p

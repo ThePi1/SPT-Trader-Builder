@@ -10,7 +10,9 @@ A project file is JSON. Paths are relative to the project file's folder:
         "trader": "Prapor or a trader id",       the trader the assort is for (optional)
         "zones": "db/CustomQuestZones/new.json", the custom zone file new zones go into (optional)
         "zone_files": ["db/CustomQuestZones"],   more custom zone files or folders, for checking (optional)
-        "game": "I:/Games/SPT"                   the game's folder, for importing maps (optional)
+        "game": "I:/Games/SPT",                  the game's folder, for importing maps (optional)
+        "spt": "I:/Games/SPT/SPT_Runtime"        the SPT server's folder, for `check --server` (optional; default:
+                                                 the game folder's SPT_Runtime)
     }
 
 The program's own settings (data/settings.ini: the SPT database folder, the language, the defaults for new quests)
@@ -29,7 +31,7 @@ from core.settings import Settings
 from core.zones import ZoneIndex
 from schema import assort as assort_schema
 
-KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_files", "game")
+KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_files", "game", "spt")
 
 
 class ProjectError(Exception):

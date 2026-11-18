@@ -33,6 +33,42 @@ CURRENCIES = {"roubles": A.MONEY["roubles"], "rub": A.MONEY["roubles"], "dollars
 QUEST_KEYS = ("id", "name", "trader", "text", "start", "finish", "fail", "rewards", "extra", "omit", "names")  # (names: what describe tells; ignored)
 OTHER_MAPS = ("develop",)  # maps the base game's Location conditions name that aren't raid maps
 
+# Short ways to write the conditions the base game builds the same way every time. Each becomes a CounterCreator.
+SHORTHANDS = {
+	"Visit": {
+		"note": "Go to a place: an Exploration counter with a VisitPlace step, as the base game's \"Locate ...\" tasks.",
+		"keys": {"zone": "the visit zone's id (required)", "map": "optional: also require this map (a Location step)"},
+	},
+	"Kill": {
+		"note": "Kill enemies: an Elimination counter with a Kills step, and InZone and Location steps when asked.",
+		"keys": {
+			"count": "how many (default 1)", "target": "who: Any, Scavs (Savage), Any PMC (AnyPmc), ... (default Any)",
+			"zone": "optional: only kills made inside this zone (or list of zones); it must count as inside (visit, botkillzone, ...)",
+			"map": "the map (default: the quest's location; \"any\" for none)",
+			"...": "any field of a Kills step (savageRole, weapon, distance, bodyPart, ...) is passed on to it",
+		},
+	},
+	"SurviveAndExtract": {
+		"note": "Survive and extract: a Completion counter with ExitStatus and Location steps, as the base game ends kill tasks.",
+		"keys": {
+			"map": "the map (default: the quest's location)", "status": "exit statuses that count (default [\"Survived\", \"Transit\"])",
+			"exit": "optional: only this exit (an ExitName step)", "text": "default \"Survive and extract from the location\"",
+		},
+	},
+}
+SHORTHAND_SHARED = {
+	"ref": "a name for the condition, for other conditions' \"after\" (any condition can have one)",
+	"after": "the ref names (or ids) of conditions to complete first: the condition is shown only then (visibilityConditions)",
+}
+_KILL_FIELDS = (
+	"savageRole", "weapon", "weaponCaliber", "weaponModsInclusive", "weaponModsExclusive", "bodyPart", "distance", "daytime",
+	"enemyEquipmentInclusive", "enemyEquipmentExclusive", "enemyHealthEffects", "resetOnSessionEnd",
+)
+_COUNTER_KEYS = (
+	"id", "text", "counterId", "index", "parentId", "visibilityConditions", "oneSessionOnly", "isResetOnConditionFailed",
+	"isNecessary", "doNotResetIfCounterCompleted", "completeInSeconds", "globalQuestCounterId", "extra", "omit",
+)
+
 
 class SpecError(Exception):
 	"""What is wrong with a spec: every problem found, one per line, each starting with where it is."""
@@ -274,6 +310,118 @@ def _ref(ref, value, resolver, field):
 	return value  # (ids inside the quest, recipe items, ...: kept as given)
 
 
+# --- shorthands, ref and after ---------------------------------------------------------------------------
+
+def _quest_map(quest_spec):
+	location = quest_spec.get("location")
+	return None if not location or str(location).lower() in ("any", "marathon") else location
+
+
+def _maps(value):
+	if value is None or (isinstance(value, str) and value.lower() in ("", "any")):
+		return None
+	return value if isinstance(value, list) else [value]
+
+
+def _counter(item, kind, counter_type, value, steps, where, problems):
+	"""A CounterCreator spec from a shorthand's remaining keys (only a counter's own keys may remain)."""
+	unknown = sorted(set(item) - set(_COUNTER_KEYS) - {"kind"})
+	if unknown:
+		has = [k for k in SHORTHANDS[kind]["keys"] if k != "..."] + (list(_KILL_FIELDS) if kind == "Kill" else []) + list(SHORTHAND_SHARED) + ["text", "id"]
+		problems.add(where, f"{', '.join(unknown)} isn't a key of a {kind}. It has: {', '.join(has)} (and a counter's own keys)")
+	counter = {k: v for k, v in item.items() if k in _COUNTER_KEYS}
+	counter.update(kind="CounterCreator", type=counter_type, value=value, conditions=steps)
+	return counter
+
+
+def _visit(item, quest_spec, where, problems):
+	zone = item.pop("zone", None)
+	if not isinstance(zone, str) or not zone:
+		problems.add(f"{where}.zone", "a Visit needs \"zone\": the id of a visit zone")
+		zone = ""
+	steps = [{"kind": "VisitPlace", "target": zone}]
+	maps = _maps(item.pop("map", None))
+	if maps:
+		steps.append({"kind": "Location", "target": maps})
+	return _counter(item, "Visit", "Exploration", 1, steps, where, problems)
+
+
+def _kill(item, quest_spec, where, problems):
+	count = item.pop("count", 1)
+	kills = {"kind": "Kills", "target": item.pop("target", "Any")}
+	for key in _KILL_FIELDS:
+		if key in item:
+			kills[key] = item.pop(key)
+	steps = [kills]
+	zone = item.pop("zone", None)
+	if zone:
+		steps.append({"kind": "InZone", "zoneIds": zone if isinstance(zone, list) else [zone]})
+	maps = _maps(item.pop("map", _quest_map(quest_spec)))
+	if maps:
+		steps.append({"kind": "Location", "target": maps})
+	return _counter(item, "Kill", "Elimination", count, steps, where, problems)
+
+
+def _survive(item, quest_spec, where, problems):
+	steps = [{"kind": "ExitStatus", "status": item.pop("status", ["Survived", "Transit"])}]
+	exit_name = item.pop("exit", None)
+	if exit_name:
+		steps.append({"kind": "ExitName", "exitName": exit_name})
+	maps = _maps(item.pop("map", _quest_map(quest_spec)))
+	if maps:
+		steps.append({"kind": "Location", "target": maps})
+	item.setdefault("text", "Survive and extract from the location")
+	return _counter(item, "SurviveAndExtract", "Completion", 1, steps, where, problems)
+
+
+_EXPAND = {"Visit": _visit, "Kill": _kill, "SurviveAndExtract": _survive}
+
+
+def expand(lists, quest_spec, problems):
+	"""The condition lists {start, finish, fail: [spec]} with shorthands (SHORTHANDS) written out, each "ref" given
+	an id, and each "after" turned into visibilityConditions on the conditions it names."""
+	labels = {}
+	for list_name, items in lists.items():
+		for i, item in enumerate(items):
+			if isinstance(item, dict) and "ref" in item:
+				label = item["ref"]
+				if not isinstance(label, str) or not label:
+					problems.add(f"{list_name}[{i}].ref", "must be a name for the condition, for other conditions' \"after\"")
+				elif label in labels:
+					problems.add(f"{list_name}[{i}].ref", f"'{label}' names two conditions")
+				else:
+					labels[label] = item.get("id") or new_id()
+	expanded = {}
+	for list_name, items in lists.items():
+		out = []
+		for i, item in enumerate(items):
+			where = f"{list_name}[{i}]"
+			if not isinstance(item, dict):
+				out.append(item)
+				continue
+			item = copy.deepcopy(item)
+			label = item.pop("ref", None)
+			if label in labels:
+				item["id"] = labels[label]
+			after = item.pop("after", None)
+			if item.get("kind") in _EXPAND:
+				item = _EXPAND[item["kind"]](item, quest_spec, where, problems)
+			if after is not None:
+				shown = list(item.get("visibilityConditions") or [])
+				for target in after if isinstance(after, list) else [after]:
+					if isinstance(target, str) and target in labels:
+						shown.append({"conditionType": "CompleteCondition", "id": new_id(), "target": labels[target]})
+					elif isinstance(target, str) and is_id(target):
+						shown.append({"conditionType": "CompleteCondition", "id": new_id(), "target": target})
+					else:
+						known = ", ".join(labels) or "none"
+						problems.add(f"{where}.after", f"no condition has the ref {target!r} (refs: {known})")
+				item["visibilityConditions"] = shown
+			out.append(item)
+		expanded[list_name] = out
+	return expanded
+
+
 # --- building quests ------------------------------------------------------------------------------------
 
 def _apply_fields(item, spec, group, kind, resolver, where, problems, skip=()):
@@ -321,7 +469,8 @@ def build_condition(spec, group, resolver, where, problems, texts):
 	kind = spec.get("kind") or spec.get("conditionType")
 	known = registry.GROUPS[group]
 	if kind not in known:
-		problems.add(f"{where}.kind", f"{kind!r} isn't a {'condition' if group == 'task' else 'counter step'} kind. Kinds: {', '.join(known)}")
+		short = f"; or a shorthand: {', '.join(SHORTHANDS)}" if group == "task" else ""
+		problems.add(f"{where}.kind", f"{kind!r} isn't a {'condition' if group == 'task' else 'counter step'} kind. Kinds: {', '.join(known)}{short}")
 		return None
 	item = registry.new_item(group, kind)
 	if spec.get("id"):
@@ -421,6 +570,8 @@ def build_reward(spec, list_key, resolver, ws, quest_id, where, problems, locks)
 	reward = registry.new_item("reward", kind)
 	if spec.get("id"):
 		reward["id"] = spec["id"]
+	if kind == "Item" and "findInRaid" not in spec and _gives_only_money(spec, resolver):
+		reward["findInRaid"] = False  # (as the base game gives money: 431 of its 456 money rewards)
 	skip = ("kind", "type", "id", "extra", "omit", "items", "composite", "parts")
 	_apply_fields(reward, spec, "reward", kind, resolver, where, problems, skip)
 	if kind in ("Item", "ProductionScheme"):
@@ -433,6 +584,30 @@ def build_reward(spec, list_key, resolver, ws, quest_id, where, problems, locks)
 			if kind == "Item":
 				reward["value"] = item_count(parts) or 1
 	return reward
+
+
+def _gives_only_money(spec, resolver):
+	"""True for an item reward spec whose items are all money (named or by id)."""
+	if "parts" in spec:
+		roots = [p for p in spec["parts"] if isinstance(p, dict) and not p.get("parentId")] if isinstance(spec["parts"], list) else []
+		return bool(roots) and all(p.get("_tpl") in MONEY for p in roots)
+	entries = spec.get("items")
+	entries = entries if isinstance(entries, list) else [entries] if entries else []
+	if not entries:
+		return False
+	for entry in entries:
+		name = entry.get("item") if isinstance(entry, dict) else entry
+		try:
+			if resolver.item(name) not in MONEY:
+				return False
+		except ValueError:
+			return False
+	return True
+
+
+def _only_money(parts):
+	roots = [p for p in parts or [] if isinstance(p, dict) and not p.get("parentId")]
+	return bool(roots) and all(p.get("_tpl") in MONEY for p in roots)
 
 
 def _build_unlock(spec, list_key, resolver, ws, quest_id, where, problems, locks):
@@ -548,8 +723,9 @@ def build_quest(spec, ws, resolver, quest_id=None):
 		except ValueError as e:
 			problems.add(key, str(e))
 	texts = {}
+	lists = expand({name: _list(spec, name, problems) for name in TASK_LISTS}, spec, problems)
 	for list_name, list_key in TASK_LISTS.items():
-		built = [build_condition(c, "task", resolver, f"{list_name}[{i}]", problems, texts) for i, c in enumerate(_list(spec, list_name, problems))]
+		built = [build_condition(c, "task", resolver, f"{list_name}[{i}]", problems, texts) for i, c in enumerate(lists[list_name])]
 		quest["conditions"][list_key] = [b for b in built if b is not None]
 	locks = []
 	rewards = spec.get("rewards") or {}
@@ -709,6 +885,11 @@ def describe_reward(reward, list_key, quest_id, ws):
 				if qid == quest_id and ws.assort is not None and A.offer_tpl(ws.assort.data, offer) == (A.reward_root(reward) or {}).get("_tpl"):
 					out["offer"] = offer
 					break
+		if kind == "Item" and "findInRaid" in reward and _only_money(parts):
+			# (a new reward of only money isn't found in raid, so that is what goes without saying)
+			out.pop("findInRaid", None)
+			if reward["findInRaid"] is not False:
+				out["findInRaid"] = copy.deepcopy(reward["findInRaid"])
 	if extra:
 		out["extra"] = extra
 	omit = [k for k in s.base if k not in reward]

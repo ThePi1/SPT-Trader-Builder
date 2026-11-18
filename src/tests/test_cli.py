@@ -253,3 +253,120 @@ def test_show_also_reads_base_game_quests_to_learn_from(project, capsys):
 	assert shown["finish"][0]["kind"] == "CounterCreator" and shown["names"][PRAPOR] == "Prapor"
 	code, result = run(capsys, "--project", project, "quest", "show", "No such quest at all")
 	assert code == 1 and "base game" in result["error"]
+
+
+# --- shorthands, money, usage, packaging, the server check -------------------------------------------------
+
+def test_shorthands_write_the_base_games_patterns_and_after_names_conditions(project):
+	ws = Workspace(project)
+	spec = {"name": "Patrol", "trader": "Prapor", "location": "Woods", "finish": [
+		{"kind": "Visit", "ref": "seen", "zone": "my_place", "text": "Find it"},
+		{"kind": "Kill", "ref": "kills", "count": 3, "target": "Any PMC", "zone": "my_place", "distance": 40, "after": "seen", "text": "Kill"},
+		{"kind": "SurviveAndExtract", "after": ["seen", "kills"]},
+		{"kind": "HandoverItem", "target": ["Bolts"], "value": 1, "after": ["kills"], "text": "auto"},
+	]}
+	quest, texts, _locks = S.build_quest(spec, ws, S.Resolver(ws))
+	visit, kill, survive, hand_over = quest["conditions"]["AvailableForFinish"]
+	assert visit["conditionType"] == "CounterCreator" and visit["type"] == "Exploration" and visit["value"] == 1
+	assert [(s["conditionType"], s.get("target")) for s in visit["counter"]["conditions"]] == [("VisitPlace", "my_place")]
+	assert kill["type"] == "Elimination" and kill["value"] == 3
+	kills, inside, location = kill["counter"]["conditions"]
+	assert kills["target"] == "AnyPmc" and kills["distance"] == {"compareMethod": ">=", "value": 40}
+	assert inside["zoneIds"] == ["my_place"] and location["target"] == ["Woods"]  # (the quest's map)
+	assert [v["target"] for v in kill["visibilityConditions"]] == [visit["id"]]
+	assert survive["type"] == "Completion" and texts[survive["id"]] == "Survive and extract from the location"
+	assert [s["conditionType"] for s in survive["counter"]["conditions"]] == ["ExitStatus", "Location"]
+	assert survive["counter"]["conditions"][0]["status"] == ["Survived", "Transit"]
+	assert [v["target"] for v in survive["visibilityConditions"]] == [visit["id"], kill["id"]]
+	assert [v["target"] for v in hand_over["visibilityConditions"]] == [kill["id"]]
+	with pytest.raises(S.SpecError) as raised:
+		S.build_quest({"name": "x", "trader": "Prapor", "finish": [
+			{"kind": "Visit"}, {"kind": "Kill", "colour": 1}, {"kind": "Level", "value": 2, "after": "nope"},
+			{"kind": "Visit", "zone": "a", "ref": "same"}, {"kind": "Visit", "zone": "b", "ref": "same"},
+		]}, ws, S.Resolver(ws))
+	text = "\n".join(raised.value.problems)
+	for expected in ('a Visit needs "zone"', "colour isn't a key of a Kill", "no condition has the ref 'nope'", "'same' names two conditions"):
+		assert expected in text, expected
+
+
+def test_money_rewards_are_not_found_in_raid_unless_asked(project):
+	ws = Workspace(project)
+	spec = {"name": "Pay", "trader": "Prapor", "rewards": {"success": [
+		{"kind": "Item", "items": [{"item": "Roubles", "count": 1000}]},
+		{"kind": "Item", "items": [{"item": "Dollars", "count": 10}], "findInRaid": True},
+		{"kind": "Item", "items": [{"item": "Bolts", "count": 1}]},
+	]}}
+	quest, _t, _l = S.build_quest(spec, ws, S.Resolver(ws))
+	assert [r["findInRaid"] for r in quest["rewards"]["Success"]] == [False, True, True]
+	assert quest["rewards"]["Success"][1]["items"][0]["_tpl"] == "5696686a4bdc2da3298b456a"  # (the game's dollars)
+	described = S.describe_quest(quest, ws)["rewards"]["success"]
+	assert "findInRaid" not in described[0] and described[1]["findInRaid"] is True
+	again, _t, _l = S.build_quest(json.loads(json.dumps(S.describe_quest(quest, ws))), ws, S.Resolver(ws), quest["_id"])
+	assert again == quest
+
+
+def test_usage_tells_how_the_base_game_fills_a_field(capsys):
+	code, result = run(capsys, "usage", "subtask", "ExitStatus", "status")
+	assert code == 0 and result["top"][0]["value"] == ["Survived", "Transit"] and result["top"][0]["examples"]
+	code, result = run(capsys, "usage", "task", "CounterCreator", "type", "--where", 'steps=["ExitStatus", "Location"]')
+	assert result["top"][0]["value"] == "Completion"
+	code, result = run(capsys, "usage", "reward", "Item", "findInRaid", "--where", "money=true")
+	assert result["top"][0]["value"] is False
+	code, result = run(capsys, "usage", "task", "FindItem", "target", "--limit", "1")
+	assert result["top"][0]["names"]
+	code, result = run(capsys, "usage", "subtask", "Kills")
+	assert code == 0 and "savageRole" in result["fields"] and result["found"] > 100
+	code, result = run(capsys, "usage", "subtask", "Teleport")
+	assert code == 1
+
+
+def test_kinds_lists_the_shorthands(capsys):
+	_code, kinds = run(capsys, "kinds")
+	assert [k["kind"] for k in kinds["shorthand"]] == ["Visit", "Kill", "SurviveAndExtract"]
+	_code, kill = run(capsys, "kinds", "shorthand", "Kill")
+	assert "zone" in kill["keys"] and "after" in kill["keys"]
+
+
+def test_package_writes_the_layout_wtt_reads(project, capsys, tmp_path, maps):
+	(tmp_path / "zones").mkdir()
+	zone = {"ZoneId": "my_mark", "ZoneName": "my_mark", "ZoneLocation": "bigmap", "ZoneType": "placeitem", "FlareType": "",
+	        "Position": {"X": "20", "Y": "1.5", "Z": "20", "W": "0"}, "Rotation": {"X": "0", "Y": "0", "Z": "0", "W": "1"}, "Scale": {"X": "2", "Y": "2", "Z": "2", "W": "0"}}
+	(tmp_path / "zones" / "new.json").write_text(json.dumps([zone]), encoding="utf-8")
+	spec = tmp_path / "spec.json"
+	spec.write_text(json.dumps(dict(SUPPLY_RUN, finish=SUPPLY_RUN["finish"] + [{"kind": "PlaceBeacon", "zoneId": "my_mark", "text": "Mark it"}])), encoding="utf-8")
+	_code, added = run(capsys, "--project", project, "--maps", maps, "quest", "add", spec, "--write")
+	quest_id = added["quests"][0]["id"]
+	out_dir = tmp_path / "mod"
+	code, result = run(capsys, "--project", project, "--maps", maps, "package", "--out", out_dir)
+	assert code == 0 and not out_dir.exists() and result["zones"] == ["my_mark"]
+	code, result = run(capsys, "--project", project, "--maps", maps, "package", "--out", out_dir, "--write")
+	trader = out_dir / "db" / "CustomQuests" / PRAPOR
+	assert code == 0 and result["written"] and any("offers" in n for n in result["notes"])
+	assert list(json.loads((trader / "Quests" / "quests.json").read_text(encoding="utf-8"))) == [quest_id]
+	assert json.loads((trader / "Locales" / "en.json").read_text(encoding="utf-8"))[f"{quest_id} name"] == "Supply run"
+	assert json.loads((trader / "QuestAssort" / "quests.json").read_text(encoding="utf-8"))["success"] == {added["locks"][0]["offer"]: quest_id}
+	assert json.loads((out_dir / "db" / "CustomQuestZones" / "quests.json").read_text(encoding="utf-8")) == [zone]
+
+
+def test_the_server_check_is_found_run_and_read(project, capsys, tmp_path, monkeypatch):
+	from cli import servercheck
+
+	runtime = tmp_path / "SPT" / "SPT_Runtime"
+	runtime.mkdir(parents=True)
+	(runtime / servercheck.CORE_DLL).write_bytes(b"")
+	monkeypatch.delenv("SPT_RUNTIME", raising=False)
+	ws = Workspace(project)
+	assert servercheck.find_runtime(ws) is None
+	assert servercheck.find_runtime(ws, tmp_path / "SPT") == runtime and servercheck.find_runtime(ws, runtime) == runtime
+	report = servercheck.parse('building...\n{"ok": true, "quests": 2, "dropped": ["q.x = 1"], "changed": [], "unknown": ["q.extra"]}\n')
+	assert report["quests"] == 2
+	assert [p["level"] for p in servercheck.problems(report)] == ["error", "warning"]
+	assert servercheck.parse("error CS1002: ; expected", "", 1)["ok"] is False
+	spec = tmp_path / "spec.json"
+	spec.write_text(json.dumps(SUPPLY_RUN), encoding="utf-8")
+	run(capsys, "--project", project, "quest", "add", spec, "--write")
+	code, result = run(capsys, "--project", project, "check", "--server")
+	assert code == 1 and "SPT_Runtime" in result["error"]
+	monkeypatch.setattr(servercheck, "run", lambda q, l, r: {"ok": True, "quests": 1, "dropped": [], "changed": ["q.value: 1 -> 2"], "unknown": []})
+	code, result = run(capsys, "--project", project, "check", "--server", "--spt", runtime)
+	assert result["summary"]["server"]["ok"] and any(p["file"] == "server" and "differently" in p["message"] for p in result["problems"])

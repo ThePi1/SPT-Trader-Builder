@@ -11,11 +11,17 @@ How the code behind `python -m cli` works, what it relies on in the game, and ho
 | `cli/workspace.py` | `Workspace`: the project file's documents (`core.documents.Document`), the app's settings, game data, references and saved composite items, and the zone index. |
 | `cli/spec.py` | Quest specs: `build_quest` (spec to quest JSON), `describe_quest` (quest JSON to spec), `Resolver` (names to ids), `apply_quest` (into the workspace). |
 | `cli/render.py` | Top-down PNGs of a map (Qt, off screen). |
+| `cli/usage.py` | `usage`: the values the base game's quests give a field, with worked-out fields (`PSEUDO`: a counter's `steps`, a reward's `money`). |
+| `cli/servercheck.py` | `check --server`: finds `SPT_Runtime`, runs `tools/server_check --json`, turns its report into problems. |
+| `cli/package.py` | `package`: the project's files in WTT-CommonLib's folder layout. |
 | `core/unity.py` | A read-only reader of the game's Unity files: serialized files, the objects the import needs, navmesh tiles. |
-| `core/mapdata.py` | `import_maps` (game files to `data/maps`), `MapData` (reading it back), `LOCATIONS` (which scenes make up each map), `find_objects`. |
+| `core/mapdata.py` | `import_maps` (game files to `data/maps`), `MapData` (reading it back), `ObjectIndex` (a map's named objects), `LOCATIONS` (which scenes make up each map), `find_objects` (live). |
 | `core/navmesh.py` | `NavMesh`: floor heights at a point, polygons near an area, sampling a box. |
 | `core/geometry.py` | Vectors, quaternions, `Box` (an oriented box: contains, overlaps, footprint). |
 | `core/zones.py` | `Zone`, `ZoneIndex`, the WTT zone file format, which zone kinds each condition takes (`ZONE_FIELDS`), the quest and zone checks, `make_zone`. |
+| `core/places.py` | `zones find`: places by the names players use, from `data/places.json`, the areas and the object index. |
+| `core/buildings.py` | `zones building`, `make --building`, `check --rooms`: a building's outline, storeys and rooms. |
+| `data/places.json` | Hand-written: other words for search words (`synonyms`) and named places with their anchors (`places`). |
 | `tools/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
 
 The app uses the same pieces: `schema/validate.validate_quests(..., zones=)` adds the zone checks, `MainWindow.zone_index()` builds the index (imported maps plus zone files among the references, rebuilt when the references change), and quest zone files are a reference kind (`core/references.ZONES`).
@@ -36,6 +42,10 @@ The app uses the same pieces: `schema/validate.validate_quests(..., zones=)` add
 - `Quest` targets can name another quest of the same spec file (`Resolver(batch=...)`).
 - Item rewards: parts are built from `items` / `composite` / `parts`; `value` is always `schema.rewards.item_count(parts)`.
 - Assort unlocks: `offer` (an existing offer) or `item` / `composite` with a price (a new offer via `schema.assort.new_offer_from_parts`). Either way the quest lock goes in `locks` and `apply_quest` writes it to the questassort.
+
+**Shorthands, ref and after.** `expand()` runs on the condition lists before anything is built: it gives every `ref` an id (the condition's own `id` if it has one), writes out the shorthands (`SHORTHANDS`: `Visit`, `Kill`, `SurviveAndExtract`, each a CounterCreator spec) and turns `after` into `visibilityConditions` (CompleteCondition entries with new ids). The rest of the build sees only ordinary specs, so a shorthand's problems are reported at the written-out keys. `describe_quest` never writes shorthands. Their defaults follow `usage`: survive-and-extract counters are Completion with ExitStatus Survived and Transit (37 of 109 base-game ExitStatus steps; 65 of the 82 ExitStatus + Location counters are Completion).
+
+**Money rewards.** A new Item reward whose items are all money gets `findInRaid: false` (431 of the base game's 456 money rewards), set before the spec's own keys. `describe_reward` mirrors it: for a money-only reward it writes `findInRaid` only when it is true, so the round trip still holds. A count over the item's stack limit is left alone: the server splits it (`RewardHelper.ProcessReward` "fixes stack sizes"; 63 base-game rewards rely on it).
 
 **Describing.** `describe_quest` writes only what differs from a new item. Values of the wrong type for their field (the base game has a few, like a count written as `"1"`) go under `extra` (`_fits`); keys a new item has that the quest lacks go under `omit`; plain item rewards become `items` entries with their part ids.
 
@@ -59,7 +69,24 @@ The maps are the game's built-in scenes. Scene N of the build is the file `Escap
 
 **Areas.** `scene_area`: a scene whose name doesn't say it holds lighting, sound, bots and so on is a place (`custom_Obshezhitie` is the Customs dorms). Its extent is the 2nd to 98th percentile of its objects' positions.
 
-**Output.** `data/maps/<location>.json` (zones, areas; small, read by the app's checks) and `<location>.navmesh.json.gz` (read only when a floor is needed). `FORMAT` is stored in both; bump it when the records change, and `MapData.load` refuses old files with "import the maps again". The data comes from the game, so `data/maps/` is git-ignored and never shipped.
+**Objects.** `scene_objects`: every GameObject with a name, at its Transform's world position, leaving out the copies models have for levels of detail, shadows, ballistics and colliders (`_COPY_NAMES`). Across a map's scenes, one object per (name, position to 0.1 m). Reserve has about 394,000 objects and keeps 200,000 (1.6 MB compressed). Scenes are read once for zones, area and objects together; a scene's objects are let go once no later map uses the scene (Factory and Sandbox share scenes).
+
+**Output.** `data/maps/<location>.json` (zones, areas; small, read by the app's checks), `<location>.navmesh.json.gz` (read only when a floor is needed) and `<location>.objects.json.gz` (`{format, scenes, names, objects: flat [name index, scene index, x, y, z in cm, ...]}`, read only when objects are searched). `FORMAT` is stored in each; bump it when the records change, and `MapData.load` refuses old files with "import the maps again". A map imported before objects were indexed has no objects file: `MapData.objects` is None and the commands say to import again. The import takes about two minutes for every map. The data comes from the game, so `data/maps/` is git-ignored and never shipped.
+
+## Places and buildings (`core/places.py`, `core/buildings.py`)
+
+**Places.** The game's files rarely use players' names: the White Knight on Reserve is the objects `Reserv_Base_PTOR2_*`, its sound rooms `rem_block_01_*` and a marker `white_horse` (in `Reserve_Base_Scripts`, beside `white_bishop`, `black_pawn`, ...); Reserve's chess signs are `reserve_sign_chess_horse` (knight), `_elephant` (bishop), `_ferz` (queen), `_rook`, `_pawn`. `find` tries each search word as itself and as its `synonyms`, then ranks: named places (`data/places.json`), areas, then groups of matching objects within 20 m (whole-word matches and short names first; objects at the origin are scene folders and are skipped). A named place's `at` is checked by hand; its `objects` anchor shows it is still in the game (`anchors`, or a warning). Add a place only once it is checked, and say how in its note.
+
+**Buildings.** Walls aren't in the import: a probe of the White Knight's scene found its BoxColliders are doors and props, the walls being mesh colliders. So `building_at` works from the floor map and the objects:
+
+1. The ground is the middle of the lowest floors on rings 24 to 40 m around the spot.
+2. The building is the connected patch of floor more than `UP` (2 m) above the ground nearest the spot, sampled every `STEP` (0.75 m): upper storeys and roofs. A building with no upper floor bots walk has no outline (its rooms are still listed).
+3. The outline is the smallest rectangle around the patch over every angle in 0.5 degree steps, ignoring the outermost 0.2% of samples each side (1% cut the corners and turned a test building 1.5 degrees).
+4. Storeys are peaks of the floor heights inside it (quarter-metre bins, at least `MIN_STOREY` 10 m², 1.8 m apart). Stairs and ramps join storeys, so splitting by gaps doesn't work. A storey more than 2 m below the ground is marked `below_ground` and left out of the zone (under the White Knight runs a tunnel at -15.5 m).
+5. Rooms are objects inside the outline whose name has a room word (`ROOM_WORDS`, whole words: Broom isn't a room) or says a storey (`floor_number`: Floor_2, f2, 2nd floor, 2F), not in a lighting scene (its light groups are called Floor1, Floor2, ...). A storey only the names give (a 2F bots never walk) is added at the median height of its rooms less 0.3 m.
+6. The zone spans the outline plus a margin, from the lowest storey less `SINK` to the top storey plus `REACH_ABOVE` (2.5 m).
+
+On the White Knight this gives 23.4 x 11.8 x 34.4 m at 15.5 degrees, matching a zone placed by hand.
 
 ## Zone rules and where they come from
 
@@ -90,17 +117,25 @@ From WTT-CommonLib (`WTTClientCommonLib.Services.QuestZones`): a zone is a new o
 
 (or set the `SPT_RUNTIME` environment variable). It deserializes into `Dictionary<MongoId, Quest>` with the server's `JsonUtil` and converters; a bad id, enum value or missing required field fails there, as it would on server start. It then writes the quests back with the server's settings and compares, and lists keys no model has: the shipped server DLL gives every model an `ExtensionData` property (a Mono.Cecil patch at build time), which keeps unknown keys without any code reading them. The server's own 558 quests come out clean, which is the baseline.
 
+With `--json` it prints one JSON object (`ok`, `quests`, `dropped`, `changed`, `added`, `unknown`, `locale_entries`, `error`). `python -m cli check --server` runs it that way (`cli/servercheck.py`): dropped keys and changed values are errors, unknown keys warnings. It finds `SPT_Runtime` from `--spt`, `SPT_RUNTIME`, the project's `spt`, then the project's `game` folder (SPT 4.1 installs into the game folder).
+
+## Packaging (`cli/package.py`)
+
+WTT-ServerCommonLib's CustomQuestService reads `db/CustomQuests/<trader key>/{Quests,Locales,QuestAssort}` next to the mod's DLL (its log lines say "Loading quests for trader"; a trader key may be the id), and CustomQuestZoneService reads `db/CustomQuestZones`. rtt2-traders uses that layout with trader ids and an empty QuestAssort file per trader, and `package` writes the same: per trader the quests, the text of their keys, and the project's quest locks for those quests; and one zone file with every custom zone the quests use (from the project's zone files and reference files). It doesn't package the assort (new offers for a base-game trader need the mod's code) or quest images.
+
 What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQuests` shows a quest with no start conditions to everyone (side comes from the quest config's lists, not the quest's `side`); accepting sends the description as the start message when there's no `startedMessageText`; `CompleteQuest` doesn't re-check conditions (the client does); `RewardHelper.ApplyRewards` handles each reward type.
 
 ## Tests
 
 - `tests/test_map_geometry.py`: boxes, the navmesh, tile parsing, and the Unity layouts on a serialized file built in the test (`_serialized`).
 - `tests/test_zones.py`: zone files, the rules, the checks, `make_zone` (on small maps written by `_map`), and a live import of Labyrinth.
-- `tests/test_cli.py`: the vanilla round trip, every command, and the server-free parts of `maps verify`.
+- `tests/test_cli.py`: the vanilla round trip, every command, shorthands, the money default, `usage`, `package`, and the server-free parts of `maps verify` and `check --server`.
+- `tests/test_places_and_buildings.py`: the object index, `zones find`, and the building at a spot on a made-up map (a building turned 20 degrees with a storey, a roof, a tunnel under it and named rooms), through the commands too.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 
 ## Known limits
 
-- The navmesh is the only floor and wall information: walls and objects aren't read (MeshColliders would need Mesh parsing).
-- Areas are a heuristic named after scenes, often in transliterated Russian.
+- The navmesh is the only floor information and there is none for walls (MeshColliders would need Mesh parsing): building outlines come from upper floors, so a building bots never walk upstairs can't be outlined, and one on a slope may be confused with the hill.
+- Areas are a heuristic named after scenes, often in transliterated Russian. Room names are a heuristic too: each map names its rooms its own way.
+- `data/places.json` names only places that were checked (some of Reserve's so far).
 - The game client reading a quest isn't checked beyond matching the base game's shapes, and WTT-CommonLib's quest loader isn't checked.

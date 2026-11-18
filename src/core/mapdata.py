@@ -1,14 +1,16 @@
 """The maps' quest zones and floors, imported from the game's own files.
 
-``import_maps`` reads the game client's scenes (see core.unity) and writes two files per map into the maps folder:
+``import_maps`` reads the game client's scenes (see core.unity) and writes three files per map into the maps folder:
 ``<location>.json`` with the quest zones the game has (their id, kind and box) and the map's areas (where its places,
-such as the dorms, are), and ``<location>.navmesh.json.gz`` with the walkable floor (the navigation mesh). That data
-comes from the game, so it stays on the user's computer (the folder is not part of the repository).
+such as the dorms, are), ``<location>.navmesh.json.gz`` with the walkable floor (the navigation mesh), and
+``<location>.objects.json.gz`` with every named object and where it is (for finding places by name). That data comes
+from the game, so it stays on the user's computer (the folder is not part of the repository).
 ``MapData.load`` reads a map back. No Qt.
 """
 
 import gzip
 import json
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -220,9 +222,34 @@ def scene_area(sf, scene):
 	return {"name": name, "scene": stem, "min": low, "max": high, "objects": len(points)}
 
 
+# The copies a model has for its levels of detail, shadow, ballistics and colliders (Door_LOD0, Door_COLLIDER, ...):
+# left out of the object index, where they would only repeat the model's own name
+_COPY_NAMES = re.compile(r"(_LOD\d+|_SHADOW(_LOD\d+)?|_BALLISTIC.*|_COLLIDER.*)$", re.IGNORECASE)
+
+
+def scene_objects(sf):
+	"""Every named object in a scene file and where it is: [(name, (x, y, z))], leaving out the level-of-detail,
+	shadow, ballistic and collider copies of models."""
+	transforms = U.TransformCache(sf)
+	found = []
+	for path_id in sf.of_class(U.TRANSFORM) + sf.of_class(U.RECT_TRANSFORM):
+		try:
+			transform = U.read_transform(sf, path_id)
+			if transform.game_object[0] != 0 or transform.game_object[1] not in sf.objects:
+				continue
+			name = U.read_game_object(sf, transform.game_object[1]).name
+			if not name or _COPY_NAMES.search(name):
+				continue
+			found.append((name, transforms.world(path_id)[1]))
+		except (U.FormatError, KeyError, IndexError):
+			continue
+	return found
+
+
 def find_objects(game_dir, location, text, limit=50):
 	"""Objects in a map's scenes whose name contains every word of text (case-insensitive), straight from the game's
-	files: [{name, scene, position: [x, y, z]}]. Slow-ish (it reads the map's scenes), so it is only done on request."""
+	files: [{name, scene, position: [x, y, z]}]. Slow (it reads the map's scenes): an imported map's object index
+	(MapData.objects) answers the same question at once."""
 	words = text.lower().split()
 	data_dir = Path(game_dir) / "EscapeFromTarkov_Data"
 	with U.SerializedFile(data_dir / "globalgamemanagers") as ggm:
@@ -273,25 +300,38 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 	out_dir.mkdir(parents=True, exist_ok=True)
 	scripts = _Scripts(data_dir)
 	scene_cache, nav_cache, summary = {}, {}, {}
+	last_use = {}  # {scene index: the last map that uses it}, to let go of a scene's objects once no map needs them
+	for location in wanted:
+		for index, scene in enumerate(scenes):
+			if LOCATIONS[location].has(scene):
+				last_use[index] = location
 	try:
 		for location in wanted:
 			spec = LOCATIONS[location]
 			mine = [(i, s) for i, s in enumerate(scenes) if spec.has(s)]
-			zones, areas, tiles = [], [], []
+			zones, areas, tiles, objects = [], [], [], {}
 			for index, scene in mine:
 				if index not in scene_cache:
 					say(f"{location}: {scene.rsplit('/', 1)[-1]}")
 					scene_cache[index] = _read_scene(
-						data_dir / f"level{index}", lambda sf: (scene_zones(sf, scripts, scene), scene_area(sf, scene)), ([], None),
+						data_dir / f"level{index}",
+						lambda sf: (scene_zones(sf, scripts, scene), scene_area(sf, scene), scene_objects(sf)),
+						([], None, []),
 					)
-				found_zones, area = scene_cache[index]
+				found_zones, area, found_objects = scene_cache[index]
 				zones += found_zones
 				if area:
 					areas.append(area)
+				stem = _stem(scene)
+				for name, position in found_objects:
+					objects.setdefault((name, *(round(c, 1) for c in position)), (stem, position))
 				if scene.endswith(("_AI.unity", "_AI_high.unity")):
 					if index not in nav_cache:
 						nav_cache[index] = _read_scene(data_dir / f"sharedassets{index}.assets", scene_navmesh, [])
 					tiles += nav_cache[index]
+			for index, _scene in mine:
+				if last_use.get(index) == location:
+					scene_cache.pop(index, None)
 			navmesh = merge_tiles(tiles)
 			record = {
 				"format": FORMAT,
@@ -311,10 +351,25 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 					"vertices": [round(c, 3) for v in navmesh.vertices for c in v],
 					"polygons": [list(verts) for verts, _area in navmesh.polygons],
 				}, f, separators=(",", ":"))
-			summary[location] = {"zones": len(zones), "areas": len(areas), "polygons": len(navmesh), "file": str(path)}
+			_write_objects(out_dir / f"{location}{OBJECTS_SUFFIX}", objects)
+			summary[location] = {"zones": len(zones), "areas": len(areas), "polygons": len(navmesh), "objects": len(objects), "file": str(path)}
 	finally:
 		scripts.close()
 	return summary
+
+
+def _stem(scene):
+	name = scene.rsplit("/", 1)[-1]
+	return name[:-len(".unity")] if name.endswith(".unity") else name
+
+
+def _write_objects(path, objects):
+	"""The object index: {format, scenes, names, objects: flat [name index, scene index, x, y, z in centimetres, ...]}."""
+	names, scenes, flat = {}, {}, []
+	for (name, *_rounded), (stem, position) in objects.items():
+		flat += [names.setdefault(name, len(names)), scenes.setdefault(stem, len(scenes)), *(round(c * 100) for c in position)]
+	with gzip.open(path, "wt", encoding="utf-8") as f:
+		json.dump({"format": FORMAT, "scenes": list(scenes), "names": list(names), "objects": flat}, f, separators=(",", ":"))
 
 
 def _read_scene(path, read, default):
@@ -327,11 +382,55 @@ def _read_scene(path, read, default):
 # --- reading it back -----------------------------------------------------------------------------------
 
 NAVMESH_SUFFIX = ".navmesh.json.gz"
+OBJECTS_SUFFIX = ".objects.json.gz"
+
+
+class ObjectIndex:
+	"""The named objects of an imported map (see scene_objects): looked up by name, or by where they are."""
+
+	def __init__(self, record):
+		self.scenes = record.get("scenes", [])
+		self.names = record.get("names", [])
+		self._flat = record.get("objects", [])
+
+	def __len__(self):
+		return len(self._flat) // 5
+
+	def rows(self, names=None):
+		"""(name, scene, (x, y, z)) of every object, or of those whose name's index is in the set `names`."""
+		flat = self._flat
+		for i in range(0, len(flat), 5):
+			n = flat[i]
+			if names is None or n in names:
+				yield self.names[n], self.scenes[flat[i + 1]], (flat[i + 2] / 100, flat[i + 3] / 100, flat[i + 4] / 100)
+
+	def name_indexes(self, test):
+		"""The indexes of the names test(name) accepts."""
+		return {i for i, name in enumerate(self.names) if test(name)}
+
+	def search(self, text, limit=50):
+		"""Objects whose name holds every word of text (any case), as find_objects gives them."""
+		words = text.lower().split()
+		wanted = self.name_indexes(lambda name: all(w in name.lower() for w in words))
+		found = []
+		for name, scene, position in self.rows(wanted):
+			found.append({"name": name, "scene": scene + ".unity", "position": _round(position, 2)})
+			if len(found) >= limit:
+				break
+		return found
+
+	def inside(self, box, margin=0.0, names=None):
+		"""(name, scene, position) of the objects inside a box (core.geometry.Box)."""
+		(x0, y0, z0), (x1, y1, z1) = box.bounds()
+		for name, scene, (x, y, z) in self.rows(names):
+			if x0 - margin <= x <= x1 + margin and z0 - margin <= z <= z1 + margin and y0 - margin <= y <= y1 + margin:
+				if box.contains((x, y, z), margin):
+					yield name, scene, (x, y, z)
 
 
 class MapData:
-	"""One imported map: its zones ([dict], see scene_zones), its areas (see scene_area) and its floor (navmesh, read
-	from its own file when first used)."""
+	"""One imported map: its zones ([dict], see scene_zones), its areas (see scene_area), its floor (navmesh) and its
+	named objects (objects); the last two are read from their own files when first used."""
 
 	def __init__(self, record, path=None):
 		self.record = record
@@ -340,6 +439,7 @@ class MapData:
 		self.zones = record.get("zones", [])
 		self.areas = record.get("areas", [])
 		self._navmesh = None
+		self._objects = None
 
 	@classmethod
 	def load(cls, location, folder=None):
@@ -364,6 +464,17 @@ class MapData:
 			vertices = [tuple(flat[i:i + 3]) for i in range(0, len(flat), 3)]
 			self._navmesh = NavMesh(vertices, [(tuple(p), 0) for p in nav.get("polygons", [])])
 		return self._navmesh
+
+	@property
+	def objects(self):
+		"""The map's named objects (ObjectIndex), or None when it was imported before objects were indexed."""
+		if self._objects is None:
+			path = self.path.with_name(f"{self.location}{OBJECTS_SUFFIX}") if self.path else None
+			if path is None or not path.is_file():
+				return None
+			with gzip.open(path, "rt", encoding="utf-8") as f:
+				self._objects = ObjectIndex(json.load(f))
+		return self._objects
 
 
 def imported(folder=None):

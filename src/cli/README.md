@@ -30,28 +30,31 @@ relative to it:
 
 Only `quests` and `locale` are needed; a missing file is made when written. `assort` and `questassort` are needed for
 assort unlocks. `zones` is the file `zones make --write` adds to; `zone_files` (files or folders) are read for checks.
-`game` is the game's folder, for `maps import` and `zones objects`. The app's own settings (`data/settings.ini`: SPT
-database folder, language, new-quest icon and side) and reference files (`data/references.json`) apply as in the window.
+`game` is the game's folder, for `maps import`; its `SPT_Runtime` folder is used by `check --server` (or give `"spt"`).
+The app's own settings (`data/settings.ini`: SPT database folder, language, new-quest icon and side) and reference
+files (`data/references.json`) apply as in the window.
 
 ## Workflow for a new quest
 
-1. **Model it on the base game.** Find a base-game quest that does the same thing and read how it is built:
-   `quest show "Bad Rep Evidence"` shows any base-game or reference quest as a spec (marked `"from"`; read-only).
-   The base game has fixed patterns, for example "survive and extract" is its own CounterCreator (`ExitStatus`
-   Survived / Runner / Transit plus `Location`), separate from the kill counter and shown after it through
-   `visibilityConditions`.
+1. **Model it on the base game.** `quest show "Bad Rep Evidence"` shows any base-game or reference quest as a spec
+   (marked `"from"`; read-only). `usage` answers how the base game fills a field across all its quests, with quests
+   that use each value: `usage subtask ExitStatus status`, `usage task CounterCreator steps` (which counter steps go
+   together), `usage reward Item findInRaid --where money=true`. Copy the common value unless the quest needs another.
 2. **Look up what you need**: `find "salewa" --kind item`, `find prapor --kind trader`, `kinds task` (condition kinds),
-   `kinds task HandoverItem` (its fields, defaults and choices), `kinds reward`.
-3. **Write a spec** (below) and dry-run it: `quest add spec.json` (`--show` also prints the quest JSON and the text it
+   `kinds task HandoverItem` (its fields, defaults and choices), `kinds shorthand`, `kinds reward`.
+3. **Place its zones** (below), if it has any.
+4. **Write a spec** (below) and dry-run it: `quest add spec.json` (`--show` also prints the quest JSON and the text it
    would write). Done when it reports no `"error"` and no `"problems"`: names are matched exactly, and an unclear one
    lists the candidates with their ids.
-4. **Write it**: `quest add spec.json --write`, then `check`. Done when `check` reports 0 errors and every warning is
-   fixed or is one you can explain (to the user, when you are working for one).
-5. **Change a quest**: `quest show <name or id> --out q.json`, edit it, `quest update q.json --write`. A shown spec builds
+5. **Write it**: `quest add spec.json --write`, then `check --server`. Done when `check` reports 0 errors and every
+   warning is fixed or is one you can explain (to the user, when you are working for one). `--server` also loads the
+   saved files with the SPT server's own code (needs the .NET SDK); without an SPT install, run plain `check`.
+6. **Change a quest**: `quest show <name or id> --out q.json`, edit it, `quest update q.json --write`. A shown spec builds
    back into exactly the same quest (all 558 base-game quests do), so only the edit changes. Use `--out` rather than a
    shell redirect, which can write the file in an encoding `quest update` can't read.
-6. **Optionally, confirm the SPT server loads it**: `tools/server_check` loads a quests file with the server's own code
-   (see [DEVELOPING.md](DEVELOPING.md#checking-files-with-the-servers-code)).
+7. **Hand it over**: `package --out <mod folder> --write` writes the quests, their text, quest locks and the custom
+   zones they use in the folders WTT-CommonLib reads (`db/CustomQuests/<trader id>/...`, `db/CustomQuestZones`). It
+   refuses while `check` has errors.
 
 ## Quest specs
 
@@ -68,16 +71,18 @@ holds one spec, a list of them, or `{"quests": [...]}`; quests in one file can n
 	"text": {"name": "Supply run", "description": "...", "successMessageText": "...", "failMessageText": "..."},
 	"start": [{"kind": "Level", "value": 5}, {"kind": "Quest", "target": "Debut", "status": ["Completed"]}],
 	"finish": [
+		{"kind": "Visit", "ref": "found", "zone": "my_dorm_room", "text": "Find the room in the dorms"},
+		{"kind": "PlaceBeacon", "ref": "marked", "after": "found", "zoneId": "my_dorm_mark", "text": "Mark the room"},
+		{"kind": "Kill", "ref": "kills", "count": 5, "target": "Scavs", "distance": 50, "text": "Eliminate Scavs on Customs"},
 		{"kind": "HandoverItem", "target": ["Bolts"], "value": 5, "onlyFoundInRaid": true, "text": "auto"},
-		{"kind": "CounterCreator", "type": "Elimination", "value": 5, "text": "Eliminate Scavs on Customs",
-			"conditions": [{"kind": "Kills", "target": "Scavs", "distance": 50}, {"kind": "Location", "target": ["Customs"]}]},
-		{"kind": "PlaceBeacon", "zoneId": "my_gas_station_mark", "text": "Mark the gas station"}
+		{"kind": "SurviveAndExtract", "after": ["marked", "kills"]}
 	],
 	"fail": [],
 	"rewards": {
 		"success": [
 			{"kind": "Experience", "value": 8000},
-			{"kind": "Item", "items": [{"item": "Roubles", "count": 50000}, {"item": "Bolts", "count": 2}]},
+			{"kind": "Item", "items": [{"item": "Roubles", "count": 50000}]},
+			{"kind": "Item", "items": [{"item": "Bolts", "count": 2}]},
 			{"kind": "TraderStanding", "target": "Prapor", "value": 0.03},
 			{"kind": "AssortmentUnlock", "item": "Bolts", "price": 12000, "currency": "roubles", "loyaltyLevel": 2}
 		],
@@ -93,13 +98,22 @@ holds one spec, a list of them, or `{"quests": [...]}`; quests in one file can n
 - **Conditions and rewards** have a `kind` and their JSON keys (`kinds task <Kind>`, `kinds subtask <Kind>`,
   `kinds reward <Kind>`). A `CounterCreator` holds its steps in `conditions` (subtask kinds). A condition's `text` is its
   locale line; `"auto"` writes it for FindItem, HandoverItem and Skill.
+- **Shorthands** write the base game's fixed patterns (`kinds shorthand <Kind>` lists their keys):
+  - `Visit` (`zone`): an Exploration counter with a VisitPlace step. The top-level VisitPlace kind doesn't work in SPT.
+  - `Kill` (`count`, `target`, optional `zone`, `map`, and any Kills field such as `distance` or `weapon`): an
+    Elimination counter with Kills, InZone and Location steps. `map` defaults to the quest's `location`.
+  - `SurviveAndExtract` (optional `map`, `status`, `exit`): a Completion counter with ExitStatus (Survived and Transit,
+    the base game's most common) and Location steps, with the base game's text.
+- **ref and after**: any condition can have a `"ref"` name; `"after": "found"` (or a list) makes a condition show only
+  once those are complete (its visibilityConditions), as the base game reveals the next step. Ids are made for you.
 - **Values**: ids, or names. Items, traders and quests by exact name (any case; an item's short name works too);
   `find` shows the names. Maps by name (`Customs`) or key (`bigmap`). Choice fields take the value or its label
   (`"Scavs"` for `Savage`, `"Completed"` for quest status 4). A `{compareMethod, value}` field takes a number for "at
   least" (`"distance": 50`).
-- **Item rewards**: `"items": [{"item": name, "count": n, "foundInRaid": bool}]` (one stack each; found in raid
-  defaults to the reward's `findInRaid`, money has none), or `"composite": "<saved or vanilla composite item>"`, or raw
-  `"parts"` with `"target"`. The reward's `value` is worked out from the stacks.
+- **Item rewards**: `"items": [{"item": name, "count": n, "foundInRaid": bool}]` (one stack each; a count over the
+  item's stack limit is fine, the server splits it), or `"composite": "<saved or vanilla composite item>"`, or raw
+  `"parts"` with `"target"`. Found in raid defaults to the reward's `findInRaid`, which is false for a reward of only
+  money (as the base game gives money) and true otherwise. The reward's `value` is worked out from the stacks.
 - **Assort unlocks**: `"offer": "<offer id>"` unlocks an offer of the project's assort; `"item"` (or `"composite"`) with
   `"price"` and `"currency"` (or `"barter": [{"item", "count"}]`), optional `"loyaltyLevel"`, `"stack"`, `"buyLimit"`,
   makes the offer. Either way the quest lock is added to the questassort (success list: `success`, started list:
@@ -114,11 +128,11 @@ Conditions point at zones by id: `PlaceBeacon` and `LeaveItemAtLocation` (`zoneI
 `InZone` (`zoneIds`, inside a CounterCreator), `LaunchFlare` (`target`). Custom zones are WTT-CommonLib
 `CustomQuestZones` entries; `zones make` writes them.
 
-`maps import [game folder]` reads the game client's scenes once (about a minute) into `data/maps`: every map's quest
-zones, its walkable floor (the bots' navigation mesh) and its areas. It stays on this computer. Re-run it after a game
-update, then `maps verify <SPT_Data/database folder>`: every zone that version's own quests use should be found (a few
-ids the game itself lacks are listed). Without an import, `check` can't tell a misspelt zone id from a game one;
-`maps list` says what is imported.
+`maps import [game folder]` reads the game client's scenes once (about two minutes) into `data/maps`: every map's
+quest zones, its walkable floor (the bots' navigation mesh), its areas and every named object. It stays on this
+computer. Re-run it after a game update, then `maps verify <SPT_Data/database folder>`: every zone that version's own
+quests use should be found (a few ids the game itself lacks are listed). Without an import, `check` can't tell a
+misspelt zone id from a game one; `maps list` says what is imported.
 
 What the client does with each zone kind (from its code), which `check` enforces:
 
@@ -131,20 +145,26 @@ What the client does with each zone kind (from its code), which `check` enforces
 
 Placing a zone:
 
-1. Find the place: `zones areas --map Customs` (the map's areas with their extents, named after the game's scenes,
-   often in transliterated Russian: Obshezhitie is the dorms, AZS the gas station, Tamozhnya the customs office),
-   `zones list --map Customs --near 395,20` (zones nearby), `zones objects --map Customs "room 214"` (objects by name,
-   read live from the game).
-2. Look at it: `zones render --map Customs --at 395,20 --radius 40 --out place.png` draws the floor from above (dark
-   is low, light is high; holes are walls and furniture), the zones and the areas, with coordinates every 5-10 m.
-   Add `--floor <height>` for one storey of a building. Read the PNG to judge the spot.
-3. `zones at --map Customs 395,20` gives the floor heights there and the zones around.
-4. `zones make --map Customs --id my_mark --kind placeitem --at 395,20 --size 3,2.5,3 --yaw 10 --picture z.png`. Read
-   the picture (the new zone is green) and the `errors` / `warnings`; adjust and repeat, then add `--write`. The zone is
-   centred on the spot with its bottom 0.25 m below the floor (`--at x,z,y` picks the storey nearest y). Positions are
-   Unity's: x east, z north, y up; `--yaw` turns clockwise from north. Give each zone an id no other zone uses.
-5. `check` (or `zones check`) checks every custom zone. Done when the new zone has no errors and the picture shows it
-   where it was meant to be.
+1. **Find the place by the name players use**: `zones find "White Knight"` (or `--map Reserve`). It searches the named
+   places (`data/places.json`), the map's areas (named after its scenes, often transliterated Russian: Obshezhitie is
+   the Customs dorms) and its objects, trying the words the game uses instead ("knight" is horse, "dorms" is
+   obshezhitie). Each result has a `"next"` command. Done when one result is the place you want; if none is, try
+   `zones areas --map ...` and `zones objects --map ... "<part of a name>"`.
+2. **A whole building**: `zones building --map Reserve --place "White Knight" --picture b.png` (or `--at x,z`) gives its
+   outline and angle, its storeys (the floor map's, and storeys only its room names show, like a 2F bots never walk),
+   its rooms, and a zone covering it all. Read the picture (the suggested zone is green). Then
+   `zones make --map Reserve --id <id> --kind visit --at <x,z> --building` makes that zone. A storey far below the
+   ground (a tunnel or bunker under the building) is left out and noted.
+3. **A spot inside**: look at it with `zones render --map Reserve --at 87,-18 --radius 10 --floor -0.7 --out r.png` (the
+   floor from above, dark low to light high; holes are walls and furniture; `--floor` keeps one storey, as the
+   building's storeys give them). `zones at --map Reserve 87,-18` gives the floor heights and zones there. Then
+   `zones make --map Reserve --id <id> --kind placeitem --at 87,-18,-0.7 --size 2.5,2.5,3 --yaw 15 --picture z.png
+   --one-floor`: the zone is centred on the spot with its bottom 0.25 m below the floor (`x,z,y` picks the storey
+   nearest y); give it the building's yaw. Read the picture and the `errors` / `warnings`, adjust, then add `--write`.
+   Positions are Unity's: x east, z north, y up; `--yaw` turns clockwise from north. Give each zone an id no other zone
+   uses. Coordinates may be negative (`--at -60,-20`).
+4. **Check it**: `zones check --rooms` (or `check`). Done when the new zone has no errors, its `covers` lists the rooms
+   and storeys it is meant to cover (and no others), and the picture shows it where it was meant to be.
 
 The floor map misses some places a player can reach (rooms bots never enter, upper floors, crate tops), so "no floor
 mapped" is a warning to check in game, never an error: a few of the game's own zones are in such places.

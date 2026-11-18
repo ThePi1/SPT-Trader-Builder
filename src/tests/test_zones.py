@@ -234,3 +234,8 @@ def test_importing_a_real_map_finds_its_zones_and_floor(tmp_path):
 		floor = data.navmesh.floor_near(zone.box.center[0], zone.box.center[1], zone.box.center[2], 3, 3)
 		assert zone.box.center[1] - zone.box.size[1] / 2 - Z.PLAYER_HEIGHT <= floor <= zone.box.center[1] + zone.box.size[1] / 2
 	assert M.imported(tmp_path) == ["Labyrinth"]
+	objects = data.objects  # (every named object, without the copies models have for levels of detail)
+	assert summary["Labyrinth"]["objects"] == len(objects) > 1000
+	assert not any(name.endswith(("_LOD0", "_LOD1")) for name in objects.names)
+	zone_object = next(z for z in data.zones if z["object"])
+	assert objects.search(zone_object["object"])

@@ -68,10 +68,11 @@ trader's quest assort in `tests/fixtures`), so they run anywhere.
     About and Check for updates windows, the Quests, Locale, Trader and Composite items tabs, Find IDs and its picker
     window, and the Schema Explorer (both pages).
   - `ui/compiled/`: those files compiled to Python (`ui_*.py`). Generated: don't edit them by hand.
-- `cli/`: the command line (`python -m cli`): make and check quests from short JSON specs, import the game's maps and
-  make quest zones. Using it: `cli/README.md`; how it works (the game's file formats, the zone rules, what to do after
-  a game update): `cli/DEVELOPING.md`. Its map reading is in `core/unity.py`, `core/mapdata.py`, `core/navmesh.py` and
-  `core/zones.py` (no Qt).
+- `cli/`: the command line (`python -m cli`): make and check quests from short JSON specs, import the game's maps,
+  find places and buildings on them, make quest zones and package it all for WTT-CommonLib. Using it: `cli/README.md`;
+  how it works (the game's file formats, the zone rules, what to do after a game update): `cli/DEVELOPING.md`. Its map
+  reading is in `core/unity.py`, `core/mapdata.py`, `core/navmesh.py`, `core/zones.py`, `core/places.py` and
+  `core/buildings.py` (no Qt); `data/places.json` names places on the maps.
 - `tools/server_check/`: a .NET program that loads a quests file with the SPT server's own code (see `cli/DEVELOPING.md`).
 - `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source) and `schema/vanilla_profile.json`
   (from the base game's quests), and compile the Designer files.
