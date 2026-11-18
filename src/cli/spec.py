@@ -11,7 +11,7 @@ import copy
 
 from core import lookup
 from core.ids import is_id, new_id
-from core.mapdata import location_key
+from maps.mapdata import location_key
 from core.gamedata import location_ids
 from schema import assort as A
 from schema import choices, registry

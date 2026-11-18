@@ -3,28 +3,28 @@
 The game's files rarely use those names: the White Knight on Reserve is the scene objects Reserv_Base_PTOR2_* and a
 marker called white_horse, the Customs dorms are the scene custom_Obshezhitie. So a search looks in three places:
 
-- the list of named places in data/places.json, written by hand: a place's names, its map, where it is and the
+- the list of named places in maps/places.json, written by hand: a place's names, its map, where it is and the
   objects that anchor it in the game's files;
-- the map's areas (its scenes, see core.mapdata.scene_area);
-- the map's named objects (core.mapdata.ObjectIndex), grouped by where they are.
+- the map's areas (its scenes, see maps.mapdata.scene_area);
+- the map's named objects (maps.mapdata.ObjectIndex), grouped by where they are.
 
-Words are also tried as the other words data/places.json gives for them ("knight" -> horse, "dorms" ->
+Words are also tried as the other words maps/places.json gives for them ("knight" -> horse, "dorms" ->
 obshezhitie), as the game names things in transliterated Russian or by other words. No Qt.
 """
 
 import re
 import statistics
+from pathlib import Path
 
 from core import jsonio
-from core.paths import DATA_DIR
 
-PLACES_FILE = DATA_DIR / "places.json"
+PLACES_FILE = Path(__file__).with_name("places.json")
 CLUSTER = 20.0  # metres: objects that match a search and lie closer than this are one result
 SERVICE_SCENES = re.compile(r"(?i)light|sound")
 
 
 def load(path=None):
-	"""(synonyms {word: [other words]}, places [dict]) from data/places.json."""
+	"""(synonyms {word: [other words]}, places [dict]) from maps/places.json."""
 	data = jsonio.read_json(path or PLACES_FILE)
 	return {k.lower(): [w.lower() for w in v] for k, v in (data.get("synonyms") or {}).items()}, data.get("places") or []
 

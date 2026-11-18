@@ -10,7 +10,7 @@ import pytest
 from cli import main as cli_main
 from cli import spec as S
 from cli.workspace import Workspace
-from core import mapdata as M
+from maps import mapdata as M
 from core.settings import Settings
 
 BOLTS, ROUBLES, PRAPOR, MARKER = "57347c5b245977448d35f6e1", "5449016a4bdc2d6f028b456f", "54cb50c76803fa8b248b4571", "5991b51486f77447b112d44f"

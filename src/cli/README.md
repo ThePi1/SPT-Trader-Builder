@@ -1,7 +1,8 @@
 # Command line
 
 Make, change and check quests and quest zones without the window, using the same schema and checks as the app.
-Run from the `src` folder:
+Run from this repository's `src` folder (Python 3.11 with the packages in `src/requirements.txt`; PySide6 draws the
+map pictures, and `check --server` needs the .NET SDK):
 
     python -m cli [--project FILE] [--maps FOLDER] <command> ...
 
@@ -24,15 +25,47 @@ relative to it:
 	"trader": "Prapor",
 	"zones": "db/CustomQuestZones/new_zones.json",
 	"zone_files": ["db/CustomQuestZones"],
+	"references": ["db/CustomItems", "db/CustomQuests/y/Quests/quests.json"],
+	"language": "en",
 	"game": "I:/Games/SPT"
 }
 ```
 
 Only `quests` and `locale` are needed; a missing file is made when written. `assort` and `questassort` are needed for
 assort unlocks. `zones` is the file `zones make --write` adds to; `zone_files` (files or folders) are read for checks.
-`game` is the game's folder, for `maps import`; its `SPT_Runtime` folder is used by `check --server` (or give `"spt"`).
-The app's own settings (`data/settings.ini`: SPT database folder, language, new-quest icon and side) and reference
-files (`data/references.json`) apply as in the window.
+`references` are files and folders whose ids are looked up too, so their names work in specs and `find`: other
+traders' quests and text, item templates, WTT `CustomItems` files, trader `base.json` files, assorts, zone files.
+`game` is the game's folder: `maps import` reads it, names are looked up in its SPT database
+(`SPT_Runtime/SPT_Data/database`, or give `"database"`), and `check --server` uses its `SPT_Runtime` (or give `"spt"`).
+
+What isn't in the project file comes from the app's own settings (`data/settings.ini`: database folder, language,
+new-quest icon and side) and reference list (`data/references.json`), as in the window; with neither, names come from
+the copy of the SPT 4.0.13 database bundled with the program. `project show` says what a project uses. Done when it
+names the database and references you expect.
+
+## Using it on another project
+
+The tool stays in this repository; another project only needs project files pointing at its own files.
+
+1. **Write the project files**: `python -m cli project init --mod <the mod's folder> --out <folder> --game <game folder>`
+   finds the traders of a WTT-CommonLib mod (`db/CustomQuests/<trader id>/`), and for each one its quests, text and
+   quest locks, the mod's zone folder, its trader file and assort (a `*base.json` with the trader's id, and the
+   `*assort.json` beside it), and makes the other traders' quests, the mod's custom items and trader files references.
+   Read the plan, then add `--write`. Put the project files in the mod (`--out <mod>/questtools`, say) to keep paths
+   relative to it; elsewhere they are absolute. `--trader <id>` starts a project for a trader with no quests yet.
+2. **Check what it sees**: `TB_PROJECT=<project file> python -m cli project show`, then `quest list` and `check`. Done
+   when `project show` names the database and references you expect and `check` reports what you know of (warnings
+   about the base game's style are common in hand-written quests).
+3. **Work as below**, one trader's project at a time. The maps import (`data/maps`) is shared by every project.
+
+For the other project's agent, add to its `CLAUDE.md` or `AGENTS.md`:
+
+```markdown
+- To make, change or check quests, quest text or quest zones, use the SPT Trader Builder command line rather than
+  editing the JSON by hand: from `<path to SPT-Trader-Builder>/src`, run
+  `python -m cli --project <path to this mod>/questtools/project.<trader>.json <command>`.
+  Read `<path to SPT-Trader-Builder>/src/cli/README.md` first.
+```
 
 ## Workflow for a new quest
 
@@ -146,7 +179,7 @@ What the client does with each zone kind (from its code), which `check` enforces
 Placing a zone:
 
 1. **Find the place by the name players use**: `zones find "White Knight"` (or `--map Reserve`). It searches the named
-   places (`data/places.json`), the map's areas (named after its scenes, often transliterated Russian: Obshezhitie is
+   places (`maps/places.json`), the map's areas (named after its scenes, often transliterated Russian: Obshezhitie is
    the Customs dorms) and its objects, trying the words the game uses instead ("knight" is horse, "dorms" is
    obshezhitie). Each result has a `"next"` command. Done when one result is the place you want; if none is, try
    `zones areas --map ...` and `zones objects --map ... "<part of a name>"`.

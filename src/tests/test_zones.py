@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from core import geometry as G
-from core import mapdata as M
-from core import zones as Z
+from maps import geometry as G
+from maps import mapdata as M
+from maps import zones as Z
 from schema import registry, validate
 from schema.issues import ERROR, WARNING
 

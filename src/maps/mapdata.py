@@ -1,6 +1,6 @@
 """The maps' quest zones and floors, imported from the game's own files.
 
-``import_maps`` reads the game client's scenes (see core.unity) and writes three files per map into the maps folder:
+``import_maps`` reads the game client's scenes (see maps.unity) and writes three files per map into the maps folder:
 ``<location>.json`` with the quest zones the game has (their id, kind and box) and the map's areas (where its places,
 such as the dorms, are), ``<location>.navmesh.json.gz`` with the walkable floor (the navigation mesh), and
 ``<location>.objects.json.gz`` with every named object and where it is (for finding places by name). That data comes
@@ -15,10 +15,10 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from core import geometry as G
+from maps import geometry as G
 from core import jsonio
-from core import unity as U
-from core.navmesh import NavMesh, merge_tiles
+from maps import unity as U
+from maps.navmesh import NavMesh, merge_tiles
 from core.paths import DATA_DIR
 
 FORMAT = 1
@@ -277,7 +277,7 @@ def find_objects(game_dir, location, text, limit=50):
 
 
 def scene_navmesh(sf):
-	"""The largest navigation mesh in a scene's shared assets, as tiles (core.unity.NavTile), or []."""
+	"""The largest navigation mesh in a scene's shared assets, as tiles (maps.unity.NavTile), or []."""
 	meshes = sf.of_class(U.NAV_MESH_DATA)
 	if not meshes:
 		return []
@@ -420,7 +420,7 @@ class ObjectIndex:
 		return found
 
 	def inside(self, box, margin=0.0, names=None):
-		"""(name, scene, position) of the objects inside a box (core.geometry.Box)."""
+		"""(name, scene, position) of the objects inside a box (maps.geometry.Box)."""
 		(x0, y0, z0), (x1, y1, z1) = box.bounds()
 		for name, scene, (x, y, z) in self.rows(names):
 			if x0 - margin <= x <= x1 + margin and z0 - margin <= z <= z1 + margin and y0 - margin <= y <= y1 + margin:

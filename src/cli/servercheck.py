@@ -1,4 +1,4 @@
-"""Running tools/server_check (the SPT server's own code reading a quests file) from the command line: finding the
+"""Running cli/server_check (the SPT server's own code reading a quests file) from the command line: finding the
 SPT install's SPT_Runtime folder, running the tool with --json and turning its report into problems. Needs the .NET
 SDK (`dotnet`). See cli/DEVELOPING.md, "Checking files with the server's code"."""
 
@@ -8,7 +8,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-TOOL = Path(__file__).resolve().parents[1] / "tools" / "server_check"
+TOOL = Path(__file__).resolve().parent / "server_check"
 CORE_DLL = "SPTarkov.Server.Core.dll"
 
 

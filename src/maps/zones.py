@@ -1,7 +1,7 @@
 """Quest zones: the boxes on a map that conditions point at by id (Visit zone, Place marker, Leave items at
 location, Inside zone, Launch a flare).
 
-There are the game's own zones (imported from the game's files, see core.mapdata) and custom ones, which a mod adds
+There are the game's own zones (imported from the game's files, see maps.mapdata) and custom ones, which a mod adds
 with WTT-CommonLib's quest zone files (CustomQuestZones: a JSON list of zones, numbers written as text). This module
 reads and writes those files, knows which zone kinds each condition can use, checks quests and zone files, and
 makes new zones that sit on the floor. No Qt.
@@ -22,8 +22,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from core import jsonio
-from core import geometry as G
-from core.mapdata import FLAREZONE, LOCATIONS, PLACEITEM, SALVAGE, TRIGGER, VISIT, MapData, imported, location_key, maps_dir
+from maps import geometry as G
+from maps.mapdata import FLAREZONE, LOCATIONS, PLACEITEM, SALVAGE, TRIGGER, VISIT, MapData, imported, location_key, maps_dir
 from core.gamedata import location_ids  # (also used from here by the command line)
 from schema.issues import ERROR, WARNING, Issue
 
@@ -223,7 +223,7 @@ class ZoneIndex:
 		self.zones += list(zones)
 
 	def map(self, location):
-		"""The imported map (core.mapdata.MapData), read once."""
+		"""The imported map (maps.mapdata.MapData), read once."""
 		key = location_key(location) or location
 		if key not in self._maps:
 			self._maps[key] = MapData.load(key, self.maps_dir)

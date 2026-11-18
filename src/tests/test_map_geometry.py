@@ -4,9 +4,9 @@ import struct
 
 import pytest
 
-from core import geometry as G
-from core import unity as U
-from core.navmesh import NavMesh, merge_tiles
+from maps import geometry as G
+from maps import unity as U
+from maps.navmesh import NavMesh, merge_tiles
 
 
 # --- boxes ------------------------------------------------------------------------------------------------

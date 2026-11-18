@@ -13,8 +13,8 @@ import sys
 from pathlib import Path
 
 from core import lookup
-from core import mapdata as M
-from core import zones as Z
+from maps import mapdata as M
+from maps import zones as Z
 from core.jsonio import read_json, write_json
 from schema import assort as A
 from schema import choices, registry, validate
@@ -434,10 +434,67 @@ def cmd_check(args):
 	}
 	if report is not None:
 		summary["server"] = {k: report[k] for k in ("ok", "quests", "locale_entries", "runtime") if k in report}
+	sources = ws.sources()
+	summary["game_data"] = f"{sources['database']} (from {sources['database_from']})"
 	if not index.game_maps:
 		summary["note"] = "No maps imported, so zone ids that aren't in a zone file aren't checked: run `maps import`."
 	out({"summary": summary, "problems": found[: args.limit] if args.limit else found})
 	return 1 if args.strict and summary["errors"] else 0
+
+
+def cmd_project_init(args):
+	from cli import project as P
+
+	ws = _workspace(args)
+	try:
+		projects, notes = P.init(args.mod, args.out, args.language, args.game, ws.gamedata.trader_name, args.trader)
+	except (ValueError, OSError) as e:
+		raise CommandError(str(e)) from e
+	result = {"projects": [{"file": str(path), "config": config, "notes": n} for path, (config, n) in projects.items()], "notes": notes}
+	if args.write:
+		written, kept = [], []
+		for path, (config, _n) in projects.items():
+			if path.exists() and not args.replace:
+				kept.append(str(path))
+				continue
+			path.parent.mkdir(parents=True, exist_ok=True)
+			write_json(path, config)
+			written.append(str(path))
+		result["written"] = written
+		if kept:
+			result["kept"] = kept
+			result["note"] = "Project files already there were kept: add --replace to write them again."
+	else:
+		result["note"] = "Nothing was written: run it again with --write to write these project files."
+	out(result)
+
+
+def cmd_project_show(args):
+	from cli import servercheck
+
+	ws = _workspace(args)
+	files = {}
+	for key in ("quests", "locale", "assort", "questassort", "zones"):
+		path = ws.path(key)
+		if path is not None:
+			files[key] = {"path": str(path), "exists": path.is_file()}
+	refs = ws.references
+	refs.read_all()
+	kinds = {}
+	for ref in refs.files:
+		kinds[ref.kind or "unreadable"] = kinds.get(ref.kind or "unreadable", 0) + 1
+	index = ws.zone_index()
+	runtime = servercheck.find_runtime(ws)
+	result = {
+		"project": str(ws.project_path) if ws.project_path else None, "trader": ws.trader_id or None, "files": files,
+		**ws.sources(), "reference_kinds": kinds,
+		"zone_files": [str(p) for p in ws.zone_file_paths()], "maps": {"folder": str(index.maps_dir), "imported": index.game_maps},
+		"game": str(ws.path("game")) if ws.path("game") else None, "spt_runtime": str(runtime) if runtime else None,
+	}
+	unread = [str(ref.path) for ref in refs.files if ref.kind is None]
+	if unread:
+		result["unreadable_references"] = unread[:20]
+	out(result)
 
 
 def cmd_package(args):
@@ -624,7 +681,7 @@ def _imported(index, key):
 def _spot(args, index, key):
 	"""(x, z) from --at, or from --place (the best match of `zones find` on the map)."""
 	if getattr(args, "place", None):
-		from core import places as P
+		from maps import places as P
 
 		found = P.find(index, args.place, key, limit=1)
 		if not found:
@@ -644,7 +701,7 @@ def _next_step(found):
 
 
 def cmd_zones_find(args):
-	from core import places as P
+	from maps import places as P
 
 	ws, index = _index(args)
 	key = _map_of(args, ws) if args.map else None
@@ -665,7 +722,7 @@ def cmd_zones_find(args):
 
 
 def cmd_zones_building(args):
-	from core import buildings as B
+	from maps import buildings as B
 
 	ws, index = _index(args)
 	key = _map_of(args, ws)
@@ -680,7 +737,7 @@ def cmd_zones_building(args):
 		)
 	if args.picture:
 		from cli.render import render
-		from core import geometry as G
+		from maps import geometry as G
 
 		shown = list(index.on(key))
 		center, radius = (x, z), args.radius / 2
@@ -705,7 +762,7 @@ def cmd_zones_make(args):
 	yaw = args.yaw if args.yaw is not None else 0.0
 	building = None
 	if args.building:
-		from core import buildings as B
+		from maps import buildings as B
 
 		building = B.building_at(_imported(index, key), x, z, margin=args.margin)
 		if "zone" not in building:
@@ -771,7 +828,7 @@ def cmd_zones_check(args):
 
 def _covers(index, zone):
 	"""The rooms (named objects) inside a zone, and the floor heights it spans, for `zones check --rooms`."""
-	from core import buildings as B
+	from maps import buildings as B
 
 	if zone.location not in index.game_maps:
 		return {"note": f"{zone.location} isn't imported."}
@@ -897,6 +954,19 @@ def parser():
 	c.add_argument("--server", action="store_true", help="also load the saved quests and text with the SPT server's own code (needs dotnet)")
 	c.add_argument("--spt", help="for --server: the SPT install's SPT_Runtime folder, or the folder holding it")
 	c.set_defaults(run=cmd_check)
+
+	pr = sub.add_parser("project", help="write project files for a mod that has quests, or show what a project uses").add_subparsers(dest="action", required=True)
+	c = pr.add_parser("init", help="a project file per trader of a WTT-CommonLib mod (db/CustomQuests/<trader>/...)")
+	c.add_argument("--mod", required=True, help="the mod's folder (the one with db/)")
+	c.add_argument("--out", required=True, help="the folder to write the project files in")
+	c.add_argument("--language", default="en", help="the text file to work on (Locales/<language>.json)")
+	c.add_argument("--game", help="the game's folder, for maps, game data and the server check")
+	c.add_argument("--trader", help="also start a project for this trader id, which has no quests in the mod yet")
+	c.add_argument("--write", action="store_true")
+	c.add_argument("--replace", action="store_true", help="write over project files that are already there")
+	c.set_defaults(run=cmd_project_init)
+	c = pr.add_parser("show", help="the project's files, and where game data, names, references and maps come from")
+	c.set_defaults(run=cmd_project_show)
 
 	c = sub.add_parser("package", help="write the project's quests, text, locks and zones as a mod's db folder for WTT-CommonLib")
 	c.add_argument("--out", required=True, help="the mod's folder (db/CustomQuests and db/CustomQuestZones go in it)")

@@ -1,5 +1,5 @@
-"""Finding places by the names players use (core.places), the building at a spot (core.buildings), the imported
-maps' object index (core.mapdata.ObjectIndex), and the commands built on them. The maps are small made-up ones."""
+"""Finding places by the names players use (maps.places), the building at a spot (maps.buildings), the imported
+maps' object index (maps.mapdata.ObjectIndex), and the commands built on them. The maps are small made-up ones."""
 
 import gzip
 import json
@@ -7,12 +7,12 @@ import json
 import pytest
 
 from cli import main as cli_main
-from core import buildings as B
-from core import geometry as G
-from core import mapdata as M
-from core import places as P
-from core.navmesh import NavMesh
-from core.zones import ZoneIndex
+from maps import buildings as B
+from maps import geometry as G
+from maps import mapdata as M
+from maps import places as P
+from maps.navmesh import NavMesh
+from maps.zones import ZoneIndex
 
 CENTER, SIZE, YAW = (50.0, 50.0), (20.0, 30.0), 20.0
 
@@ -187,7 +187,7 @@ def test_coordinates_can_start_with_a_minus(capsys, tmp_path):
 
 
 def test_a_zone_on_stairs_reaches_down_the_whole_flight_only_when_asked(tmp_path):
-	from core import zones as Z
+	from maps import zones as Z
 
 	floors = [
 		[(0, 0, 0), (20, 0, 0), (20, 0, 10), (0, 0, 10)],  # the ground floor

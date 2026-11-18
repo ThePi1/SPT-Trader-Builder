@@ -5,7 +5,7 @@ than the real floor (it keeps about half a metre from walls) and leaves out spot
 jumping, so a zone a few metres wide is always checked by sampling, never one point. No Qt.
 """
 
-from core.geometry import add, point_in_polygon, rotate
+from maps.geometry import add, point_in_polygon, rotate
 
 CELL = 8.0  # metres: the size of the squares the polygons are filed under, for finding them quickly
 
@@ -110,7 +110,7 @@ def _plane(points):
 
 
 def merge_tiles(tiles):
-	"""One NavMesh from navmesh tiles (core.unity.NavTile): their vertices joined in one list."""
+	"""One NavMesh from navmesh tiles (maps.unity.NavTile): their vertices joined in one list."""
 	vertices, polygons = [], []
 	for tile in tiles:
 		base = len(vertices)

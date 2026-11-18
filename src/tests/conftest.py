@@ -29,7 +29,7 @@ def no_real_reference_files(tmp_path, monkeypatch):
 @pytest.fixture(autouse=True)
 def no_imported_maps(tmp_path, monkeypatch):
 	"""Nor are the maps imported on this computer (data/maps): every test starts with none."""
-	monkeypatch.setattr("core.mapdata.MAPS_DIR", tmp_path / "no_maps")
+	monkeypatch.setattr("maps.mapdata.MAPS_DIR", tmp_path / "no_maps")
 
 
 @pytest.fixture(scope="session")

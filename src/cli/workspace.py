@@ -11,12 +11,18 @@ A project file is JSON. Paths are relative to the project file's folder:
         "zones": "db/CustomQuestZones/new.json", the custom zone file new zones go into (optional)
         "zone_files": ["db/CustomQuestZones"],   more custom zone files or folders, for checking (optional)
         "game": "I:/Games/SPT",                  the game's folder, for importing maps (optional)
-        "spt": "I:/Games/SPT/SPT_Runtime"        the SPT server's folder, for `check --server` (optional; default:
+        "spt": "I:/Games/SPT/SPT_Runtime",       the SPT server's folder, for `check --server` (optional; default:
                                                  the game folder's SPT_Runtime)
+        "database": "I:/Games/SPT/.../database", the SPT_Data/database to look names up in (optional; default: the
+                                                 game folder's, else the app's setting, else the bundled copy)
+        "language": "en",                        the language of names (optional; default: the app's setting)
+        "references": ["db/CustomItems"]         files and folders whose ids are looked up too: other traders' quests,
+                                                 custom items, trader files (optional; default: the app's list)
     }
 
-The program's own settings (data/settings.ini: the SPT database folder, the language, the defaults for new quests)
-and reference files (data/references.json) are used as the app uses them. No Qt.
+`project init` writes these for a WTT-CommonLib mod. Without the last three, the app's own settings
+(data/settings.ini) and reference list (data/references.json) are used as the app uses them; the defaults for new
+quests (icon, side) always come from the app's settings. `sources()` says which were used. No Qt.
 """
 
 from pathlib import Path
@@ -28,10 +34,13 @@ from core.library import Library
 from core.paths import BUNDLED_DATABASE_DIR
 from core.references import References
 from core.settings import Settings
-from core.zones import ZoneIndex
+from maps.zones import ZoneIndex
 from schema import assort as assort_schema
 
-KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_files", "game", "spt")
+KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_files", "game", "spt", "database", "language", "references")
+# Where an SPT install keeps its database, under the game folder (SPT 4.1, then 4.0)
+DATABASE_IN_GAME = ("SPT_Runtime/SPT_Data/database", "SPT_Data/database", "SPT/SPT_Data/database")
+BUNDLED = "the copy bundled with the program (SPT 4.0.13)"
 
 
 class ProjectError(Exception):
@@ -53,9 +62,16 @@ class Workspace:
 			if unknown:
 				raise ProjectError(f"Unknown keys in the project file: {', '.join(unknown)} (it can have {', '.join(KEYS)}).")
 		self.settings = settings if settings is not None else Settings.load()
-		database = self.settings.resolve("database_folder")
-		self.gamedata = GameData(database, self.settings.language, BUNDLED_DATABASE_DIR if BUNDLED_DATABASE_DIR.is_dir() else None)
-		self.references = References(language=self.settings.language)
+		self.language = self.config.get("language") or self.settings.language
+		self.database, self.database_from = self._database()
+		self.gamedata = GameData(self.database, self.language, BUNDLED_DATABASE_DIR if BUNDLED_DATABASE_DIR.is_dir() else None)
+		listed = self.config.get("references")
+		if listed is not None:
+			if not isinstance(listed, list) or not all(isinstance(p, str) for p in listed):
+				raise ProjectError("\"references\" in the project file must be a list of files and folders.")
+			self.references = References.of([self._full(p) for p in listed], self.language)
+		else:
+			self.references = References(language=self.language)
 		self.gamedata.references = self.references
 		self.library = Library()
 		self.maps_dir = maps_dir
@@ -71,8 +87,37 @@ class Workspace:
 		value = self.config.get(key)
 		if not value or not isinstance(value, str):
 			return None
+		return self._full(value)
+
+	def _full(self, value):
 		path = Path(value)
 		return path if path.is_absolute() or self.project_path is None else self.project_path.parent / path
+
+	def _database(self):
+		"""(the SPT_Data/database folder names are looked up in or None for the bundled copy, where that came from)."""
+		given = self.path("database")
+		if given is not None:
+			if not given.is_dir():
+				raise ProjectError(f"\"database\" in the project file isn't a folder: {given}")
+			return given, "the project file"
+		game = self.path("game")
+		for sub in DATABASE_IN_GAME if game is not None else ():
+			if (game / sub).is_dir():
+				return game / sub, "the game folder"
+		app = self.settings.resolve("database_folder")
+		if app is not None:
+			return app, "the app's settings (data/settings.ini)"
+		return None, BUNDLED
+
+	def sources(self):
+		"""Where the workspace's game data, names and maps come from, for `project show` and the checks."""
+		refs = self.references
+		return {
+			"database": str(self.database) if self.database else "bundled", "database_from": self.database_from,
+			"language": self.language, "language_from": "the project file" if self.config.get("language") else "the app's settings (data/settings.ini)",
+			"references": [str(ref.path) for ref in refs.files],
+			"references_from": "the project file" if refs.path is None else f"the app's reference list ({refs.path})",
+		}
 
 	def _open(self, key, empty):
 		path = self.path(key)

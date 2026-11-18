@@ -318,10 +318,10 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.statusBar().showMessage("Reference files read again.", 8000)
 
 	def zone_index(self):
-		"""The quest zones known: the game's (when the maps have been imported, see core.mapdata) and the zone files among
+		"""The quest zones known: the game's (when the maps have been imported, see maps.mapdata) and the zone files among
 		the references. None when there are neither, so the zones aren't checked."""
 		if self._zone_index is None:
-			from core import zones
+			from maps import zones
 
 			index = zones.ZoneIndex()
 			for records, name in self.references.zone_files():

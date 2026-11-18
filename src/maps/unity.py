@@ -12,7 +12,7 @@ import struct
 from collections import namedtuple
 from pathlib import Path
 
-from core import geometry as G
+from maps import geometry as G
 
 # Unity class ids
 GAME_OBJECT, TRANSFORM, BOX_COLLIDER, MONO_BEHAVIOUR, MONO_SCRIPT, BUILD_SETTINGS, NAV_MESH_DATA, RECT_TRANSFORM = 1, 4, 65, 114, 115, 141, 238, 224

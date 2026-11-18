@@ -37,7 +37,7 @@ def _profile_name(group, kind):
 
 def validate_quests(quests, locale=None, gamedata=None, zones=None):
 	"""Every problem in a quests file ({quest id: quest}). locale ({key: text}) adds the text checks.
-	gamedata (core.gamedata.GameData) adds checks against the real traders, items and maps. zones (core.zones.ZoneIndex)
+	gamedata (core.gamedata.GameData) adds checks against the real traders, items and maps. zones (maps.zones.ZoneIndex)
 	adds checks of the zones the conditions point at."""
 	issues = []
 	if not isinstance(quests, dict):
@@ -47,7 +47,7 @@ def validate_quests(quests, locale=None, gamedata=None, zones=None):
 	if locale is not None:
 		issues += validate_quest_locale(quests, locale)
 	if zones is not None:
-		from core.zones import zone_issues
+		from maps.zones import zone_issues
 
 		issues += zone_issues(quests, zones)
 	return issues

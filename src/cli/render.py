@@ -36,8 +36,8 @@ def _height_colour(h, low, high):
 def render(path, navmesh, zones, center, radius=40.0, size=900, floor=None, highlight=(), labels=True, areas=()):
 	"""Draw the square of 2 * radius metres around center (x, z) to the PNG at path.
 
-	floor (a height) shows only the floor within 2.5 m of it, for one storey of a building; zones are core.zones.Zone;
-	highlight is ids drawn thicker (a zone being made or checked); areas are core.mapdata areas, outlined."""
+	floor (a height) shows only the floor within 2.5 m of it, for one storey of a building; zones are maps.zones.Zone;
+	highlight is ids drawn thicker (a zone being made or checked); areas are maps.mapdata areas, outlined."""
 	_app()
 	cx, cz = center
 	scale = size / (2 * radius)

@@ -1,6 +1,6 @@
 """The building at a spot on an imported map: its outline, storeys and rooms, and a quest zone that covers all of it.
 
-Worked out from two things the map import keeps (core.mapdata):
+Worked out from two things the map import keeps (maps.mapdata):
 
 - the floor map (the bots' navigation mesh). A building's upper storeys and roofs are floor well above the ground
   around it, so the connected patch of such floor nearest the spot is the building, and the smallest turned rectangle
@@ -15,7 +15,7 @@ import math
 import re
 import statistics
 
-from core.zones import SINK
+from maps.zones import SINK
 
 UP = 2.0  # metres above the ground around a building: floor this high is an upper storey or a roof
 STEP = 0.75  # metres between the floor samples
@@ -195,7 +195,7 @@ def named_floors(rooms):
 
 
 def building_at(mapdata, x, z, radius=40.0, margin=1.0):
-	"""What is known of the building at (x, z) on an imported map (core.mapdata.MapData), as a dict: its outline
+	"""What is known of the building at (x, z) on an imported map (maps.mapdata.MapData), as a dict: its outline
 	(center, size, yaw, corners), the ground around it, its storeys (from the floor map and from named rooms), its rooms,
 	and a zone that covers every storey with `margin` metres to spare (as `zones make` arguments)."""
 	navmesh, objects = mapdata.navmesh, mapdata.objects
@@ -261,7 +261,7 @@ def building_at(mapdata, x, z, radius=40.0, margin=1.0):
 
 
 def rooms_covered(objects, box):
-	"""The room-like objects inside a zone's box (core.geometry.Box): [{name, floor}]."""
+	"""The room-like objects inside a zone's box (maps.geometry.Box): [{name, floor}]."""
 	if objects is None:
 		return None
 	found = {}

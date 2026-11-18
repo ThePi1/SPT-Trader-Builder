@@ -5,24 +5,43 @@ How the code behind `python -m cli` works, what it relies on in the game, and ho
 
 ## Layout
 
+Two folders hold this part of the program, apart from the app's window:
+
+```
+src/
+  cli/          the command line, its docs, and server_check (.NET)
+  maps/         the game's maps and quest zones: map import, zones and their checks, places, buildings
+  core/, schema/   shared with the app: quest schema and checks, game data, references, documents, settings
+  ui/, main.py     the app's window only
+  data/maps/    the imported maps (made by `maps import`, git-ignored)
+```
+
+Imports only go one way: `cli` uses `maps`, `core` and `schema`; `maps` uses `core` and `schema`; neither imports `ui`.
+The app uses `maps.zones` for its zone checks (`schema/validate`, `core/references`, `ui/main_window`). The command
+line deliberately builds and checks quests with the app's own `schema` (`registry`, `validate`, `locale`, `assort`),
+so both report the same problems: those modules are shared, not part of either side.
+
 | Module | What it does |
 | --- | --- |
 | `cli/main.py` | The commands (argparse). Each `cmd_*` prints JSON and returns an exit code. |
-| `cli/workspace.py` | `Workspace`: the project file's documents (`core.documents.Document`), the app's settings, game data, references and saved composite items, and the zone index. |
+| `cli/workspace.py` | `Workspace`: the project file's documents (`core.documents.Document`), game data (`database`, else the game folder's, else the app's setting, else the bundled copy), language, references (the project's list, else the app's), the app's saved composite items, and the zone index. `sources()` says which were used. |
+| `cli/project.py` | `project init`: project files per trader of a WTT-CommonLib mod; finds trader `base.json` files and the assort beside them. |
 | `cli/spec.py` | Quest specs: `build_quest` (spec to quest JSON), `describe_quest` (quest JSON to spec), `Resolver` (names to ids), `apply_quest` (into the workspace). |
 | `cli/render.py` | Top-down PNGs of a map (Qt, off screen). |
 | `cli/usage.py` | `usage`: the values the base game's quests give a field, with worked-out fields (`PSEUDO`: a counter's `steps`, a reward's `money`). |
-| `cli/servercheck.py` | `check --server`: finds `SPT_Runtime`, runs `tools/server_check --json`, turns its report into problems. |
+| `cli/servercheck.py` | `check --server`: finds `SPT_Runtime`, runs `cli/server_check --json`, turns its report into problems. |
 | `cli/package.py` | `package`: the project's files in WTT-CommonLib's folder layout. |
-| `core/unity.py` | A read-only reader of the game's Unity files: serialized files, the objects the import needs, navmesh tiles. |
-| `core/mapdata.py` | `import_maps` (game files to `data/maps`), `MapData` (reading it back), `ObjectIndex` (a map's named objects), `LOCATIONS` (which scenes make up each map), `find_objects` (live). |
-| `core/navmesh.py` | `NavMesh`: floor heights at a point, polygons near an area, sampling a box. |
-| `core/geometry.py` | Vectors, quaternions, `Box` (an oriented box: contains, overlaps, footprint). |
-| `core/zones.py` | `Zone`, `ZoneIndex`, the WTT zone file format, which zone kinds each condition takes (`ZONE_FIELDS`), the quest and zone checks, `make_zone`. |
-| `core/places.py` | `zones find`: places by the names players use, from `data/places.json`, the areas and the object index. |
-| `core/buildings.py` | `zones building`, `make --building`, `check --rooms`: a building's outline, storeys and rooms. |
-| `data/places.json` | Hand-written: other words for search words (`synonyms`) and named places with their anchors (`places`). |
-| `tools/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
+| `maps/unity.py` | A read-only reader of the game's Unity files: serialized files, the objects the import needs, navmesh tiles. |
+| `maps/mapdata.py` | `import_maps` (game files to `data/maps`), `MapData` (reading it back), `ObjectIndex` (a map's named objects), `LOCATIONS` (which scenes make up each map), `find_objects` (live). |
+| `maps/navmesh.py` | `NavMesh`: floor heights at a point, polygons near an area, sampling a box. |
+| `maps/geometry.py` | Vectors, quaternions, `Box` (an oriented box: contains, overlaps, footprint). |
+| `maps/zones.py` | `Zone`, `ZoneIndex`, the WTT zone file format, which zone kinds each condition takes (`ZONE_FIELDS`), the quest and zone checks, `make_zone`. |
+| `maps/places.py` | `zones find`: places by the names players use, from `maps/places.json`, the areas and the object index. |
+| `maps/buildings.py` | `zones building`, `make --building`, `check --rooms`: a building's outline, storeys and rooms. |
+| `maps/places.json` | Hand-written: other words for search words (`synonyms`) and named places with their anchors (`places`). |
+| `cli/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
+
+References are `core/references.References`: the app's list (`data/references.json`), or `References.of(paths)` for a project's list (kept in no file, never saved). Besides quests, locale, assorts, item templates, trader files and zone files, it reads WTT-CommonLib `CustomItems` files (`CUSTOM_ITEMS`: entries with `itemTplToClone`, named from their `locales`).
 
 The app uses the same pieces: `schema/validate.validate_quests(..., zones=)` adds the zone checks, `MainWindow.zone_index()` builds the index (imported maps plus zone files among the references, rebuilt when the references change), and quest zone files are a reference kind (`core/references.ZONES`).
 
@@ -53,11 +72,11 @@ The app uses the same pieces: `schema/validate.validate_quests(..., zones=)` add
 
 **The invariant.** `build_quest(describe_quest(q)) == q` for every base-game quest, enforced by `test_every_vanilla_quest_is_described_and_built_again_unchanged`. That is what makes `quest show` then `quest update` safe: only the edit changes. A change to either side must keep that test passing.
 
-## The map import (`core/unity.py`, `core/mapdata.py`)
+## The map import (`maps/unity.py`, `maps/mapdata.py`)
 
 The maps are the game's built-in scenes. Scene N of the build is the file `EscapeFromTarkov_Data/levelN`; its assets (meshes, the navmesh) are in `sharedassetsN.assets`. The scene list is the first field of `BuildSettings` (class 141) in `globalgamemanagers`.
 
-**File format.** Unity 2022.3 serialized files, format 22, *without type trees*, so every object layout is written out by hand in `core/unity.py`. Header: big-endian `u32 metadataSize, fileSize, version, dataOffset`, an endianness byte, 3 reserved bytes, then (format 22) `u32 metadataSize, i64 fileSize, i64 dataOffset, i64 unused`. Metadata (little-endian): Unity version string, platform, type-tree flag (must be 0), types (`classId, stripped, scriptIndex`, a 16-byte script hash for MonoBehaviours, a 16-byte type hash), objects (aligned `pathId i64, start i64, size u32, typeIndex i32`), scripts (`fileIndex, pathId`), externals (file names; file index n means `externals[n-1]`). Strings are length-prefixed and padded to 4 bytes; references are `(fileIndex i32, pathId i64)`.
+**File format.** Unity 2022.3 serialized files, format 22, *without type trees*, so every object layout is written out by hand in `maps/unity.py`. Header: big-endian `u32 metadataSize, fileSize, version, dataOffset`, an endianness byte, 3 reserved bytes, then (format 22) `u32 metadataSize, i64 fileSize, i64 dataOffset, i64 unused`. Metadata (little-endian): Unity version string, platform, type-tree flag (must be 0), types (`classId, stripped, scriptIndex`, a 16-byte script hash for MonoBehaviours, a 16-byte type hash), objects (aligned `pathId i64, start i64, size u32, typeIndex i32`), scripts (`fileIndex, pathId`), externals (file names; file index n means `externals[n-1]`). Strings are length-prefixed and padded to 4 bytes; references are `(fileIndex i32, pathId i64)`.
 
 **Objects read**, with their class ids: GameObject 1, Transform 4 (and RectTransform 224), BoxCollider 65, MonoBehaviour 114 (only its common start; the reader is left at the script's own fields), MonoScript 115 (for the class name), BuildSettings 141, NavMeshData 238. One quirk found by dumping raw bytes: a 2022.3 BoxCollider has `IsTrigger, ProvidesContacts` in one aligned block and `Enabled` in the next, so the size and centre start 8 bytes after the layer fields. `TransformCache.world` composes parent transforms (rotation, scaled position, lossy scale).
 
@@ -73,9 +92,9 @@ The maps are the game's built-in scenes. Scene N of the build is the file `Escap
 
 **Output.** `data/maps/<location>.json` (zones, areas; small, read by the app's checks), `<location>.navmesh.json.gz` (read only when a floor is needed) and `<location>.objects.json.gz` (`{format, scenes, names, objects: flat [name index, scene index, x, y, z in cm, ...]}`, read only when objects are searched). `FORMAT` is stored in each; bump it when the records change, and `MapData.load` refuses old files with "import the maps again". A map imported before objects were indexed has no objects file: `MapData.objects` is None and the commands say to import again. The import takes about two minutes for every map. The data comes from the game, so `data/maps/` is git-ignored and never shipped.
 
-## Places and buildings (`core/places.py`, `core/buildings.py`)
+## Places and buildings (`maps/places.py`, `maps/buildings.py`)
 
-**Places.** The game's files rarely use players' names: the White Knight on Reserve is the objects `Reserv_Base_PTOR2_*`, its sound rooms `rem_block_01_*` and a marker `white_horse` (in `Reserve_Base_Scripts`, beside `white_bishop`, `black_pawn`, ...); Reserve's chess signs are `reserve_sign_chess_horse` (knight), `_elephant` (bishop), `_ferz` (queen), `_rook`, `_pawn`. `find` tries each search word as itself and as its `synonyms`, then ranks: named places (`data/places.json`), areas, then groups of matching objects within 20 m (whole-word matches and short names first; objects at the origin are scene folders and are skipped). A named place's `at` is checked by hand; its `objects` anchor shows it is still in the game (`anchors`, or a warning). Add a place only once it is checked, and say how in its note.
+**Places.** The game's files rarely use players' names: the White Knight on Reserve is the objects `Reserv_Base_PTOR2_*`, its sound rooms `rem_block_01_*` and a marker `white_horse` (in `Reserve_Base_Scripts`, beside `white_bishop`, `black_pawn`, ...); Reserve's chess signs are `reserve_sign_chess_horse` (knight), `_elephant` (bishop), `_ferz` (queen), `_rook`, `_pawn`. `find` tries each search word as itself and as its `synonyms`, then ranks: named places (`maps/places.json`), areas, then groups of matching objects within 20 m (whole-word matches and short names first; objects at the origin are scene folders and are skipped). A named place's `at` is checked by hand; its `objects` anchor shows it is still in the game (`anchors`, or a warning). Add a place only once it is checked, and say how in its note.
 
 **Buildings.** Walls aren't in the import: a probe of the White Knight's scene found its BoxColliders are doors and props, the walls being mesh colliders. So `building_at` works from the floor map and the objects:
 
@@ -98,7 +117,7 @@ From the client (`Assembly-CSharp`, readable in the 4.1.6 decompile):
 
 From WTT-CommonLib (`WTTClientCommonLib.Services.QuestZones`): a zone is a new object with a trigger BoxCollider of size 1, positioned at `Position`, turned by `Rotation`, scaled by `Scale` (so Scale is the box size), numbers parsed from strings; `ZoneLocation` is compared with the raid's map id ignoring case. `visit` is an ExperienceTrigger, `placeitem` a PlaceItemTrigger, `botkillzone` a TriggerWithId, `flarezone` a `ZoneFlareTrigger` (a TriggerWithId that calls the base, so it counts as inside) with a `FlareShootDetectorZone`, `salvage` a `SalvageItemTrigger`.
 
-`ZONE_FIELDS` in `core/zones.py` encodes these per condition. A zone of the wrong kind is an error (the condition can't be done); an unknown id is a warning only when maps are imported (it may come from a file the program isn't told about).
+`ZONE_FIELDS` in `maps/zones.py` encodes these per condition. A zone of the wrong kind is an error (the condition can't be done); an unknown id is a warning only when maps are imported (it may come from a file the program isn't told about).
 
 **Floor checks are warnings only.** A trigger fires when the player's body touches the box, so a box is reachable when a floor lies between its bottom minus a player's height and its top. The navmesh leaves out rooms bots never enter, upper floors and crate tops: 20 boxes of the game's own zones are metres from any floor it has. `floor_report` therefore never returns errors.
 
@@ -112,9 +131,9 @@ From WTT-CommonLib (`WTTClientCommonLib.Services.QuestZones`): a zone is a new o
 
 ## Checking files with the server's code
 
-`tools/server_check` loads a quests file the way the SPT 4.1 server does, using the server's DLLs from an install (it targets .NET 10, as SPT 4.1 does):
+`cli/server_check` loads a quests file the way the SPT 4.1 server does, using the server's DLLs from an install (it targets .NET 10, as SPT 4.1 does):
 
-    cd src/tools/server_check
+    cd src/cli/server_check
     dotnet run -c Release -p:SptRuntime="<SPT install>\SPT_Runtime" -- <quests.json> [<en.json>]
 
 (or set the `SPT_RUNTIME` environment variable). It deserializes into `Dictionary<MongoId, Quest>` with the server's `JsonUtil` and converters; a bad id, enum value or missing required field fails there, as it would on server start. It then writes the quests back with the server's settings and compares, and lists keys no model has: the shipped server DLL gives every model an `ExtensionData` property (a Mono.Cecil patch at build time), which keeps unknown keys without any code reading them. The server's own 558 quests come out clean, which is the baseline.
@@ -132,6 +151,7 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - `tests/test_map_geometry.py`: boxes, the navmesh, tile parsing, and the Unity layouts on a serialized file built in the test (`_serialized`).
 - `tests/test_zones.py`: zone files, the rules, the checks, `make_zone` (on small maps written by `_map`), and a live import of Labyrinth.
 - `tests/test_cli.py`: the vanilla round trip, every command, shorthands, the money default, `usage`, `package`, and the server-free parts of `maps verify` and `check --server`.
+- `tests/test_projects.py`: `project init` on a made-up WTT mod, a project's own game data, language and references, WTT custom items, `project show`.
 - `tests/test_places_and_buildings.py`: the object index, `zones find`, and the building at a spot on a made-up map (a building turned 20 degrees with a storey, a roof, a tunnel under it and named rooms), through the commands too.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 
@@ -139,5 +159,5 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 
 - The navmesh is the only floor information and there is none for walls (MeshColliders would need Mesh parsing): building outlines come from upper floors, so a building bots never walk upstairs can't be outlined, and one on a slope may be confused with the hill.
 - Areas are a heuristic named after scenes, often in transliterated Russian. Room names are a heuristic too: each map names its rooms its own way.
-- `data/places.json` names only places that were checked (some of Reserve's so far).
+- `maps/places.json` names only places that were checked (some of Reserve's so far).
 - The game client reading a quest isn't checked beyond matching the base game's shapes, and WTT-CommonLib's quest loader isn't checked.

@@ -13,7 +13,7 @@ CreateCustomQuests and CreateCustomQuestZones. No Qt.
 
 from pathlib import Path
 
-from core import zones as Z
+from maps import zones as Z
 from schema import assort as A
 from schema import locale as L
 
