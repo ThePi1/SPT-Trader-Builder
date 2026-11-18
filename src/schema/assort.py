@@ -18,7 +18,7 @@ from schema.issues import ERROR, WARNING, Issue
 ROOT = "hideout"
 QUEST_LOCKS = ("started", "success", "fail")
 LEVELS = (1, 2, 3, 4)
-MONEY = {"roubles": "5449016a4bdc2d6f028b456f", "dollars": "5696686a4bdc2d3b5c8b4568", "euros": "569668774bdc2da2298b4568"}
+MONEY = {"roubles": "5449016a4bdc2d6f028b456f", "dollars": "5696686a4bdc2da3298b456a", "euros": "569668774bdc2da2298b4568"}
 
 
 def is_root(part):
