@@ -8,3 +8,5 @@ src/spt_trader_builder.log*
 src/dist/
 src/build/
 src/data/maps/
+src/tools/server_check/bin/
+src/tools/server_check/obj/

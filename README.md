@@ -71,6 +71,11 @@ The files are built to be compatible with vanilla SPT - but you will need to cre
 
 The assumption is that if you're here, you probably know how to use these files - but more detail is planned to be added on this later.
 
+## Command line
+
+Quests can also be made and checked from the command line, from short JSON descriptions, and quest zones can be placed
+using the game's own maps. See [src/cli/README.md](src/cli/README.md).
+
 ## Settings
 
 Open **Settings > Settings...** to change:

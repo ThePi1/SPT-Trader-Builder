@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Loads quest files with the SPT server's own code, built against an SPT 4.1 install's SPT_Runtime folder.
+    How to run it: see cli/DEVELOPING.md, "Checking files with the server's code".
+    SPT 4.1 targets .NET 10; another SPT version may need another TargetFramework.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SptRuntime Condition="'$(SptRuntime)' == ''">$(SPT_RUNTIME)</SptRuntime>
+  </PropertyGroup>
+  <Target Name="NeedSptRuntime" BeforeTargets="ResolveAssemblyReferences" Condition="'$(SptRuntime)' == '' Or !Exists('$(SptRuntime)\SPTarkov.Server.Core.dll')">
+    <Error Text="Set SptRuntime to an SPT install's SPT_Runtime folder (the one with SPTarkov.Server.Core.dll): dotnet run -p:SptRuntime=&quot;...\SPT_Runtime&quot; -- quests.json, or set the SPT_RUNTIME environment variable." />
+  </Target>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Reference Include="$(SptRuntime)\SPTarkov.Server.Core.dll" />
+    <Reference Include="$(SptRuntime)\SPTarkov.Common.dll" />
+    <Reference Include="$(SptRuntime)\SPTarkov.DI.dll" />
+    <Reference Include="$(SptRuntime)\SPTarkov.Reflection.dll" />
+    <Reference Include="$(SptRuntime)\SemanticVersioning.dll" />
+    <Reference Include="$(SptRuntime)\ZLinq.dll" />
+    <Reference Include="$(SptRuntime)\FastCloner.dll" />
+    <Reference Include="$(SptRuntime)\System.IO.Hashing.dll" />
+  </ItemGroup>
+</Project>
