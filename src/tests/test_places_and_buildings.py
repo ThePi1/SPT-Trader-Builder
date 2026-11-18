@@ -184,3 +184,33 @@ def test_coordinates_can_start_with_a_minus(capsys, tmp_path):
 	assert code == 0 and result["x"] == -5.0 and result["floors"] == [1.0]
 	code, result = run(capsys, "--maps", maps, "zones", "render", "--map", "Reserve", "--at", "-5.5,-5", "--radius", "5", "--out", tmp_path / "r.png")
 	assert code == 0 and result["center"] == [-5.5, -5.0]
+
+
+def test_a_zone_on_stairs_reaches_down_the_whole_flight_only_when_asked(tmp_path):
+	from core import zones as Z
+
+	floors = [
+		[(0, 0, 0), (20, 0, 0), (20, 0, 10), (0, 0, 10)],  # the ground floor
+		[(5, 0, 10), (7, 0, 10), (7, -3, 16), (5, -3, 16)],  # stairs down
+		[(0, -3, 16), (20, -3, 16), (20, -3, 26), (0, -3, 26)],  # the basement
+		[(10, 3.5, 0), (20, 3.5, 0), (20, 3.5, 10), (10, 3.5, 10)],  # a storey above part of the ground floor
+	]
+	index = ZoneIndex(_write_map(tmp_path / "maps", "bigmap", floors, objects=None))
+	_record, plain, notes = Z.make_zone(index, "stairs", "bigmap", "visit", 6, 13, None, (1.6, 5, 7))
+	assert plain.box.center[1] - 2.5 == pytest.approx(-1.5 - Z.SINK) and "--slope" in notes[-1]
+	_record, sloped, notes = Z.make_zone(index, "stairs", "bigmap", "visit", 6, 13, None, (1.6, 5, 7), slope=True)
+	assert sloped.box.center[1] - 2.5 == pytest.approx(-3 - Z.SINK) and "from -3.00 to 0.00 m" in notes[-1]
+	_record, upstairs, notes = Z.make_zone(index, "room", "bigmap", "visit", 15, 5, 3.5, (4, 3, 4))
+	assert upstairs.box.center[1] - 1.5 == pytest.approx(3.5 - Z.SINK) and len(notes) == 1  # (the storey below isn't part of its walk)
+
+
+def test_objects_in_a_scene_named_after_the_place_come_before_lighting_groups(tmp_path):
+	folder = _write_map(tmp_path / "maps", "bigmap", objects=None)
+	objects = {("AZS_old", 228, -14, -57): ("custom_Light", (228.0, -14.0, -57.0))}
+	for i in range(6):
+		objects[(f"P.ZoneOldAZS Patrol {i}", 315 + i, 1, -171)] = ("custom_AZS_old", (315.0 + i, 1.0, -171.0))
+	M._write_objects(folder / f"bigmap{M.OBJECTS_SUFFIX}", objects)
+	places = tmp_path / "places.json"
+	places.write_text(json.dumps({"synonyms": {"gas station": ["azs"]}, "places": []}), encoding="utf-8")
+	found = P.find(ZoneIndex(folder), "old gas station", path=places)
+	assert [f["scenes"] for f in found] == [["custom_AZS_old"], ["custom_Light"]]

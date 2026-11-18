@@ -192,7 +192,7 @@ def scene_zones(sf, scripts, scene):
 # Words in the names of the scenes that hold a map's lighting, sound, bots and so on rather than a place
 _NOT_AREAS = {
 	"ai", "high", "light", "sound", "culling", "scripts", "design", "designmain", "designstuff", "stuff", "terrain", "background",
-	"multiscene", "quests", "loot", "levelborders", "borders", "old", "combined", "portals",
+	"multiscene", "quests", "loot", "levelborders", "borders", "combined", "portals",  # (not "old": custom_AZS_old is the old gas station)
 }
 
 

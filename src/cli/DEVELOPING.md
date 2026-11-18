@@ -102,6 +102,8 @@ From WTT-CommonLib (`WTTClientCommonLib.Services.QuestZones`): a zone is a new o
 
 **Floor checks are warnings only.** A trigger fires when the player's body touches the box, so a box is reachable when a floor lies between its bottom minus a player's height and its top. The navmesh leaves out rooms bots never enter, upper floors and crate tops: 20 boxes of the game's own zones are metres from any floor it has. `floor_report` therefore never returns errors.
 
+**Slopes.** A new zone's bottom sits `SINK` below the floor at its middle, which on stairs is halfway down the flight. `walkable_span` follows the floor from there across the zone's footprint, sample to sample (0.5 m), up or down less than `STEP_DOWN` (1.6 m): the floor map draws stairs in coarse steps (the old gas station's on Customs has a 1.47 m step), but storeys are further apart. `make_zone(slope=True)` (`zones make --slope`) puts the bottom at the lowest floor of that walk; without it a note says when the walk goes below the zone. It is opt-in: a room zone beside a stairwell would otherwise reach down to the storey below.
+
 ## After a game update
 
 1. `python -m cli maps import "<game folder>"`. A `FormatError` means the Unity version or a layout changed: dump the failing object's bytes (`SerializedFile.reader`) and re-check the layout, as was done for BoxCollider.

@@ -20,6 +20,7 @@ from core.paths import DATA_DIR
 
 PLACES_FILE = DATA_DIR / "places.json"
 CLUSTER = 20.0  # metres: objects that match a search and lie closer than this are one result
+SERVICE_SCENES = re.compile(r"(?i)light|sound")
 
 
 def load(path=None):
@@ -139,9 +140,15 @@ def _object_clusters(objects, search, key):
 	results = []
 	for score, members in clusters:
 		names = list(dict.fromkeys(n for n, _s, _p in members))
+		scenes = list(dict.fromkeys(s for _n, s, _p in members))
 		at = [round(statistics.median(p[i] for _n, _s, p in members), 1) for i in range(3)]
 		# whole-word matches first, then the fewer and shorter names (a marker called white_horse beats lamp posts)
 		rank = 50 + score * 10 - min(len(_tokens(n)) for n in names)
+		if any(matches(s, search)[0] for s in scenes):
+			rank += 25  # (objects of a scene named after the search, such as custom_AZS_old: the place itself)
+		if all(SERVICE_SCENES.search(s) for s in scenes):
+			rank -= 15  # (a lighting or sound scene's groups are named after places, but not always where they are)
+		rank += min(8, len(members) // 3)
 		results.append((rank, {
 			"kind": "objects", "map": key, "at": at, "count": len(members), "names": names[:6],
 			"scenes": list(dict.fromkeys(s for _n, s, _p in members))[:4],

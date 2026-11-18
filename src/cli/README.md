@@ -160,11 +160,14 @@ Placing a zone:
    building's storeys give them). `zones at --map Reserve 87,-18` gives the floor heights and zones there. Then
    `zones make --map Reserve --id <id> --kind placeitem --at 87,-18,-0.7 --size 2.5,2.5,3 --yaw 15 --picture z.png
    --one-floor`: the zone is centred on the spot with its bottom 0.25 m below the floor (`x,z,y` picks the storey
-   nearest y); give it the building's yaw. Read the picture and the `errors` / `warnings`, adjust, then add `--write`.
+   nearest y); give it the building's yaw. On stairs or a ramp add `--slope`: the bottom then follows the walk under
+   the zone down to its lowest floor (without it, `notes` says when the floor runs below the zone). Read the picture
+   and the `errors` / `warnings`, adjust, then add `--write`.
    Positions are Unity's: x east, z north, y up; `--yaw` turns clockwise from north. Give each zone an id no other zone
    uses. Coordinates may be negative (`--at -60,-20`).
 4. **Check it**: `zones check --rooms` (or `check`). Done when the new zone has no errors, its `covers` lists the rooms
-   and storeys it is meant to cover (and no others), and the picture shows it where it was meant to be.
+   and storeys it is meant to cover (and no others; `floor_range` for a slope), and the picture shows it where it was
+   meant to be.
 
 The floor map misses some places a player can reach (rooms bots never enter, upper floors, crate tops), so "no floor
 mapped" is a warning to check in game, never an error: a few of the game's own zones are in such places.

@@ -455,12 +455,48 @@ def _storeys(heights, gap=2.5, share=0.15):
 	return [round(sum(c) / len(c), 1) for c in big]
 
 
-def make_zone(index, zone_id, location, kind, x, z, y=None, size=(4.0, 3.0, 4.0), yaw=0.0, name=None):
+STEP_DOWN = 1.6  # metres: floor samples side by side less than this apart in height are one walk (the floor map draws stairs in coarse steps)
+
+
+def walkable_span(navmesh, box, start, step=0.5):
+	"""(lowest, highest) floor a player walks to inside the box's footprint from height `start` near its middle,
+	going from sample to sample (`step` metres apart) up or down less than STEP_DOWN: the whole flight of stairs or ramp
+	under a zone. (start, start) when there is no floor at that height near the middle."""
+	nx, nz = max(1, round(box.size[0] / step)), max(1, round(box.size[2] / step))
+	samples = {}
+	for i in range(nx):
+		for k in range(nz):
+			local = (-box.size[0] / 2 + (i + 0.5) * box.size[0] / nx, 0.0, -box.size[2] / 2 + (k + 0.5) * box.size[2] / nz)
+			px, _py, pz = G.add(box.center, G.rotate(box.rotation, local))
+			samples[(i, k)] = navmesh.floors_at(px, pz)
+	middle = ((nx - 1) / 2, (nz - 1) / 2)
+	starts = sorted(
+		((i, k, h) for (i, k), floors in samples.items() for h in floors if abs(h - start) <= 0.5),
+		key=lambda s: (s[0] - middle[0]) ** 2 + (s[1] - middle[1]) ** 2,
+	)
+	if not starts:
+		return start, start
+	seen = {starts[0]}
+	todo = [starts[0]]
+	while todo:
+		i, k, h = todo.pop()
+		for n in ((i + 1, k), (i - 1, k), (i, k + 1), (i, k - 1)):
+			for h2 in samples.get(n, ()):
+				state = (n[0], n[1], h2)
+				if abs(h2 - h) < STEP_DOWN and state not in seen:
+					seen.add(state)
+					todo.append(state)
+	heights = [h for _i, _k, h in seen]
+	return min(heights), max(heights)
+
+
+def make_zone(index, zone_id, location, kind, x, z, y=None, size=(4.0, 3.0, 4.0), yaw=0.0, name=None, slope=False):
 	"""A new zone standing on the floor at (x, z): its bottom SINK metres below the floor (the floor nearest to height y
 	if given, else the lowest), turned `yaw` degrees. size is (width, height, depth) in metres. Returns (record for the
 	zone file, Zone, notes) where notes say which floor was used. Where the floor map has no floor at (x, z), the height
-	y is used as the floor if given, else the nearest floor within a few metres. Raises ValueError if the map isn't
-	imported, or there is no floor to go by."""
+	y is used as the floor if given, else the nearest floor within a few metres. slope=True is for a zone on stairs or a
+	ramp: its bottom goes down to the lowest floor of the walk under it (walkable_span), not the floor at its middle.
+	Raises ValueError if the map isn't imported, or there is no floor to go by."""
 	key = location_key(location)
 	if key is None:
 		raise ValueError(f"'{location}' isn't a map ({', '.join(LOCATIONS)}).")
@@ -487,6 +523,19 @@ def make_zone(index, zone_id, location, kind, x, z, y=None, size=(4.0, 3.0, 4.0)
 			)
 		floor = min(around)
 		notes = [f"No floor is mapped exactly here, so the lowest floor nearby ({floor:.2f} m) is used: give y to choose another."]
+	box = G.Box((float(x), floor, float(z)), (float(size[0]), float(size[1]), float(size[2])), G.yaw_rotation(yaw))
+	low, high = walkable_span(navmesh, box, floor)
+	if slope:
+		top = low - SINK + float(size[1])
+		notes.append(f"On a slope: the walk under it goes from {low:.2f} to {high:.2f} m, so its bottom is at the lowest.")
+		if top < high + 0.5:
+			notes.append(f"Its top ({top:.2f} m) is less than half a metre above the highest floor under it: make it taller.")
+		floor = low
+	elif low < floor - 0.5:
+		notes.append(
+			f"The floor under it goes down to {low:.2f} m (stairs or a ramp), below its bottom: add --slope if it is meant to cover "
+			"the whole slope."
+		)
 	center = (float(x), floor - SINK + float(size[1]) / 2, float(z))
 	box = G.Box(center, (float(size[0]), float(size[1]), float(size[2])), G.yaw_rotation(yaw))
 	record = zone_record(zone_id, key, kind, box, name)

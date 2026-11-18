@@ -715,7 +715,7 @@ def cmd_zones_make(args):
 		size = _point(args.size, 3) if args.size else [float(v) for v in building["zone"]["size"].split(",")]
 		yaw = args.yaw if args.yaw is not None else building["zone"]["yaw"]
 	try:
-		record, zone, notes = Z.make_zone(index, args.id, key, args.kind, x, z, y, size, yaw, args.name)
+		record, zone, notes = Z.make_zone(index, args.id, key, args.kind, x, z, y, size, yaw, args.name, args.slope)
 	except ValueError as e:
 		raise CommandError(str(e)) from e
 	index.add([zone])
@@ -780,6 +780,8 @@ def _covers(index, zone):
 	_hits, _total, heights = m.navmesh.floor_in_box(zone.box)
 	smallest = min(B.MIN_STOREY, zone.box.size[0] * zone.box.size[2] * 0.3)  # (a small zone's floor is all one storey)
 	covers = {"floors": [s["height"] for s in B.storeys_of(heights, 0.25, smallest)]}
+	if heights:
+		covers["floor_range"] = [round(min(heights), 2), round(max(heights), 2)]  # (a slope has no one storey)
 	if rooms is None:
 		covers["note"] = "The map was imported before objects were indexed: run `maps import` again for its rooms."
 	else:
@@ -956,6 +958,7 @@ def parser():
 	c.add_argument("--yaw", type=float, help="turn in degrees, clockwise from north (default 0)")
 	c.add_argument("--building", action="store_true", help="cover the whole building at --at: its outline, angle and every storey (see `zones building`)")
 	c.add_argument("--margin", type=float, default=1.0, help="for --building: metres past the outline")
+	c.add_argument("--slope", action="store_true", help="on stairs or a ramp: reach down to the lowest floor of the walk under it")
 	c.add_argument("--name", help="ZoneName (default: the id)")
 	c.add_argument("--picture", help="also draw it to this PNG")
 	c.add_argument("--radius", type=float, default=25.0, help="for --picture")
