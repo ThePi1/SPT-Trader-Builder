@@ -30,3 +30,34 @@ def test_the_outline_says_the_name_of_the_map_not_its_id():
 	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
 	assert spec.summary(task, Names(data)) == "On Factory (day), Factory (night), custom-map"  # (a map nobody knows keeps what the file says)
 	assert spec.summary(task, PLAIN) == f"On {DAY}, {NIGHT}, custom-map"  # (no game data: the ids)
+
+
+def test_location_conditions_name_maps_by_key():
+	"""The game compares a Location condition's targets with the raid's map key (bigmap), so that is what the field offers."""
+	from schema import registry
+
+	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
+	keys = dict(choices.get("map_keys", data))
+	assert keys["bigmap"] == "Customs" and keys["factory4_night"] == "Factory (night)"
+	assert keys["Sandbox"] != keys["Sandbox_high"]  # (Ground Zero, and Ground Zero for level 21 and up: both "Ground Zero")
+	assert registry.spec_for("subtask", "Location").field("target").choices == "map_keys"
+
+
+def test_a_location_condition_with_a_map_id_is_an_error():
+	from schema import registry, validate
+	from schema.issues import ERROR
+
+	task = registry.new_item("task", "CounterCreator")
+	for kind, target in (("Kills", None), ("Location", ["56f40101d2720b2a4d8b45d6", "bigmap"])):
+		sub = registry.new_item("subtask", kind)
+		if target:
+			sub["target"] = target
+		task["counter"]["conditions"].append(sub)
+	quest = {"_id": "q1", "QuestName": "Test", "conditions": {"AvailableForFinish": [task], "AvailableForStart": [], "Fail": []}, "rewards": {}}
+	issues = [i for i in validate.validate_quests({"q1": quest}) if i.path[-1:] == ("target",)]
+	assert len(issues) == 1 and issues[0].level == ERROR and "'bigmap'" in issues[0].message
+	sandbox = dict(quest)
+	for map_id, key in (("653e6760052c01c1c805532f", "'Sandbox'."), ("65b8d6f5cdde2479cb2a3125", "'Sandbox_high'.")):  # (each Ground Zero has its own id)
+		task["counter"]["conditions"][1]["target"] = [map_id]
+		message = [i for i in validate.validate_quests({"q1": sandbox}) if i.path[-1:] == ("target",)][0].message
+		assert message.endswith(f"use {key}"), message

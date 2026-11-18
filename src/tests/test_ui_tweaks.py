@@ -510,3 +510,13 @@ def test_the_item_reward_form_has_no_how_many_and_keeps_value_in_step_with_the_s
 	item["value"] = 99  # (set by hand in the JSON editor: it stays until the parts change)
 	form.bind(item)
 	assert item["value"] == 99
+
+
+def test_a_sell_to_a_trader_condition_says_how_many_items_and_to_whom():
+	from schema.common import Names
+
+	spec = registry.spec_for("task", "SellItemToTrader")
+	names = Names()
+	assert spec.summary({"value": 5, "traderId": "t1"}, names) == "Sell 5 items to t1"
+	assert spec.summary({"value": 1, "traderId": "t1"}, names) == "Sell 1 item to t1"
+	assert "roubles" not in spec.summary({"value": 3}, names)

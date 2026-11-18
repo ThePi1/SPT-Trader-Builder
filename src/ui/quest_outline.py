@@ -70,6 +70,7 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		self.locale = None  # the open locale Document, for the text boxes
 		self.sources = {}  # quest id -> the file it was imported from, shown next to the quest
 		self.picker = None  # (ref kind, multi, parent) -> [ids]: the window's search dialog
+		self.zones = None  # () -> maps.zones.ZoneIndex or None: the known quest zones, for checking the conditions that use them
 		self._editing = False
 		self._unlock = None  # (the unlock panel of the open reward and its address, while there is one)
 		self.setupUi(self)  # (the layout: the buttons, tree, form pane and JSON view are in ui/designer/quest_outline.ui)
@@ -180,7 +181,8 @@ class QuestOutline(QWidget, Ui_OutlineForm):
 		if self.doc is None:
 			return
 		locale = self.locale.data if self.locale is not None else None
-		issues = validate.validate_quests(self.doc.data, locale, self.gamedata)
+		zones = self.zones() if self.zones is not None else None
+		issues = validate.validate_quests(self.doc.data, locale, self.gamedata, zones)
 		names = self._names()
 		self.problems.show_issues(issues, lambda path: self._where(path, names))
 		worst = {}

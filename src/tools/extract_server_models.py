@@ -7,9 +7,14 @@ a value of the wrong type, stops the file from loading; a key the record doesn't
 ignored. So the records are the exact rules for "the server can load this".
 
 Usage (from src):
-    python tools/extract_server_models.py <path to a server-csharp checkout>
+    python tools/extract_server_models.py <a server-csharp checkout, or a decompile of SPTarkov.Server.Core.dll>
 
-The checkout used for SPT 4.0.13 is commit 2891fd41fd07b6150a2192ac0d24adb93eb72862.
+A decompile is what `ilspycmd -p -o <folder> <SPT_Runtime>/SPTarkov.Server.Core.dll -r <SPT_Runtime>` writes (one
+folder per namespace): it is the exact code of an installed server, so it is the better source for a release. The
+shipped DLL gives every model an ExtensionData property (a build-time patch); it is left out like the source's own.
+
+SPT 4.0.13 was read from server-csharp commit 2891fd41fd07b6150a2192ac0d24adb93eb72862; SPT 4.1.6 from a decompile of
+its SPTarkov.Server.Core.dll.
 """
 
 import json
@@ -148,13 +153,27 @@ def referenced(decl):
 	return {n for n in names if n not in _BUILTIN}
 
 
-def main(server_dir):
+DECOMPILED_PREFIX = "SPTarkov.Server.Core.Models."  # (a decompile has a folder per namespace)
+
+
+def model_files(server_dir):
+	"""[(path of a .cs file, its path under Models/)] from a server-csharp checkout or a decompile, and what it is."""
 	models_dir = Path(server_dir) / MODELS_DIR
-	if not models_dir.is_dir():
-		sys.exit(f"Not a server-csharp checkout (no {MODELS_DIR}): {server_dir}")
+	if models_dir.is_dir():
+		return [(p, p.relative_to(models_dir).as_posix()) for p in sorted(models_dir.rglob("*.cs"))], "sp-tarkov/server-csharp"
+	found = []
+	for folder in sorted(Path(server_dir).glob(DECOMPILED_PREFIX + "*")):
+		under = folder.name[len(DECOMPILED_PREFIX):].replace(".", "/")
+		found += [(p, f"{under}/{p.name}") for p in sorted(folder.glob("*.cs"))]
+	if not found:
+		sys.exit(f"Not a server-csharp checkout (no {MODELS_DIR}) or a decompile of SPTarkov.Server.Core.dll: {server_dir}")
+	return found, "a decompile of SPTarkov.Server.Core.dll"
+
+
+def main(server_dir, source=None):
+	files, kind = model_files(server_dir)
 	candidates = {}
-	for path in sorted(models_dir.rglob("*.cs")):
-		rel = path.relative_to(models_dir).as_posix()
+	for path, rel in files:
 		for name, decl in parse_file(path).items():
 			decl["file"] = rel
 			candidates.setdefault(name, []).append(decl)
@@ -183,7 +202,7 @@ def main(server_dir):
 		todo += sorted(referenced(decl) - set(out))
 	OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 	result = {
-		"source": "sp-tarkov/server-csharp",
+		"source": source or kind,
 		"records": {k: out[k] for k in sorted(out) if out[k]["kind"] != "enum"},
 		"enums": {k: out[k]["members"] for k in sorted(out) if out[k]["kind"] == "enum"},
 	}
@@ -218,6 +237,6 @@ def compact_json(data):
 
 
 if __name__ == "__main__":
-	if len(sys.argv) != 2:
-		sys.exit(__doc__)
-	main(sys.argv[1])
+	if len(sys.argv) not in (2, 3):
+		sys.exit(__doc__ + "\n(an optional second argument says where it came from, for the file's \"source\")")
+	main(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None)

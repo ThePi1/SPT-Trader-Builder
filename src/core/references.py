@@ -9,18 +9,26 @@ from pathlib import Path
 
 from core import jsonio
 from core.paths import REFERENCES_FILE
+from maps.zones import is_zone_file
 from schema import assort as assort_schema
 from schema import explorer
 
-QUESTS, LOCALE, ASSORT, ITEMS, TRADER = "quests", "locale", "assort", "items", "trader"
-KIND_LABEL = {QUESTS: "Quests", LOCALE: "Locale", ASSORT: "Trader assort", ITEMS: "Item templates", TRADER: "Trader"}
+QUESTS, LOCALE, ASSORT, ITEMS, TRADER, ZONES = "quests", "locale", "assort", "items", "trader", "zones"
+CUSTOM_ITEMS = "custom_items"  # (WTT-CommonLib's CustomItems files: {id: {itemTplToClone, parentId, locales: {en: {name, ...}}, ...}})
+KIND_LABEL = {
+	QUESTS: "Quests", LOCALE: "Locale", ASSORT: "Trader assort", ITEMS: "Item templates", TRADER: "Trader", ZONES: "Quest zones",
+	CUSTOM_ITEMS: "Custom items (WTT)",
+}
 NO_IDS = "questassort"  # (a quest assort file has no ids of its own, so there is nothing to look up in it)
 LIMIT = 200  # the most files read from the folders that are added at once
 
 
 def detect_kind(data):
-	"""What a loaded file is, for a reference: quests, locale, assort, items (item templates), trader (a trader's
-	base.json), "questassort" (nothing to look up) or None."""
+	"""What a loaded file is, for a reference: quests, locale, assort, items (item templates), custom_items (a
+	WTT-CommonLib CustomItems file), trader (a trader's base.json), zones (a WTT-CommonLib quest zone file),
+	"questassort" (nothing to look up) or None."""
+	if is_zone_file(data):
+		return ZONES
 	if not isinstance(data, dict):
 		return None
 	if isinstance(data.get("_id"), str) and ("nickname" in data or "name" in data) and ("loyaltyLevels" in data or "currency" in data):
@@ -28,6 +36,8 @@ def detect_kind(data):
 	values = list(data.values())[:20]
 	if values and all(isinstance(v, dict) and "_id" in v and "_parent" in v for v in values):
 		return ITEMS
+	if values and all(isinstance(v, dict) and "itemTplToClone" in v for v in values):
+		return CUSTOM_ITEMS
 	kind = explorer.detect_kind(data)
 	return {"quests": QUESTS, "locale": LOCALE, "assort": ASSORT}.get(kind, kind)
 
@@ -54,7 +64,7 @@ class Reference:
 			return len(assort_schema.offer_ids(data))
 		if self.kind == TRADER:
 			return 1
-		return len(data) if isinstance(data, dict) else 0
+		return len(data) if isinstance(data, (dict, list)) else 0
 
 
 def _read(ref):
@@ -66,7 +76,7 @@ def _read(ref):
 		return ref
 	kind = detect_kind(data)
 	if kind is None:
-		ref.error = "Not a quest, locale, trader assort, item template or trader file."
+		ref.error = "Not a quest, locale, trader assort, item template, custom item, trader or quest zone file."
 	elif kind == NO_IDS:
 		ref.error = "A quest assort file has no ids of its own, so there is nothing to look up in it."
 	else:
@@ -75,7 +85,9 @@ def _read(ref):
 
 
 class References:
-	"""The reference files. path is the file the list of them is kept in; language picks which locale file names are read from."""
+	"""The reference files. path is the file the list of them is kept in; language picks which locale file names are read from.
+	References.of(paths) is a list given directly (files, and the .json files in folders), kept in no file (the
+	command line's project files name theirs)."""
 
 	def __init__(self, path=None, language="en"):
 		self.path = Path(path) if path else REFERENCES_FILE
@@ -83,6 +95,16 @@ class References:
 		self.files = []
 		self._index = None
 		self._load_list()
+
+	@classmethod
+	def of(cls, paths, language="en", limit=LIMIT):
+		refs = cls.__new__(cls)
+		refs.path, refs.language, refs.files, refs._index = None, language or "en", [], None
+		found = []
+		for path in map(Path, paths):
+			found.extend(sorted(path.rglob("*.json"))[:limit] if path.is_dir() else [path])
+		refs.files = [Reference(p) for p in dict.fromkeys(found)]
+		return refs
 
 	# --- the list --------------------------------------------------------------------------
 	def _load_list(self):
@@ -94,7 +116,8 @@ class References:
 		self.files = [Reference(Path(p)) for p in paths or [] if isinstance(p, str) and p]
 
 	def save(self):
-		jsonio.write_json(self.path, {"files": [str(ref.path) for ref in self.files]})
+		if self.path is not None:  # (a list given directly is kept in no file)
+			jsonio.write_json(self.path, {"files": [str(ref.path) for ref in self.files]})
 
 	def read_all(self):
 		"""Read the files that have not been read yet."""
@@ -173,6 +196,10 @@ class References:
 				for tpl, item in ref.data.items():
 					if isinstance(item, dict) and tpl not in templates:
 						templates[tpl] = (item.get("_name") or "", ref.name)
+			elif ref.kind == CUSTOM_ITEMS:
+				for tpl, item in ref.data.items():
+					if isinstance(item, dict) and tpl not in templates:
+						templates[tpl] = (self._custom_item_name(item), ref.name)
 			elif ref.kind == ASSORT:
 				for part in ref.data.get("items", []):
 					if not isinstance(part, dict):
@@ -188,6 +215,14 @@ class References:
 					traders[trader_id] = (ref.data.get("nickname") or ref.data.get("name") or "", ref.name)
 		return {"locale": locale, "quests": quests, "templates": templates, "assort_tpls": assort_tpls, "offers": offers, "traders": traders}
 
+	def _custom_item_name(self, item):
+		"""A WTT custom item's name in the chosen language, else English, else any."""
+		locales = item.get("locales") if isinstance(item.get("locales"), dict) else {}
+		for text in [locales.get(self.language), locales.get("en"), *locales.values()]:
+			if isinstance(text, dict) and isinstance(text.get("name"), str) and text["name"]:
+				return text["name"]
+		return ""
+
 	def locale_entries(self):
 		"""{key: (text, the file it is in)} of every locale file in the list (the file in the chosen language first, then English, then the rest;
 		the first file with a key wins)."""
@@ -201,6 +236,11 @@ class References:
 				if isinstance(text, str) and key not in found:
 					found[key] = (text, ref.name)
 		return found
+
+	def zone_files(self):
+		"""[(entries, file name)] of the quest zone files in the list."""
+		self.read_all()
+		return [(ref.data, ref.name) for ref in self.files if ref.kind == ZONES]
 
 	def quest_data(self):
 		"""{quest id: (the quest, the file it is in)} of every quest in the reference files (the first file wins)."""

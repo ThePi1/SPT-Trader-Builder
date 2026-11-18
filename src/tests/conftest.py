@@ -1,9 +1,9 @@
 """Shared test data: the base game's own files, which are known to be valid.
 
 The quests and the English text come from the game data bundled with the app (data/database,
-copied from SPT 4.0.13 by tools/bundle_database.py). The trader files are fixtures: Mechanic's assort
+copied from SPT 4.1.6 by tools/bundle_database.py). The trader files are fixtures: Mechanic's assort
 (589 offers) and every trader's quest locks (tests/fixtures/questassort), because the bundle does not
-hold the trader folders.
+hold the trader folders; they are the same in SPT 4.0.13 and 4.1.6.
 """
 
 import json
@@ -24,6 +24,12 @@ def _load(path):
 def no_real_reference_files(tmp_path, monkeypatch):
 	"""The reference files the user has added to the program are not part of any test: every test starts with none."""
 	monkeypatch.setattr("core.references.REFERENCES_FILE", tmp_path / "no_references.json")
+
+
+@pytest.fixture(autouse=True)
+def no_imported_maps(tmp_path, monkeypatch):
+	"""Nor are the maps imported on this computer (data/maps): every test starts with none."""
+	monkeypatch.setattr("maps.mapdata.MAPS_DIR", tmp_path / "no_maps")
 
 
 @pytest.fixture(scope="session")

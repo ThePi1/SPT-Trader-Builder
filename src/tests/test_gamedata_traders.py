@@ -38,3 +38,11 @@ def test_the_app_runs_with_no_trader_files_in_the_bundle():
 	assert not (BUNDLED_DATABASE_DIR / "traders").exists()
 	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
 	assert data.trader_name(OWN["Skier"]) and data.trader_name("0" * 24) == ""
+
+
+def test_the_two_storytellers_are_told_apart():
+	# (SPT's database has an empty trader called Storyteller, and rtt2 has a trader of that name: neither has a
+	# nickname in the game's text, so the list's labels are what is shown)
+	traders = GameData(None, "en", BUNDLED_DATABASE_DIR).traders
+	assert traders["6864e812f9fe664cb8b8e152"] == "Storyteller (SPT)"
+	assert traders["69744632183b55cf9702c981"] == "Storyteller (rtt2)"

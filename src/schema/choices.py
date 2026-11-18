@@ -149,6 +149,8 @@ def get(name, gamedata=None):
 	if name == "locations":
 		names = gamedata.locations if gamedata is not None else {"any": "Any"}
 		return tuple(names.items())
+	if name == "map_keys":
+		return tuple(gamedata.map_keys.items()) if gamedata is not None else ()
 	raise KeyError(f"No choice list named {name!r}")
 
 

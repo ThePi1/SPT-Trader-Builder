@@ -7,3 +7,6 @@ src/data/last_files.json
 src/spt_trader_builder.log*
 src/dist/
 src/build/
+src/data/maps/
+src/cli/server_check/bin/
+src/cli/server_check/obj/

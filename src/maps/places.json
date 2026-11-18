@@ -1,0 +1,78 @@
+{
+	"_about": "Names players use for places on the maps, for `zones find` (core/places.py). synonyms: other words the game's files use for a word (transliterated Russian, or another word). places: a place's name and other names (aka), its map (as zone files name maps), where it is (at: x, z; optional), the objects anchoring it in the game's files (objects: an object name, or part of one, looked up in the imported map; optional) and a note. Add a place once it has been checked against the game, and say in its note how.",
+	"synonyms": {
+		"dorms": ["obshezhitie"],
+		"dormitory": ["obshezhitie"],
+		"dormitories": ["obshezhitie"],
+		"gas station": ["azs"],
+		"customs": ["tamozhnya"],
+		"fuel": ["mazuto", "fuel"],
+		"trailer park": ["trailerpark"],
+		"resort": ["sanatorium"],
+		"health resort": ["sanatorium"],
+		"water treatment": ["water_filter_facility", "waterstation"],
+		"wtp": ["water_filter_facility"],
+		"knight": ["horse"],
+		"bishop": ["elephant", "bishop"],
+		"queen": ["ferz", "queen"],
+		"pawn": ["pawn"],
+		"barracks": ["casarms"],
+		"radar": ["rls"],
+		"train station": ["trainstation"],
+		"repair": ["ptor", "repairing", "rem"],
+		"vehicle repair": ["ptor"],
+		"warehouse": ["storage", "storages"],
+		"lab": ["laboratory", "lab"],
+		"underground": ["basement", "underground"]
+	},
+	"places": [
+		{
+			"map": "RezervBase",
+			"name": "White Knight",
+			"aka": ["PTOR2", "rem_block_01"],
+			"at": [83.9, -31.6],
+			"objects": "Reserv_Base_PTOR2",
+			"note": "Repair block on the east side of the vehicle yard (PTOR). 1F (-6.8 m): BMP-2 hangar and offices; 2F (about -4 m, east wing, not on the floor map); 3F (-0.95 m): north offices and the hangar roof; roof at 2.3 m. Checked against the game's white_horse marker and knight signs, and the Reserve map on maps.tmubl.com."
+		},
+		{
+			"map": "RezervBase",
+			"name": "Black Knight",
+			"aka": ["PTOR1"],
+			"at": [14.7, -12.7],
+			"objects": "black_horse",
+			"note": "Repair block on the west side of the vehicle yard (PTOR), across from the White Knight: storeys at -6.8, -3.95 and -0.95 m. Checked against the game's black_horse marker and knight signs, and the Reserve map on maps.tmubl.com."
+		},
+		{
+			"map": "RezervBase",
+			"name": "White Pawn",
+			"aka": ["west barracks"],
+			"objects": "white_pawn",
+			"note": "Barracks (Base_Casarms). Where the game's white_pawn marker is (under the building), not its middle: use `zones building` there."
+		},
+		{
+			"map": "RezervBase",
+			"name": "Black Pawn",
+			"aka": ["north barracks"],
+			"objects": "black_pawn",
+			"note": "Barracks (Base_Casarms). Where the game's black_pawn marker is, not the building's middle: use `zones building` there."
+		},
+		{
+			"map": "RezervBase",
+			"name": "Black Bishop",
+			"objects": "black_bishop",
+			"note": "Where the game's black_bishop marker is (in the academy area, Base_Academy_and_Kitchens), not the building's middle: use `zones building` there."
+		},
+		{
+			"map": "RezervBase",
+			"name": "White Bishop",
+			"objects": "white_bishop",
+			"note": "Where the game's white_bishop marker is, not the building's middle: use `zones building` there."
+		},
+		{
+			"map": "RezervBase",
+			"name": "White Queen",
+			"objects": "white_queen",
+			"note": "Where the game's white_queen marker is, not the building's middle: use `zones building` there."
+		}
+	]
+}

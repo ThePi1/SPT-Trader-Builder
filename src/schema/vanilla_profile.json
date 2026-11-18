@@ -1,20 +1,20 @@
 {
  "kinds": {
   "assort_part": {
-   "count": 2446,
+   "count": 2936,
    "where": {},
    "keys": {
     "_id": {
-     "count": 2446,
+     "count": 2936,
      "types": {
-      "string": 2446
+      "string": 2936
      },
      "example": "686e34616c2a18ed6b0eabfc"
     },
     "_tpl": {
-     "count": 2446,
+     "count": 2936,
      "types": {
-      "string": 2446
+      "string": 2936
      },
      "example": "5448c12b4bdc2d02308b456f"
     },
@@ -48,16 +48,16 @@
      "example": 0
     },
     "parentId": {
-     "count": 2446,
+     "count": 2936,
      "types": {
-      "string": 2446
+      "string": 2936
      },
      "example": "686e34616c2a18ed6b0eabfb"
     },
     "slotId": {
-     "count": 2446,
+     "count": 2936,
      "types": {
-      "string": 2446
+      "string": 2936
      },
      "example": "mod_magazine"
     }
@@ -96,94 +96,94 @@
    }
   },
   "assort_root": {
-   "count": 2265,
+   "count": 2854,
    "where": {},
    "keys": {
     "_id": {
-     "count": 2265,
+     "count": 2854,
      "types": {
-      "string": 2265
+      "string": 2854
      },
      "example": "686e34606c2a18ed6b0eabe7"
     },
     "_tpl": {
-     "count": 2265,
+     "count": 2854,
      "types": {
-      "string": 2265
+      "string": 2854
      },
      "example": "57d14e1724597714010c3f4b"
     },
     "parentId": {
-     "count": 2265,
+     "count": 2854,
      "types": {
-      "string": 2265
+      "string": 2854
      },
      "values": {
-      "hideout": 2265
+      "hideout": 2854
      },
      "example": "hideout"
     },
     "slotId": {
-     "count": 2265,
+     "count": 2854,
      "types": {
-      "string": 2265
+      "string": 2854
      },
      "values": {
-      "hideout": 2265
+      "hideout": 2854
      },
      "example": "hideout"
     }
    }
   },
   "assort_root_upd": {
-   "count": 2265,
+   "count": 2854,
    "where": {},
    "keys": {
     "BuyRestrictionCurrent": {
-     "count": 2247,
+     "count": 2832,
      "types": {
-      "int": 2247
+      "int": 2832
      },
      "values": {
-      "0": 2247
+      "0": 2832
      },
      "example": 0
     },
     "BuyRestrictionMax": {
-     "count": 2262,
+     "count": 2851,
      "types": {
-      "int": 2262
+      "int": 2851
      },
      "values": {
-      "5": 691,
-      "3": 555,
-      "1": 244,
-      "2": 215,
-      "4": 187,
-      "10": 142,
-      "1000": 42,
-      "6": 21,
-      "7": 18,
+      "5": 849,
+      "3": 779,
+      "1": 294,
+      "2": 253,
+      "4": 244,
+      "10": 163,
+      "1000": 44,
+      "7": 30,
+      "6": 25,
+      "8": 25,
       "200": 18,
-      "8": 17,
+      "12": 15,
       "20": 14,
-      "12": 12,
-      "120": 10,
-      "150": 10,
-      "400": 9,
+      "150": 13,
+      "120": 12,
+      "400": 11,
       "300": 7,
       "60": 6,
+      "180": 6,
       "15": 5,
+      "100": 5,
       "30": 5,
       "50": 4,
-      "180": 4,
-      "100": 4,
+      "90": 4,
       "80": 4,
-      "90": 3,
+      "500": 3,
       "220": 2,
       "450": 2,
       "210": 2,
-      "500": 2,
       "70": 2,
       "600": 1,
       "350": 1,
@@ -194,27 +194,27 @@
      "example": 10
     },
     "FireMode": {
-     "count": 102,
+     "count": 119,
      "types": {
-      "object": 102
+      "object": 119
      },
      "example": {
       "FireMode": "single"
      }
     },
     "Foldable": {
-     "count": 33,
+     "count": 41,
      "types": {
-      "object": 33
+      "object": 41
      },
      "example": {
       "Folded": false
      }
     },
     "Repairable": {
-     "count": 90,
+     "count": 113,
      "types": {
-      "object": 90
+      "object": 113
      },
      "example": {
       "Durability": 100,
@@ -222,19 +222,23 @@
      }
     },
     "StackObjectsCount": {
-     "count": 2265,
+     "count": 2854,
      "types": {
-      "int": 2265
+      "int": 2854
      },
      "values": {
-      "9999999": 2073,
+      "9999999": 2657,
       "2885000": 114,
       "2880000": 51,
-      "20000": 15,
+      "20000": 16,
       "20": 4,
       "2000": 2,
       "865000": 1,
       "245000": 1,
+      "19900": 1,
+      "250": 1,
+      "200000": 1,
+      "2000000": 1,
       "20200": 1,
       "10": 1,
       "650000": 1,
@@ -243,12 +247,12 @@
      "example": 9999999
     },
     "UnlimitedCount": {
-     "count": 2240,
+     "count": 2824,
      "types": {
-      "bool": 2240
+      "bool": 2824
      },
      "values": {
-      "true": 2238,
+      "true": 2822,
       "false": 2
      },
      "example": true
@@ -256,21 +260,21 @@
    }
   },
   "barter_price": {
-   "count": 2447,
+   "count": 3101,
    "where": {},
    "keys": {
     "_tpl": {
-     "count": 2447,
+     "count": 3101,
      "types": {
-      "string": 2447
+      "string": 3101
      },
      "example": "5449016a4bdc2d6f028b456f"
     },
     "count": {
-     "count": 2447,
+     "count": 3101,
      "types": {
-      "int": 1709,
-      "float": 738
+      "int": 2324,
+      "float": 777
      },
      "example": 1638
     },
@@ -328,19 +332,19 @@
    }
   },
   "loyal_level": {
-   "count": 2277,
+   "count": 2872,
    "where": {},
    "keys": {
     "level": {
-     "count": 2277,
+     "count": 2872,
      "types": {
-      "int": 2277
+      "int": 2872
      },
      "values": {
-      "3": 639,
-      "2": 588,
-      "1": 548,
-      "4": 502
+      "3": 812,
+      "2": 752,
+      "1": 692,
+      "4": 616
      }
     }
    }

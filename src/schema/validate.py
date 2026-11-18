@@ -35,9 +35,10 @@ def _profile_name(group, kind):
 	return f"{group}:{kind}"
 
 
-def validate_quests(quests, locale=None, gamedata=None):
+def validate_quests(quests, locale=None, gamedata=None, zones=None):
 	"""Every problem in a quests file ({quest id: quest}). locale ({key: text}) adds the text checks.
-	gamedata (core.gamedata.GameData) adds checks against the real traders, items and maps."""
+	gamedata (core.gamedata.GameData) adds checks against the real traders, items and maps. zones (maps.zones.ZoneIndex)
+	adds checks of the zones the conditions point at."""
 	issues = []
 	if not isinstance(quests, dict):
 		return [Issue(ERROR, (), "A quests file must be an object of quests, each under its own id.")]
@@ -45,6 +46,10 @@ def validate_quests(quests, locale=None, gamedata=None):
 		issues += validate_quest(quest, quest_id, gamedata)
 	if locale is not None:
 		issues += validate_quest_locale(quests, locale)
+	if zones is not None:
+		from maps.zones import zone_issues
+
+		issues += zone_issues(quests, zones)
 	return issues
 
 
@@ -140,6 +145,24 @@ def _check_subtask(sub, timing, path, ids, gamedata):
 		return issues
 	issues += _profile_check(sub, "subtask", kind, path)
 	issues += _check_choices(sub, spec, path, gamedata)
+	if kind == "Location":
+		issues += _check_map_keys(sub, path)
+	return issues
+
+
+def _check_map_keys(sub, path):
+	"""A Location condition must name maps by key (bigmap): the game compares the raid's map key with them exactly,
+	so a map's id there never matches."""
+	from core.gamedata import location_ids
+
+	keys = {}
+	for key, location_id in location_ids().items():
+		keys.setdefault(location_id, []).append(key)
+	issues = []
+	for target in sub.get("target") or []:
+		if target in keys:
+			use = " or ".join(f"'{k}'" for k in keys[target])
+			issues.append(Issue(ERROR, path + ("target",), f"'{target}' is the id of a map, but the game compares the map's key, so this never matches: use {use}."))
 	return issues
 
 

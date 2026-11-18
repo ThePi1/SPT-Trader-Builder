@@ -57,4 +57,6 @@ def test_optional_adds_the_optional_text_to_what_is_missing():
 
 
 def test_the_base_game_has_nothing_missing(vanilla_quests, vanilla_locale):
-	assert L.missing_keys(vanilla_quests, vanilla_locale) == {}
+	# (but one task: SPT 4.1.6's English text lacks Last Spurt - Pioneer's "Locate and obtain the second game disk on
+	# Reserve", which 4.0.13 had)
+	assert L.missing_keys(vanilla_quests, vanilla_locale) == {"68a75afe16fe31bcff46eea9": "task"}

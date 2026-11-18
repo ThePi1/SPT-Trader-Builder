@@ -1,9 +1,9 @@
 {
-  "source": "sp-tarkov/server-csharp",
+  "source": "SPTarkov.Server.Core.dll of SPT 4.1.6 (decompiled)",
   "records": {
     "BarterScheme": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Trader.cs",
+      "file": "Eft/Common/Tables/BarterScheme.cs",
       "properties": {
         "count": {"type": "double?", "required": false},
         "_tpl": {"type": "MongoId", "required": false},
@@ -15,7 +15,7 @@
     },
     "CounterConditionDistance": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/CounterConditionDistance.cs",
       "properties": {
         "value": {"type": "double?", "required": false},
         "compareMethod": {"type": "string?", "required": false}
@@ -23,7 +23,7 @@
     },
     "DaytimeCounter": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/DaytimeCounter.cs",
       "properties": {
         "from": {"type": "int?", "required": false},
         "to": {"type": "int?", "required": false}
@@ -31,7 +31,7 @@
     },
     "EnemyHealthEffect": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/EnemyHealthEffect.cs",
       "properties": {
         "bodyParts": {"type": "List<string>?", "required": false},
         "effects": {"type": "List<string>?", "required": false}
@@ -39,7 +39,7 @@
     },
     "IllustrationConfig": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Reward.cs",
+      "file": "Eft/Common/Tables/IllustrationConfig.cs",
       "properties": {
         "image": {"type": "string", "required": false},
         "bigImage": {"type": "string", "required": false},
@@ -61,7 +61,7 @@
     },
     "LockableComponent": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/LockableComponent.cs",
       "properties": {
         "KeyIds": {"type": "IEnumerable<string>?", "required": false},
         "Locked": {"type": "bool?", "required": false},
@@ -70,7 +70,7 @@
     },
     "LockableKeyComponent": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/LockableKeyComponent.cs",
       "properties": {
         "RelativeValue": {"type": "float?", "required": false},
         "NumberOfUsages": {"type": "int?", "required": false}
@@ -78,7 +78,7 @@
     },
     "MapMarker": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/MapMarker.cs",
       "properties": {
         "Type": {"type": "string?", "required": false},
         "X": {"type": "double?", "required": false},
@@ -135,7 +135,7 @@
     },
     "QuestCondition": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/QuestCondition.cs",
       "properties": {
         "id": {"type": "MongoId", "required": true},
         "index": {"type": "int?", "required": false},
@@ -166,6 +166,8 @@
         "completeInSeconds": {"type": "double?", "required": false},
         "isEncoded": {"type": "bool?", "required": false},
         "conditionType": {"type": "string", "required": true},
+        "epicGamesId": {"type": "string?", "required": false},
+        "steamGamesId": {"type": "string?", "required": false},
         "areaType": {"type": "HideoutAreas?", "required": false},
         "baseAccuracy": {"type": "ValueCompare?", "required": false},
         "containsItems": {"type": "List<string>?", "required": false},
@@ -184,7 +186,7 @@
     },
     "QuestConditionCounter": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/QuestConditionCounter.cs",
       "properties": {
         "id": {"type": "string?", "required": false},
         "conditions": {"type": "List<QuestConditionCounterCondition>?", "required": false}
@@ -192,7 +194,7 @@
     },
     "QuestConditionCounterCondition": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/QuestConditionCounterCondition.cs",
       "properties": {
         "id": {"type": "MongoId?", "required": false},
         "dynamicLocale": {"type": "bool?", "required": false},
@@ -227,7 +229,7 @@
     },
     "QuestConditionTypes": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/QuestConditionTypes.cs",
       "properties": {
         "Started": {"type": "List<QuestCondition>?", "required": false},
         "AvailableForFinish": {"type": "List<QuestCondition>?", "required": false},
@@ -247,7 +249,7 @@
         "target": {"type": "string?", "required": false},
         "items": {"type": "List<Item>?", "required": false},
         "loyaltyLevel": {"type": "int?", "required": false},
-        "traderId": {"type": "object?", "required": false},
+        "traderId": {"type": "StringOrInt?", "required": false, "converter": "StringOrIntConverter"},
         "isEncoded": {"type": "bool?", "required": false},
         "unknown": {"type": "bool?", "required": false},
         "findInRaid": {"type": "bool?", "required": false},
@@ -261,7 +263,7 @@
     },
     "TraderAssort": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Trader.cs",
+      "file": "Eft/Common/Tables/TraderAssort.cs",
       "properties": {
         "nextResupply": {"type": "double?", "required": false},
         "items": {"type": "List<Item>", "required": false},
@@ -271,7 +273,7 @@
     },
     "Upd": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/Upd.cs",
       "properties": {
         "Buff": {"type": "UpdBuff?", "required": false},
         "OriginalStackObjectsCount": {"type": "double?", "required": false},
@@ -305,7 +307,7 @@
     },
     "UpdBuff": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdBuff.cs",
       "properties": {
         "Rarity": {"type": "string?", "required": false},
         "BuffType": {"type": "RepairBuffType?", "required": false, "converter": "JsonStringEnumConverter"},
@@ -315,14 +317,14 @@
     },
     "UpdCultistAmulet": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdCultistAmulet.cs",
       "properties": {
         "NumberOfUsages": {"type": "double?", "required": false}
       }
     },
     "UpdDogtag": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdDogtag.cs",
       "properties": {
         "AccountId": {"type": "string?", "required": false},
         "ProfileId": {"type": "string?", "required": false},
@@ -340,7 +342,7 @@
     },
     "UpdFaceShield": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdFaceShield.cs",
       "properties": {
         "Hits": {"type": "int?", "required": false},
         "HitSeed": {"type": "int?", "required": false}
@@ -348,35 +350,35 @@
     },
     "UpdFireMode": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdFireMode.cs",
       "properties": {
         "FireMode": {"type": "string?", "required": false}
       }
     },
     "UpdFoldable": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdFoldable.cs",
       "properties": {
         "Folded": {"type": "bool?", "required": false}
       }
     },
     "UpdFoodDrink": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdFoodDrink.cs",
       "properties": {
         "HpPercent": {"type": "double?", "required": false}
       }
     },
     "UpdKey": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdKey.cs",
       "properties": {
         "NumberOfUsages": {"type": "int?", "required": false}
       }
     },
     "UpdLight": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdLight.cs",
       "properties": {
         "IsActive": {"type": "bool?", "required": false},
         "SelectedMode": {"type": "int?", "required": false}
@@ -384,35 +386,35 @@
     },
     "UpdMap": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdMap.cs",
       "properties": {
         "Markers": {"type": "List<MapMarker>?", "required": false}
       }
     },
     "UpdMedKit": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdMedKit.cs",
       "properties": {
         "HpResource": {"type": "double?", "required": false}
       }
     },
     "UpdRecodableComponent": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdRecodableComponent.cs",
       "properties": {
         "IsEncoded": {"type": "bool?", "required": false}
       }
     },
     "UpdRepairKit": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdRepairKit.cs",
       "properties": {
         "Resource": {"type": "double?", "required": false}
       }
     },
     "UpdRepairable": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdRepairable.cs",
       "properties": {
         "Durability": {"type": "double?", "required": false},
         "MaxDurability": {"type": "double?", "required": false}
@@ -420,7 +422,7 @@
     },
     "UpdResource": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdResource.cs",
       "properties": {
         "Value": {"type": "double?", "required": false},
         "UnitsConsumed": {"type": "double?", "required": false}
@@ -428,14 +430,14 @@
     },
     "UpdSideEffect": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdSideEffect.cs",
       "properties": {
         "Value": {"type": "double?", "required": false}
       }
     },
     "UpdSight": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdSight.cs",
       "properties": {
         "ScopesCurrentCalibPointIndexes": {"type": "IEnumerable<int>?", "required": false},
         "ScopesSelectedModes": {"type": "IEnumerable<int>?", "required": false},
@@ -445,7 +447,7 @@
     },
     "UpdTag": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdTag.cs",
       "properties": {
         "Color": {"type": "int?", "required": false},
         "Name": {"type": "string?", "required": false}
@@ -453,14 +455,14 @@
     },
     "UpdTogglable": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Item.cs",
+      "file": "Eft/Common/Tables/UpdTogglable.cs",
       "properties": {
         "On": {"type": "bool?", "required": false}
       }
     },
     "ValueCompare": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/ValueCompare.cs",
       "properties": {
         "compareMethod": {"type": "string?", "required": false},
         "value": {"type": "double?", "required": false}
@@ -468,7 +470,7 @@
     },
     "VisibilityCondition": {
       "kind": "record",
-      "file": "Eft/Common/Tables/Quest.cs",
+      "file": "Eft/Common/Tables/VisibilityCondition.cs",
       "properties": {
         "id": {"type": "string?", "required": false},
         "target": {"type": "string?", "required": false},

@@ -222,7 +222,7 @@ _add(Spec(
 		target=[], traderId="", value=1,
 	),
 	vanilla_timing_use=(FINISH,), managed=MANAGED, common=False,
-	summary=lambda item, names: f"Sell {item.get('value', 1)} roubles' worth to {names.trader(item.get('traderId', ''))}",
+	summary=lambda item, names: f"Sell {item.get('value', 1)} item{'' if item.get('value', 1) == 1 else 's'} to {names.trader(item.get('traderId', ''))}",
 	note="Sell a certain number of specified items to a trader.",
 ))
 
