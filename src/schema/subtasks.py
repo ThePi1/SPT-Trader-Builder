@@ -96,7 +96,7 @@ _add(Spec(
 ))
 
 _add(Spec(
-	"subtask", "Location", "Location (map)", (Field("target", "Maps", LIST, [], choices="locations", open=True),),
+	"subtask", "Location", "Location (map)", (Field("target", "Maps", LIST, [], choices="map_keys", open=True),),
 	_base("Location", target=[]),
 	vanilla_timing_use=("Finish", "Fail"), managed=MANAGED, summary=lambda item, names: f"On {', '.join(names.location(t) for t in item.get('target', []))}",
 	note="The raid must be on one of these maps.",

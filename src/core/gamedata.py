@@ -30,6 +30,15 @@ def locale_file(language):
 	return f"locales/global/{language}.json"
 
 
+def location_ids():
+	"""{map key (bigmap, factory4_day, ...): the map's _id, as a quest's "location" gives it} (data/locations.json).
+	Sandbox and Sandbox_high share one _id."""
+	try:
+		return read_json(DATA_DIR / "locations.json")
+	except (OSError, ValueError):
+		return {}
+
+
 class GameData:
 	def __init__(self, database_dir=None, language="en", fallback_dir=BUNDLED_DATABASE_DIR):
 		self.database_dir = Path(database_dir) if database_dir else None
@@ -133,6 +142,16 @@ class GameData:
 		for location_id, name in list(names.items()):  # (the game calls both Factory maps "Factory": tell them apart by the end of their key)
 			if same.count(name) > 1:
 				names[location_id] = f"{name} ({keys[location_id].rpartition('_')[2]})"
+		return names
+
+	@cached_property
+	def map_keys(self):
+		"""{map key: name}: the maps as a raid names them (bigmap, factory4_day, ...), which is what Location conditions
+		and quest zone files use. Two keys of one map (Sandbox, Sandbox_high) are told apart by the key."""
+		names = {}
+		for key, location_id in location_ids().items():
+			name = self.locations.get(location_id) or key
+			names[key] = name if name not in names.values() else f"{name} ({key})"
 		return names
 
 	# --- names -------------------------------------------------------------------------

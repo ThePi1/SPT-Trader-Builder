@@ -140,6 +140,24 @@ def _check_subtask(sub, timing, path, ids, gamedata):
 		return issues
 	issues += _profile_check(sub, "subtask", kind, path)
 	issues += _check_choices(sub, spec, path, gamedata)
+	if kind == "Location":
+		issues += _check_map_keys(sub, path)
+	return issues
+
+
+def _check_map_keys(sub, path):
+	"""A Location condition must name maps by key (bigmap): the game compares the raid's map key with them exactly,
+	so a map's id there never matches."""
+	from core.gamedata import location_ids
+
+	keys = {}
+	for key, location_id in location_ids().items():
+		keys.setdefault(location_id, []).append(key)
+	issues = []
+	for target in sub.get("target") or []:
+		if target in keys:
+			use = " or ".join(f"'{k}'" for k in keys[target])
+			issues.append(Issue(ERROR, path + ("target",), f"'{target}' is the id of a map, but the game compares the map's key, so this never matches: use {use}."))
 	return issues
 
 

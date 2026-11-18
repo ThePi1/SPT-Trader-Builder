@@ -34,7 +34,9 @@ class Names:
 
 	def location(self, location_id):
 		"""A map's name (the id when it isn't a known map)."""
-		return (self.gamedata.locations.get(location_id) if self.gamedata is not None else None) or str(location_id)
+		if self.gamedata is None:
+			return str(location_id)
+		return self.gamedata.locations.get(location_id) or self.gamedata.map_keys.get(location_id) or str(location_id)
 
 	def items(self, tpls, limit=2):
 		names = [self.item(t) for t in tpls[:limit]]
