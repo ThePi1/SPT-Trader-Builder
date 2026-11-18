@@ -9,18 +9,21 @@ from pathlib import Path
 
 from core import jsonio
 from core.paths import REFERENCES_FILE
+from core.zones import is_zone_file
 from schema import assort as assort_schema
 from schema import explorer
 
-QUESTS, LOCALE, ASSORT, ITEMS, TRADER = "quests", "locale", "assort", "items", "trader"
-KIND_LABEL = {QUESTS: "Quests", LOCALE: "Locale", ASSORT: "Trader assort", ITEMS: "Item templates", TRADER: "Trader"}
+QUESTS, LOCALE, ASSORT, ITEMS, TRADER, ZONES = "quests", "locale", "assort", "items", "trader", "zones"
+KIND_LABEL = {QUESTS: "Quests", LOCALE: "Locale", ASSORT: "Trader assort", ITEMS: "Item templates", TRADER: "Trader", ZONES: "Quest zones"}
 NO_IDS = "questassort"  # (a quest assort file has no ids of its own, so there is nothing to look up in it)
 LIMIT = 200  # the most files read from the folders that are added at once
 
 
 def detect_kind(data):
 	"""What a loaded file is, for a reference: quests, locale, assort, items (item templates), trader (a trader's
-	base.json), "questassort" (nothing to look up) or None."""
+	base.json), zones (a WTT-CommonLib quest zone file), "questassort" (nothing to look up) or None."""
+	if is_zone_file(data):
+		return ZONES
 	if not isinstance(data, dict):
 		return None
 	if isinstance(data.get("_id"), str) and ("nickname" in data or "name" in data) and ("loyaltyLevels" in data or "currency" in data):
@@ -54,7 +57,7 @@ class Reference:
 			return len(assort_schema.offer_ids(data))
 		if self.kind == TRADER:
 			return 1
-		return len(data) if isinstance(data, dict) else 0
+		return len(data) if isinstance(data, (dict, list)) else 0
 
 
 def _read(ref):
@@ -66,7 +69,7 @@ def _read(ref):
 		return ref
 	kind = detect_kind(data)
 	if kind is None:
-		ref.error = "Not a quest, locale, trader assort, item template or trader file."
+		ref.error = "Not a quest, locale, trader assort, item template, trader or quest zone file."
 	elif kind == NO_IDS:
 		ref.error = "A quest assort file has no ids of its own, so there is nothing to look up in it."
 	else:
@@ -201,6 +204,11 @@ class References:
 				if isinstance(text, str) and key not in found:
 					found[key] = (text, ref.name)
 		return found
+
+	def zone_files(self):
+		"""[(entries, file name)] of the quest zone files in the list."""
+		self.read_all()
+		return [(ref.data, ref.name) for ref in self.files if ref.kind == ZONES]
 
 	def quest_data(self):
 		"""{quest id: (the quest, the file it is in)} of every quest in the reference files (the first file wins)."""

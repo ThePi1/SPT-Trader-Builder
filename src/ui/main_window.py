@@ -76,6 +76,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline = QuestOutline(gamedata, settings)
 		self.quest_outline.set_document(self.quests)
 		self.quest_outline.picker = self.pick
+		self._zone_index = None
+		self.quest_outline.zones = self.zone_index
 		self.quest_outline.assort_source = lambda: (self.assort.data, self.locks.data, self.assort_tab.trader_id)
 		self.quest_outline.locale = self.locale
 		self.locale_tab = LocaleTab(self.locale, self.quests, settings, references=self.references)
@@ -315,9 +317,22 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self._references_changed()
 		self.statusBar().showMessage("Reference files read again.", 8000)
 
+	def zone_index(self):
+		"""The quest zones known: the game's (when the maps have been imported, see core.mapdata) and the zone files among
+		the references. None when there are neither, so the zones aren't checked."""
+		if self._zone_index is None:
+			from core import zones
+
+			index = zones.ZoneIndex()
+			for records, name in self.references.zone_files():
+				index.add_records(records, name)
+			self._zone_index = index if index.zones else False
+		return self._zone_index or None
+
 	def _references_changed(self):
 		"""The reference files changed: names, checks and the id lists have to look again."""
 		self._base_rows = None
+		self._zone_index = None
 		if self.tabs.currentWidget() is self.lookup_tab:
 			self.lookup_tab.set_rows(self.rows())
 		self.quest_outline.rebuild()

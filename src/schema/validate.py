@@ -35,9 +35,10 @@ def _profile_name(group, kind):
 	return f"{group}:{kind}"
 
 
-def validate_quests(quests, locale=None, gamedata=None):
+def validate_quests(quests, locale=None, gamedata=None, zones=None):
 	"""Every problem in a quests file ({quest id: quest}). locale ({key: text}) adds the text checks.
-	gamedata (core.gamedata.GameData) adds checks against the real traders, items and maps."""
+	gamedata (core.gamedata.GameData) adds checks against the real traders, items and maps. zones (core.zones.ZoneIndex)
+	adds checks of the zones the conditions point at."""
 	issues = []
 	if not isinstance(quests, dict):
 		return [Issue(ERROR, (), "A quests file must be an object of quests, each under its own id.")]
@@ -45,6 +46,10 @@ def validate_quests(quests, locale=None, gamedata=None):
 		issues += validate_quest(quest, quest_id, gamedata)
 	if locale is not None:
 		issues += validate_quest_locale(quests, locale)
+	if zones is not None:
+		from core.zones import zone_issues
+
+		issues += zone_issues(quests, zones)
 	return issues
 
 
