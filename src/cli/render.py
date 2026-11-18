@@ -9,6 +9,7 @@ if os.name == "nt":
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QGuiApplication, QImage, QPainter, QPen, QPolygonF
+from PySide6.QtWidgets import QApplication
 
 KIND_COLOURS = {
 	"visit": QColor(40, 140, 255),
@@ -21,7 +22,9 @@ NEW = QColor(0, 230, 60)
 
 
 def _app():
-	return QGuiApplication.instance() or QGuiApplication([])
+	# (a QApplication, not a bare QGuiApplication: a widget made later in the same process, as in the app's tests,
+	# needs one, and an existing application is reused)
+	return QGuiApplication.instance() or QApplication([])
 
 
 def _height_colour(h, low, high):
