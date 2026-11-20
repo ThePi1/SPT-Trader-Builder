@@ -230,8 +230,8 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 				else "The walls of this map haven't been imported: import the maps again to see them"
 			)
 			self.view.set_areas([(a["name"], G.Box([(a["min"][i] + a["max"][i]) / 2 for i in range(3)], [a["max"][i] - a["min"][i] for i in range(3)])) for a in mapdata.areas])
-			low, high = floor.bounds()
-			self.cutSlider.set_range(low[1], high[1] + STOREY_VIEW)
+			low, high = floor.floor_range()  # (not the rooftops high above everything else: see Triangles.floor_range)
+			self.cutSlider.set_range(low, high + STOREY_VIEW)
 			self.cutSlider.set_value(None)
 		finally:
 			QApplication.restoreOverrideCursor()

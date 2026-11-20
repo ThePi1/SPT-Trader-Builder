@@ -5,8 +5,9 @@ middle of the view (set_storeys: the floors' heights, ticked on the track), stop
 floor so that storey shows with its walls and the one above is hidden. Shift drags it freely. The wheel and the arrow
 keys go a storey at a time; Home or a double-click shows everything again.
 
-The track spans the map, from its lowest floor to STOREY_VIEW above its highest (set_range): it stays the same
-wherever the view looks; only the storeys ticked on it change.
+The track spans the map, from its lowest floor to STOREY_VIEW above its highest (set_range; the tab leaves out
+rooftops high above everything else, see maps.triangles.Triangles.floor_range): it stays the same wherever the view
+looks; only the storeys ticked on it change.
 """
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal

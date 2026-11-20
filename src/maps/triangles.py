@@ -17,6 +17,7 @@ WIDE = 64  # a triangle over more squares than this is looked at by every ray in
 LEVEL = 0.7  # how far up a surface's normal must point to be stood on (about 45 degrees of slope at most)
 CHUNK = 12  # squares looked at together
 BATCH = 2_000_000  # points times triangles worked out at once when looking for floors (memory, about 16 MB an array)
+FLOOR_GAP, FEW_ABOVE = 10.0, 0.04  # floor_range leaves out floors above a 10 m band with none, holding under 4% of the floor
 
 
 @dataclass(frozen=True)
@@ -148,6 +149,23 @@ class Triangles:
 		else:
 			self._heights_over(np.nonzero(standable)[0], pts, np.arange(len(pts)), found)
 		return [sorted(set(heights)) for heights in found]
+
+	def floor_range(self, gap=FLOOR_GAP, few=FEW_ABOVE):
+		"""(lowest, highest) height of these floors (the navmesh's), leaving out floors high above the rest: those above
+		a band of `gap` metres with no floor, holding less than `few` of the floor's area. Ground Zero's tall buildings
+		have floors on their roofs, from 82 m up to 347 m (3% of its floor); the rest of it is below 66 m."""
+		if not len(self):
+			return 0.0, 0.0
+		c = self.corners.astype(np.float64)
+		area = 0.5 * np.linalg.norm(np.cross(c[:, 1] - c[:, 0], c[:, 2] - c[:, 0]), axis=1)
+		order = np.argsort(c[:, :, 1].mean(axis=1), kind="stable")
+		middle, area = c[order, :, 1].mean(axis=1), area[order]
+		above = area.sum() - np.cumsum(area)
+		lowest = float(c[:, :, 1].min())
+		for i in np.nonzero(np.diff(middle) >= gap)[0]:
+			if above[i] < few * area.sum():
+				return lowest, float(c[order[:i + 1], :, 1].max())
+		return lowest, float(c[:, :, 1].max())
 
 	def section(self, height, steep=LEVEL):
 		"""Where the steep triangles (walls: a normal less than `steep` up or down) cross the level `height`: line

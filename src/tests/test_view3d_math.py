@@ -132,3 +132,18 @@ def test_dragging_the_handles_of_a_zone():
 def test_a_tilted_box_has_no_turn_handle():
 	tilted = G.Box((0, 0, 0), (1, 1, 1), G.q_normalize((0.3, 0.0, 0.0, 0.95)))
 	assert H.TURN not in {h.kind for h in H.handles(tilted)}
+
+
+def _slab(y, size, x=0.0):
+	"""A square floor (two triangles facing up) size metres wide at height y, starting at x."""
+	a, b, c, d = (x, y, 0), (x, y, size), (x + size, y, size), (x + size, y, 0)
+	return [(a, b, c), (a, c, d)]
+
+
+def test_the_floors_range_leaves_out_rooftops_high_above_everything_else():
+	ground = _slab(0.0, 100) + _slab(4.0, 30) + _slab(9.0, 30) + _slab(14.0, 30)  # (a building: storeys under 10 m apart)
+	roof = _slab(60.0, 10, x=200)  # (1% of the floor, 46 m above the rest)
+	assert Triangles(np.array(ground + roof, dtype=np.float32)).floor_range() == pytest.approx((0.0, 14.0))
+	tower = _slab(60.0, 40, x=200)  # (12% of the floor: kept)
+	assert Triangles(np.array(ground + tower, dtype=np.float32)).floor_range() == pytest.approx((0.0, 60.0))
+	assert Triangles(np.array(ground, dtype=np.float32)).floor_range() == pytest.approx((0.0, 14.0))

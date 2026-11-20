@@ -175,7 +175,10 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   `glFrontFace(GL_CW)`: Unity's front faces go round clockwise). The slider's storeys are the heights with a floor
   under at least a quarter of the spots within 4 m of the middle of the view (`Floors.storeys_at`, about 5 ms); the
   view says where it looks once it stops moving (`view_moved`). The track spans the map, its lowest floor to 2.2 m
-  above its highest (the navmesh's), and stays the same wherever the view looks.
+  above its highest (the navmesh's), and stays the same wherever the view looks. Floors high above everything else
+  are left out (`Triangles.floor_range`: above a 10 m band with no floor, holding under 4% of the floor): Ground
+  Zero's tall buildings have navmesh on their roofs from 82 m up to 347 m, which squeezed the rest of the map (all
+  below 66 m) into the bottom 15% of the track; on Customs and Reserve it drops a stray patch or two.
 - **The camera's target** stays on the map: zooming in moves it toward the point under the mouse, height and all, but
   zooming out keeps its height (moving away from a point above or below it sent it hundreds of metres off within a few
   notches, and the slider's track with it), and `keep_on_map` keeps it within the floor's bounds (and 100 m past its
