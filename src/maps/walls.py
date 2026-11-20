@@ -7,7 +7,7 @@ level's shared assets, its corners in the .resS file beside it; see maps.unity.r
 terrain isn't read: the floor map (the navmesh) covers the ground players walk on.
 
 A map's walls are kept as each distinct mesh once plus where each copy of it goes (a 3 x 4 matrix), in
-``<location>.walls.npz`` beside the map's other files: Customs is about 1 900 meshes placed 23 000 times, 2.3 million
+``<location>.walls.npz`` beside the map's other files: Customs is about 1 900 meshes placed 47 000 times (box colliders included), 2.3 million
 triangles once placed. ``load`` places them. Uses numpy. No Qt.
 """
 
