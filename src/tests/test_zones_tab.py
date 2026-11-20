@@ -25,20 +25,25 @@ def app():
 	return QApplication.instance() or QApplication([])
 
 
+def _write_map(folder, location=MAP):
+	"""An imported map, made up: a 20 x 20 m floor with a 6 x 6 m upper floor 4 m above it, and one game zone."""
+	record = {
+		"format": 1, "location": location, "scenes": [], "areas": [{"name": "Yard", "scene": "yard", "min": [0, -1, 0], "max": [20, 8, 20], "objects": 0}],
+		"zones": [{"id": "game_spot", "kind": "visit", "class": "ExperienceTrigger", "object": "spot", "active": True, "scene": "x.unity",
+			"boxes": [{"center": [15, 1, 15], "size": [2, 2, 2], "rotation": [0, 0, 0, 1]}]}],
+	}
+	(folder / f"{location}.json").write_text(json.dumps(record), encoding="utf-8")
+	vertices = [0, 0, 0, 20, 0, 0, 20, 0, 20, 0, 0, 20, 2, 4, 2, 8, 4, 2, 8, 4, 8, 2, 4, 8]
+	with gzip.open(folder / f"{location}.navmesh.json.gz", "wt", encoding="utf-8") as f:
+		json.dump({"format": 1, "vertices": vertices, "polygons": [[0, 3, 2, 1], [4, 7, 6, 5]]}, f)
+
+
 @pytest.fixture
 def maps(tmp_path):
 	"""A maps folder with one imported map: Customs, made up."""
 	folder = tmp_path / "maps"
 	folder.mkdir()
-	record = {
-		"format": 1, "location": MAP, "scenes": [], "areas": [{"name": "Yard", "scene": "yard", "min": [0, -1, 0], "max": [20, 8, 20], "objects": 0}],
-		"zones": [{"id": "game_spot", "kind": "visit", "class": "ExperienceTrigger", "object": "spot", "active": True, "scene": "x.unity",
-			"boxes": [{"center": [15, 1, 15], "size": [2, 2, 2], "rotation": [0, 0, 0, 1]}]}],
-	}
-	(folder / f"{MAP}.json").write_text(json.dumps(record), encoding="utf-8")
-	vertices = [0, 0, 0, 20, 0, 0, 20, 0, 20, 0, 0, 20, 2, 4, 2, 8, 4, 2, 8, 4, 8, 2, 4, 8]
-	with gzip.open(folder / f"{MAP}.navmesh.json.gz", "wt", encoding="utf-8") as f:
-		json.dump({"format": 1, "vertices": vertices, "polygons": [[0, 3, 2, 1], [4, 7, 6, 5]]}, f)
+	_write_map(folder)
 	return folder
 
 
@@ -60,14 +65,14 @@ def test_the_map_its_floor_and_the_games_zones_are_shown(tab):
 	assert not tab.importButton.isVisibleTo(tab)
 
 
-def _add_walls(folder):
+def _add_walls(folder, location=MAP):
 	"""A 6 x 6 m slab whose top is at 8 m over (15, 15), where the floor map has nothing: a roof bots never walk."""
 	from maps import walls as W
 
 	class Shapes:
 		shapes = {W.BOX: (W._CUBE, W._CUBE_TRIANGLES)}
 
-	W.write(folder / f"{MAP}.walls.npz", [(W.BOX, W._matrix(G.IDENTITY, (15, 7.5, 15), (1, 1, 1), (6, 1, 6)))], Shapes())
+	W.write(folder / f"{location}.walls.npz", [(W.BOX, W._matrix(G.IDENTITY, (15, 7.5, 15), (1, 1, 1), (6, 1, 6)))], Shapes())
 
 
 def test_a_zone_placed_on_a_roof_only_the_walls_know_sits_on_it(app, maps):
@@ -102,6 +107,27 @@ def test_the_height_slider_hides_what_is_above_a_storey_of_what_the_view_looks_a
 	tab.view.camera.target = (30.0, -300.0, 30.0)  # (off the floor, far below it: no storeys there)
 	tab.view.view_moved.emit(tab.view.camera.target)
 	assert slider.storeys == [] and (slider.low, slider.high) == pytest.approx((0.0, 6.2))  # (the map's floors, to 2.2 m above the top one)
+
+
+def test_only_the_last_few_maps_walls_are_kept_in_memory(app, maps):
+	from ui.zones_tab import KEEP_WALLS
+
+	keys = [MAP, "Woods", "Shoreline", "Interchange"]
+	for key in keys:
+		if key != MAP:
+			_write_map(maps, key)
+		_add_walls(maps, key)
+	window = QMainWindow()
+	tab = ZonesTab(maps_folder=maps)
+	window.setCentralWidget(tab)
+	tab.load()
+	for key in keys:
+		tab.set_map(key)
+	assert [key for key in keys if tab.index.map(key)._walls is not None] == keys[-KEEP_WALLS:]
+	tab.set_map(MAP)  # (going back reads them again, and lets go of the oldest kept)
+	assert tab.view.walls is not None and len(tab.view.walls) == 12
+	assert tab.index.map(keys[1])._walls is None
+	window.deleteLater()
 
 
 def test_placing_a_zone_puts_it_on_the_floor_clicked(tab):

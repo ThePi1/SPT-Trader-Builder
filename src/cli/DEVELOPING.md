@@ -183,6 +183,11 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   zooming out keeps its height (moving away from a point above or below it sent it hundreds of metres off within a few
   notches, and the slider's track with it), and `keep_on_map` keeps it within the floor's bounds (and 100 m past its
   edges) after every pan and zoom, and for a map's remembered camera.
+- **Memory**: a map's walls are read when it is first shown (and by the floor checks), placed (`walls.load`) and kept
+  with what is worked out from them (the square index, the cut spans): about 350 MB for Lighthouse, 2 GB for every
+  map. The tab keeps only the last `KEEP_WALLS` (3) maps' (`MapData.forget_walls`); going back to another reads its
+  file again (about a second). The command line keeps every map it reads: it doesn't live long, and a check across
+  maps would otherwise read the same walls again and again.
 - **The overlay** (labels, handles, floor-check dots, compass) is drawn with QPainter after the 3D part. A whole-window
   `grab()` paints it under the 3D picture, so for screenshots use `view.grabFramebuffer()` (or paste it into the grab).
 - **Which OpenGL**: Qt on its own picks its software renderer on some PCs whose graphics card works (it did on a PC with

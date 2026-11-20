@@ -481,6 +481,12 @@ class MapData:
 			self._navmesh = NavMesh(vertices, [(tuple(p), 0) for p in nav.get("polygons", [])])
 		return self._navmesh
 
+	def forget_walls(self):
+		"""Let go of the walls (and the floors made with them, and what was worked out from them): they take hundreds of
+		megabytes once placed, and are read from their file again when next needed."""
+		self._walls = None
+		self._floors = None
+
 	@property
 	def objects(self):
 		"""The map's named objects (ObjectIndex), or None when it was imported before objects were indexed."""

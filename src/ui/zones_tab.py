@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 
 BASE, OWN = "base", "mine"  # the first part of a zone's key: (BASE, index in self.base) or (OWN, index in the file)
 NEW_SIZE = (4.0, 3.0, 4.0)  # metres: a new zone's width, height and depth
+KEEP_WALLS = 3  # maps whose walls are kept in memory (the last ones shown); the others' are read again if gone back to
 JSON_FILTER = "Quest zone files (*.json);;All files (*)"
 KINDS = list(Z.CUSTOM_TYPE)  # visit, placeitem, trigger, flarezone, salvage, as the kind box lists them
 
@@ -97,6 +98,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.building = None  # what maps.buildings found at the last "Building here"
 		self._floors = {}  # {location: Triangles} of the floor map (the walls are the map's own: MapData.walls)
 		self._cameras = {}  # {location: the view's camera there}, so going back to a map looks where it looked
+		self._recent = []  # the maps shown, the last first (only the first KEEP_WALLS keep their walls in memory)
 		self._loaded = False
 		self._filling = False
 		self._worker = None
@@ -213,6 +215,9 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		if self.location is not None:
 			self._cameras[self.location] = copy.copy(self.view.camera)
 		self.location = location
+		self._recent = [location] + [key for key in self._recent if key != location]
+		for old in self._recent[KEEP_WALLS:]:  # (before this map's are read, so no more than KEEP_WALLS are held at once)
+			self.index.map(old).forget_walls()
 		self.building = None
 		self.view.set_outlines([])
 		self._fill_storeys()
