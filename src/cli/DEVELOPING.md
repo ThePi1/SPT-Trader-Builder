@@ -174,8 +174,8 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   have no bottom; at an angle, the inside of a cut wall shows, which is the back of its faces (`gl_FrontFacing`, with
   `glFrontFace(GL_CW)`: Unity's front faces go round clockwise). The slider's storeys are the heights with a floor
   under at least a quarter of the spots within 4 m of the middle of the view (`Floors.storeys_at`, about 5 ms); the
-  view says where it looks once it stops moving (`view_moved`), and the track spans those storeys, not the whole map
-  (Reserve's range would squeeze a building into a few pixels); with none there, it spans the floor there.
+  view says where it looks once it stops moving (`view_moved`). The track spans the map, its lowest floor to 2.2 m
+  above its highest (the navmesh's), and stays the same wherever the view looks.
 - **The camera's target** stays on the map: zooming in moves it toward the point under the mouse, height and all, but
   zooming out keeps its height (moving away from a point above or below it sent it hundreds of metres off within a few
   notches, and the slider's track with it), and `keep_on_map` keeps it within the floor's bounds (and 100 m past its

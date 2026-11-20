@@ -5,8 +5,8 @@ middle of the view (set_storeys: the floors' heights, ticked on the track), stop
 floor so that storey shows with its walls and the one above is hidden. Shift drags it freely. The wheel and the arrow
 keys go a storey at a time; Home or a double-click shows everything again.
 
-The track spans the heights around those storeys (a map's whole range would squeeze a building's storeys into a few
-pixels), so it changes as the view moves; the height chosen stays.
+The track spans the map, from its lowest floor to STOREY_VIEW above its highest (set_range): it stays the same
+wherever the view looks; only the storeys ticked on it change.
 """
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
@@ -16,8 +16,7 @@ from PySide6.QtWidgets import QSizePolicy, QWidget
 STOREY_VIEW = 2.2  # metres above a storey's floor that the slider stops at: that storey shows, the one above is hidden
 UNDER_NEXT = 0.3  # metres under the next storey's floor it stops at when that is nearer than STOREY_VIEW
 FREE_STEP = 1.0  # metres a wheel step or arrow key moves it where no storeys are known
-MARGIN = 2.0  # metres the track goes on below the lowest storey and above the highest one's stop
-MIN_SPAN = 12.0  # metres the track spans at least
+LABEL_GAP = 12  # pixels: a storey's height is written only this far from the last one written
 SNAP_PIXELS = 10  # how near (in pixels) a drag must come to a storey's stop to land on it
 WIDTH = 58
 TOP, ALL_GAP, BOTTOM = 14, 26, 14  # pixels: "All" sits TOP down, the heights start ALL_GAP below it and end BOTTOM above the edge
@@ -48,21 +47,14 @@ class CutSlider(QWidget):
 		return QSize(WIDTH, 140)
 
 	# --- what it shows ------------------------------------------------------------------------------------
-	def set_storeys(self, storeys, around=None):
-		"""The floors' heights of the storeys at the middle of the view, ticked on the track (it stops above them). The
-		track spans them, from MARGIN metres below the lowest to MARGIN above the highest one's stop, MIN_SPAN metres at
-		least; with no storeys, it spans MIN_SPAN metres around `around` (the height the view looks at)."""
+	def set_range(self, low, high):
+		"""The heights the track spans: the map's lowest floor to above its highest."""
+		self.low, self.high = float(low), max(float(high), float(low) + 1.0)
+		self.update()
+
+	def set_storeys(self, storeys):
+		"""The floors' heights of the storeys at the middle of the view, ticked on the track (it stops above them)."""
 		self.storeys = sorted(float(s) for s in storeys)
-		if self.storeys:
-			low, high = self.storeys[0] - MARGIN, self.storeys[-1] + STOREY_VIEW + MARGIN
-		elif around is not None:
-			low, high = float(around), float(around)
-		else:
-			low, high = self.low, self.high
-		if high - low < MIN_SPAN:
-			middle = (low + high) / 2
-			low, high = middle - MIN_SPAN / 2, middle + MIN_SPAN / 2
-		self.low, self.high = low, high
 		self.update()
 
 	def value(self):
@@ -200,13 +192,17 @@ class CutSlider(QWidget):
 		if self._value is not None:
 			painter.setPen(muted)
 			painter.drawText(QRectF(0, TOP - 8, x - 10, 16), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, "All")
-		# the storeys at the middle of the view
-		for floor in self.storeys:
+		# the storeys at the middle of the view (from the top, so the highest ones' heights are written when they're close)
+		written = None
+		for floor in reversed(self.storeys):
 			if not self.low <= floor <= self.high:
 				continue
 			y = self.y_of(floor)
 			painter.setPen(QPen(text, 1.5))
 			painter.drawLine(QPointF(x - 7, y), QPointF(x + 7, y))
+			if written is not None and y - written < LABEL_GAP:
+				continue
+			written = y
 			painter.setPen(muted)
 			painter.drawText(QRectF(0, y - 8, x - 10, 16), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, f"{floor:.1f}")
 		# the handle, with what it hides above

@@ -101,7 +101,7 @@ def test_the_height_slider_hides_what_is_above_a_storey_of_what_the_view_looks_a
 	assert tab.view.cut >= NO_CUT
 	tab.view.camera.target = (30.0, -300.0, 30.0)  # (off the floor, far below it: no storeys there)
 	tab.view.view_moved.emit(tab.view.camera.target)
-	assert slider.storeys == [] and slider.low <= 0.0 <= slider.high < 15  # (the track stays around the map's floors)
+	assert slider.storeys == [] and (slider.low, slider.high) == pytest.approx((0.0, 6.2))  # (the map's floors, to 2.2 m above the top one)
 
 
 def test_placing_a_zone_puts_it_on_the_floor_clicked(tab):

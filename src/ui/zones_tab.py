@@ -230,6 +230,8 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 				else "The walls of this map haven't been imported: import the maps again to see them"
 			)
 			self.view.set_areas([(a["name"], G.Box([(a["min"][i] + a["max"][i]) / 2 for i in range(3)], [a["max"][i] - a["min"][i] for i in range(3)])) for a in mapdata.areas])
+			low, high = floor.bounds()
+			self.cutSlider.set_range(low[1], high[1] + STOREY_VIEW)
 			self.cutSlider.set_value(None)
 		finally:
 			QApplication.restoreOverrideCursor()
@@ -362,20 +364,12 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self._refresh()
 
 	def _update_storeys(self):
-		"""Tick the storeys at the middle of the view on the height slider (it stops above them). With none there (a
-		slope outdoors), the track is around the floor there nearest the height the view looks at."""
+		"""Tick the storeys at the middle of the view on the height slider (it stops above them)."""
 		if self.index is None or self.location is None:
 			self.cutSlider.set_storeys([])
 			return
-		x, y, z = self.view.camera.target
-		floors = self.index.map(self.location).floors
-		here = floors.floors_at(x, z)
-		if here:
-			y = min(here, key=lambda h: abs(h - y))
-		elif self.view.floor is not None and len(self.view.floor):
-			low, high = self.view.floor.bounds()
-			y = min(max(y, low[1]), high[1])
-		self.cutSlider.set_storeys(floors.storeys_at(x, z), around=y)
+		x, _y, z = self.view.camera.target
+		self.cutSlider.set_storeys(self.index.map(self.location).floors.storeys_at(x, z))
 
 	def _top_down_changed(self, top_down):
 		self.topDownButton.blockSignals(True)

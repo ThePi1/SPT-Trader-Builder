@@ -1,5 +1,5 @@
 """The height slider beside the 3D view: where it stops for each storey, dragging (snapping to them, or free with
-Shift), the wheel and the keys, and the heights its track spans."""
+Shift), the wheel and the keys, and the heights its track spans (the map's, wherever the view looks)."""
 
 import os
 
@@ -13,7 +13,7 @@ from PySide6.QtGui import QWheelEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from ui.view3d.cut_slider import MIN_SPAN, CutSlider
+from ui.view3d.cut_slider import CutSlider
 
 
 @pytest.fixture(scope="module")
@@ -25,6 +25,7 @@ def app():
 def slider(app):
 	slider = CutSlider()
 	slider.resize(58, 400)
+	slider.set_range(-5.0, 20.0)
 	slider.set_storeys([0.0, 3.0, 6.0])
 	yield slider
 	slider.deleteLater()
@@ -36,12 +37,12 @@ def _changes(slider):
 	return got
 
 
-def test_it_stops_above_each_storey_and_spans_them(slider):
+def test_it_stops_above_each_storey(slider):
 	assert slider.stops() == pytest.approx([2.2, 5.2, 8.2])
-	assert (slider.low, slider.high) == pytest.approx((-2.0, 10.2))  # (2 m below the lowest, 2 m above the highest stop)
 	slider.set_storeys([0.0, 1.5])  # (a storey nearer than 2.2 m: it stops just under it)
 	assert slider.stops() == pytest.approx([1.2, 3.7])
-	assert slider.high - slider.low == pytest.approx(MIN_SPAN)
+	slider.set_storeys([-10.0, 0.0, 19.0])  # (stops off the track are left out)
+	assert slider.stops() == pytest.approx([2.2])
 
 
 def test_the_keys_and_the_wheel_go_a_storey_at_a_time(slider):
@@ -76,18 +77,17 @@ def test_dragging_lands_on_a_storey_near_it_unless_shift_is_held(slider):
 	assert slider.value() is None
 
 
-def test_with_no_storeys_it_goes_a_metre_at_a_time_around_the_height_looked_at(slider):
-	slider.set_storeys([], around=10.0)
-	assert (slider.low, slider.high) == pytest.approx((10 - MIN_SPAN / 2, 10 + MIN_SPAN / 2))
+def test_with_no_storeys_it_goes_a_metre_at_a_time_from_the_top(slider):
+	slider.set_storeys([])
 	got = _changes(slider)
 	slider.step(False)
 	slider.step(False)
 	slider.step(True)
 	slider.step(True)
-	assert got == [pytest.approx(16.0), pytest.approx(15.0), pytest.approx(16.0), None]
+	assert got == [pytest.approx(20.0), pytest.approx(19.0), pytest.approx(20.0), None]
 
 
-def test_the_height_chosen_stays_when_the_view_moves(slider):
+def test_the_track_and_the_height_chosen_stay_when_the_view_moves(slider):
 	slider.set_value(5.2)
-	slider.set_storeys([20.0, 23.0])  # (elsewhere: the track moves, the cut doesn't)
-	assert slider.value() == pytest.approx(5.2)
+	slider.set_storeys([10.0, 13.0])  # (another building: other ticks, the same track and cut)
+	assert slider.value() == pytest.approx(5.2) and (slider.low, slider.high) == (-5.0, 20.0)
