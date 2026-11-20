@@ -91,6 +91,11 @@ def test_the_camera_orbits_pans_zooms_and_frames():
 	cam = Camera(target=(0, 0, 0), distance=100)
 	cam.zoom(0.5, toward=(10, 0, 0))
 	assert cam.distance == 50 and cam.target == pytest.approx((5, 0, 0))
+	cam.zoom(0.5, toward=(5, 40, 0))  # (closer: toward the point, its height too)
+	assert cam.target == pytest.approx((5, 20, 0))
+	for _ in range(20):  # (back, away from a point above: the target keeps its height, it doesn't sink ever deeper)
+		cam.zoom(1 / 0.85, toward=(5, 60, 10))
+	assert cam.target[1] == pytest.approx(20) and cam.target[2] < -100
 	cam.frame((0, 0, 0), (10, 4, 20))
 	assert cam.target == pytest.approx((5, 2, 10)) and cam.distance > 20
 

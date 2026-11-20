@@ -45,6 +45,7 @@ AREA_COLOUR = QColor(200, 200, 200)
 HANDLE_PIXELS = 9  # how near (in pixels) the mouse must be to a handle to take it
 BIG_ZONE = 15.0  # metres: a zone longer than this is drawn fainter, the longer the fainter
 MOST_LABELS = 60  # the zones named on screen at once (the nearest to what the view looks at)
+ON_MAP = 50.0  # metres past the floor's edges the view can look at (see keep_on_map)
 
 # GLSL 1.20, so it runs on any OpenGL from 2.1 (and on the software renderer)
 VERTEX_SHADER = """#version 120
@@ -279,6 +280,18 @@ class MapView(QOpenGLWidget):
 		low, high = box.bounds()
 		self.camera.frame(low, high, margin=2.2)
 		self.update()
+
+	def keep_on_map(self):
+		"""Keep what the view looks at over the map (up to ON_MAP metres past the floor's edges) and between its lowest
+		and highest floor, so the view turns about a point on the map and the height slider has something to show."""
+		shape = self.floor if self.floor is not None and len(self.floor) else self.walls
+		if shape is None or not len(shape):
+			return
+		low, high = shape.bounds()
+		target = tuple(min(max(float(v), lo - m), hi + m) for v, lo, hi, m in zip(self.camera.target, low, high, (ON_MAP, 0.0, ON_MAP)))
+		if target != tuple(self.camera.target):
+			self.camera.target = target
+			self.update()
 
 	def look_at_everything(self):
 		"""Frame the floor (the walls reach out past the playable map: borders, scenery)."""
@@ -661,6 +674,7 @@ class MapView(QOpenGLWidget):
 			self.camera.orbit(dx * 0.4, dy * 0.3)
 		else:
 			self.camera.pan(dx, dy, self.height())
+			self.keep_on_map()
 		self.update()
 
 	def mouseReleaseEvent(self, event):
@@ -701,6 +715,7 @@ class MapView(QOpenGLWidget):
 			hit = self.ground_at(pos.x(), pos.y())
 			toward = hit.point if hit is not None else None
 		self.camera.zoom(0.85 ** steps, toward=toward)
+		self.keep_on_map()
 		self.update()
 
 	def keyPressEvent(self, event):

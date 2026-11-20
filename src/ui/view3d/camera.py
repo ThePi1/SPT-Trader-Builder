@@ -123,13 +123,17 @@ class Camera:
 		self.target = tuple(float(v) for v in np.asarray(self.target) + np.array([move[0], 0.0, move[2]]))
 
 	def zoom(self, factor, toward=None):
-		"""Come closer (factor < 1) or go back, toward a point (the one under the mouse) if given."""
+		"""Come closer (factor < 1) or go back, toward a point (the one under the mouse) if given. Going back keeps the
+		target's height: moving away from a point above or below it would send the target ever further up or down."""
 		factor = min(max(factor, 0.05), 20.0)
 		new = min(max(self.distance * factor, 0.5), 5000.0)
 		factor = new / self.distance
 		if toward is not None:
 			target = np.asarray(self.target, dtype=np.float64)
-			self.target = tuple(float(v) for v in np.asarray(toward) + (target - np.asarray(toward)) * factor)
+			moved = np.asarray(toward) + (target - np.asarray(toward)) * factor
+			if factor > 1.0:
+				moved[1] = target[1]
+			self.target = tuple(float(v) for v in moved)
 		self.distance = new
 
 	def frame(self, low, high, margin=1.3):

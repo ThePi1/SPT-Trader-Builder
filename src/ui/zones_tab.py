@@ -235,6 +235,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 			QApplication.restoreOverrideCursor()
 		if location in self._cameras:
 			self.view.camera = self._cameras[location]
+			self.view.keep_on_map()
 			self.topDownButton.setChecked(self.view.camera.top_down)
 		else:
 			self.view.camera.top_down = self.topDownButton.isChecked()
@@ -361,12 +362,20 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self._refresh()
 
 	def _update_storeys(self):
-		"""Tick the storeys at the middle of the view on the height slider (it stops above them)."""
+		"""Tick the storeys at the middle of the view on the height slider (it stops above them). With none there (a
+		slope outdoors), the track is around the floor there nearest the height the view looks at."""
 		if self.index is None or self.location is None:
 			self.cutSlider.set_storeys([])
 			return
 		x, y, z = self.view.camera.target
-		self.cutSlider.set_storeys(self.index.map(self.location).floors.storeys_at(x, z), around=y)
+		floors = self.index.map(self.location).floors
+		here = floors.floors_at(x, z)
+		if here:
+			y = min(here, key=lambda h: abs(h - y))
+		elif self.view.floor is not None and len(self.view.floor):
+			low, high = self.view.floor.bounds()
+			y = min(max(y, low[1]), high[1])
+		self.cutSlider.set_storeys(floors.storeys_at(x, z), around=y)
 
 	def _top_down_changed(self, top_down):
 		self.topDownButton.blockSignals(True)
