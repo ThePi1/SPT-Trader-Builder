@@ -165,38 +165,6 @@
       </spacer>
      </item>
      <item>
-      <widget class="QCheckBox" name="cutBox">
-       <property name="toolTip">
-        <string>Hide everything above a height, to see into a building (the floors below it stay)</string>
-       </property>
-       <property name="text">
-        <string>Hide above</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QDoubleSpinBox" name="cutSpin">
-       <property name="suffix">
-        <string> m</string>
-       </property>
-       <property name="decimals">
-        <number>1</number>
-       </property>
-       <property name="minimum">
-        <double>-200.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>500.000000000000000</double>
-       </property>
-       <property name="singleStep">
-        <double>0.500000000000000</double>
-       </property>
-       <property name="value">
-        <double>3.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="buildingButton">
        <property name="toolTip">
         <string>Find the building in the middle of the view: its outline, and its storeys to hide the ones above</string>
@@ -281,7 +249,10 @@
       </layout>
      </widget>
      <widget class="QWidget" name="viewHost">
-      <layout class="QVBoxLayout" name="viewLayout">
+      <layout class="QHBoxLayout" name="viewLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
        <property name="leftMargin">
         <number>0</number>
        </property>

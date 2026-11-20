@@ -42,10 +42,11 @@ so both report the same problems: those modules are shared, not part of either s
 | `maps/buildings.py` | `zones building`, `make --building`, `check --rooms`: a building's outline, storeys and rooms. |
 | `maps/places.json` | Hand-written: other words for search words (`synonyms`) and named places with their anchors (`places`). |
 | `maps/walls.py` | The walls players bump into: which colliders (`WALL_LAYERS`), reading their meshes (`Meshes`), the walls file per map (`write`, `load`). |
-| `maps/triangles.py` | `Triangles` (numpy): a map's floor cut into triangles, and the first one a ray hits (`pick`, with a height cut); rays and boxes. |
+| `maps/triangles.py` | `Triangles` (numpy): a map's floor cut into triangles, and the first one a ray hits (`pick`, with a height cut); the floors at many spots at once; the walls' outline at a cut (`section`); rays and boxes. |
 | `ui/view3d/camera.py` | The 3D view's camera: matrices, the ray under a pixel, orbit, pan, zoom, frame. No Qt. |
 | `ui/view3d/handles.py` | The selected zone's handles and what dragging one does to its box (`Drag`). No Qt. |
 | `ui/view3d/view.py` | `MapView`: the OpenGL view (floor, walls, zones, outlines) with a QPainter overlay (labels, handles, floor samples) and the mouse. |
+| `ui/view3d/cut_slider.py` | `CutSlider`: the height slider beside the view (hide everything above a height), stopping above the storeys at the middle of the view (`Floors.storeys_at`). |
 | `ui/zones_tab.py` | `ZonesTab` (the app's Zones tab: your zone file as a `Document`, the game's and the references' zones, checks as you go) and `ZonesWindow` (`zones edit`). |
 | `cli/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
 
@@ -166,6 +167,15 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   boxes, fainter the bigger they are. Everything stays in Unity's axes: the camera builds its view from its own right,
   up and forward vectors, so nothing is mirrored. Drawing with alpha would make the widget's picture see-through, so
   the alpha channel is masked off while the 3D part is drawn.
+- **The cut** (the height slider, `CutSlider`): the shader drops everything above it. Where it slices through walls they
+  are drawn solid in `CAP_COLOUR`, two ways, as each covers what the other misses: the walls' outline at the cut
+  (`Triangles.section`, the steep triangles crossing that height, made again when the cut moves: 10 to 30 ms on
+  Customs) is what shows from straight above, where a wall's sides are edge on and most of the game's wall meshes
+  have no bottom; at an angle, the inside of a cut wall shows, which is the back of its faces (`gl_FrontFacing`, with
+  `glFrontFace(GL_CW)`: Unity's front faces go round clockwise). The slider's storeys are the heights with a floor
+  under at least a quarter of the spots within 4 m of the middle of the view (`Floors.storeys_at`, about 5 ms); the
+  view says where it looks once it stops moving (`view_moved`), and the track spans those storeys, not the whole map
+  (Reserve's range would squeeze a building into a few pixels).
 - **The overlay** (labels, handles, floor-check dots, compass) is drawn with QPainter after the 3D part. A whole-window
   `grab()` paints it under the 3D picture, so for screenshots use `view.grabFramebuffer()` (or paste it into the grab).
 - **Which OpenGL**: Qt on its own picks its software renderer on some PCs whose graphics card works (it did on a PC with
@@ -188,7 +198,8 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - `tests/test_places_and_buildings.py`: the object index, `zones find`, and the building at a spot on a made-up map (a building turned 20 degrees with a storey, a roof, a tunnel under it and named rooms), through the commands too.
 - `tests/test_walls.py`: mesh colliders, meshes (in the scene and in a .resS file) and the layer names on a serialized file built in the test; placing them (turned, mirrored, a box), the walls file, floors on the tops, `Floors`, and the navmesh's height in a polygon that isn't flat.
 - `tests/test_view3d_math.py`: triangles and picking, the camera (east right, north up from above; the ray under a pixel), the handles.
-- `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed), and one real drawing in a separate process with Qt's software OpenGL (skipped where there is none).
+- `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed), and real drawings in a separate process with Qt's software OpenGL (skipped where there is none): the floor and zones, and walls cut through drawn solid.
+- `tests/test_cut_slider.py`: the height slider's stops above each storey, dragging (snapping, Shift), the keys and wheel, the heights its track spans.
 - `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, and the main window's checks seeing the tab's zones.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 

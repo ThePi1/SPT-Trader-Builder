@@ -37,6 +37,7 @@ class Triangles:
 		self._cells = None
 		self._cells_from = cells_from
 		self._level = {}  # {level: which triangles are level enough to stand on}
+		self._section = None  # (steep, lowest corners, highest corners, which are steep): see section
 
 	@classmethod
 	def from_navmesh(cls, navmesh):
@@ -147,6 +148,41 @@ class Triangles:
 		else:
 			self._heights_over(np.nonzero(standable)[0], pts, np.arange(len(pts)), found)
 		return [sorted(set(heights)) for heights in found]
+
+	def section(self, height, steep=LEVEL):
+		"""Where the steep triangles (walls: a normal less than `steep` up or down) cross the level `height`: line
+		segments (n, 2, 3), float32. Drawn at a cut, they outline every wall it slices through, as on a floor plan."""
+		if not len(self):
+			return np.zeros((0, 2, 3), np.float32)
+		low, high, walls = self._spans(steep)
+		index = np.nonzero((low < height) & (high > height) & walls)[0]
+		tri = self.corners[index].astype(np.float64)
+		y = tri[:, :, 1] - height
+		y[y == 0] = 1e-6  # (a corner right at the height counts as above it)
+		points, crossed = [], []
+		with np.errstate(divide="ignore", invalid="ignore"):
+			for i, j in ((0, 1), (1, 2), (2, 0)):
+				t = y[:, i] / (y[:, i] - y[:, j])
+				points.append(tri[:, i] + t[:, None] * (tri[:, j] - tri[:, i]))
+				crossed.append((y[:, i] < 0) != (y[:, j] < 0))
+		points, crossed = np.stack(points, axis=1), np.stack(crossed, axis=1)  # (n, 3 edges, 3), (n, 3): two edges cross
+		rows = np.arange(len(index))
+		first, last = np.argmax(crossed, axis=1), 2 - np.argmax(crossed[:, ::-1], axis=1)
+		return np.stack([points[rows, first], points[rows, last]], axis=1).astype(np.float32)
+
+	def _spans(self, steep):
+		"""(lowest corner, highest corner, steep or not) of every triangle, kept for section."""
+		if self._section is None or self._section[0] != steep:
+			low, high = np.zeros(len(self), dtype=np.float32), np.zeros(len(self), dtype=np.float32)
+			walls = np.zeros(len(self), dtype=bool)
+			for s in range(0, len(self), 1 << 20):
+				tri = self.corners[s:s + (1 << 20)]
+				low[s:s + len(tri)], high[s:s + len(tri)] = tri[:, :, 1].min(axis=1), tri[:, :, 1].max(axis=1)
+				t = tri.astype(np.float64)
+				n = np.cross(t[:, 1] - t[:, 0], t[:, 2] - t[:, 0])
+				walls[s:s + len(tri)] = np.abs(n[:, 1]) < steep * np.linalg.norm(n, axis=1)
+			self._section = (steep, low, high, walls)
+		return self._section[1:]
 
 	def _standable(self, level):
 		"""Which triangles face up and are level enough to stand on (kept for each level asked about)."""

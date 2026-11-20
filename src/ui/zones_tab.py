@@ -6,7 +6,8 @@ reference files and any other zone files given are shown too, but never changed:
 your file. Each of your zones is checked as it changes (maps.zones.check_zone: its kind, overlaps, and whether a player
 can reach it from the floor), and the spots the floor check looked at are drawn under it.
 
-The layout is ui/designer/zones_tab.ui; the 3D view is ui/view3d/view.py. The maps are read when the tab is first
+The layout is ui/designer/zones_tab.ui; the 3D view is ui/view3d/view.py, and the height slider beside it (to hide
+what is above a storey) ui/view3d/cut_slider.py. The maps are read when the tab is first
 shown. The same tab is the window of `python -m cli zones edit`.
 """
 
@@ -24,13 +25,13 @@ from maps import geometry as G
 from maps import zones as Z
 from maps.triangles import Triangles
 from ui.compiled.ui_zones_tab import Ui_ZonesForm
+from ui.view3d.cut_slider import STOREY_VIEW, CutSlider
 from ui.view3d.view import GAME, MINE, REFERENCE, MapView, ViewZone
 
 log = logging.getLogger(__name__)
 
 BASE, OWN = "base", "mine"  # the first part of a zone's key: (BASE, index in self.base) or (OWN, index in the file)
 NEW_SIZE = (4.0, 3.0, 4.0)  # metres: a new zone's width, height and depth
-STOREY_VIEW = 2.2  # metres above a storey's floor that "show one storey" hides from
 JSON_FILTER = "Quest zone files (*.json);;All files (*)"
 KINDS = list(Z.CUSTOM_TYPE)  # visit, placeitem, trigger, flarezone, salvage, as the kind box lists them
 
@@ -80,7 +81,9 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.doc = Document([])
 		self.doc.on_change(self._doc_changed)
 		self.view = MapView()
-		self.viewLayout.addWidget(self.view)
+		self.cutSlider = CutSlider()
+		self.viewLayout.addWidget(self.view, 1)
+		self.viewLayout.addWidget(self.cutSlider)
 		self.splitter.setStretchFactor(1, 1)
 		self.splitter.setSizes([290, 860, 340])
 		self.kindBox.addItems([Z.CUSTOM_TYPE[k] for k in KINDS])
@@ -110,6 +113,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		v.placing_changed.connect(self._placing_changed)
 		v.delete_requested.connect(self.delete_selected)
 		v.top_down_changed.connect(self._top_down_changed)
+		v.view_moved.connect(lambda _target: self._update_storeys())
 		self.mapBox.currentIndexChanged.connect(lambda _i: self.set_map(self.mapBox.currentData()))
 		self.search.returnPressed.connect(lambda: self.find(choose=True))
 		self.topDownButton.toggled.connect(self.view.set_top_down)
@@ -117,8 +121,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.importButton.clicked.connect(lambda _c=False: self.import_maps())
 		for box in (self.floorBox, self.wallsBox, self.gameZonesBox, self.referenceZonesBox, self.areasBox, self.labelsBox):
 			box.toggled.connect(lambda _checked: self._layers_changed())
-		self.cutBox.toggled.connect(self._cut_toggled)
-		self.cutSpin.valueChanged.connect(lambda _v: self._cut_changed())
+		self.cutSlider.cut_changed.connect(self.view.set_cut)
 		self.buildingButton.clicked.connect(lambda _c=False: self.find_building())
 		self.storeyBox.currentIndexChanged.connect(self._storey_chosen)
 		self.zoneFilter.textChanged.connect(lambda _t: self._fill_list())
@@ -227,8 +230,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 				else "The walls of this map haven't been imported: import the maps again to see them"
 			)
 			self.view.set_areas([(a["name"], G.Box([(a["min"][i] + a["max"][i]) / 2 for i in range(3)], [a["max"][i] - a["min"][i] for i in range(3)])) for a in mapdata.areas])
-			low, high = floor.bounds()
-			self.cutSpin.setRange(round(low[1] - 5), round(high[1] + 5))
+			self.cutSlider.set_value(None)
 		finally:
 			QApplication.restoreOverrideCursor()
 		if location in self._cameras:
@@ -237,6 +239,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		else:
 			self.view.camera.top_down = self.topDownButton.isChecked()
 			self.view.look_at_everything()
+		self._update_storeys()
 		if self.selected and self._zone(self.selected) is not None and self._zone(self.selected).location != location:
 			self.selected = None
 		self._refresh()
@@ -357,16 +360,13 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		v.show_areas, v.show_labels = self.areasBox.isChecked(), self.labelsBox.isChecked()
 		self._refresh()
 
-	def _cut_toggled(self, on):
-		"""Turned on: hide from 2.2 m above what the view looks at (a storey's ceiling), unless a storey was chosen."""
-		if on and self.storeyBox.currentData() is None:
-			self.cutSpin.blockSignals(True)
-			self.cutSpin.setValue(self.view.camera.target[1] + STOREY_VIEW)
-			self.cutSpin.blockSignals(False)
-		self._cut_changed()
-
-	def _cut_changed(self):
-		self.view.set_cut(self.cutSpin.value() if self.cutBox.isChecked() else None)
+	def _update_storeys(self):
+		"""Tick the storeys at the middle of the view on the height slider (it stops above them)."""
+		if self.index is None or self.location is None:
+			self.cutSlider.set_storeys([])
+			return
+		x, y, z = self.view.camera.target
+		self.cutSlider.set_storeys(self.index.map(self.location).floors.storeys_at(x, z), around=y)
 
 	def _top_down_changed(self, top_down):
 		self.topDownButton.blockSignals(True)
@@ -758,10 +758,9 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 	def _storey_chosen(self, index):
 		height = self.storeyBox.itemData(index)
 		if height is None:
-			self.cutBox.setChecked(False)
+			self.cutSlider.set_value(None)
 			return
-		self.cutSpin.setValue(height + STOREY_VIEW)
-		self.cutBox.setChecked(True)
+		self.cutSlider.set_value(height + STOREY_VIEW)
 		x, _y, z = self.view.camera.target
 		self.view.camera.target = (x, height, z)
 		self.view.update()

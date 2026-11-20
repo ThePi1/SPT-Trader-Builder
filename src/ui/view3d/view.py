@@ -6,6 +6,11 @@ zooms toward the mouse, a click selects a zone (or, while placing, puts the new 
 looks at that spot. Dragging the selected zone moves it; its handles size, lift and turn it (Shift snaps). F frames
 the selected zone, T switches to the top-down view and back, Delete asks to delete the selected zone.
 
+The cut (set_cut, from the height slider beside the view: ui.view3d.cut_slider) hides everything above a height. Where
+it slices through the walls, they are drawn as solid, like a floor plan: their outline at the cut is drawn in
+CAP_COLOUR (Triangles.section; this is what shows from straight above, where a wall's sides are edge on), and so is the
+inside of a wall where it shows (the back of its faces: Unity's faces go round clockwise as seen from the front).
+
 What a click hits and how a drag changes a box are worked out by maps.triangles, ui.view3d.camera and
 ui.view3d.handles (no Qt, tested on their own); this module draws and passes the mouse on.
 """
@@ -15,7 +20,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QMatrix4x4, QPainter, QPen, QSurfaceFormat, QVector2D, QVector4D
+from PySide6.QtGui import QColor, QFont, QMatrix4x4, QPainter, QPen, QSurfaceFormat, QVector2D, QVector3D, QVector4D
 from PySide6.QtOpenGL import QOpenGLBuffer, QOpenGLShader, QOpenGLShaderProgram
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
@@ -29,10 +34,13 @@ GL_FLOAT, GL_TRIANGLES, GL_LINES = 0x1406, 0x0004, 0x0001
 GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT = 0x4000, 0x0100
 GL_DEPTH_TEST, GL_BLEND, GL_POLYGON_OFFSET_FILL, GL_MULTISAMPLE = 0x0B71, 0x0BE2, 0x8037, 0x809D
 GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_LEQUAL, GL_VERSION, GL_RENDERER = 0x0302, 0x0303, 0x0203, 0x1F02, 0x1F01
+GL_CW = 0x0900
 
 NO_CUT = 1.0e6
 BACKGROUND = (0.11, 0.12, 0.14)
 WALL_COLOUR = (0.62, 0.63, 0.66)
+CAP_COLOUR = (0.30, 0.19, 0.17)  # the walls the cut slices through: their outline there and their inside
+SECTION_LIFT = 0.02  # metres the outline is drawn above the cut
 AREA_COLOUR = QColor(200, 200, 200)
 HANDLE_PIXELS = 9  # how near (in pixels) the mouse must be to a handle to take it
 BIG_ZONE = 15.0  # metres: a zone longer than this is drawn fainter, the longer the fainter
@@ -54,9 +62,15 @@ uniform float shading;
 uniform float by_height;
 uniform vec2 heights;
 uniform vec4 colour;
+uniform float caps;
+uniform vec3 cap_colour;
 varying vec3 world;
 void main() {
 	if (world.y > cut) discard;
+	if (caps > 0.5 && !gl_FrontFacing) {  // (the inside of a wall the cut slices through: flat, so it reads as solid)
+		gl_FragColor = vec4(cap_colour, colour.a);
+		return;
+	}
 	vec3 base = colour.rgb;
 	if (by_height > 0.5) {
 		float t = clamp((world.y - heights.x) / max(heights.y - heights.x, 0.001), 0.0, 1.0);
@@ -133,6 +147,7 @@ class MapView(QOpenGLWidget):
 	hovered = Signal(object)  # (x, y, z) under the mouse, or None
 	delete_requested = Signal()
 	top_down_changed = Signal(bool)
+	view_moved = Signal(object)  # (x, y, z) the view looks at, once it has stopped moving
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -165,6 +180,7 @@ class MapView(QOpenGLWidget):
 		self._floor_buffer, self._wall_buffer = _Buffer(), _Buffer()
 		self._zone_faces, self._zone_edges, self._area_edges, self._outline_edges = _Buffer(), _Buffer(), _Buffer(), _Buffer()
 		self._selected_faces, self._selected_edges = _Buffer(), _Buffer()
+		self._section_lines = _Buffer()  # the walls' outline at the cut
 		self._program = None
 		self._press = None
 		self._last = None
@@ -176,6 +192,11 @@ class MapView(QOpenGLWidget):
 		self._hover_timer.setSingleShot(True)
 		self._hover_timer.setInterval(40)
 		self._hover_timer.timeout.connect(self._hover)
+		self._looked_at = None
+		self._moved_timer = QTimer(self)
+		self._moved_timer.setSingleShot(True)
+		self._moved_timer.setInterval(200)
+		self._moved_timer.timeout.connect(lambda: self.view_moved.emit(self._looked_at))
 
 	# --- what to draw -------------------------------------------------------------------------------
 	def set_floor(self, triangles):
@@ -190,7 +211,14 @@ class MapView(QOpenGLWidget):
 	def set_walls(self, triangles):
 		self.walls = triangles
 		self._wall_buffer.set(triangles.vertex_array() if triangles is not None else None)
+		self._section_changed()
 		self.update()
+
+	def _section_changed(self):
+		if self.walls is None or self.cut >= NO_CUT:
+			self._section_lines.set(None)
+		else:  # (a little above the cut, so the walls' faces don't hide it)
+			self._section_lines.set(self.walls.section(self.cut).reshape(-1, 3) + np.float32([0.0, SECTION_LIFT, 0.0]))
 
 	def set_zones(self, zones):
 		"""zones: [(ViewZone, style)]. The selected one is drawn on its own (see set_selected)."""
@@ -237,6 +265,7 @@ class MapView(QOpenGLWidget):
 	def set_cut(self, height):
 		"""Draw nothing above this height (None: everything)."""
 		self.cut = NO_CUT if height is None else float(height)
+		self._section_changed()
 		self.update()
 
 	def set_placing(self, placing):
@@ -290,10 +319,13 @@ class MapView(QOpenGLWidget):
 	def _buffers(self):
 		return (
 			self._floor_buffer, self._wall_buffer, self._zone_faces, self._zone_edges, self._area_edges, self._outline_edges,
-			self._selected_faces, self._selected_edges,
+			self._selected_faces, self._selected_edges, self._section_lines,
 		)
 
 	def paintGL(self):
+		if tuple(self.camera.target) != self._looked_at:  # (every move ends in a drawing: say where it stopped, once it has)
+			self._looked_at = tuple(self.camera.target)
+			self._moved_timer.start()
 		f = self.context().functions()
 		f.glColorMask(True, True, True, True)
 		f.glClearColor(*BACKGROUND, 1.0)
@@ -316,12 +348,14 @@ class MapView(QOpenGLWidget):
 			high = min(high, self.cut)
 			low = min(low, high - 1.0)
 		p.setUniformValue("heights", QVector2D(low, high))
+		p.setUniformValue("cap_colour", QVector3D(*CAP_COLOUR))
+		f.glFrontFace(GL_CW)  # (Unity's front faces)
 		f.glEnable(GL_DEPTH_TEST)
 		f.glDepthFunc(GL_LEQUAL)
 		f.glEnable(GL_MULTISAMPLE)
 		f.glDisable(GL_BLEND)
 		f.glDepthMask(True)
-		self._uniforms(cut=self.cut, shading=1, by_height=1, colour=(1, 1, 1, 1))
+		self._uniforms(cut=self.cut, shading=1, by_height=1, colour=(1, 1, 1, 1), caps=self.cut < NO_CUT)
 		if self.show_floor:
 			self._triangles(f, self._floor_buffer)
 		if self.show_walls:
@@ -330,6 +364,10 @@ class MapView(QOpenGLWidget):
 			f.glPolygonOffset(1.0, 1.0)  # (the floor wins where a wall's floor and the navmesh are at one height)
 			self._triangles(f, self._wall_buffer)
 			f.glDisable(GL_POLYGON_OFFSET_FILL)
+			if self._section_lines.count:
+				self._uniforms(cut=NO_CUT, caps=False, shading=0, colour=(*CAP_COLOUR, 1.0))
+				self._lines(f, self._section_lines, 0, self._section_lines.count, width=2.5)
+		self._uniforms(caps=False)
 		f.glEnable(GL_BLEND)
 		f.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		if self.show_areas and self._area_edges.count:
@@ -364,8 +402,10 @@ class MapView(QOpenGLWidget):
 			f.glDepthMask(True)
 		p.release()
 
-	def _uniforms(self, cut=None, shading=None, by_height=None, colour=None):
+	def _uniforms(self, cut=None, shading=None, by_height=None, colour=None, caps=None):
 		p = self._program
+		if caps is not None:
+			p.setUniformValue1f("caps", 1.0 if caps else 0.0)
 		if cut is not None:
 			p.setUniformValue1f("cut", float(cut))
 		if shading is not None:

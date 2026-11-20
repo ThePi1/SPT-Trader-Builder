@@ -541,6 +541,26 @@ class Floors:
 			for here, top in zip(mapped, tops)
 		]
 
+	def storeys_at(self, x, z, radius=4.0, step=1.0, share=0.25, apart=1.8, near=0.3):
+		"""The storeys at (x, z), lowest first: heights with a floor (within `near` metres) under at least `share` of the
+		spots within `radius` metres around it, `step` metres apart. Stairs, tables and crates are under too few spots to
+		count, and of two storeys less than `apart` metres apart only the one under more spots is kept."""
+		n = max(0, round(radius / step))
+		points = [(x + i * step, z + k * step) for i in range(-n, n + 1) for k in range(-n, n + 1)]
+		found = [(h, spot) for spot, here in enumerate(self.floors_at_points(points)) for h in here]
+		scored = []
+		for c in sorted({round(h, 1) for h, _spot in found}):
+			close = [(h, spot) for h, spot in found if abs(h - c) <= near]
+			spots = len({spot for _h, spot in close})
+			if spots >= share * len(points):
+				heights = sorted(h for h, _spot in close)
+				scored.append((spots, heights[len(heights) // 2]))
+		storeys = []
+		for _spots, height in sorted(scored, key=lambda s: -s[0]):
+			if all(abs(height - kept) >= apart for kept in storeys):
+				storeys.append(height)
+		return sorted(storeys)
+
 	def floor_near(self, x, y, z, below=3.0, above=1.0):
 		"""The floor at (x, z) closest to height y, looking down to `below` metres and up to `above` metres; None if there is none."""
 		found = [h for h in self.floors_at(x, z) if y - below <= h <= y + above]

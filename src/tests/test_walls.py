@@ -172,6 +172,25 @@ def test_the_floors_join_the_floor_map_and_the_walls_tops():
 	assert floors.floors_at_points(points)[2] == []
 
 
+def test_the_storeys_at_a_spot_leave_out_tables_and_floors_too_close_to_a_storey():
+	navmesh = NavMesh([(-10, 0.1, -10), (20, 0.1, -10), (20, 0.1, 20), (-10, 0.1, 20)], [((0, 3, 2, 1), 0)])
+	slabs = []
+	for y, low, high in ((3.0, 0, 10), (4.0, 2, 8), (0.8, 4.6, 5.4), (-99.5, -50, 50)):  # (a storey, a mezzanine, a table, the plane far under)
+		slabs += [(low, y, low), (low, y, high), (high, y, high), (low, y, low), (high, y, high), (high, y, low)]
+	floors = Floors(navmesh, Triangles(np.array(slabs, dtype=np.float32).reshape(-1, 3, 3)))
+	assert floors.storeys_at(5, 5) == pytest.approx([0.1, 3.0])
+	assert floors.storeys_at(15, 15) == pytest.approx([0.1])  # (outside: only the ground)
+
+
+def test_a_cut_outlines_the_walls_it_slices_through():
+	box = Triangles(W._CUBE[W._CUBE_TRIANGLES] * [8, 4, 8] + [20, 2, 20])  # (8 x 4 x 8 m, from 0 to 4 m up)
+	lines = box.section(2.0)
+	assert lines.shape == (8, 2, 3) and np.allclose(lines[:, :, 1], 2.0)  # (two triangles a side; the top and bottom aren't walls)
+	xz = lines[:, :, [0, 2]].reshape(-1, 2)
+	assert np.all((np.isclose(xz, 16) | np.isclose(xz, 24)).any(axis=1))  # (all on the box's sides)
+	assert len(box.section(5.0)) == 0 and len(box.section(4.0)) == 0 and len(box.section(-1.0)) == 0
+
+
 def test_the_navmesh_height_comes_from_the_part_of_the_polygon_under_the_point():
 	"""Its first three corners make a sliver whose plane is metres off at the far corner (as on Factory at 0, 0)."""
 	corners = [(-10.4, 0.35, 0.0), (-10.9, 0.4, 1.1), (-10.7, 0.05, 1.3), (-4.5, 0.05, 2.6), (-4.2, 0.05, 2.6), (0.0, 0.05, 0.0)]

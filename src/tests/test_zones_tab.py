@@ -83,6 +83,24 @@ def test_a_zone_placed_on_a_roof_only_the_walls_know_sits_on_it(app, maps):
 	window.deleteLater()
 
 
+def test_the_height_slider_hides_what_is_above_a_storey_of_what_the_view_looks_at(tab):
+	from ui.view3d.view import NO_CUT
+
+	tab.view.camera.target = (5.0, 0.0, 5.0)  # (over the upper floor)
+	tab.view.view_moved.emit(tab.view.camera.target)
+	slider = tab.cutSlider
+	assert slider.storeys == pytest.approx([0.0, 4.0])
+	slider.step(False)
+	assert tab.view.cut == pytest.approx(6.2)  # (the upper storey, and 2.2 m of its walls)
+	slider.step(False)
+	assert tab.view.cut == pytest.approx(2.2)  # (the ground floor: the upper one is hidden)
+	tab.view.camera.target = (15.0, 0.0, 15.0)
+	tab.view.view_moved.emit(tab.view.camera.target)
+	assert slider.storeys == pytest.approx([0.0]) and tab.view.cut == pytest.approx(2.2)  # (the cut stays where it was)
+	slider.set_value(None)
+	assert tab.view.cut >= NO_CUT
+
+
 def test_placing_a_zone_puts_it_on_the_floor_clicked(tab):
 	record = tab.place_at((5.0, 0.0, 5.0))
 	assert record["ZoneLocation"] == MAP and record["ZoneType"] == "visit"

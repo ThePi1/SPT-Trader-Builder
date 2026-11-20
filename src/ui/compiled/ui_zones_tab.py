@@ -112,21 +112,6 @@ class Ui_ZonesForm(object):
 
         self.layersRow.addItem(self.layersSpacer)
 
-        self.cutBox = QCheckBox(ZonesForm)
-        self.cutBox.setObjectName(u"cutBox")
-
-        self.layersRow.addWidget(self.cutBox)
-
-        self.cutSpin = QDoubleSpinBox(ZonesForm)
-        self.cutSpin.setObjectName(u"cutSpin")
-        self.cutSpin.setDecimals(1)
-        self.cutSpin.setMinimum(-200.000000000000000)
-        self.cutSpin.setMaximum(500.000000000000000)
-        self.cutSpin.setSingleStep(0.500000000000000)
-        self.cutSpin.setValue(3.000000000000000)
-
-        self.layersRow.addWidget(self.cutSpin)
-
         self.buildingButton = QPushButton(ZonesForm)
         self.buildingButton.setObjectName(u"buildingButton")
 
@@ -167,7 +152,8 @@ class Ui_ZonesForm(object):
         self.splitter.addWidget(self.leftPanel)
         self.viewHost = QWidget(self.splitter)
         self.viewHost.setObjectName(u"viewHost")
-        self.viewLayout = QVBoxLayout(self.viewHost)
+        self.viewLayout = QHBoxLayout(self.viewHost)
+        self.viewLayout.setSpacing(0)
         self.viewLayout.setObjectName(u"viewLayout")
         self.viewLayout.setContentsMargins(0, 0, 0, 0)
         self.splitter.addWidget(self.viewHost)
@@ -463,11 +449,6 @@ class Ui_ZonesForm(object):
         self.labelsBox.setToolTip(QCoreApplication.translate("ZonesForm", u"The zones' ids over them", None))
 #endif // QT_CONFIG(tooltip)
         self.labelsBox.setText(QCoreApplication.translate("ZonesForm", u"Names", None))
-#if QT_CONFIG(tooltip)
-        self.cutBox.setToolTip(QCoreApplication.translate("ZonesForm", u"Hide everything above a height, to see into a building (the floors below it stay)", None))
-#endif // QT_CONFIG(tooltip)
-        self.cutBox.setText(QCoreApplication.translate("ZonesForm", u"Hide above", None))
-        self.cutSpin.setSuffix(QCoreApplication.translate("ZonesForm", u" m", None))
 #if QT_CONFIG(tooltip)
         self.buildingButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Find the building in the middle of the view: its outline, and its storeys to hide the ones above", None))
 #endif // QT_CONFIG(tooltip)
