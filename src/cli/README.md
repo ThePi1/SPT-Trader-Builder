@@ -176,6 +176,10 @@ What the client does with each zone kind (from its code), which `check` enforces
 - `flarezone`: LaunchFlare. The game's own flare zones don't count for InZone; WTT's custom ones do.
 - A `Location` condition names maps by key (`bigmap`): a map's `_id` there never matches (an error in `check`).
 
+Placing a zone with the mouse: `zones edit` opens a window (the app's Zones tab) with the maps in 3D. It changes the
+project's zone file (`"zones"`, or `--file`): "Place a new zone", click the floor, then drag the box and its handles; the
+checks below run as it changes. That is for people; an agent uses the commands below.
+
 Placing a zone:
 
 1. **Find the place by the name players use**: `zones find "White Knight"` (or `--map Reserve`). It searches the named

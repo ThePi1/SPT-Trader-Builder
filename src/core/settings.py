@@ -70,6 +70,7 @@ SETTINGS = (
 	Setting("display", "show_json_preview", "bool", False),
 	Setting("display", "mark_uncommon_fields", "bool", True),
 	Setting("display", "problems_collapsed", "bool", True),  # (set by the Problems header, not in the dialog)
+	Setting("display", "software_3d", "bool", False),  # the Zones tab's 3D view without the graphics card (read at start)
 	Setting("lists", "locale_max_entries", "int", 5000),  # the Locale tab
 	Setting("lists", "lookup_max_rows", "int", 400),  # Find IDs, and the pickers that search for an id
 	Setting("lists", "problems_max_shown", "int", 300),  # the Problems list under the quests

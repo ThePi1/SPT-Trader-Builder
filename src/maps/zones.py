@@ -33,6 +33,10 @@ GAME = "game"  # Zone.source of the game's own zones
 CUSTOM_KINDS = {"visit": VISIT, "placeitem": PLACEITEM, "botkillzone": TRIGGER, "flarezone": FLAREZONE, "salvage": SALVAGE}
 CUSTOM_TYPE = {VISIT: "visit", PLACEITEM: "placeitem", TRIGGER: "botkillzone", FLAREZONE: "flarezone", SALVAGE: "salvage"}
 
+# The colour (red, green, blue) each kind is drawn in, on the map pictures and in the 3D view
+KIND_COLOURS = {VISIT: (40, 140, 255), PLACEITEM: (255, 150, 0), TRIGGER: (200, 60, 220), FLAREZONE: (255, 60, 60), SALVAGE: (0, 180, 120)}
+NEW_COLOUR = (0, 230, 60)  # a zone being made
+
 PLAYER_HEIGHT = 1.8  # metres: a player standing on the floor reaches this high
 SINK = 0.25  # metres: how far a new zone reaches below the floor, so standing on the floor is surely inside
 
@@ -427,20 +431,44 @@ def floors_around(navmesh, x, z, radius=LOOK_AROUND):
 	return found
 
 
-def _reach_samples(box, navmesh, reach, step=0.5):
-	"""(spots where a player on a floor would touch the box, spots in all, those floors' heights), sampling the box's
-	footprint every step metres."""
+def footprint_points(box, step=0.5):
+	"""(x, z) of the spots the checks look at under a box: its footprint sampled every `step` metres."""
 	nx, nz = max(1, round(box.size[0] / step)), max(1, round(box.size[2] / step))
-	hits, heights = 0, []
 	for i in range(nx):
 		for k in range(nz):
 			local = (-box.size[0] / 2 + (i + 0.5) * box.size[0] / nx, 0.0, -box.size[2] / 2 + (k + 0.5) * box.size[2] / nz)
 			px, _py, pz = G.add(box.center, G.rotate(box.rotation, local))
-			found = [h for h in navmesh.floors_at(px, pz) if reach(h)]
-			if found:
-				hits += 1
-				heights += found
-	return hits, nx * nz, heights
+			yield px, pz
+
+
+def _reach_samples(box, navmesh, reach, step=0.5):
+	"""(spots where a player on a floor would touch the box, spots in all, those floors' heights), sampling the box's
+	footprint every step metres."""
+	hits, total, heights = 0, 0, []
+	for px, pz in footprint_points(box, step):
+		total += 1
+		found = [h for h in navmesh.floors_at(px, pz) if reach(h)]
+		if found:
+			hits += 1
+			heights += found
+	return hits, total, heights
+
+
+def reach_samples(box, navmesh, step=0.5):
+	"""What floor_report looks at, spot by spot, to draw it: [((x, y, z), reached)]. reached is True where a player
+	standing on a mapped floor touches the box (y is that floor); elsewhere y is the floor nearest the box's bottom, or
+	the bottom itself where no floor is mapped."""
+	bottom, top = box.center[1] - box.size[1] / 2, box.center[1] + box.size[1] / 2
+	found = []
+	for px, pz in footprint_points(box, step):
+		floors = navmesh.floors_at(px, pz)
+		inside = [h for h in floors if bottom - PLAYER_HEIGHT <= h <= top]
+		if inside:
+			found.append(((px, max(inside), pz), True))
+		else:
+			y = min(floors, key=lambda h: abs(h - bottom)) if floors else bottom
+			found.append(((px, y, pz), False))
+	return found
 
 
 def _storeys(heights, gap=2.5, share=0.15):

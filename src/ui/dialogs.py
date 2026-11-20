@@ -54,6 +54,7 @@ _LABELS = {
 	"show_all_fields": "Show every option",
 	"show_json_preview": "Show the JSON",
 	"mark_uncommon_fields": "Mark uncommon fields in the Schema Explorer",
+	"software_3d": "Draw the 3D map without the graphics card",
 	"locale_max_entries": "Locale tab",
 	"lookup_max_rows": "Find IDs and pickers",
 	"problems_max_shown": "Problems under the quests",
@@ -73,13 +74,14 @@ _TIPS = {
 	"quest_icon": "The icon new quests start with.",
 	"show_all_fields": "Show rarely used options without clicking More options.",
 	"mark_uncommon_fields": "Grey out the uncommon fields (the ones under More options) in the Schema Explorer's field tables. Off shows every field in normal text.",
+	"software_3d": "The Zones tab's 3D map normally uses the graphics card. Turn this on if the map stays black or the program closes when the tab opens: drawing is then slower. Restart the program after changing it.",
 	"locale_max_entries": "The most entries the Locale tab lists. Search to find the rest.",
 	"lookup_max_rows": "The most rows Find IDs and the id pickers list. Type more to narrow them down.",
 	"problems_max_shown": "The most problems listed under the quests. The count above the list is always the full total.",
 	"explorer_max_problems": "The most problems listed after checking a file in the Schema Explorer.",
 }
 _TABS = (
-	("General", ("debug_logging", "copy_locale_to_all_languages", "save_asks_for_file", "load_last_files", "enable_debug_options", "show_all_fields", "show_json_preview", "mark_uncommon_fields")),
+	("General", ("debug_logging", "copy_locale_to_all_languages", "save_asks_for_file", "load_last_files", "enable_debug_options", "show_all_fields", "show_json_preview", "mark_uncommon_fields", "software_3d")),
 	("Game data", ("database_folder", "language")),
 	("New quests", ("quest_icon", "side", "trader")),
 	("Lists", ("locale_max_entries", "lookup_max_rows", "problems_max_shown", "explorer_max_problems")),

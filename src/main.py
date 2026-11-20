@@ -10,15 +10,19 @@ from core.gamedata import GameData
 from core.paths import BUNDLED_DATABASE_DIR
 from core.settings import Settings, SettingsError
 from ui.main_window import MainWindow, app_icon
+from ui.view3d import choose_opengl
 
 
 def main():
+	try:
+		settings, problem = Settings.load(), None
+	except SettingsError as e:
+		settings, problem = None, str(e)
+	choose_opengl(bool(getattr(settings, "software_3d", False)))  # (before the application is made)
 	app = QApplication(sys.argv)
 	app.setWindowIcon(app_icon())  # (every window and dialog, the message boxes before the main window too)
-	try:
-		settings = Settings.load()
-	except SettingsError as e:
-		QMessageBox.critical(None, "Settings", str(e))
+	if problem:
+		QMessageBox.critical(None, "Settings", problem)
 		return 1
 	if settings.debug_logging:
 		logging.basicConfig(filename="spt_trader_builder.log", level=logging.DEBUG)

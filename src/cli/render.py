@@ -11,14 +11,10 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QGuiApplication, QImage, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import QApplication
 
-KIND_COLOURS = {
-	"visit": QColor(40, 140, 255),
-	"placeitem": QColor(255, 150, 0),
-	"trigger": QColor(200, 60, 220),
-	"flarezone": QColor(255, 60, 60),
-	"salvage": QColor(0, 180, 120),
-}
-NEW = QColor(0, 230, 60)
+from maps.zones import KIND_COLOURS as _KIND_RGB, NEW_COLOUR as _NEW_RGB
+
+KIND_COLOURS = {kind: QColor(*rgb) for kind, rgb in _KIND_RGB.items()}
+NEW = QColor(*_NEW_RGB)
 
 
 def _app():

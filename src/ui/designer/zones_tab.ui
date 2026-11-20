@@ -1,0 +1,709 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ZonesForm</class>
+ <widget class="QWidget" name="ZonesForm">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,1,0">
+   <item>
+    <layout class="QHBoxLayout" name="topRow">
+     <item>
+      <widget class="QLabel" name="mapLabel">
+       <property name="text">
+        <string>Map</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="mapBox">
+       <property name="toolTip">
+        <string>The map to show (the maps imported from the game)</string>
+       </property>
+       <property name="minimumContentsLength">
+        <number>14</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="search">
+       <property name="placeholderText">
+        <string>Find a place, building, object or zone on this map (Enter)</string>
+       </property>
+       <property name="clearButtonEnabled">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="topDownButton">
+       <property name="toolTip">
+        <string>Look straight down, as on a map (T)</string>
+       </property>
+       <property name="text">
+        <string>Top-down</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="wholeMapButton">
+       <property name="toolTip">
+        <string>Show the whole map</string>
+       </property>
+       <property name="text">
+        <string>Whole map</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="importButton">
+       <property name="toolTip">
+        <string>Read the maps from the game's own files (takes a few minutes; nothing in the game is changed)</string>
+       </property>
+       <property name="text">
+        <string>Import the game's maps...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="layersRow">
+     <item>
+      <widget class="QLabel" name="showLabel">
+       <property name="text">
+        <string>Show</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="floorBox">
+       <property name="toolTip">
+        <string>The floor bots walk on (the game's navigation mesh), coloured by height</string>
+       </property>
+       <property name="text">
+        <string>Floor</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="wallsBox">
+       <property name="toolTip">
+        <string>The walls, floors and stairs players bump into (imported with the maps' walls)</string>
+       </property>
+       <property name="text">
+        <string>Walls</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="gameZonesBox">
+       <property name="toolTip">
+        <string>The game's own quest zones</string>
+       </property>
+       <property name="text">
+        <string>Game zones</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="referenceZonesBox">
+       <property name="toolTip">
+        <string>The zones in the quest zone files among your reference files</string>
+       </property>
+       <property name="text">
+        <string>Reference zones</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="areasBox">
+       <property name="toolTip">
+        <string>The parts the map is made of (each a scene of the game), outlined</string>
+       </property>
+       <property name="text">
+        <string>Areas</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="labelsBox">
+       <property name="toolTip">
+        <string>The zones' ids over them</string>
+       </property>
+       <property name="text">
+        <string>Names</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="layersSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>10</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="cutBox">
+       <property name="toolTip">
+        <string>Hide everything above a height, to see into a building (the floors below it stay)</string>
+       </property>
+       <property name="text">
+        <string>Hide above</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="cutSpin">
+       <property name="suffix">
+        <string> m</string>
+       </property>
+       <property name="decimals">
+        <number>1</number>
+       </property>
+       <property name="minimum">
+        <double>-200.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>500.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.500000000000000</double>
+       </property>
+       <property name="value">
+        <double>3.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buildingButton">
+       <property name="toolTip">
+        <string>Find the building in the middle of the view: its outline, and its storeys to hide the ones above</string>
+       </property>
+       <property name="text">
+        <string>Building here</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="storeyBox">
+       <property name="toolTip">
+        <string>Show one storey of the building found (and hide the ones above it)</string>
+       </property>
+       <property name="minimumContentsLength">
+        <number>12</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="childrenCollapsible">
+      <bool>false</bool>
+     </property>
+     <widget class="QWidget" name="leftPanel">
+      <layout class="QVBoxLayout" name="leftLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLineEdit" name="zoneFilter">
+         <property name="placeholderText">
+          <string>Filter the zones</string>
+         </property>
+         <property name="clearButtonEnabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTreeWidget" name="zoneList">
+         <property name="rootIsDecorated">
+          <bool>false</bool>
+         </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
+         </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <column>
+          <property name="text">
+           <string>Zone</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Kind</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>From</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="viewHost">
+      <layout class="QVBoxLayout" name="viewLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="rightPanel">
+      <layout class="QVBoxLayout" name="rightLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="fileLabel">
+         <property name="toolTip">
+          <string>The quest zone file (WTT-CommonLib's CustomQuestZones) your zones are in</string>
+         </property>
+         <property name="text">
+          <string>Zone file: none</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="fileRow">
+         <item>
+          <widget class="QPushButton" name="newFileButton">
+           <property name="toolTip">
+            <string>Start an empty zone file</string>
+           </property>
+           <property name="text">
+            <string>New</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="openFileButton">
+           <property name="toolTip">
+            <string>Open a quest zone file to change its zones</string>
+           </property>
+           <property name="text">
+            <string>Open...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="saveFileButton">
+           <property name="text">
+            <string>Save</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="saveAsFileButton">
+           <property name="text">
+            <string>Save as...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="placeButton">
+         <property name="toolTip">
+          <string>Then click the floor where the new zone goes (Esc to stop)</string>
+         </property>
+         <property name="text">
+          <string>Place a new zone</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="zoneGroup">
+         <property name="title">
+          <string>Zone</string>
+         </property>
+         <layout class="QFormLayout" name="zoneForm">
+          <item row="0" column="0">
+           <widget class="QLabel" name="idLabel">
+            <property name="text">
+             <string>Id</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="idEdit">
+            <property name="toolTip">
+             <string>ZoneId: what quest conditions name the zone by</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="nameLabel">
+            <property name="text">
+             <string>Name</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="nameEdit">
+            <property name="toolTip">
+             <string>ZoneName (only for you to tell zones apart)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="kindLabel">
+            <property name="text">
+             <string>Kind</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QComboBox" name="kindBox">
+            <property name="toolTip">
+             <string>What the zone is for: visit (Visit zone, Inside zone), placeitem (Place marker, Leave items), botkillzone (Inside zone, kills in a zone), flarezone (Launch a flare), salvage</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="positionLabel">
+            <property name="text">
+             <string>Middle (x, y, z)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <layout class="QHBoxLayout" name="positionRow">
+            <item>
+             <widget class="QDoubleSpinBox" name="xSpin">
+              <property name="toolTip">
+               <string>East (metres)</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>-5000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>5000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.250000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="ySpin">
+              <property name="toolTip">
+               <string>Up (metres)</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>-5000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>5000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.250000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="zSpin">
+              <property name="toolTip">
+               <string>North (metres)</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>-5000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>5000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.250000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="sizeLabel">
+            <property name="text">
+             <string>Size (w, h, d)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <layout class="QHBoxLayout" name="sizeRow">
+            <item>
+             <widget class="QDoubleSpinBox" name="widthSpin">
+              <property name="toolTip">
+               <string>Width (metres, across before turning)</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>0.200000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>2000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.250000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="heightSpin">
+              <property name="toolTip">
+               <string>Height (metres)</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>0.200000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>2000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.250000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="depthSpin">
+              <property name="toolTip">
+               <string>Depth (metres, north to south before turning)</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>0.200000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>2000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.250000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="yawLabel">
+            <property name="text">
+             <string>Turned</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QDoubleSpinBox" name="yawSpin">
+            <property name="toolTip">
+             <string>Degrees clockwise, seen from above</string>
+            </property>
+            <property name="suffix">
+             <string>°</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>5.000000000000000</double>
+            </property>
+            <property name="wrapping">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="zoneButtonsRow">
+            <item>
+             <widget class="QPushButton" name="floorButton">
+              <property name="toolTip">
+               <string>Put its bottom just under the floor it is over</string>
+              </property>
+              <property name="text">
+               <string>Sit on floor</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="slopeButton">
+              <property name="toolTip">
+               <string>For stairs or a ramp: reach down to the lowest floor of the walk under it</string>
+              </property>
+              <property name="text">
+               <string>Cover the slope</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="lookButton">
+              <property name="toolTip">
+               <string>Bring it into view (F)</string>
+              </property>
+              <property name="text">
+               <string>Look at it</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="7" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="zoneButtonsRow2">
+            <item>
+             <widget class="QPushButton" name="copyButton">
+              <property name="toolTip">
+               <string>Add a copy of this zone to your zone file, to change</string>
+              </property>
+              <property name="text">
+               <string>Copy as a new zone</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteButton">
+              <property name="toolTip">
+               <string>Take this zone out of your zone file (Delete)</string>
+              </property>
+              <property name="text">
+               <string>Delete</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="checksLabel">
+         <property name="text">
+          <string>Checks</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListWidget" name="checksList">
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="hintLabel">
+         <property name="text">
+          <string>Drag the zone to move it. Its handles size it (squares), lift it (arrow) and turn it (circle); Shift snaps. Left-drag turns the view, right-drag moves it, the wheel zooms.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="statusLabel">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>mapBox</tabstop>
+  <tabstop>search</tabstop>
+  <tabstop>zoneFilter</tabstop>
+  <tabstop>zoneList</tabstop>
+  <tabstop>idEdit</tabstop>
+  <tabstop>nameEdit</tabstop>
+  <tabstop>kindBox</tabstop>
+  <tabstop>xSpin</tabstop>
+  <tabstop>ySpin</tabstop>
+  <tabstop>zSpin</tabstop>
+  <tabstop>widthSpin</tabstop>
+  <tabstop>heightSpin</tabstop>
+  <tabstop>depthSpin</tabstop>
+  <tabstop>yawSpin</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

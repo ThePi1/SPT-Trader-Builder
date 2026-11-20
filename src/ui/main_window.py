@@ -37,6 +37,7 @@ from ui.lookup_view import LookupTab, PickerDialog
 from ui.quest_graph_tab import QuestGraphTab, Sources
 from ui.quest_outline import QuestOutline
 from ui.tabs import fill_tabs
+from ui.zones_tab import ZonesTab
 
 JSON_FILTER = "JSON files (*.json);;All files (*)"
 # (key = the attribute holding its Document, the strip's title, the name used in dialogs, the kind core.merge knows it as)
@@ -46,6 +47,15 @@ KINDS = (
 )
 KEY_OF_KIND = {kind: key for key, _title, _label, kind in KINDS}
 LAST_KEYS = ("quests", "locale", "assort", "locks")  # (the sections whose file is remembered)
+
+
+def _map_names(gamedata):
+	"""{map key: its name} for the Zones tab's map list."""
+	if gamedata is None:
+		return {}
+	from schema import choices
+
+	return dict(choices.get("map_keys", gamedata))
 
 
 def app_icon():
@@ -91,10 +101,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		)
 		self.graph_tab = QuestGraphTab(self._graph_sources)
 		self.graph_tab.open_requested.connect(self.show_quest)
+		self.zones_tab = ZonesTab(settings, self.references, _map_names(gamedata))
+		self.zones_tab.zones_changed.connect(self._zones_changed)
 		self.explorer_tab = ExplorerTab(lambda: self.quests.data, lambda: self.locale.data, gamedata, settings)
 		fill_tabs(self.tabs, self, {
 			"page_quests": self.quest_outline, "page_locale": self.locale_tab, "page_trader": self.assort_tab,
-			"page_composite": self.composite_tab, "page_quest_graph": self.graph_tab, "page_find_ids": self.lookup_tab,
+			"page_composite": self.composite_tab, "page_quest_graph": self.graph_tab, "page_zones": self.zones_tab,
+			"page_find_ids": self.lookup_tab,
 			"page_explorer": self.explorer_tab,
 		})
 		self.tabs.currentChanged.connect(self._tab_changed)
@@ -318,14 +331,17 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.statusBar().showMessage("Reference files read again.", 8000)
 
 	def zone_index(self):
-		"""The quest zones known: the game's (when the maps have been imported, see maps.mapdata) and the zone files among
-		the references. None when there are neither, so the zones aren't checked."""
+		"""The quest zones known: the game's (when the maps have been imported, see maps.mapdata), the zone files among
+		the references and the zone file open in the Zones tab. None when there are none, so the zones aren't checked."""
 		if self._zone_index is None:
 			from maps import zones
 
 			index = zones.ZoneIndex()
 			for records, name in self.references.zone_files():
 				index.add_records(records, name)
+			tab = getattr(self, "zones_tab", None)  # (made after the quest outline, which may check first)
+			if tab is not None:
+				index.add_records(tab.doc.data, tab.doc.name)
 			self._zone_index = index if index.zones else False
 		return self._zone_index or None
 
@@ -333,6 +349,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		"""The reference files changed: names, checks and the id lists have to look again."""
 		self._base_rows = None
 		self._zone_index = None
+		self.zones_tab.references_changed()
 		if self.tabs.currentWidget() is self.lookup_tab:
 			self.lookup_tab.set_rows(self.rows())
 		self.quest_outline.rebuild()
@@ -551,7 +568,13 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		return self._save(getattr(self, name), self._OTHER[name][0], as_new)
 
 	def _docs(self):
-		return (self.quests, self.locale, self.assort, self.locks)
+		return (self.quests, self.locale, self.assort, self.locks, self.zones_tab.doc)
+
+	def _zones_changed(self):
+		"""The Zones tab's zone file changed: the quests' zone checks look again."""
+		self._zone_index = None
+		self.quest_outline.check_soon()
+		self._update_title()
 
 	def _latest(self):
 		"""The document whose last edit was most recent (what Undo undoes)."""
@@ -564,7 +587,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		max(self._docs(), key=lambda d: d.redo_stamp).redo()
 
 	def closeEvent(self, event):
-		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest assort"))):
+		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest assort", "quest zone"))):
 			self._remember_files()
 			event.accept()
 		else:

@@ -1,7 +1,8 @@
 # Developer notes: the command line, the map import and quest zones
 
 How the code behind `python -m cli` works, what it relies on in the game, and how to keep it right. For using it, see
-[README.md](README.md). Everything here is Qt-free except `cli/render.py`.
+[README.md](README.md). Everything here is Qt-free except `cli/render.py` and the 3D zone editor (`ui/view3d/`,
+`ui/zones_tab.py`), which the app shows as its Zones tab and `zones edit` opens as a window of its own.
 
 ## Layout
 
@@ -12,11 +13,12 @@ src/
   cli/          the command line, its docs, and server_check (.NET)
   maps/         the game's maps and quest zones: map import, zones and their checks, places, buildings
   core/, schema/   shared with the app: quest schema and checks, game data, references, documents, settings
-  ui/, main.py     the app's window only
+  ui/, main.py     the app's window, including the Zones tab's 3D editor (ui/view3d, ui/zones_tab.py)
   data/maps/    the imported maps (made by `maps import`, git-ignored)
 ```
 
-Imports only go one way: `cli` uses `maps`, `core` and `schema`; `maps` uses `core` and `schema`; neither imports `ui`.
+Imports only go one way: `cli` uses `maps`, `core` and `schema`; `maps` uses `core` and `schema`; neither imports `ui`,
+except `zones edit`, which opens the app's Zones tab (`ui/zones_tab.py`) as a window.
 The app uses `maps.zones` for its zone checks (`schema/validate`, `core/references`, `ui/main_window`). The command
 line deliberately builds and checks quests with the app's own `schema` (`registry`, `validate`, `locale`, `assort`),
 so both report the same problems: those modules are shared, not part of either side.
@@ -39,6 +41,11 @@ so both report the same problems: those modules are shared, not part of either s
 | `maps/places.py` | `zones find`: places by the names players use, from `maps/places.json`, the areas and the object index. |
 | `maps/buildings.py` | `zones building`, `make --building`, `check --rooms`: a building's outline, storeys and rooms. |
 | `maps/places.json` | Hand-written: other words for search words (`synonyms`) and named places with their anchors (`places`). |
+| `maps/triangles.py` | `Triangles` (numpy): a map's floor cut into triangles, and the first one a ray hits (`pick`, with a height cut); rays and boxes. |
+| `ui/view3d/camera.py` | The 3D view's camera: matrices, the ray under a pixel, orbit, pan, zoom, frame. No Qt. |
+| `ui/view3d/handles.py` | The selected zone's handles and what dragging one does to its box (`Drag`). No Qt. |
+| `ui/view3d/view.py` | `MapView`: the OpenGL view (floor, walls, zones, outlines) with a QPainter overlay (labels, handles, floor samples) and the mouse. |
+| `ui/zones_tab.py` | `ZonesTab` (the app's Zones tab: your zone file as a `Document`, the game's and the references' zones, checks as you go) and `ZonesWindow` (`zones edit`). |
 | `cli/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
 
 References are `core/references.References`: the app's list (`data/references.json`), or `References.of(paths)` for a project's list (kept in no file, never saved). Besides quests, locale, assorts, item templates, trader files and zone files, it reads WTT-CommonLib `CustomItems` files (`CUSTOM_ITEMS`: entries with `itemTplToClone`, named from their `locales`).
@@ -147,6 +154,26 @@ WTT-ServerCommonLib's CustomQuestService reads `db/CustomQuests/<trader key>/{Qu
 
 What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQuests` shows a quest with no start conditions to everyone (side comes from the quest config's lists, not the quest's `side`); accepting sends the description as the start message when there's no `startedMessageText`; `CompleteQuest` doesn't re-check conditions (the client does); `RewardHelper.ApplyRewards` handles each reward type.
 
+## The 3D editor (`ui/view3d/`, `ui/zones_tab.py`)
+
+- **Drawing**: a `QOpenGLWidget` with one GLSL 1.20 shader (runs from OpenGL 2.1 up, and on Qt's software renderer). The
+  floor is coloured by height (2nd to 98th percentile, or up to the cut) and darkened by slope; zones are see-through
+  boxes, fainter the bigger they are. Everything stays in Unity's axes: the camera builds its view from its own right,
+  up and forward vectors, so nothing is mirrored. Drawing with alpha would make the widget's picture see-through, so
+  the alpha channel is masked off while the 3D part is drawn.
+- **The overlay** (labels, handles, floor-check dots, compass) is drawn with QPainter after the 3D part. A whole-window
+  `grab()` paints it under the 3D picture, so for screenshots use `view.grabFramebuffer()` (or paste it into the grab).
+- **Which OpenGL**: Qt on its own picks its software renderer on some PCs whose graphics card works (it did on a PC with
+  an NVIDIA and an AMD chip). `ui.view3d.choose_opengl` sets `QT_OPENGL=desktop` before the application is made
+  (`main.py`, `zones edit`), or `software` with the setting `software_3d`; a `QT_OPENGL` already set wins.
+- **Clicks and drags** are worked out on the CPU, not read back from the picture: `Triangles.pick` (a box test on every
+  triangle, then Möller-Trumbore on the few left, in numpy: about 10 ms for Customs' 107 000 triangles), `ray_box` for
+  zones (the smallest zone under the mouse wins), and `handles.Drag` (a face moves along its normal, the opposite one
+  stays; Shift snaps).
+- **Undo**: a form field or a drag changes one entry of the file with `Document.watch` / `touch`; typing in one field
+  is one step (`coalesce`). The main window counts the tab's document among its own (undo, the title's `*`, asking to
+  save on close) and adds its zones to the quests' zone checks.
+
 ## Tests
 
 - `tests/test_map_geometry.py`: boxes, the navmesh, tile parsing, and the Unity layouts on a serialized file built in the test (`_serialized`).
@@ -154,6 +181,9 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - `tests/test_cli.py`: the vanilla round trip, every command, shorthands, the money default, `usage`, `package`, and the server-free parts of `maps verify` and `check --server`.
 - `tests/test_projects.py`: `project init` on a made-up WTT mod, a project's own game data, language and references, WTT custom items, `project show`.
 - `tests/test_places_and_buildings.py`: the object index, `zones find`, and the building at a spot on a made-up map (a building turned 20 degrees with a storey, a roof, a tunnel under it and named rooms), through the commands too.
+- `tests/test_view3d_math.py`: triangles and picking, the camera (east right, north up from above; the ray under a pixel), the handles.
+- `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed), and one real drawing in a separate process with Qt's software OpenGL (skipped where there is none).
+- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, and the main window's checks seeing the tab's zones.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 
 ## Known limits
