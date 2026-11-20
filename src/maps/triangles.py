@@ -16,6 +16,7 @@ CELLS_FROM = 150_000  # triangles: from this many, a ray only looks at the trian
 WIDE = 64  # a triangle over more squares than this is looked at by every ray instead
 LEVEL = 0.7  # how far up a surface's normal must point to be stood on (about 45 degrees of slope at most)
 CHUNK = 12  # squares looked at together
+BATCH = 2_000_000  # points times triangles worked out at once when looking for floors (memory, about 16 MB an array)
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class Triangles:
 		self._bounds = None
 		self._cells = None
 		self._cells_from = cells_from
+		self._level = {}  # {level: which triangles are level enough to stand on}
 
 	@classmethod
 	def from_navmesh(cls, navmesh):
@@ -117,33 +119,68 @@ class Triangles:
 	def floors_at(self, x, z, level=LEVEL):
 		"""The heights of the triangles over or under (x, z) that face up and are level enough to stand on (their normal
 		at least `level` up), lowest first. Ceilings (facing down) and steep slopes are left out."""
-		if not len(self):
-			return []
-		if len(self) >= self._cells_from:
+		return self.floors_at_points([(x, z)], level)[0]
+
+	def floors_at_points(self, points, level=LEVEL):
+		"""floors_at for many (x, z) points at once, [heights] for each: the points in one square are looked at
+		together, so a zone's whole footprint costs about as much as a few single points."""
+		pts = np.asarray(points, dtype=np.float64).reshape(-1, 2)
+		found = [[] for _ in range(len(pts))]
+		if not len(self) or not len(pts):
+			return found
+		standable = self._standable(level)
+		if len(self) >= self._cells_from or len(self) * len(pts) > BATCH:
 			if self._cells is None:
 				self._file_cells()
 			unique, starts, filed, wide = self._cells
-			key = _key(int(np.floor(x / CELL)), int(np.floor(z / CELL)))
-			at = np.searchsorted(unique, key)
-			index = filed[starts[at]:starts[at + 1]] if at < len(unique) and unique[at] == key else filed[:0]
-			index = np.concatenate([index, wide]) if len(wide) else index
+			wide = wide[standable[wide]]
+			keys = _key(np.floor(pts[:, 0] / CELL), np.floor(pts[:, 1] / CELL))
+			order = np.argsort(keys, kind="stable")
+			groups, group_starts = np.unique(keys[order], return_index=True)
+			group_starts = np.append(group_starts, len(order))
+			for g, key in enumerate(groups):
+				which = order[group_starts[g]:group_starts[g + 1]]
+				at = np.searchsorted(unique, key)
+				index = filed[starts[at]:starts[at + 1]] if at < len(unique) and unique[at] == key else filed[:0]
+				index = index[standable[index]]
+				self._heights_over(np.concatenate([index, wide]) if len(wide) else index, pts, which, found)
 		else:
-			index = np.arange(len(self))
+			self._heights_over(np.nonzero(standable)[0], pts, np.arange(len(pts)), found)
+		return [sorted(set(heights)) for heights in found]
+
+	def _standable(self, level):
+		"""Which triangles face up and are level enough to stand on (kept for each level asked about)."""
+		if level not in self._level:
+			mask = np.zeros(len(self), dtype=bool)
+			for s in range(0, len(self), 1 << 20):  # (in parts: Lighthouse's walls are 6 million triangles)
+				tri = self.corners[s:s + (1 << 20)].astype(np.float64)
+				n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+				length = np.linalg.norm(n, axis=1)
+				mask[s:s + len(tri)] = (length > 0) & (n[:, 1] >= level * length)
+			self._level[level] = mask
+		return self._level[level]
+
+	def _heights_over(self, index, pts, which, found):
+		"""Add to found[w] the height of each triangle in index over or under the point pts[w], for w in which."""
+		if not len(index) or not len(which):
+			return
 		tri = self.corners[index].astype(np.float64)
 		a, b, c = tri[:, 0], tri[:, 1], tri[:, 2]
 		v0x, v0z, v1x, v1z = c[:, 0] - a[:, 0], c[:, 2] - a[:, 2], b[:, 0] - a[:, 0], b[:, 2] - a[:, 2]
-		v2x, v2z = x - a[:, 0], z - a[:, 2]
 		det = v0x * v1z - v1x * v0z
-		ok = np.abs(det) > 1e-12
-		safe = np.where(ok, det, 1.0)
-		u = (v2x * v1z - v1x * v2z) / safe
-		v = (v0x * v2z - v2x * v0z) / safe
-		ok &= (u >= -1e-6) & (v >= -1e-6) & (u + v <= 1 + 1e-6)
-		n = np.cross(b - a, c - a)
-		length = np.linalg.norm(n, axis=1)
-		ok &= n[:, 1] >= level * np.where(length > 0, length, np.inf)
-		heights = a[ok, 1] + u[ok] * (c[ok, 1] - a[ok, 1]) + v[ok] * (b[ok, 1] - a[ok, 1])
-		return sorted(set(round(float(h), 3) for h in heights))
+		flat = np.abs(det) > 1e-12
+		safe = np.where(flat, det, 1.0)
+		step = max(1, BATCH // len(index))
+		for s in range(0, len(which), step):
+			part = which[s:s + step]
+			x, z = pts[part, 0:1], pts[part, 1:2]  # (points, 1) against (triangles,)
+			v2x, v2z = x - a[:, 0], z - a[:, 2]
+			u = (v2x * v1z - v1x * v2z) / safe
+			v = (v0x * v2z - v2x * v0z) / safe
+			p, t = np.nonzero(flat & (u >= -1e-6) & (v >= -1e-6) & (u + v <= 1 + 1e-6))
+			heights = a[t, 1] + u[p, t] * (c[t, 1] - a[t, 1]) + v[p, t] * (b[t, 1] - a[t, 1])
+			for w, h in zip(part[p].tolist(), heights.tolist()):
+				found[w].append(round(h, 3))
 
 	# --- many triangles: filed under squares ---------------------------------------------------------------
 	def _file_cells(self):

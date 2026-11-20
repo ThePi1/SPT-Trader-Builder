@@ -375,6 +375,7 @@ def check_zone(zone, index):
 
 FAR_OFF = 3.0  # metres: a box this far above or below every floor around it can't be reached
 LOOK_AROUND = 6.0  # metres: how far around a box with no floor inside to look for one
+MOST_SAMPLES = 2500  # spots the checks look at under one zone at most: a big zone's are further apart than 0.5 m
 
 
 def floor_report(box, floors):
@@ -421,34 +422,50 @@ def floor_report(box, floors):
 	return errors, warnings
 
 
+def floors_under(floors, points):
+	"""floors.floors_at(x, z) for each (x, z) of points: all at once when floors can (the map's Floors), which is
+	much quicker for a zone's whole footprint."""
+	many = getattr(floors, "floors_at_points", None)
+	return many(points) if many is not None else [floors.floors_at(x, z) for x, z in points]
+
+
 def floors_around(floors, x, z, radius=LOOK_AROUND):
 	"""The floor heights at (x, z) and at points around it (2 m apart, out to radius metres)."""
-	found = list(floors.floors_at(x, z))
+	points = [(x, z)]
 	r = 2.0
 	while r <= radius + 1e-6:
 		for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1), (0.7, 0.7), (-0.7, 0.7), (0.7, -0.7), (-0.7, -0.7)):
-			found += floors.floors_at(x + dx * r, z + dz * r)
+			points.append((x + dx * r, z + dz * r))
 		r += 2.0
-	return found
+	return [h for here in floors_under(floors, points) for h in here]
 
 
-def footprint_points(box, step=0.5):
-	"""(x, z) of the spots the checks look at under a box: its footprint sampled every `step` metres."""
+def _grid(box, step):
+	"""(nx, nz, [(x, z)]): the box's footprint cut into nx by nz squares about `step` metres wide, the middle of each,
+	square (i, k) at i * nz + k."""
 	nx, nz = max(1, round(box.size[0] / step)), max(1, round(box.size[2] / step))
+	points = []
 	for i in range(nx):
 		for k in range(nz):
 			local = (-box.size[0] / 2 + (i + 0.5) * box.size[0] / nx, 0.0, -box.size[2] / 2 + (k + 0.5) * box.size[2] / nz)
 			px, _py, pz = G.add(box.center, G.rotate(box.rotation, local))
-			yield px, pz
+			points.append((px, pz))
+	return nx, nz, points
+
+
+def footprint_points(box, step=0.5):
+	"""[(x, z)] of the spots the checks look at under a box: its footprint sampled every `step` metres, or further
+	apart under a big zone, so that there are about MOST_SAMPLES at most (every 2 m under a 100 m square)."""
+	return _grid(box, max(step, math.sqrt(box.size[0] * box.size[2] / MOST_SAMPLES)))[2]
 
 
 def _reach_samples(box, floors, reach, step=0.5):
 	"""(spots where a player on a floor would touch the box, spots in all, those floors' heights), sampling the box's
-	footprint every step metres."""
+	footprint (footprint_points)."""
 	hits, total, heights = 0, 0, []
-	for px, pz in footprint_points(box, step):
+	for here in floors_under(floors, footprint_points(box, step)):
 		total += 1
-		found = [h for h in floors.floors_at(px, pz) if reach(h)]
+		found = [h for h in here if reach(h)]
 		if found:
 			hits += 1
 			heights += found
@@ -461,8 +478,8 @@ def reach_samples(box, floors, step=0.5):
 	the bottom itself where no floor is mapped."""
 	bottom, top = box.center[1] - box.size[1] / 2, box.center[1] + box.size[1] / 2
 	found = []
-	for px, pz in footprint_points(box, step):
-		here = floors.floors_at(px, pz)
+	points = footprint_points(box, step)
+	for (px, pz), here in zip(points, floors_under(floors, points)):
 		inside = [h for h in here if bottom - PLAYER_HEIGHT <= h <= top]
 		if inside:
 			found.append(((px, max(inside), pz), True))
@@ -491,13 +508,8 @@ def walkable_span(floors, box, start, step=0.5):
 	"""(lowest, highest) floor a player walks to inside the box's footprint from height `start` near its middle,
 	going from sample to sample (`step` metres apart) up or down less than STEP_DOWN: the whole flight of stairs or ramp
 	under a zone. (start, start) when there is no floor at that height near the middle."""
-	nx, nz = max(1, round(box.size[0] / step)), max(1, round(box.size[2] / step))
-	samples = {}
-	for i in range(nx):
-		for k in range(nz):
-			local = (-box.size[0] / 2 + (i + 0.5) * box.size[0] / nx, 0.0, -box.size[2] / 2 + (k + 0.5) * box.size[2] / nz)
-			px, _py, pz = G.add(box.center, G.rotate(box.rotation, local))
-			samples[(i, k)] = floors.floors_at(px, pz)
+	nx, nz, points = _grid(box, step)
+	samples = dict(zip(((i, k) for i in range(nx) for k in range(nz)), floors_under(floors, points)))
 	middle = ((nx - 1) / 2, (nz - 1) / 2)
 	starts = sorted(
 		((i, k, h) for (i, k), floors in samples.items() for h in floors if abs(h - start) <= 0.5),

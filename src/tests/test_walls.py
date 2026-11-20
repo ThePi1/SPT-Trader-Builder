@@ -143,6 +143,22 @@ def test_floors_on_the_walls_tops_leave_out_ceilings_and_steep_slopes():
 	assert Triangles(np.array(floor * 30000, dtype=np.float32).reshape(-1, 3, 3), cells_from=1).floors_at(1, 2) == [0.0]
 
 
+def test_floors_at_many_points_at_once_are_those_found_one_at_a_time():
+	"""Looked up together (square by square when there are many triangles, with a wide one over many squares), the
+	floors are the same as one point at a time, and the same whichever way they are looked up."""
+	rng = np.random.default_rng(3)
+	low = rng.uniform(0, 60, (400, 1, 3)) * [1, 0.1, 1]
+	slabs = (low + rng.uniform(-3, 3, (400, 3, 3)) * [1, 0.2, 1]).astype(np.float32)  # (small tilted triangles, some facing down)
+	wide = np.array([[(-100, -1, -100), (-100, -1, 400), (400, -1, -100)]], dtype=np.float32)  # (over hundreds of 8 m squares)
+	corners = np.concatenate([slabs, wide])
+	points = rng.uniform(-5, 65, (300, 2))
+	one_by_one = [Triangles(corners).floors_at(x, z) for x, z in points]
+	assert sum(map(len, one_by_one)) > 300  # (the wide one is under every point, the others under some)
+	for tri in (Triangles(corners), Triangles(corners, cells_from=1)):
+		assert tri.floors_at_points(points) == one_by_one
+		assert [tri.floors_at(x, z) for x, z in points] == one_by_one
+
+
 def test_the_floors_join_the_floor_map_and_the_walls_tops():
 	navmesh = NavMesh([(0, 0.1, 0), (10, 0.1, 0), (10, 0.1, 10), (0, 0.1, 10)], [((0, 3, 2, 1), 0)])
 	slabs = []
@@ -151,6 +167,9 @@ def test_the_floors_join_the_floor_map_and_the_walls_tops():
 	floors = Floors(navmesh, Triangles(np.array(slabs, dtype=np.float32).reshape(-1, 3, 3)))
 	assert floors.floors_at(5, 5) == pytest.approx([0.1, 3.0])  # (the wall's top at 0 is the floor map's 0.1)
 	assert floors.floor_near(5, 2.5, 5) == pytest.approx(3.0) and Floors(navmesh).floors_at(5, 5) == pytest.approx([0.1])
+	points = [(5, 5), (0.5, 9.5), (20, 20)]
+	assert floors.floors_at_points(points) == [floors.floors_at(x, z) for x, z in points]
+	assert floors.floors_at_points(points)[2] == []
 
 
 def test_the_navmesh_height_comes_from_the_part_of_the_polygon_under_the_point():

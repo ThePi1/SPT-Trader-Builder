@@ -189,6 +189,18 @@ def test_zone_file_checks(tmp_path):
 	assert found["lost"][0] and "Atlantis" in found["lost"][0][0]
 
 
+def test_the_checks_look_at_fewer_spots_under_a_big_zone():
+	"""Every 0.5 m under a small zone; under a 100 m one, about MOST_SAMPLES spots (every 2 m), all inside it."""
+	small = Z.footprint_points(G.Box((0, 0, 0), (4, 2, 3)))
+	assert len(small) == 8 * 6
+	big = G.Box((115, 1, 187), (100, 50, 100), G.yaw_rotation(30))
+	spots = Z.footprint_points(big)
+	assert len(spots) == Z.MOST_SAMPLES
+	assert all(big.contains((x, 1, z)) for x, z in spots)
+	long = Z.footprint_points(G.Box((0, 0, 0), (400, 2, 1)))  # (a long thin one: still every 0.5 m along it)
+	assert len(long) == 800 * 2
+
+
 def test_a_box_beside_the_mapped_floor_is_only_a_warning(tmp_path):
 	index = Z.ZoneIndex(_map(tmp_path))
 	errors, warnings = Z.floor_report(G.Box((22, 1, 5), (2, 2, 2)), index.map("bigmap").navmesh)

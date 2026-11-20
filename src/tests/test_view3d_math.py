@@ -70,6 +70,10 @@ def test_the_ray_under_a_pixel_goes_through_what_is_drawn_there():
 		to_point = np.subtract(point, origin)
 		along = float(np.dot(to_point, direction))
 		assert np.linalg.norm(to_point - along * np.asarray(direction)) < 1e-6
+		pixels, front = cam.project_many([point, (-3.0, 1.0, 7.0), cam.eye()], 640, 480)  # (many at once, as the view draws the floor spots)
+		assert pixels[0] == pytest.approx((px, py)) and pixels[1] == pytest.approx(cam.project((-3.0, 1.0, 7.0), 640, 480))
+		if not cam.top_down:  # (seen straight down from far above, nothing is behind the camera)
+			assert front.tolist() == [True, True, False] and cam.project(cam.eye(), 640, 480) is None
 		origin, direction = cam.ray(320, 240, 640, 480)  # (the middle of the view looks at the target)
 		to_target = np.subtract(cam.target, origin)
 		assert np.linalg.norm(to_target - float(np.dot(to_target, direction)) * np.asarray(direction)) < 1e-6

@@ -89,11 +89,16 @@ class Camera:
 
 	def project(self, point, width, height):
 		"""(x, y) pixel of a point in map space, or None when it is behind the camera."""
-		clip = self.matrix(width / max(height, 1)) @ np.array([*point, 1.0])
-		if clip[3] <= 1e-9:
-			return None
-		nx, ny = clip[0] / clip[3], clip[1] / clip[3]
-		return (nx + 1.0) * width / 2.0, (1.0 - ny) * height / 2.0
+		pixels, front = self.project_many([point], width, height)
+		return (float(pixels[0, 0]), float(pixels[0, 1])) if front[0] else None
+
+	def project_many(self, points, width, height):
+		"""The pixels (n, 2) of many points in map space at once, and which of them are in front of the camera (n,)."""
+		p = np.asarray(points, dtype=np.float64).reshape(-1, 3)
+		clip = np.c_[p, np.ones(len(p))] @ self.matrix(width / max(height, 1)).T
+		front = clip[:, 3] > 1e-9
+		w = np.where(front, clip[:, 3], 1.0)
+		return np.c_[(clip[:, 0] / w + 1.0) * width / 2.0, (1.0 - clip[:, 1] / w) * height / 2.0], front
 
 	def metres_per_pixel(self, height):
 		"""How many metres one pixel is at the target."""

@@ -425,12 +425,15 @@ class MapView(QOpenGLWidget):
 				spot = self.camera.project(top, w, h)
 				if spot and 0 <= spot[0] <= w and 0 <= spot[1] <= h:
 					self._label(painter, spot, zone.label, QColor(*KIND_COLOURS.get(zone.kind, (255, 255, 255))))
-		for point, ok in self.samples:
-			spot = self.camera.project(point, w, h)
-			if spot:
-				painter.setPen(Qt.PenStyle.NoPen)
-				painter.setBrush(QColor(60, 220, 90) if ok else QColor(240, 70, 60))
-				painter.drawEllipse(QPointF(*spot), 2.5, 2.5)
+		if self.samples:
+			pixels, front = self.camera.project_many([point for point, _ok in self.samples], w, h)
+			shown = front & (pixels[:, 0] >= 0) & (pixels[:, 0] <= w) & (pixels[:, 1] >= 0) & (pixels[:, 1] <= h)
+			reached = np.array([ok for _point, ok in self.samples], dtype=bool)
+			painter.setPen(Qt.PenStyle.NoPen)
+			for ok, colour in ((True, QColor(60, 220, 90)), (False, QColor(240, 70, 60))):
+				painter.setBrush(colour)
+				for x, y in pixels[shown & (reached == ok)].tolist():
+					painter.drawEllipse(QPointF(x, y), 2.5, 2.5)
 		for point, label in self.markers:
 			spot = self.camera.project(point, w, h)
 			if spot and 0 <= spot[0] <= w and 0 <= spot[1] <= h:

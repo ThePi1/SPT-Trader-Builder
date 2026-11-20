@@ -527,11 +527,19 @@ class Floors:
 		self._lowest = navmesh.bounds()[0][1] - self.DEEP if len(navmesh) else -1e9
 
 	def floors_at(self, x, z):
-		heights = list(self.navmesh.floors_at(x, z))
-		if self.walls is not None:
-			mapped = list(heights)
-			heights += [h for h in self.walls.floors_at(x, z) if h >= self._lowest and all(abs(h - g) > self.SAME for g in mapped)]
-		return sorted(heights)
+		return self.floors_at_points([(x, z)])[0]
+
+	def floors_at_points(self, points):
+		"""floors_at for many (x, z) points at once (the walls' tops are looked up together: see Triangles)."""
+		points = [(float(x), float(z)) for x, z in points]
+		mapped = [list(self.navmesh.floors_at(x, z)) for x, z in points]
+		if self.walls is None:
+			return [sorted(heights) for heights in mapped]
+		tops = self.walls.floors_at_points(points)
+		return [
+			sorted(here + [h for h in top if h >= self._lowest and all(abs(h - g) > self.SAME for g in here)])
+			for here, top in zip(mapped, tops)
+		]
 
 	def floor_near(self, x, y, z, below=3.0, above=1.0):
 		"""The floor at (x, z) closest to height y, looking down to `below` metres and up to `above` metres; None if there is none."""
