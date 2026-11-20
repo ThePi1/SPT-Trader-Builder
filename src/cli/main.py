@@ -659,10 +659,10 @@ def cmd_zones_at(args):
 	result = {"map": key, "x": x, "z": z}
 	if key in index.game_maps:
 		m = index.map(key)
-		floors = m.navmesh.floors_at(x, z)
+		floors = m.floors.floors_at(x, z)
 		result["floors"] = floors
 		if not floors:
-			result["floors_nearby"] = sorted(set(round(h, 2) for h in Z.floors_around(m.navmesh, x, z)))
+			result["floors_nearby"] = sorted(set(round(h, 2) for h in Z.floors_around(m.floors, x, z)))
 		result["areas"] = [a["name"] for a in m.areas if a["min"][0] <= x <= a["max"][0] and a["min"][2] <= z <= a["max"][2]]
 	else:
 		result["note"] = f"{key} hasn't been imported: run `maps import` for floors and the game's zones."

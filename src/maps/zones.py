@@ -367,7 +367,7 @@ def check_zone(zone, index):
 				"overlap the player may not be offered to place the item."
 			)
 	if zone.location in index.game_maps:
-		errors_, warnings_ = floor_report(zone.box, index.map(zone.location).navmesh)
+		errors_, warnings_ = floor_report(zone.box, index.map(zone.location).floors)
 		errors += errors_
 		warnings += warnings_
 	return list(dict.fromkeys(errors)), list(dict.fromkeys(warnings))
@@ -377,17 +377,18 @@ FAR_OFF = 3.0  # metres: a box this far above or below every floor around it can
 LOOK_AROUND = 6.0  # metres: how far around a box with no floor inside to look for one
 
 
-def floor_report(box, navmesh):
+def floor_report(box, floors):
 	"""(errors, warnings) about whether a player can get into a box. A trigger fires when the player's body touches it,
 	so a player standing on a floor reaches a box whose bottom is below their head and whose top is above their feet.
+	floors: anything with floors_at(x, z): the map's Floors (the floor map and the walls' tops), or its NavMesh.
 
 	The game's floor map (the bots' navigation mesh) leaves out some spots a player can reach (rooms and upper floors
-	the bots never enter, the tops of crates, and half a metre along every wall), so everything found here is a warning:
-	even some of the game's own zones are where the map has no floor. (errors is always empty; it is there so this
-	reads like the other checks.)"""
+	the bots never enter, the tops of crates, and half a metre along every wall); the walls, when imported, fill most of
+	that in. Still, everything found here is a warning: even some of the game's own zones are where no floor is
+	mapped. (errors is always empty; it is there so this reads like the other checks.)"""
 	errors, warnings = [], []
 	bottom, top = box.center[1] - box.size[1] / 2, box.center[1] + box.size[1] / 2
-	hits, _total, heights = _reach_samples(box, navmesh, lambda h: bottom - PLAYER_HEIGHT <= h <= top)
+	hits, _total, heights = _reach_samples(box, floors, lambda h: bottom - PLAYER_HEIGHT <= h <= top)
 	if hits:
 		storeys = _storeys(heights)
 		if len(storeys) > 1:
@@ -396,7 +397,7 @@ def floor_report(box, navmesh):
 				"make it shorter if it's meant for one of them."
 			)
 		return errors, warnings
-	around = floors_around(navmesh, box.center[0], box.center[2])
+	around = floors_around(floors, box.center[0], box.center[2])
 	if not around:
 		warnings.append(
 			f"No walkable floor is mapped in it or within {LOOK_AROUND:.0f} m. The game's floor map leaves out some spots players "
@@ -420,13 +421,13 @@ def floor_report(box, navmesh):
 	return errors, warnings
 
 
-def floors_around(navmesh, x, z, radius=LOOK_AROUND):
+def floors_around(floors, x, z, radius=LOOK_AROUND):
 	"""The floor heights at (x, z) and at points around it (2 m apart, out to radius metres)."""
-	found = list(navmesh.floors_at(x, z))
+	found = list(floors.floors_at(x, z))
 	r = 2.0
 	while r <= radius + 1e-6:
 		for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1), (0.7, 0.7), (-0.7, 0.7), (0.7, -0.7), (-0.7, -0.7)):
-			found += navmesh.floors_at(x + dx * r, z + dz * r)
+			found += floors.floors_at(x + dx * r, z + dz * r)
 		r += 2.0
 	return found
 
@@ -441,32 +442,32 @@ def footprint_points(box, step=0.5):
 			yield px, pz
 
 
-def _reach_samples(box, navmesh, reach, step=0.5):
+def _reach_samples(box, floors, reach, step=0.5):
 	"""(spots where a player on a floor would touch the box, spots in all, those floors' heights), sampling the box's
 	footprint every step metres."""
 	hits, total, heights = 0, 0, []
 	for px, pz in footprint_points(box, step):
 		total += 1
-		found = [h for h in navmesh.floors_at(px, pz) if reach(h)]
+		found = [h for h in floors.floors_at(px, pz) if reach(h)]
 		if found:
 			hits += 1
 			heights += found
 	return hits, total, heights
 
 
-def reach_samples(box, navmesh, step=0.5):
+def reach_samples(box, floors, step=0.5):
 	"""What floor_report looks at, spot by spot, to draw it: [((x, y, z), reached)]. reached is True where a player
 	standing on a mapped floor touches the box (y is that floor); elsewhere y is the floor nearest the box's bottom, or
 	the bottom itself where no floor is mapped."""
 	bottom, top = box.center[1] - box.size[1] / 2, box.center[1] + box.size[1] / 2
 	found = []
 	for px, pz in footprint_points(box, step):
-		floors = navmesh.floors_at(px, pz)
-		inside = [h for h in floors if bottom - PLAYER_HEIGHT <= h <= top]
+		here = floors.floors_at(px, pz)
+		inside = [h for h in here if bottom - PLAYER_HEIGHT <= h <= top]
 		if inside:
 			found.append(((px, max(inside), pz), True))
 		else:
-			y = min(floors, key=lambda h: abs(h - bottom)) if floors else bottom
+			y = min(here, key=lambda h: abs(h - bottom)) if here else bottom
 			found.append(((px, y, pz), False))
 	return found
 
@@ -486,7 +487,7 @@ def _storeys(heights, gap=2.5, share=0.15):
 STEP_DOWN = 1.6  # metres: floor samples side by side less than this apart in height are one walk (the floor map draws stairs in coarse steps)
 
 
-def walkable_span(navmesh, box, start, step=0.5):
+def walkable_span(floors, box, start, step=0.5):
 	"""(lowest, highest) floor a player walks to inside the box's footprint from height `start` near its middle,
 	going from sample to sample (`step` metres apart) up or down less than STEP_DOWN: the whole flight of stairs or ramp
 	under a zone. (start, start) when there is no floor at that height near the middle."""
@@ -496,7 +497,7 @@ def walkable_span(navmesh, box, start, step=0.5):
 		for k in range(nz):
 			local = (-box.size[0] / 2 + (i + 0.5) * box.size[0] / nx, 0.0, -box.size[2] / 2 + (k + 0.5) * box.size[2] / nz)
 			px, _py, pz = G.add(box.center, G.rotate(box.rotation, local))
-			samples[(i, k)] = navmesh.floors_at(px, pz)
+			samples[(i, k)] = floors.floors_at(px, pz)
 	middle = ((nx - 1) / 2, (nz - 1) / 2)
 	starts = sorted(
 		((i, k, h) for (i, k), floors in samples.items() for h in floors if abs(h - start) <= 0.5),
@@ -534,8 +535,8 @@ def make_zone(index, zone_id, location, kind, x, z, y=None, size=(4.0, 3.0, 4.0)
 		raise ValueError(f"The kind must be one of {', '.join(CUSTOM_TYPE)}.")
 	if min(size) <= 0:
 		raise ValueError("Every side of the zone must be longer than 0.")
-	navmesh = index.map(key).navmesh
-	floors = navmesh.floors_at(x, z)
+	where = index.map(key).floors  # (the floor map, and the walls' tops when imported)
+	floors = where.floors_at(x, z)
 	if floors:
 		floor = min(floors, key=lambda h: abs(h - y)) if y is not None else floors[0]
 		notes = [f"Floor at {floor:.2f} m" + (f" (of {len(floors)} floors here: {', '.join(f'{h:.1f}' for h in floors)})." if len(floors) > 1 else ".")]
@@ -543,7 +544,7 @@ def make_zone(index, zone_id, location, kind, x, z, y=None, size=(4.0, 3.0, 4.0)
 		floor = float(y)
 		notes = [f"No floor is mapped at {x:.1f}, {z:.1f}, so the height you gave ({floor:.2f} m) is used as the floor: check it in game."]
 	else:
-		around = floors_around(navmesh, x, z)
+		around = floors_around(where, x, z)
 		if not around:
 			raise ValueError(
 				f"No walkable floor is mapped at {x:.1f}, {z:.1f} on {key} or within {LOOK_AROUND:.0f} m. Give the floor's height (y) "
@@ -552,7 +553,7 @@ def make_zone(index, zone_id, location, kind, x, z, y=None, size=(4.0, 3.0, 4.0)
 		floor = min(around)
 		notes = [f"No floor is mapped exactly here, so the lowest floor nearby ({floor:.2f} m) is used: give y to choose another."]
 	box = G.Box((float(x), floor, float(z)), (float(size[0]), float(size[1]), float(size[2])), G.yaw_rotation(yaw))
-	low, high = walkable_span(navmesh, box, floor)
+	low, high = walkable_span(where, box, floor)
 	if slope:
 		top = low - SINK + float(size[1])
 		notes.append(f"On a slope: the walk under it goes from {low:.2f} to {high:.2f} m, so its bottom is at the lowest.")

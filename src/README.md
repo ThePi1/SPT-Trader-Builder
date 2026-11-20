@@ -86,8 +86,9 @@ trader's quest assort in `tests/fixtures`), so they run anywhere.
   short JSON specs, import the game's maps, find places and buildings on them, make quest zones and package it all for
   WTT-CommonLib. Using it: `cli/README.md`; how it works: `cli/DEVELOPING.md`. `cli/server_check/` is a .NET program
   that loads a quests file with the SPT server's own code.
-- `maps/`: the game's maps and quest zones (no Qt): the map import from the game's files, quest zones and their
-  checks (also used by the app's Problems list), places found by name (`maps/places.json`) and buildings.
+- `maps/`: the game's maps and quest zones (no Qt): the map import from the game's files (zones, the navmesh, the
+  walls players bump into), quest zones and their checks (also used by the app's Problems list), places found by
+  name (`maps/places.json`) and buildings.
 - `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source or a decompile of its DLL) and `schema/vanilla_profile.json`
   (from the base game's quests), and compile the Designer files.
 

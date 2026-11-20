@@ -60,6 +60,29 @@ def test_the_map_its_floor_and_the_games_zones_are_shown(tab):
 	assert not tab.importButton.isVisibleTo(tab)
 
 
+def _add_walls(folder):
+	"""A 6 x 6 m slab whose top is at 8 m over (15, 15), where the floor map has nothing: a roof bots never walk."""
+	from maps import walls as W
+
+	class Shapes:
+		shapes = {W.BOX: (W._CUBE, W._CUBE_TRIANGLES)}
+
+	W.write(folder / f"{MAP}.walls.npz", [(W.BOX, W._matrix(G.IDENTITY, (15, 7.5, 15), (1, 1, 1), (6, 1, 6)))], Shapes())
+
+
+def test_a_zone_placed_on_a_roof_only_the_walls_know_sits_on_it(app, maps):
+	_add_walls(maps)
+	window = QMainWindow()
+	tab = ZonesTab(maps_folder=maps)
+	window.setCentralWidget(tab)
+	tab.load()
+	assert tab.view.walls is not None and len(tab.view.walls) == 12 and tab.wallsBox.isEnabled()
+	tab.place_at((15.0, 8.0, 15.0))
+	assert tab.mine[0].box.center[1] == pytest.approx(8 - Z.SINK + 1.5)
+	assert tab.checksList.item(0).text() == "No problems found."  # (the roof counts as floor for the checks too)
+	window.deleteLater()
+
+
 def test_placing_a_zone_puts_it_on_the_floor_clicked(tab):
 	record = tab.place_at((5.0, 0.0, 5.0))
 	assert record["ZoneLocation"] == MAP and record["ZoneType"] == "visit"

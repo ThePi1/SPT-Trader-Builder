@@ -162,7 +162,8 @@ Conditions point at zones by id: `PlaceBeacon` and `LeaveItemAtLocation` (`zoneI
 `CustomQuestZones` entries; `zones make` writes them.
 
 `maps import [game folder]` reads the game client's scenes once (about two minutes) into `data/maps`: every map's
-quest zones, its walkable floor (the bots' navigation mesh), its areas and every named object. It stays on this
+quest zones, its walkable floor (the bots' navigation mesh), the walls and floors players bump into (for the 3D view
+and the floor checks), its areas and every named object. It stays on this
 computer. Re-run it after a game update, then `maps verify <SPT_Data/database folder>`: every zone that version's own
 quests use should be found (a few ids the game itself lacks are listed). Without an import, `check` can't tell a
 misspelt zone id from a game one; `maps list` says what is imported.
@@ -206,5 +207,6 @@ Placing a zone:
    and storeys it is meant to cover (and no others; `floor_range` for a slope), and the picture shows it where it was
    meant to be.
 
-The floor map misses some places a player can reach (rooms bots never enter, upper floors, crate tops), so "no floor
-mapped" is a warning to check in game, never an error: a few of the game's own zones are in such places.
+The floor map misses some places a player can reach (rooms bots never enter, upper floors, crate tops); the walls'
+tops fill most of that in once the maps are imported with walls. Still, "no floor mapped" is a warning to check in
+game, never an error: a few of the game's own zones are in such places.

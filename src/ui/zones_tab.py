@@ -82,7 +82,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.view = MapView()
 		self.viewLayout.addWidget(self.view)
 		self.splitter.setStretchFactor(1, 1)
-		self.splitter.setSizes([230, 900, 330])
+		self.splitter.setSizes([290, 860, 340])
 		self.kindBox.addItems([Z.CUSTOM_TYPE[k] for k in KINDS])
 		self.index = None  # maps.zones.ZoneIndex of everything (the game's, the reference files', yours): for the checks
 		self.base = []  # the zones that aren't yours, keyed (BASE, i)
@@ -92,8 +92,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.start_map = None  # the map to show first (else the map of your first zone, else Customs)
 		self.selected = None  # the key of the zone selected
 		self.building = None  # what maps.buildings found at the last "Building here"
-		self._floors = {}  # {location: Triangles}
-		self._walls = {}  # {location: Triangles or None}
+		self._floors = {}  # {location: Triangles} of the floor map (the walls are the map's own: MapData.walls)
 		self._cameras = {}  # {location: the view's camera there}, so going back to a map looks where it looked
 		self._loaded = False
 		self._filling = False
@@ -118,7 +117,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.importButton.clicked.connect(lambda _c=False: self.import_maps())
 		for box in (self.floorBox, self.wallsBox, self.gameZonesBox, self.referenceZonesBox, self.areasBox, self.labelsBox):
 			box.toggled.connect(lambda _checked: self._layers_changed())
-		self.cutBox.toggled.connect(lambda _c: self._cut_changed())
+		self.cutBox.toggled.connect(self._cut_toggled)
 		self.cutSpin.valueChanged.connect(lambda _v: self._cut_changed())
 		self.buildingButton.clicked.connect(lambda _c=False: self.find_building())
 		self.storeyBox.currentIndexChanged.connect(self._storey_chosen)
@@ -219,8 +218,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 			mapdata = self.index.map(location)
 			if location not in self._floors:
 				self._floors[location] = Triangles.from_navmesh(mapdata.navmesh)
-				self._walls[location] = _read_walls(mapdata)
-			floor, walls = self._floors[location], self._walls[location]
+			floor, walls = self._floors[location], mapdata.walls
 			self.view.set_floor(floor)
 			self.view.set_walls(walls)
 			self.wallsBox.setEnabled(walls is not None)
@@ -358,6 +356,14 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		v.show_floor, v.show_walls = self.floorBox.isChecked(), self.wallsBox.isChecked()
 		v.show_areas, v.show_labels = self.areasBox.isChecked(), self.labelsBox.isChecked()
 		self._refresh()
+
+	def _cut_toggled(self, on):
+		"""Turned on: hide from 2.2 m above what the view looks at (a storey's ceiling), unless a storey was chosen."""
+		if on and self.storeyBox.currentData() is None:
+			self.cutSpin.blockSignals(True)
+			self.cutSpin.setValue(self.view.camera.target[1] + STOREY_VIEW)
+			self.cutSpin.blockSignals(False)
+		self._cut_changed()
 
 	def _cut_changed(self):
 		self.view.set_cut(self.cutSpin.value() if self.cutBox.isChecked() else None)
@@ -498,7 +504,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		if not self._editable():
 			self._check_item(zone.summary(), None)
 		if zone.location in self.index.game_maps:
-			self.view.samples = Z.reach_samples(zone.box, self.index.map(zone.location).navmesh)
+			self.view.samples = Z.reach_samples(zone.box, self.index.map(zone.location).floors)
 		self.view.update()
 
 	def _check_item(self, text, colour):
@@ -634,17 +640,8 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 
 	def _floor_under(self, x, z, near):
 		"""The floor at (x, z) nearest to height `near` (within 3 m below and 1.5 m above), from the floor map and the
-		walls; None if there is none."""
-		heights = []
-		floor = self.index.map(self.location).navmesh.floor_near(x, near, z, below=3.0, above=1.5)
-		if floor is not None:
-			heights.append(floor)
-		walls = self._walls.get(self.location)
-		if walls is not None:
-			hit = walls.pick((x, near + 1.5, z), (0.0, -1.0, 0.0))
-			if hit is not None and hit.point[1] >= near - 3.0:
-				heights.append(hit.point[1])
-		return min(heights, key=lambda h: abs(h - near)) if heights else None
+		walls' tops; None if there is none."""
+		return self.index.map(self.location).floors.floor_near(x, near, z, below=3.0, above=1.5)
 
 	def sit_on_floor(self):
 		if not self._editable():
@@ -665,10 +662,10 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 			return
 		i = self.selected[1]
 		box = self.mine[i].box
-		navmesh = self.index.map(self.location).navmesh
+		floors = self.index.map(self.location).floors
 		bottom = box.center[1] - box.size[1] / 2
 		floor = self._floor_under(box.center[0], box.center[2], bottom + Z.SINK)
-		low, high = Z.walkable_span(navmesh, box, floor if floor is not None else bottom + Z.SINK)
+		low, high = Z.walkable_span(floors, box, floor if floor is not None else bottom + Z.SINK)
 		if high - low < 0.3:
 			self.statusLabel.setText("The floor under it is level: there is no slope to cover.")
 			return
@@ -719,7 +716,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 			x, z = at[0], at[-1]
 			y = at[1] if len(at) == 3 else None
 			if y is None:
-				floors = self.index.map(self.location).navmesh.floors_at(x, z)
+				floors = self.index.map(self.location).floors.floors_at(x, z)
 				y = floors[0] if floors else self.view.camera.target[1]
 			self.view.markers = [((x, y, z), result.get("name", ""))]
 			if not result.get("min"):
@@ -746,7 +743,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		else:
 			self.view.set_outlines([])
 		self._fill_storeys(storeys)
-		self.statusLabel.setText(" ".join(found.get("notes", [])[:2]))
+		self.statusLabel.setText(" ".join(n for n in found.get("notes", []) if "--picture" not in n))  # (that one is the command line's)
 		return found
 
 	def _fill_storeys(self, storeys=()):
@@ -795,18 +792,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 			return
 		self.statusLabel.setText(f"Imported {len(result)} maps.")
 		self._floors.clear()
-		self._walls.clear()
 		self.load()
-
-
-def _read_walls(mapdata):
-	"""The map's walls as Triangles, when they have been imported (maps.walls); else None."""
-	try:
-		from maps import walls
-	except ImportError:
-		return None
-	corners = walls.load(mapdata)
-	return Triangles(corners) if corners is not None else None
 
 
 def _set_text(edit, text):

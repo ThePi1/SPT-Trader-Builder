@@ -41,13 +41,10 @@ MOST_LABELS = 60  # the zones named on screen at once (the nearest to what the v
 # GLSL 1.20, so it runs on any OpenGL from 2.1 (and on the software renderer)
 VERTEX_SHADER = """#version 120
 attribute vec3 position;
-attribute vec3 normal;
 uniform mat4 matrix;
-varying float height;
-varying vec3 facing;
+varying vec3 world;
 void main() {
-	height = position.y;
-	facing = normal;
+	world = position;
 	gl_Position = matrix * vec4(position, 1.0);
 }
 """
@@ -57,18 +54,17 @@ uniform float shading;
 uniform float by_height;
 uniform vec2 heights;
 uniform vec4 colour;
-varying float height;
-varying vec3 facing;
+varying vec3 world;
 void main() {
-	if (height > cut) discard;
+	if (world.y > cut) discard;
 	vec3 base = colour.rgb;
 	if (by_height > 0.5) {
-		float t = clamp((height - heights.x) / max(heights.y - heights.x, 0.001), 0.0, 1.0);
+		float t = clamp((world.y - heights.x) / max(heights.y - heights.x, 0.001), 0.0, 1.0);
 		base = vec3(30.0 + 200.0 * t, 50.0 + 180.0 * t, 110.0 - 40.0 * t) / 255.0;
 	}
 	float light = 1.0;
-	if (shading > 0.5) {
-		vec3 n = normalize(facing + vec3(0.0, 1e-5, 0.0));
+	if (shading > 0.5) {  // (each triangle's slope, from how its position changes across the screen)
+		vec3 n = normalize(cross(dFdx(world), dFdy(world)) + vec3(0.0, 1e-9, 0.0));
 		light = 0.42 + 0.58 * abs(n.y) + 0.15 * abs(dot(n, vec3(0.53, 0.0, 0.85)));
 	}
 	gl_FragColor = vec4(base * light, colour.a);
@@ -104,11 +100,10 @@ class _Buffer:
 	def __init__(self):
 		self.buffer = None
 		self.count = 0
-		self.stride = 0
 		self.pending = None  # an array waiting to be sent (sent when next drawn: the context is current then)
 
 	def set(self, array):
-		self.pending = np.ascontiguousarray(array, dtype=np.float32) if array is not None else np.zeros((0, 6), np.float32)
+		self.pending = np.ascontiguousarray(array, dtype=np.float32) if array is not None else np.zeros((0, 3), np.float32)
 
 	def upload(self):
 		if self.pending is None:
@@ -122,7 +117,6 @@ class _Buffer:
 		self.buffer.allocate(data, len(data))
 		self.buffer.release()
 		self.count = len(array)
-		self.stride = array.shape[1] * 4 if array.ndim == 2 and len(array) else 24
 
 	def destroy(self):
 		if self.buffer is not None:
@@ -188,7 +182,7 @@ class MapView(QOpenGLWidget):
 		"""The floor (maps.triangles.Triangles), or None. The colours by height run between its 2nd and 98th percentile."""
 		self.floor = triangles
 		if triangles is not None and len(triangles):
-			ys = triangles.corners[:, :, 1].ravel()
+			ys = triangles.heights()
 			self._heights = (float(np.percentile(ys, 2)), float(np.percentile(ys, 98)))
 		self._floor_buffer.set(triangles.vertex_array() if triangles is not None else None)
 		self.update()
@@ -202,19 +196,19 @@ class MapView(QOpenGLWidget):
 		"""zones: [(ViewZone, style)]. The selected one is drawn on its own (see set_selected)."""
 		self.zones = list(zones)
 		self._zone_faces.set(np.concatenate([box_faces(z.box) for z, _s in self.zones]) if self.zones else None)
-		self._zone_edges.set(_with_normals(np.concatenate([box_edges(z.box) for z, _s in self.zones])) if self.zones else None)
+		self._zone_edges.set(np.concatenate([box_edges(z.box) for z, _s in self.zones]) if self.zones else None)
 		self.update()
 
 	def set_areas(self, areas):
 		"""areas: [(name, maps.geometry.Box)], outlined when show_areas is on."""
 		self.areas = list(areas)
-		self._area_edges.set(_with_normals(np.concatenate([box_edges(b) for _n, b in self.areas])) if self.areas else None)
+		self._area_edges.set(np.concatenate([box_edges(b) for _n, b in self.areas]) if self.areas else None)
 		self.update()
 
 	def set_outlines(self, outlines):
 		"""outlines: [(name, maps.geometry.Box)], always outlined (a building found)."""
 		self.outlines = list(outlines)
-		self._outline_edges.set(_with_normals(np.concatenate([box_edges(b) for _n, b in self.outlines])) if self.outlines else None)
+		self._outline_edges.set(np.concatenate([box_edges(b) for _n, b in self.outlines]) if self.outlines else None)
 		self.update()
 
 	def set_top_down(self, top_down):
@@ -237,7 +231,7 @@ class MapView(QOpenGLWidget):
 	def _selected_changed(self):
 		box = self.selected_box
 		self._selected_faces.set(box_faces(box) if box is not None else None)
-		self._selected_edges.set(_with_normals(box_edges(box)) if box is not None else None)
+		self._selected_edges.set(box_edges(box) if box is not None else None)
 		self.update()
 
 	def set_cut(self, height):
@@ -258,7 +252,8 @@ class MapView(QOpenGLWidget):
 		self.update()
 
 	def look_at_everything(self):
-		ranges = [t.bounds() for t in (self.floor, self.walls) if t is not None and len(t)]
+		"""Frame the floor (the walls reach out past the playable map: borders, scenery)."""
+		ranges = [t.bounds() for t in ((self.floor,) if self.floor is not None and len(self.floor) else (self.walls,)) if t is not None and len(t)]
 		if ranges:
 			low = np.min([r[0] for r in ranges], axis=0)
 			high = np.max([r[1] for r in ranges], axis=0)
@@ -276,7 +271,6 @@ class MapView(QOpenGLWidget):
 		ok = program.addShaderFromSourceCode(QOpenGLShader.ShaderTypeBit.Vertex, VERTEX_SHADER)
 		ok = ok and program.addShaderFromSourceCode(QOpenGLShader.ShaderTypeBit.Fragment, FRAGMENT_SHADER)
 		program.bindAttributeLocation("position", 0)
-		program.bindAttributeLocation("normal", 1)
 		if not (ok and program.link()):
 			self.gl_problem = (
 				"The 3D view needs OpenGL 2.1 or later" + (f"; this computer gives {self.renderer}" if self.renderer else "")
@@ -382,12 +376,9 @@ class MapView(QOpenGLWidget):
 			p.setUniformValue("colour", QVector4D(*colour))
 
 	def _bind(self, buffer):
-		p = self._program
 		buffer.buffer.bind()
-		p.enableAttributeArray(0)
-		p.setAttributeBuffer(0, GL_FLOAT, 0, 3, buffer.stride)
-		p.enableAttributeArray(1)
-		p.setAttributeBuffer(1, GL_FLOAT, 12, 3, buffer.stride)
+		self._program.enableAttributeArray(0)
+		self._program.setAttributeBuffer(0, GL_FLOAT, 0, 3, 12)
 
 	def _triangles(self, f, buffer, first=0, count=None):
 		if buffer.buffer is None or not buffer.count:
@@ -409,6 +400,7 @@ class MapView(QOpenGLWidget):
 		painter = QPainter(self)
 		painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 		w, h = self.width(), self.height()
+		self._taken = []  # (the label boxes drawn so far: a label that would cover one is left out)
 		font = QFont(self.font())
 		font.setPointSizeF(max(font.pointSizeF(), 8.5))
 		painter.setFont(font)
@@ -445,7 +437,7 @@ class MapView(QOpenGLWidget):
 				painter.setPen(QPen(QColor(255, 255, 255), 1.5))
 				painter.setBrush(QColor(255, 220, 60))
 				painter.drawEllipse(QPointF(*spot), 4, 4)
-				self._label(painter, (spot[0], spot[1] - 6), label, QColor(255, 220, 60))
+				self._label(painter, (spot[0], spot[1] - 6), label, QColor(255, 220, 60), always=True)
 		if self.selected_box is not None and self.selected_editable:
 			self._draw_handles(painter)
 		self._compass(painter, w)
@@ -457,10 +449,14 @@ class MapView(QOpenGLWidget):
 		if spot and 0 <= spot[0] <= self.width() and 0 <= spot[1] <= self.height():
 			self._label(painter, spot, text, colour)
 
-	def _label(self, painter, spot, text, colour):
+	def _label(self, painter, spot, text, colour, always=False):
 		metrics = painter.fontMetrics()
 		width = metrics.horizontalAdvance(text) + 8
 		rect = QRectF(spot[0] - width / 2, spot[1] - metrics.height() - 4, width, metrics.height() + 2)
+		taken = getattr(self, "_taken", [])
+		if not always and any(rect.intersects(other) for other in taken):
+			return
+		taken.append(rect)
 		painter.setPen(Qt.PenStyle.NoPen)
 		painter.setBrush(QColor(0, 0, 0, 150))
 		painter.drawRoundedRect(rect, 3, 3)
@@ -696,8 +692,3 @@ class MapView(QOpenGLWidget):
 		self.hovered.emit(self.hover_point)
 		self.update()
 
-
-def _with_normals(points):
-	"""Line points (n, 3) with an up normal each, so lines use the same buffer layout as triangles."""
-	points = np.asarray(points, dtype=np.float32).reshape(-1, 3)
-	return np.hstack([points, np.tile(np.array([0.0, 1.0, 0.0], dtype=np.float32), (len(points), 1))])

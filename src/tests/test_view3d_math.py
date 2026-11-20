@@ -22,7 +22,7 @@ def test_the_navmesh_is_cut_into_triangles_whose_normals_point_up():
 	tri = Triangles.from_navmesh(two_floors())
 	assert len(tri) == 4 and tri.bounds() == ((0, 0, 0), (10, 3, 10))
 	assert np.allclose(tri.normals(), [(0, 1, 0)] * 4)
-	assert tri.vertex_array().shape == (12, 6)
+	assert tri.vertex_array().shape == (12, 3)
 
 
 def test_a_click_hits_the_first_floor_and_the_cut_hides_what_is_above():
@@ -44,7 +44,7 @@ def test_rays_and_boxes():
 	assert ray_box((-10, 5, 0), (1, 0, 0), box) is None
 	other = G.Box((5, 1, 0), (1, 1, 1))
 	assert pick_box((-10, 1, 0), (1, 0, 0), [other, box]).index == 1
-	assert box_faces(box).shape == (36, 6) and box_edges(box).shape == (24, 3)
+	assert box_faces(box).shape == (36, 3) and box_edges(box).shape == (24, 3)
 
 
 def _unit(v):
