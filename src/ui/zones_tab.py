@@ -8,10 +8,12 @@ can reach it from the floor), and the spots the floor check looked at are drawn 
 
 The layout is ui/designer/zones_tab.ui; the 3D view is ui/view3d/view.py, and the height slider beside it (to hide
 what is above a storey) ui/view3d/cut_slider.py. The maps are read when the tab is first
-shown. The same tab is the window of `python -m cli zones edit`.
+shown, and can be imported again (after a game update, or from another game folder): a notice above the view says when
+they aren't from the game as it is now. The same tab is the window of `python -m cli zones edit`.
 """
 
 import copy
+import html
 import logging
 from pathlib import Path
 
@@ -22,6 +24,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMainW
 from core.documents import Document
 from maps import buildings, places
 from maps import geometry as G
+from maps import mapdata as M
 from maps import zones as Z
 from maps.triangles import Triangles
 from ui.compiled.ui_zones_tab import Ui_ZonesForm
@@ -35,6 +38,7 @@ NEW_SIZE = (4.0, 3.0, 4.0)  # metres: a new zone's width, height and depth
 KEEP_WALLS = 3  # maps whose walls are kept in memory (the last ones shown); the others' are read again if gone back to
 JSON_FILTER = "Quest zone files (*.json);;All files (*)"
 KINDS = list(Z.CUSTOM_TYPE)  # visit, placeitem, trigger, flarezone, salvage, as the kind box lists them
+NOTICE_STYLE = "QLabel { background: rgba(230, 160, 40, 45); border: 1px solid rgba(200, 130, 20, 160); border-radius: 3px; padding: 4px 8px; }"
 
 
 class _ImportSignals(QObject):
@@ -68,17 +72,21 @@ class ImportWorker(QRunnable):
 class ZonesTab(QWidget, Ui_ZonesForm):
 	"""settings: the app's settings (or None). references: core.references.References, whose zone files are shown.
 	map_names: {location id: name to show}. maps_folder: where the imported maps are (default: maps.mapdata's).
-	zone_files: more zone files to show (not to change)."""
+	zone_files: more zone files to show (not to change). game_dir: the game folder to compare the maps with and import
+	them from (default: the game your SPT database is in, else the one the maps came from)."""
 
 	zones_changed = Signal()  # your zone file changed (the quests' checks may want to look again)
 
-	def __init__(self, settings=None, references=None, map_names=None, maps_folder=None, zone_files=(), parent=None):
+	def __init__(self, settings=None, references=None, map_names=None, maps_folder=None, zone_files=(), game_dir=None, parent=None):
 		super().__init__(parent)
 		self.setupUi(self)
 		self.settings, self.references = settings, references
 		self.map_names = dict(map_names or {})
 		self.maps_folder = maps_folder
 		self.zone_files = [Path(p) for p in zone_files]
+		self.game_dir = Path(game_dir) if game_dir else None
+		self.versionLabel.setStyleSheet(NOTICE_STYLE)
+		self.versionLabel.hide()
 		self.doc = Document([])
 		self.doc.on_change(self._doc_changed)
 		self.view = MapView()
@@ -121,6 +129,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.topDownButton.toggled.connect(self.view.set_top_down)
 		self.wholeMapButton.clicked.connect(lambda _c=False: self.view.look_at_everything())
 		self.importButton.clicked.connect(lambda _c=False: self.import_maps())
+		self.versionLabel.linkActivated.connect(self._notice_link)
 		for box in (self.floorBox, self.wallsBox, self.gameZonesBox, self.referenceZonesBox, self.areasBox, self.labelsBox):
 			box.toggled.connect(lambda _checked: self._layers_changed())
 		self.cutSlider.cut_changed.connect(self.view.set_cut)
@@ -157,12 +166,15 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		try:
 			self._read_zones()
 			current = self.location
+			if current is not None:  # (imported again: the view looks where it looked)
+				self._cameras[current] = copy.copy(self.view.camera)
 			self.mapBox.blockSignals(True)
 			self.mapBox.clear()
 			for key in self.index.game_maps:
 				self.mapBox.addItem(self.map_names.get(key, key), key)
 			self.mapBox.blockSignals(False)
-			self.importButton.setVisible(not self.index.game_maps)
+			self._import_button()
+			self.check_maps_version()
 			if not self.index.game_maps:
 				self.view.message = (
 					"No maps have been imported yet.\n\nClick \"Import the game's maps...\" above and choose the game's folder (the one "
@@ -774,17 +786,73 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.view.update()
 
 	# --- importing the maps ---------------------------------------------------------------------------------
+	def _records(self):
+		"""{location: the imported map's record} (read with the zones, so this costs nothing)."""
+		return {key: self.index.map(key).record for key in self.index.game_maps} if self.index is not None else {}
+
+	def _last_import(self):
+		"""The record of the map imported last, or None."""
+		return max(self._records().values(), key=lambda r: r.get("imported") or "", default=None)
+
+	def _game_dir(self):
+		"""The game folder to compare the maps with and import them from: game_dir, else the game your SPT database (in
+		the settings) is in, else the one the maps were last imported from; None if there is none."""
+		if self.game_dir:
+			return self.game_dir
+		game = M.game_holding(getattr(self.settings, "database_folder", "")) if self.settings is not None else None
+		last = self._last_import()
+		return game or (Path(last["source"]) if last and last.get("source") else None)
+
+	def _import_button(self):
+		last = self._last_import()
+		self.importButton.setText("Import the maps again..." if last else "Import the game's maps...")
+		if last:
+			version = f" (version {last['game_version']})" if last.get("game_version") else ""
+			self.importButton.setToolTip(
+				f"The maps were last imported from {last.get('source')}{version} on {last.get('imported')}. Import them "
+				"again after a game update, or from another game folder (takes a few minutes; nothing in the game is changed)."
+			)
+		else:
+			self.importButton.setToolTip("Read the maps from the game's own files (takes a few minutes; nothing in the game is changed)")
+
+	def check_maps_version(self):
+		"""Show the notice above the view if the maps aren't from the game as it is now (maps.mapdata.older_maps), else hide
+		it. Run when the maps are read, and when the settings change (they say which game your SPT database is in)."""
+		records = self._records()
+		game = self._game_dir() if records else None
+		now, older = M.older_maps(records, game) if game else (None, {})
+		if not older:
+			self.versionLabel.hide()
+			return
+		which = "The maps are" if len(older) == len(self.index.game_maps) else f"{len(older)} of the {len(self.index.game_maps)} maps are"
+		self.versionLabel.setText(
+			f"{which} from version {' and '.join(sorted(set(older.values())))} of the game, but the game in "
+			f"{html.escape(str(game))} is version {now}. <a href=\"import\">Import them again</a> to see that version's maps, "
+			"or <a href=\"hide\">hide this</a>."
+		)
+		self.versionLabel.show()
+
+	def _notice_link(self, link):
+		if link == "import":
+			self.import_maps(self._game_dir())
+		else:
+			self.versionLabel.hide()
+
 	def import_maps(self, game_dir=None):
+		"""Import the maps from game_dir, else from the folder chosen (the dialog starts in the game the maps are compared
+		with). They are read again when done; the map shown meanwhile stays (maps.mapdata swaps each file in when written)."""
 		if self._worker is not None:
 			return
 		if game_dir is None:
-			game_dir = QFileDialog.getExistingDirectory(self, "The game's folder (the one with EscapeFromTarkov_Data)")
+			start = self._game_dir()
+			game_dir = QFileDialog.getExistingDirectory(self, "The game's folder (the one with EscapeFromTarkov_Data)", str(start or ""))
 			if not game_dir:
 				return
 		if not (Path(game_dir) / "EscapeFromTarkov_Data").is_dir():
 			QMessageBox.warning(self, "Import the maps", f"{game_dir} has no EscapeFromTarkov_Data folder: choose the game's own folder.")
 			return
 		self.importButton.setEnabled(False)
+		self.versionLabel.hide()
 		self.statusLabel.setText("Importing the maps...")
 		self._worker = ImportWorker(game_dir, self.maps_folder)
 		self._worker.signals.progress.connect(lambda text: self.statusLabel.setText(f"Importing the maps: {text}"))
@@ -794,12 +862,10 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 	def _imported(self, result):
 		self._worker = None
 		self.importButton.setEnabled(True)
-		if isinstance(result, Exception):
-			self.statusLabel.setText(f"The maps couldn't be imported: {result}")
-			return
-		self.statusLabel.setText(f"Imported {len(result)} maps.")
+		failed = isinstance(result, Exception)
+		self.statusLabel.setText(f"The maps couldn't be imported: {result}" if failed else f"Imported {len(result)} maps.")
 		self._floors.clear()
-		self.load()
+		self.load()  # (after a failure too: the maps imported before it are new)
 
 
 def _set_text(edit, text):

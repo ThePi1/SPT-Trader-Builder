@@ -166,7 +166,8 @@ quest zones, its walkable floor (the bots' navigation mesh), the walls and floor
 and the floor checks), its areas and every named object. It stays on this
 computer. Re-run it after a game update, then `maps verify <SPT_Data/database folder>`: every zone that version's own
 quests use should be found (a few ids the game itself lacks are listed). Without an import, `check` can't tell a
-misspelt zone id from a game one; `maps list` says what is imported.
+misspelt zone id from a game one; `maps list` says what is imported and from which game version (`game_version`;
+`game_now` when the project's game, else the one the map came from, has another version now).
 
 What the client does with each zone kind (from its code), which `check` enforces:
 

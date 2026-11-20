@@ -1,17 +1,20 @@
 """The maps' quest zones and floors, imported from the game's own files.
 
-``import_maps`` reads the game client's scenes (see maps.unity) and writes three files per map into the maps folder:
+``import_maps`` reads the game client's scenes (see maps.unity) and writes four files per map into the maps folder:
 ``<location>.json`` with the quest zones the game has (their id, kind and box) and the map's areas (where its places,
 such as the dorms, are), ``<location>.navmesh.json.gz`` with the walkable floor (the navigation mesh), and
 ``<location>.objects.json.gz`` with every named object and where it is (for finding places by name) and
 ``<location>.walls.npz`` with the walls and floors players bump into (maps.walls, for the 3D view). That data comes
-from the game, so it stays on the user's computer (the folder is not part of the repository).
+from the game, so it stays on the user's computer (the folder is not part of the repository). Each file is swapped in
+when written, so the maps can be read while they are imported again. The game's version is kept in the json
+(``game_version``), and ``older_maps`` tells which maps aren't from the game as it is now.
 ``MapData.load`` reads a map back. No Qt.
 """
 
 import gzip
 import json
 import re
+import struct
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +32,53 @@ MAPS_DIR = DATA_DIR / "maps"  # (read when used, so tests can point it elsewhere
 def maps_dir(folder=None):
 	"""The folder of imported maps: folder if given, else MAPS_DIR."""
 	return Path(folder) if folder else MAPS_DIR
+
+
+GAME_EXE = "EscapeFromTarkov.exe"
+_VERSION_BLOCK = "VS_VERSION_INFO".encode("utf-16-le")  # the name of a Windows program's version block
+_VERSION_INFO = b"\xbd\x04\xef\xfe\x00\x00\x01\x00"  # the block's VS_FIXEDFILEINFO: its signature and layout
+_GAME_NAME = "Tarkov".encode("utf-16-le")
+
+
+def game_version(game_dir):
+	"""The game's version as its EscapeFromTarkov.exe gives it (the file version, e.g. "0.16.9.40743": the last part is
+	the build), or None if it can't be read. Read from the program's bytes, so it works without Windows too. The program
+	has two version blocks, the game's and Unity's (2022.3...): the game's is the one naming Tarkov (else the first)."""
+	try:
+		data = (Path(game_dir) / GAME_EXE).read_bytes()
+	except OSError:
+		return None
+	found = []  # [(names Tarkov, version)]
+	at = data.find(_VERSION_BLOCK)
+	while at >= 6:
+		start = at - 6  # (the block's length, its value's length and its type come before its name)
+		block = data[start:start + struct.unpack_from("<H", data, start)[0]]
+		info = block.find(_VERSION_INFO)
+		if 0 <= info and info + 16 <= len(block):
+			high, low = struct.unpack_from("<II", block, info + 8)
+			found.append((_GAME_NAME in block, f"{high >> 16}.{high & 0xFFFF}.{low >> 16}.{low & 0xFFFF}"))
+		at = data.find(_VERSION_BLOCK, at + 1)
+	return next((v for named, v in found if named), found[0][1] if found else None)
+
+
+def game_holding(folder):
+	"""The game folder that folder is in or is (e.g. the game of an SPT install's SPT_Data/database), or None."""
+	if not folder:
+		return None
+	for path in (Path(folder), *Path(folder).parents):
+		if (path / GAME_EXE).is_file():
+			return path
+	return None
+
+
+def older_maps(records, game_dir):
+	"""The imported maps that aren't from the game in game_dir as it is now: (its version, {location: the version the
+	map is from}). records: {location: the map's record}. A map imported before the version was kept can't be told, so
+	it is left out; so is every map when game_dir's version can't be read (None, {})."""
+	now = game_version(game_dir) if game_dir else None
+	if now is None:
+		return None, {}
+	return now, {loc: r["game_version"] for loc, r in records.items() if r.get("game_version") not in (None, now)}
 
 # Zone kinds, as the quest zone files of WTT-CommonLib name them
 VISIT, PLACEITEM, TRIGGER, FLAREZONE, SALVAGE = "visit", "placeitem", "trigger", "flarezone", "salvage"
@@ -295,6 +345,7 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 		raise FileNotFoundError(f"No EscapeFromTarkov_Data\\globalgamemanagers in {game_dir}: is this the game's folder?")
 	from maps import walls as W  # (numpy)
 
+	version = game_version(game_dir)
 	with U.SerializedFile(data_dir / "globalgamemanagers") as ggm:
 		scenes = U.read_scene_list(ggm)
 		unity_version = ggm.unity_version
@@ -346,6 +397,7 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 				"format": FORMAT,
 				"location": location,
 				"unity": unity_version,
+				"game_version": version,
 				"source": str(Path(game_dir)),
 				"imported": time.strftime("%Y-%m-%d %H:%M:%S"),
 				"scenes": [s for _i, s in mine],
@@ -354,7 +406,7 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 			}
 			path = out_dir / f"{location}.json"
 			jsonio.write_json(path, record, indent=None)
-			with gzip.open(out_dir / f"{location}{NAVMESH_SUFFIX}", "wt", encoding="utf-8") as f:
+			with jsonio.replacing(out_dir / f"{location}{NAVMESH_SUFFIX}") as raw, gzip.open(raw, "wt", encoding="utf-8") as f:
 				json.dump({
 					"format": FORMAT,
 					"vertices": [round(c, 3) for v in navmesh.vertices for c in v],
@@ -382,7 +434,7 @@ def _write_objects(path, objects):
 	names, scenes, flat = {}, {}, []
 	for (name, *_rounded), (stem, position) in objects.items():
 		flat += [names.setdefault(name, len(names)), scenes.setdefault(stem, len(scenes)), *(round(c * 100) for c in position)]
-	with gzip.open(path, "wt", encoding="utf-8") as f:
+	with jsonio.replacing(path) as raw, gzip.open(raw, "wt", encoding="utf-8") as f:
 		json.dump({"format": FORMAT, "scenes": list(scenes), "names": list(names), "objects": flat}, f, separators=(",", ":"))
 
 

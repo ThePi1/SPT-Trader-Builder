@@ -714,6 +714,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			self.explorer_tab.browse.refresh()
 			self.locale_tab.refresh()
 			self.lookup_tab.view.refresh()
+			self.zones_tab.check_maps_version()  # (the SPT database chosen may be in another game)
 
 	def show_about(self):
 		dialogs.AboutDialog(self.update_status.local_version, self.update_status.project_url, self).exec()

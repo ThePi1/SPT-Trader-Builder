@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from contextlib import contextmanager
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -39,15 +40,22 @@ def dumps(data, indent=INDENT):
 
 
 def write_json(path, data, indent=INDENT):
-	"""Save data as UTF-8 JSON. The file is written to a temporary name first and swapped in,
-	so a failure can't leave a half-written file."""
-	path = Path(path)
+	"""Save data as UTF-8 JSON, swapped in when written (see replacing)."""
 	text = dumps(data, indent)
+	with replacing(path, "w", encoding="utf-8", newline="\n") as f:
+		f.write(text)
+		f.write("\n")
+
+
+@contextmanager
+def replacing(path, mode="wb", **options):
+	"""Open a file to write in place of path. It is written under a temporary name and swapped in when done, so a
+	failure can't leave a half-written file, and whoever reads path meanwhile gets the old file or the new one."""
+	path = Path(path)
 	tmp_path = path.with_name(path.name + ".tmp")
 	try:
-		with open(tmp_path, "w", encoding="utf-8", newline="\n") as f:
-			f.write(text)
-			f.write("\n")
+		with open(tmp_path, mode, **options) as f:
+			yield f
 		os.replace(tmp_path, path)
 	finally:
 		if tmp_path.exists():

@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 
+from core import jsonio
 from maps import geometry as G
 from maps import unity as U
 
@@ -151,14 +152,15 @@ def write(path, placed, meshes):
 		ranges.append((start_triangle, len(t)))
 		start_corner += len(c)
 		start_triangle += len(t)
-	np.savez_compressed(
-		path, format=np.int32(FORMAT),
-		corners=np.concatenate(corners).astype(np.float32) if corners else np.zeros((0, 3), np.float32),
-		triangles=np.concatenate(triangles).astype(np.int32) if triangles else np.zeros((0, 3), np.int32),
-		ranges=np.asarray(ranges, dtype=np.int64).reshape(-1, 2),
-		matrices=np.asarray([m for _k, m in placed], dtype=np.float32).reshape(-1, 3, 4),
-		mesh_of=np.asarray([order[k] for k, _m in placed], dtype=np.int32),
-	)
+	with jsonio.replacing(path) as f:  # (swapped in when written: the tab may read it meanwhile)
+		np.savez_compressed(
+			f, format=np.int32(FORMAT),
+			corners=np.concatenate(corners).astype(np.float32) if corners else np.zeros((0, 3), np.float32),
+			triangles=np.concatenate(triangles).astype(np.int32) if triangles else np.zeros((0, 3), np.int32),
+			ranges=np.asarray(ranges, dtype=np.int64).reshape(-1, 2),
+			matrices=np.asarray([m for _k, m in placed], dtype=np.float32).reshape(-1, 3, 4),
+			mesh_of=np.asarray([order[k] for k, _m in placed], dtype=np.int32),
+		)
 	return sum(ranges[order[k]][1] for k, _m in placed)
 
 

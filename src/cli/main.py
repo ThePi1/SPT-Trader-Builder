@@ -598,16 +598,32 @@ def _zone_uses(quest):
 
 
 def cmd_maps_list(args):
+	"""What is imported, from which game version; "game_now" when the game (the project's, else the one the map came
+	from) has another version now."""
 	folder = _maps_dir(args)
-	rows = []
 	from core.gamedata import location_ids
 
 	ids = location_ids()
+	maps = {location: M.MapData.load(location, folder) for location in M.imported(folder)}
+	try:
+		game = _workspace(args).path("game")
+	except CommandError:
+		game = None
+	newer = {}  # {location: what the game is now, for the maps not from it}
+	for game_dir in {game} if game else {m.record.get("source") for m in maps.values()} - {None}:
+		now, older = M.older_maps({k: m.record for k, m in maps.items() if game or m.record.get("source") == game_dir}, game_dir)
+		newer.update({k: f"{now} (in {game_dir}): import the maps again" for k in older})
+	rows = []
 	for location in M.LOCATIONS:
 		row = {"map": location, "id": ids.get(location, ""), "imported": False}
-		if location in M.imported(folder):
-			m = M.MapData.load(location, folder)
-			row.update(imported=True, zones=len(m.zones), areas=len(m.areas), when=m.record.get("imported"), source=m.record.get("source"))
+		if location in maps:
+			m = maps[location]
+			row.update(
+				imported=True, zones=len(m.zones), areas=len(m.areas), when=m.record.get("imported"), source=m.record.get("source"),
+				game_version=m.record.get("game_version"),
+			)
+			if location in newer:
+				row["game_now"] = newer[location]
 		rows.append(row)
 	out(rows)
 
@@ -861,7 +877,7 @@ def cmd_zones_edit(args):
 	app = QApplication.instance() or QApplication([])
 	path = Path(args.file) if args.file else ws.path("zones")
 	others = [p for p in ws.zone_file_paths() if path is None or p != path.resolve()]
-	tab = ZonesTab(ws.settings, ws.references, dict(choices.get("map_keys", ws.gamedata)), ws.maps_dir, others)
+	tab = ZonesTab(ws.settings, ws.references, dict(choices.get("map_keys", ws.gamedata)), ws.maps_dir, others, ws.path("game"))
 	if path is not None and path.is_file():
 		tab.open_file(path)
 	elif path is not None:

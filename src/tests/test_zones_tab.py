@@ -4,6 +4,7 @@ made-up one (a 20 x 20 m floor with a 6 x 6 m upper floor 4 m above it), so the 
 import gzip
 import json
 import os
+from types import SimpleNamespace
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from core.documents import Document
 from maps import geometry as G
 from maps import zones as Z
+from tests.test_zones import fake_game
 from ui.zones_tab import OWN, ZonesTab
 
 MAP = "bigmap"
@@ -25,10 +27,10 @@ def app():
 	return QApplication.instance() or QApplication([])
 
 
-def _write_map(folder, location=MAP):
+def _write_map(folder, location=MAP, game_version=None, source=None):
 	"""An imported map, made up: a 20 x 20 m floor with a 6 x 6 m upper floor 4 m above it, and one game zone."""
 	record = {
-		"format": 1, "location": location, "scenes": [], "areas": [{"name": "Yard", "scene": "yard", "min": [0, -1, 0], "max": [20, 8, 20], "objects": 0}],
+		"format": 1, "location": location, "game_version": game_version, "source": source and str(source), "imported": "2026-11-20 10:00:00", "scenes": [], "areas": [{"name": "Yard", "scene": "yard", "min": [0, -1, 0], "max": [20, 8, 20], "objects": 0}],
 		"zones": [{"id": "game_spot", "kind": "visit", "class": "ExperienceTrigger", "object": "spot", "active": True, "scene": "x.unity",
 			"boxes": [{"center": [15, 1, 15], "size": [2, 2, 2], "rotation": [0, 0, 0, 1]}]}],
 	}
@@ -62,7 +64,36 @@ def test_the_map_its_floor_and_the_games_zones_are_shown(tab):
 	assert len(tab.view.floor) == 4  # (two squares, two triangles each)
 	ids = [tab.zoneList.topLevelItem(i).text(0) for i in range(tab.zoneList.topLevelItemCount())]
 	assert ids == ["game_spot"]
-	assert not tab.importButton.isVisibleTo(tab)
+	assert tab.importButton.isVisibleTo(tab) and tab.importButton.text() == "Import the maps again..."  # (after a game update)
+	assert not tab.versionLabel.isVisibleTo(tab)  # (the version the map is from wasn't kept: nothing to tell)
+
+
+def test_a_notice_says_when_the_maps_arent_from_the_game_as_it_is_now(app, tmp_path):
+	game = fake_game(tmp_path / "game", "0.16.9.40743")
+	maps = tmp_path / "maps"
+	maps.mkdir()
+	_write_map(maps, game_version="0.16.9.40087", source=game)  # (imported before the game was updated)
+	window = QMainWindow()
+	tab = ZonesTab(maps_folder=maps)
+	window.setCentralWidget(tab)
+	tab.load()
+	assert tab.versionLabel.isVisibleTo(tab)
+	text = tab.versionLabel.text()
+	assert "0.16.9.40087" in text and "0.16.9.40743" in text and str(game) in text
+	asked = []
+	tab.import_maps = asked.append
+	tab.versionLabel.linkActivated.emit("import")
+	assert asked == [game]  # (from that game, without asking which)
+	tab.versionLabel.linkActivated.emit("hide")
+	assert not tab.versionLabel.isVisibleTo(tab)
+	other = fake_game(tmp_path / "other" / "game", "0.16.9.40087")
+	tab.settings = SimpleNamespace(database_folder=str(other / "SPT" / "SPT_Data" / "database"))  # (your SPT database: in another game)
+	tab.check_maps_version()
+	assert not tab.versionLabel.isVisibleTo(tab)  # (that game is the maps' version)
+	tab.game_dir = game  # (given: `zones edit` gives the project's game)
+	tab.check_maps_version()
+	assert tab.versionLabel.isVisibleTo(tab)
+	window.deleteLater()
 
 
 def _add_walls(folder, location=MAP):

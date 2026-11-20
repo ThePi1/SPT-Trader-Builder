@@ -34,7 +34,7 @@ so both report the same problems: those modules are shared, not part of either s
 | `cli/servercheck.py` | `check --server`: finds `SPT_Runtime`, runs `cli/server_check --json`, turns its report into problems. |
 | `cli/package.py` | `package`: the project's files in WTT-CommonLib's folder layout. |
 | `maps/unity.py` | A read-only reader of the game's Unity files: serialized files, the objects the import needs, navmesh tiles. |
-| `maps/mapdata.py` | `import_maps` (game files to `data/maps`), `MapData` (reading it back), `ObjectIndex` (a map's named objects), `LOCATIONS` (which scenes make up each map), `find_objects` (live). |
+| `maps/mapdata.py` | `import_maps` (game files to `data/maps`), `MapData` (reading it back), `ObjectIndex` (a map's named objects), `LOCATIONS` (which scenes make up each map), `find_objects` (live), `game_version` and `older_maps` (which maps aren't from the game as it is now). |
 | `maps/navmesh.py` | `NavMesh`: floor heights at a point, polygons near an area, sampling a box. |
 | `maps/geometry.py` | Vectors, quaternions, `Box` (an oriented box: contains, overlaps, footprint). |
 | `maps/zones.py` | `Zone`, `ZoneIndex`, the WTT zone file format, which zone kinds each condition takes (`ZONE_FIELDS`), the quest and zone checks, `make_zone`. |
@@ -93,6 +93,8 @@ The maps are the game's built-in scenes. Scene N of the build is the file `Escap
 
 **Which scenes make up a map.** `LOCATIONS` maps each location id to its scene folder, minus some scenes. The game's own description is in `StreamingAssets/Windows/maps/*_preset.bundle`, but presets nest other presets by GUID, so the folder rule is used and was checked instead: every zone the base game's quests use is found on the quest's own map. Factory day and night are `Factory_Rework` with different quest scenes (the old `Factory` folder is unused); Sandbox and Sandbox_high differ by their `_AI` scene.
 
+**The game's version** (`game_version`) is `EscapeFromTarkov.exe`'s file version, e.g. `0.16.9.40743` (the build is the last part; SPT 4.0 is `40087`), kept in each map's json as `game_version`. It is read from the program's bytes: the exe has two `VS_VERSION_INFO` blocks, the game's and Unity's (`2022.3.43.18813`), and the game's is the one naming Tarkov. Every file is swapped in when written (`jsonio.replacing`), so the Zones tab can read a map while the maps are imported again. The tab compares the maps with `ZonesTab.game_dir` (`zones edit` gives the project's `game`), else the game the SPT database in the settings is in (`game_holding`), else the one they were last imported from, and shows a notice when `older_maps` finds any; maps imported before the version was kept can't be told.
+
 **Floor.** The bots' navigation mesh: the largest NavMeshData in the sharedassets of the map's `_AI` scene (Woods has two). Each tile starts `VAND` (`DNAV` little-endian) version 16 with a 72-byte header: at offset 20, `polyCount, vertCount, detailMeshCount, detailVertCount, detailTriCount, bvNodeCount`, then the bounds and a quantisation factor. Then `vertCount` float triples (world coordinates: the game's zones sit on it), then `polyCount` 32-byte polygons (`u16 verts[6], u16 neighbours[6], u32 flags, u8 vertCount, u8 area, 2 bytes`). Only vertices and polygons are read; a height comes from the triangle of the polygon's fan under the point (see Floors).
 
 **Walls** (`maps/walls.py`). The colliders that stop a player: enabled, solid (not trigger) MeshColliders and BoxColliders on an active object whose layer is in `WALL_LAYERS` (`LowPolyCollider`, `DoorLowPolyCollider`, `Terrain`: the client's `LayersMaskController.PlayerCollisionTestMask` less `Player`; `HighPolyCollider` is for bullets). The layer numbers come from `TagManager` in `globalgamemanagers`. A MeshCollider's mesh is usually in another scene's shared assets (`sharedassets5.assets` holds many), and the mesh's corners are in the `.resS` file beside it (`m_StreamData`: offset, size, file name); `Meshes` opens each file once and reads each mesh once. The Mesh layout (`read_mesh`) skips blend shapes, bones and the compressed mesh (the game's collision meshes aren't compressed: all 1 900 of Customs' read); in 2022.3 an `int m_CookingOptions` follows `m_MeshUsageFlags`. Corners are the first channel (float or half); each stream follows the last on 16 bytes; indexes are 16- or 32-bit, plus each part's base vertex. Stored as each distinct mesh once plus a 3 x 4 matrix per copy (`<location>.walls.npz`: Customs is 1 900 meshes and 47 000 copies (box colliders included), 2.3 million triangles placed; Lighthouse is the most, 6.4 million). `load` places them and turns a mirrored copy's triangles back round, so that a floor's normal (`cross(b - a, c - a)`) points up for every triangle.
@@ -138,7 +140,7 @@ From WTT-CommonLib (`WTTClientCommonLib.Services.QuestZones`): a zone is a new o
 
 ## After a game update
 
-1. `python -m cli maps import "<game folder>"`. A `FormatError` means the Unity version or a layout changed: dump the failing object's bytes (`SerializedFile.reader`) and re-check the layout, as was done for BoxCollider and Mesh. Each map's `wall_triangles` should be in the hundreds of thousands to millions; a map with far fewer has meshes the reader couldn't read (`Meshes.problems` says why).
+1. `python -m cli maps import "<game folder>"` (or **Import the maps again** in the Zones tab, which offers it when the game's version changed). A `FormatError` means the Unity version or a layout changed: dump the failing object's bytes (`SerializedFile.reader`) and re-check the layout, as was done for BoxCollider and Mesh. Each map's `wall_triangles` should be in the hundreds of thousands to millions; a map with far fewer has meshes the reader couldn't read (`Meshes.problems` says why).
 2. `python -m cli maps verify "<that SPT's SPT_Data/database>"`. Expect only the ids the game itself lacks (in 4.1.6: `bunker2`, `Check_cinema`, `Labs_transits`, `1`). Many missing ids on one map point at `LOCATIONS` (a renamed or new scene folder).
 3. Re-run the tests: `test_importing_a_real_map_finds_its_zones_and_floor` reads the real game when `SPT_GAME` (or the default path in `tests/test_zones.py`) is a game folder.
 4. Refresh the app's game data, base-game profile and server models, and check `data/locations.json` and `data/traders.json` (`src/README.md`, "Game data and building"). Check `cli/server_check` still builds against the new `SPT_Runtime` (its TargetFramework follows the server's .NET version).
@@ -204,7 +206,7 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 ## Tests
 
 - `tests/test_map_geometry.py`: boxes, the navmesh, tile parsing, and the Unity layouts on a serialized file built in the test (`_serialized`).
-- `tests/test_zones.py`: zone files, the rules, the checks, `make_zone` (on small maps written by `_map`), and a live import of Labyrinth.
+- `tests/test_zones.py`: zone files, the rules, the checks, `make_zone` (on small maps written by `_map`), the game's version (`fake_game` writes an exe with only version blocks), files swapped in whole, and a live import of Labyrinth.
 - `tests/test_cli.py`: the vanilla round trip, every command, shorthands, the money default, `usage`, `package`, and the server-free parts of `maps verify` and `check --server`.
 - `tests/test_projects.py`: `project init` on a made-up WTT mod, a project's own game data, language and references, WTT custom items, `project show`.
 - `tests/test_places_and_buildings.py`: the object index, `zones find`, and the building at a spot on a made-up map (a building turned 20 degrees with a storey, a roof, a tunnel under it and named rooms), through the commands too.
@@ -212,7 +214,7 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - `tests/test_view3d_math.py`: triangles and picking, the camera (east right, north up from above; the ray under a pixel), the handles.
 - `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed), and real drawings in a separate process with Qt's software OpenGL (skipped where there is none): the floor and zones, and walls cut through drawn solid.
 - `tests/test_cut_slider.py`: the height slider's stops above each storey, dragging (snapping, Shift), the keys and wheel, the heights its track spans.
-- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, and the main window's checks seeing the tab's zones.
+- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, the notice when the maps are from another game version, and the main window's checks seeing the tab's zones.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 
 ## Known limits

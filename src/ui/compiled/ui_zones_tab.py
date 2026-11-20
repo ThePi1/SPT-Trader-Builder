@@ -66,6 +66,13 @@ class Ui_ZonesForm(object):
 
         self.verticalLayout.addLayout(self.topRow)
 
+        self.versionLabel = QLabel(ZonesForm)
+        self.versionLabel.setObjectName(u"versionLabel")
+        self.versionLabel.setTextFormat(Qt.RichText)
+        self.versionLabel.setWordWrap(True)
+
+        self.verticalLayout.addWidget(self.versionLabel)
+
         self.layersRow = QHBoxLayout()
         self.layersRow.setObjectName(u"layersRow")
         self.showLabel = QLabel(ZonesForm)
@@ -386,7 +393,7 @@ class Ui_ZonesForm(object):
 
         self.verticalLayout.addWidget(self.statusLabel)
 
-        self.verticalLayout.setStretch(2, 1)
+        self.verticalLayout.setStretch(3, 1)
         QWidget.setTabOrder(self.mapBox, self.search)
         QWidget.setTabOrder(self.search, self.zoneFilter)
         QWidget.setTabOrder(self.zoneFilter, self.zoneList)
@@ -424,6 +431,7 @@ class Ui_ZonesForm(object):
         self.importButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Read the maps from the game's own files (takes a few minutes; nothing in the game is changed)", None))
 #endif // QT_CONFIG(tooltip)
         self.importButton.setText(QCoreApplication.translate("ZonesForm", u"Import the game's maps...", None))
+        self.versionLabel.setText("")
         self.showLabel.setText(QCoreApplication.translate("ZonesForm", u"Show", None))
 #if QT_CONFIG(tooltip)
         self.floorBox.setToolTip(QCoreApplication.translate("ZonesForm", u"The floor bots walk on (the game's navigation mesh), coloured by height", None))
