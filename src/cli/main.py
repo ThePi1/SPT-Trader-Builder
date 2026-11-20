@@ -866,7 +866,7 @@ def cmd_zones_edit(args):
 		tab.open_file(path)
 	elif path is not None:
 		tab.set_document(Document([], path))  # (made when first saved)
-	tab.start_map = M.location_key(args.map) if args.map else None
+	tab.start_map = _map_of(args, ws) if args.map else None
 	window = ZonesWindow(tab)
 	window.show()
 	app.exec()
