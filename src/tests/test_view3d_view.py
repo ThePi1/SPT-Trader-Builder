@@ -103,10 +103,10 @@ def test_zooming_out_keeps_the_view_on_the_map(view):
 		QApplication.sendEvent(view, QWheelEvent(spot, view.mapToGlobal(spot), QPoint(), QPoint(0, -120), Qt.MouseButton.NoButton,
 			Qt.KeyboardModifier.NoModifier, Qt.ScrollPhase.NoScrollPhase, False))
 	x, y, z = view.camera.target
-	assert y == pytest.approx(0.0) and -50 <= x <= 90 and -50 <= z <= 90
+	assert y == pytest.approx(0.0) and -100 <= x <= 140 and -100 <= z <= 140
 	view.camera.target = (500.0, -300.0, 20.0)  # (a camera from before, gone astray)
 	view.keep_on_map()
-	assert view.camera.target == pytest.approx((90.0, 0.0, 20.0))
+	assert view.camera.target == pytest.approx((140.0, 0.0, 20.0))
 
 
 def _move(view, spot, button):

@@ -178,7 +178,7 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   (Reserve's range would squeeze a building into a few pixels); with none there, it spans the floor there.
 - **The camera's target** stays on the map: zooming in moves it toward the point under the mouse, height and all, but
   zooming out keeps its height (moving away from a point above or below it sent it hundreds of metres off within a few
-  notches, and the slider's track with it), and `keep_on_map` keeps it within the floor's bounds (and 50 m past its
+  notches, and the slider's track with it), and `keep_on_map` keeps it within the floor's bounds (and 100 m past its
   edges) after every pan and zoom, and for a map's remembered camera.
 - **The overlay** (labels, handles, floor-check dots, compass) is drawn with QPainter after the 3D part. A whole-window
   `grab()` paints it under the 3D picture, so for screenshots use `view.grabFramebuffer()` (or paste it into the grab).

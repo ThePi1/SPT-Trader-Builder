@@ -45,7 +45,7 @@ AREA_COLOUR = QColor(200, 200, 200)
 HANDLE_PIXELS = 9  # how near (in pixels) the mouse must be to a handle to take it
 BIG_ZONE = 15.0  # metres: a zone longer than this is drawn fainter, the longer the fainter
 MOST_LABELS = 60  # the zones named on screen at once (the nearest to what the view looks at)
-ON_MAP = 50.0  # metres past the floor's edges the view can look at (see keep_on_map)
+ON_MAP = 100.0  # metres past the floor's edges the view can look at (see keep_on_map)
 
 # GLSL 1.20, so it runs on any OpenGL from 2.1 (and on the software renderer)
 VERTEX_SHADER = """#version 120
