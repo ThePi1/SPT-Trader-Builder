@@ -185,6 +185,32 @@ def test_reading_a_map_says_how_far_along_it_is_and_a_map_in_memory_says_nothing
 	window.deleteLater()
 
 
+def test_factory_by_day_is_shown_first(app, maps):
+	_write_map(maps, "factory4_day")
+	window = QMainWindow()
+	tab = ZonesTab(maps_folder=maps)
+	window.setCentralWidget(tab)
+	tab.load()
+	assert tab.location == "factory4_day"  # (not Customs: it comes first in the list, but takes seconds to read)
+	window.deleteLater()
+
+
+def test_the_maps_are_read_once_the_tab_is_drawn_so_the_loading_panel_shows(app, maps):
+	window = QMainWindow()
+	tab = ZonesTab(maps_folder=maps)
+	window.setCentralWidget(tab)
+	shown = []
+	panel_say = tab.loadingPanel.say
+	tab.loadingPanel.say = lambda text, fraction: (panel_say(text, fraction), shown.append(tab.loadingPanel.isVisible()))
+	window.show()
+	assert tab.location is None  # (not in the show event: the window doesn't draw the tab until the show is over)
+	for _ in range(3):
+		QApplication.processEvents()
+	assert tab.location == MAP and shown and all(shown) and tab.loadingPanel.isHidden()
+	window.close()
+	window.deleteLater()
+
+
 def test_placing_a_zone_puts_it_on_the_floor_clicked(tab):
 	record = tab.place_at((5.0, 0.0, 5.0))
 	assert record["ZoneLocation"] == MAP and record["ZoneType"] == "visit"

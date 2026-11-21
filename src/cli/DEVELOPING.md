@@ -201,7 +201,9 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   It runs on the window's thread; the panel lets the window paint (not take clicks) every 50 ms, and the tab skips
   `view_moved` meanwhile (it would read the same map again, inside the first reading). The shares of each step
   (`prepare`'s 0.2 / 0.3 / 0.5, `walls.READ_SHARE`, `triangles.STANDABLE_SHARE`) keep the bar within about 15% of
-  the time taken.
+  the time taken. The tab's first load (`_first_load`) waits until just after its show event: from inside it, the
+  window hadn't drawn the tab yet, so the panel never appeared. The map shown first is `FIRST_MAP`, Factory (day): small
+  and quick to read (unless `zones edit --map` or your zone file's first zone says another).
 - **The overlay** (labels, handles, floor-check dots, compass) is drawn with QPainter after the 3D part. A whole-window
   `grab()` paints it under the 3D picture, so for screenshots use `view.grabFramebuffer()` (or paste it into the grab).
 - **Which OpenGL**: Qt on its own picks its software renderer on some PCs whose graphics card works (it did on a PC with
@@ -226,7 +228,7 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - `tests/test_view3d_math.py`: triangles and picking, the camera (east right, north up from above; the ray under a pixel), the handles.
 - `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed), and real drawings in a separate process with Qt's software OpenGL (skipped where there is none): the floor and zones, and walls cut through drawn solid.
 - `tests/test_cut_slider.py`: the height slider's stops above each storey, dragging (snapping, Shift), the keys and wheel, the heights its track spans.
-- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, the notice when the maps are from another game version, the loading panel's steps (and none for a map in memory), and the main window's checks seeing the tab's zones.
+- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, the notice when the maps are from another game version, the loading panel's steps (and none for a map in memory, and shown on the first load once the tab is drawn), Factory (day) first, and the main window's checks seeing the tab's zones.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 
 ## Known limits

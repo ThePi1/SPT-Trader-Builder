@@ -17,7 +17,7 @@ import html
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, Signal
+from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, QTimer, Signal
 from PySide6.QtGui import QBrush, QColor, QCursor, QKeySequence, QShortcut
 from PySide6.QtWidgets import QApplication, QFileDialog, QListWidgetItem, QMainWindow, QMenu, QMessageBox, QTreeWidgetItem, QWidget
 
@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 
 BASE, OWN = "base", "mine"  # the first part of a zone's key: (BASE, index in self.base) or (OWN, index in the file)
 NEW_SIZE = (4.0, 3.0, 4.0)  # metres: a new zone's width, height and depth
+FIRST_MAP = "factory4_day"  # shown first when nothing says which: Factory (day), small and quick to read
 KEEP_WALLS = 3  # maps whose walls are kept in memory (the last ones shown); the others' are read again if gone back to
 JSON_FILTER = "Quest zone files (*.json);;All files (*)"
 KINDS = list(Z.CUSTOM_TYPE)  # visit, placeitem, trigger, flarezone, salvage, as the kind box lists them
@@ -103,13 +104,14 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.mine = {}  # {index in the file: Zone} of your entries that can be read
 		self.broken = {}  # {index in the file: why it can't be read}
 		self.location = None
-		self.start_map = None  # the map to show first (else the map of your first zone, else Customs)
+		self.start_map = None  # the map to show first (else the map of your first zone, else FIRST_MAP)
 		self.selected = None  # the key of the zone selected
 		self.building = None  # what maps.buildings found at the last "Building here"
 		self._floors = {}  # {location: Triangles} of the floor map (the walls are the map's own: MapData.walls)
 		self._cameras = {}  # {location: the view's camera there}, so going back to a map looks where it looked
 		self._recent = []  # the maps shown, the last first (only the first KEEP_WALLS keep their walls in memory)
 		self._loaded = False
+		self._load_pending = False  # (shown, and about to load: see _first_load)
 		self._loading = False  # (a map is being read: see _read_map)
 		self._filling = False
 		self._worker = None
@@ -159,8 +161,18 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 	# --- loading ----------------------------------------------------------------------------------
 	def showEvent(self, event):
 		super().showEvent(event)
-		if not self._loaded:
-			self.load()
+		if not self._loaded and not self._load_pending:
+			self._load_pending = True
+			QTimer.singleShot(0, self._first_load)
+
+	def _first_load(self):
+		"""The first load, just after the tab is first shown: from its show event, the loading panel would never appear,
+		as the window doesn't draw the tab until the show is over. The tab is drawn first, then the maps read."""
+		self._load_pending = False
+		if self._loaded or not self.isVisible():  # (shown and hidden again at once: the next show loads)
+			return
+		self.repaint()
+		self.load()
 
 	def load(self):
 		"""Read the imported maps and the zone files (the first time the tab is shown, and after an import)."""
@@ -195,13 +207,13 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 			QApplication.restoreOverrideCursor()
 
 	def _first_map(self, keys):
-		"""start_map, else the map of your first zone, else Customs, else the first imported."""
+		"""start_map, else the map of your first zone, else FIRST_MAP, else the first imported."""
 		if self.start_map in keys:
 			return self.start_map
 		for zone in self.mine.values():
 			if zone.location in keys:
 				return zone.location
-		return "bigmap" if "bigmap" in keys else keys[0]
+		return FIRST_MAP if FIRST_MAP in keys else keys[0]
 
 	def _read_zones(self):
 		self.index = Z.ZoneIndex(self.maps_folder)
