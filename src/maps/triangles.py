@@ -17,6 +17,7 @@ WIDE = 64  # a triangle over more squares than this is looked at by every ray in
 LEVEL = 0.7  # how far up a surface's normal must point to be stood on (about 45 degrees of slope at most)
 CHUNK = 12  # squares looked at together
 BATCH = 2_000_000  # points times triangles worked out at once when looking for floors (memory, about 16 MB an array)
+STANDABLE_SHARE = 0.25  # of prepare's time: which triangles can be stood on (the rest is the square index)
 FLOOR_GAP, FEW_ABOVE = 10.0, 0.04  # floor_range leaves out floors above a 10 m band with none, holding under 4% of the floor
 
 
@@ -123,6 +124,20 @@ class Triangles:
 		at least `level` up), lowest first. Ceilings (facing down) and steep slopes are left out."""
 		return self.floors_at_points([(x, z)], level)[0]
 
+	def prepare(self, level=LEVEL, progress=None):
+		"""Work out now what the first floor lookup would (which triangles can be stood on, and for many triangles the
+		square index): seconds for a big map's walls, so the Zones tab does it while it says it is loading the map.
+		progress(fraction) is told how far along it is."""
+		say = progress or (lambda fraction: None)
+		self._standable(level, lambda f: say(STANDABLE_SHARE * f))
+		if len(self) >= self._cells_from and self._cells is None:
+			self._file_cells(lambda f: say(STANDABLE_SHARE + (1 - STANDABLE_SHARE) * f))
+		say(1.0)
+
+	def is_prepared(self, level=LEVEL):
+		"""True if prepare has nothing left to do."""
+		return level in self._level and (len(self) < self._cells_from or self._cells is not None)
+
 	def floors_at_points(self, points, level=LEVEL):
 		"""floors_at for many (x, z) points at once, [heights] for each: the points in one square are looked at
 		together, so a zone's whole footprint costs about as much as a few single points."""
@@ -202,7 +217,7 @@ class Triangles:
 			self._section = (steep, low, high, walls)
 		return self._section[1:]
 
-	def _standable(self, level):
+	def _standable(self, level, progress=None):
 		"""Which triangles face up and are level enough to stand on (kept for each level asked about)."""
 		if level not in self._level:
 			mask = np.zeros(len(self), dtype=bool)
@@ -211,6 +226,8 @@ class Triangles:
 				n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
 				length = np.linalg.norm(n, axis=1)
 				mask[s:s + len(tri)] = (length > 0) & (n[:, 1] >= level * length)
+				if progress:
+					progress((s + len(tri)) / len(self))
 			self._level[level] = mask
 		return self._level[level]
 
@@ -237,12 +254,14 @@ class Triangles:
 				found[w].append(round(h, 3))
 
 	# --- many triangles: filed under squares ---------------------------------------------------------------
-	def _file_cells(self):
+	def _file_cells(self, progress=None):
 		"""(sorted square keys, where each square's triangles start, the triangles square by square, wide triangles)."""
+		say = progress or (lambda fraction: None)
 		xz = self.corners[:, :, [0, 2]]
 		c0 = np.floor(xz.min(axis=1) / CELL).astype(np.int64)
 		c1 = np.floor(xz.max(axis=1) / CELL).astype(np.int64)
 		del xz
+		say(0.2)
 		span = c1 - c0 + 1
 		count = span[:, 0] * span[:, 1]
 		wide = np.nonzero(count > WIDE)[0]
@@ -254,10 +273,13 @@ class Triangles:
 		cx = c0[triangle, 0] + k % sx
 		cz = c0[triangle, 1] + k // sx
 		keys = _key(cx, cz)
+		say(0.45)
 		order = np.argsort(keys, kind="stable")
+		say(0.8)
 		keys, triangle = keys[order], triangle[order]
 		unique, starts = np.unique(keys, return_index=True)
 		self._cells = (unique, np.append(starts, len(keys)), triangle, wide)
+		say(1.0)
 
 	def _pick_by_cells(self, o, d, below):
 		if self._cells is None:

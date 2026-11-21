@@ -46,6 +46,7 @@ so both report the same problems: those modules are shared, not part of either s
 | `ui/view3d/camera.py` | The 3D view's camera: matrices, the ray under a pixel, orbit, pan, zoom, frame. No Qt. |
 | `ui/view3d/handles.py` | The selected zone's handles and what dragging one does to its box (`Drag`). No Qt. |
 | `ui/view3d/view.py` | `MapView`: the OpenGL view (floor, walls, zones, outlines) with a QPainter overlay (labels, handles, floor samples) and the mouse. |
+| `ui/view3d/loading_panel.py` | `LoadingPanel`: "Loading <map>", a bar and the step, over the view while a map is read (`MapData.prepare`). |
 | `ui/view3d/cut_slider.py` | `CutSlider`: the height slider beside the view (hide everything above a height), stopping above the storeys at the middle of the view (`Floors.storeys_at`). |
 | `ui/zones_tab.py` | `ZonesTab` (the app's Zones tab: your zone file as a `Document`, the game's and the references' zones, checks as you go) and `ZonesWindow` (`zones edit`). |
 | `cli/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
@@ -193,6 +194,14 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   map in a process that has imported it already. The tab keeps only the last `KEEP_WALLS` (3) maps' (`MapData.forget_walls`); going back to another reads its
   file again (about a second). The command line keeps every map it reads: it doesn't live long, and a check across
   maps would otherwise read the same walls again and again.
+- **Loading a map** in the tab (`ZonesTab._read_map`) is `MapData.prepare`: the floor map, the walls (`walls.load`)
+  and the floors' lookup (`Triangles.prepare`: what the first lookup would otherwise work out), each only if it isn't
+  in memory, telling the loading panel the step and how far along the whole is. Lighthouse takes 4.5 s: 0.7 reading
+  the floor map, 1.4 the walls, 2.4 the lookup; the first drawing after it sends the walls to the graphics card (0.2 s).
+  It runs on the window's thread; the panel lets the window paint (not take clicks) every 50 ms, and the tab skips
+  `view_moved` meanwhile (it would read the same map again, inside the first reading). The shares of each step
+  (`prepare`'s 0.2 / 0.3 / 0.5, `walls.READ_SHARE`, `triangles.STANDABLE_SHARE`) keep the bar within about 15% of
+  the time taken.
 - **The overlay** (labels, handles, floor-check dots, compass) is drawn with QPainter after the 3D part. A whole-window
   `grab()` paints it under the 3D picture, so for screenshots use `view.grabFramebuffer()` (or paste it into the grab).
 - **Which OpenGL**: Qt on its own picks its software renderer on some PCs whose graphics card works (it did on a PC with
@@ -213,11 +222,11 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - `tests/test_cli.py`: the vanilla round trip, every command, shorthands, the money default, `usage`, `package`, and the server-free parts of `maps verify` and `check --server`.
 - `tests/test_projects.py`: `project init` on a made-up WTT mod, a project's own game data, language and references, WTT custom items, `project show`.
 - `tests/test_places_and_buildings.py`: the object index, `zones find`, and the building at a spot on a made-up map (a building turned 20 degrees with a storey, a roof, a tunnel under it and named rooms), through the commands too.
-- `tests/test_walls.py`: mesh colliders, meshes (in the scene and in a .resS file), terrain colliders and their heightmaps, and the layer names on a serialized file built in the test; placing them (turned, mirrored, a box, a terrain with a hole), the terrain's ground within its tolerance, the walls file, floors on the tops, `Floors`, and the navmesh's height in a polygon that isn't flat.
+- `tests/test_walls.py`: mesh colliders, meshes (in the scene and in a .resS file), terrain colliders and their heightmaps, and the layer names on a serialized file built in the test; placing them (turned, mirrored, a box, a terrain with a hole), the terrain's ground within its tolerance, the walls file (and its progress), `Triangles.prepare`, floors on the tops, `Floors`, and the navmesh's height in a polygon that isn't flat.
 - `tests/test_view3d_math.py`: triangles and picking, the camera (east right, north up from above; the ray under a pixel), the handles.
 - `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed), and real drawings in a separate process with Qt's software OpenGL (skipped where there is none): the floor and zones, and walls cut through drawn solid.
 - `tests/test_cut_slider.py`: the height slider's stops above each storey, dragging (snapping, Shift), the keys and wheel, the heights its track spans.
-- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, the notice when the maps are from another game version, and the main window's checks seeing the tab's zones.
+- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, the notice when the maps are from another game version, the loading panel's steps (and none for a map in memory), and the main window's checks seeing the tab's zones.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 
 ## Known limits

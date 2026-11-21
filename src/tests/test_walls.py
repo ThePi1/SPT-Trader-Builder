@@ -124,7 +124,9 @@ def test_the_walls_of_a_scene_are_its_solid_colliders_on_the_wall_layers_placed(
 
 	m = Map()
 	m.path = level.parent / "map.json"
-	corners = W.load(m)
+	said = []
+	corners = W.load(m, progress=said.append)
+	assert said[0] == W.READ_SHARE and said[-1] == 1.0 and said == sorted(said)  # (then by the triangles placed)
 	tri = Triangles(corners)
 	assert tri.floors_at(11, -1) == [1.0]  # (the turned floor: x 10 to 12, z -2 to 0)
 	assert tri.floors_at(11, 1) == [] and tri.floors_at(10.5, -1.5) == [1.0]
@@ -224,6 +226,11 @@ def test_floors_at_many_points_at_once_are_those_found_one_at_a_time():
 	for tri in (Triangles(corners), Triangles(corners, cells_from=1)):
 		assert tri.floors_at_points(points) == one_by_one
 		assert [tri.floors_at(x, z) for x, z in points] == one_by_one
+	prepared, said = Triangles(corners, cells_from=1), []
+	assert not prepared.is_prepared()
+	prepared.prepare(progress=said.append)  # (worked out before the first lookup, as the Zones tab does while loading)
+	assert prepared.is_prepared() and said[-1] == 1.0 and said == sorted(said) and len(said) > 3
+	assert prepared.floors_at_points(points) == one_by_one
 
 
 def test_the_floors_join_the_floor_map_and_the_walls_tops():

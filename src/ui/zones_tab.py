@@ -8,7 +8,7 @@ can reach it from the floor), and the spots the floor check looked at are drawn 
 
 The layout is ui/designer/zones_tab.ui; the 3D view is ui/view3d/view.py, and the height slider beside it (to hide
 what is above a storey) ui/view3d/cut_slider.py. The maps are read when the tab is first
-shown, and can be imported again (after a game update, or from another game folder): a notice above the view says when
+shown (and a map's floor map and walls when it is first shown, with ui/view3d/loading_panel.py saying how far along), and can be imported again (after a game update, or from another game folder): a notice above the view says when
 they aren't from the game as it is now. The same tab is the window of `python -m cli zones edit`.
 """
 
@@ -29,6 +29,7 @@ from maps import zones as Z
 from maps.triangles import Triangles
 from ui.compiled.ui_zones_tab import Ui_ZonesForm
 from ui.view3d.cut_slider import STOREY_VIEW, CutSlider
+from ui.view3d.loading_panel import LoadingPanel
 from ui.view3d.view import GAME, MINE, REFERENCE, MapView, ViewZone
 
 log = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self.doc = Document([])
 		self.doc.on_change(self._doc_changed)
 		self.view = MapView()
+		self.loadingPanel = LoadingPanel(self.view)
 		self.cutSlider = CutSlider()
 		self.viewLayout.addWidget(self.view, 1)
 		self.viewLayout.addWidget(self.cutSlider)
@@ -108,6 +110,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		self._cameras = {}  # {location: the view's camera there}, so going back to a map looks where it looked
 		self._recent = []  # the maps shown, the last first (only the first KEEP_WALLS keep their walls in memory)
 		self._loaded = False
+		self._loading = False  # (a map is being read: see _read_map)
 		self._filling = False
 		self._worker = None
 		self._new_kind = Z.VISIT
@@ -236,8 +239,7 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
 		try:
 			mapdata = self.index.map(location)
-			if location not in self._floors:
-				self._floors[location] = Triangles.from_navmesh(mapdata.navmesh)
+			self._read_map(location, mapdata)
 			floor, walls = self._floors[location], mapdata.walls
 			self.view.set_floor(floor)
 			self.view.set_walls(walls)
@@ -263,6 +265,20 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		if self.selected and self._zone(self.selected) is not None and self._zone(self.selected).location != location:
 			self.selected = None
 		self._refresh()
+
+	def _read_map(self, location, mapdata):
+		"""Read what showing the map needs and isn't in memory yet (MapData.prepare: the floor map, the walls and the
+		floors' lookup), with the loading panel over the view saying how far along it is (it only shows if there is
+		something to read). The window's paint events are handled meanwhile, so the view's own signals wait."""
+		self._loading = True
+		self.loadingPanel.start(f"Loading {self.map_names.get(location, location)}")
+		try:
+			mapdata.prepare(self.loadingPanel.say)
+			if location not in self._floors:
+				self._floors[location] = Triangles.from_navmesh(mapdata.navmesh)
+		finally:
+			self._loading = False
+			self.loadingPanel.finish()
 
 	# --- your zone file -----------------------------------------------------------------------------
 	def set_document(self, doc):
@@ -382,6 +398,8 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 
 	def _update_storeys(self):
 		"""Tick the storeys at the middle of the view on the height slider (it stops above them)."""
+		if self._loading:  # (the view moved just before; set_map ticks them when the map is read)
+			return
 		if self.index is None or self.location is None:
 			self.cutSlider.set_storeys([])
 			return

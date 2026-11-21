@@ -555,11 +555,15 @@ class MapData:
 	def walls(self):
 		"""The walls, floors and stairs players bump into (maps.triangles.Triangles), or None when the map was imported
 		without them."""
+		return self.read_walls()
+
+	def read_walls(self, progress=None):
+		"""walls, read now if they haven't been; progress(fraction) is told how far along the reading is."""
 		if self._walls is None:
 			from maps import walls as W
 			from maps.triangles import Triangles
 
-			corners = W.load(self)
+			corners = W.load(self, progress)
 			self._walls = Triangles(corners) if corners is not None else False
 		return self._walls or None
 
@@ -569,6 +573,25 @@ class MapData:
 		if self._floors is None:
 			self._floors = Floors(self.navmesh, self.walls)
 		return self._floors
+
+	def prepare(self, progress=None):
+		"""Read the floor map and the walls and work out the floors' lookup now (each is otherwise done when first
+		needed): seconds for a big map, so the Zones tab does it while it says it is loading the map. progress(text,
+		fraction) is told what is being done and how far along the whole is; it isn't called when nothing is left to do."""
+		steps = []  # [(what is done, its share of the time (as measured on Lighthouse and Interchange), doing it)]
+		if self._navmesh is None:
+			steps.append(("Reading the floor map", 0.2, lambda part: self.navmesh))
+		if self._walls is None:
+			steps.append(("Reading the walls", 0.3, self.read_walls))
+		if self._walls is None or (self._walls and not self._walls.is_prepared()):
+			steps.append(("Working out where players can stand", 0.5, lambda part: self.walls and self.walls.prepare(progress=part)))
+		say = progress or (lambda text, fraction: None)
+		total, done = sum(share for _t, share, _do in steps), 0.0
+		for text, share, do in steps:
+			start, size = done / total, share / total
+			say(text, start)
+			do(lambda fraction, text=text, start=start, size=size: say(text, start + size * fraction))
+			done += share
 
 
 class Floors:

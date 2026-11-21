@@ -26,6 +26,7 @@ FORMAT = 1
 WALLS_SUFFIX = ".walls.npz"
 WALL_LAYERS = ("LowPolyCollider", "DoorLowPolyCollider", "Terrain")  # (LayersMaskController.PlayerCollisionTestMask, less Player)
 BOX = ("box", 0)  # the key of the unit cube every solid box collider is a copy of
+READ_SHARE = 0.2  # of load's time: reading the file (the rest is placing the copies)
 
 _CUBE = np.array([[x, y, z] for x in (-0.5, 0.5) for y in (-0.5, 0.5) for z in (-0.5, 0.5)], dtype=np.float32)
 _CUBE_TRIANGLES = np.array([  # (corners numbered x * 4 + y * 2 + z, as maps.triangles numbers a box's)
@@ -237,9 +238,10 @@ def path_of(mapdata):
 	return mapdata.path.with_name(f"{mapdata.location}{WALLS_SUFFIX}") if mapdata.path else None
 
 
-def load(mapdata):
+def load(mapdata, progress=None):
 	"""The map's walls placed, as triangle corners (n, 3, 3) float32, each going round so that a floor's normal
-	(cross(b - a, c - a)) points up; None when they haven't been imported."""
+	(cross(b - a, c - a)) points up; None when they haven't been imported. progress(fraction) is told how far along it
+	is (by the triangles placed)."""
 	path = path_of(mapdata)
 	if path is None or not path.is_file():
 		return None
@@ -248,14 +250,22 @@ def load(mapdata):
 			return None
 		corners, triangles, ranges = data["corners"], data["triangles"], data["ranges"]
 		matrices, mesh_of = data["matrices"], data["mesh_of"]
+	order = np.argsort(mesh_of, kind="stable")  # (each mesh's copies together, in the file's order)
+	meshes, starts, copies = np.unique(mesh_of[order], return_index=True, return_counts=True)
+	work = ranges[meshes, 1] * copies
+	done = np.cumsum(work) / max(1, int(work.sum()))
+	if progress:
+		progress(READ_SHARE)
 	parts = []
-	for mesh in np.unique(mesh_of):
+	for i, mesh in enumerate(meshes):
 		start, count = ranges[mesh]
 		tri = corners[triangles[start:start + count]]  # (count, 3, 3)
-		m = matrices[mesh_of == mesh]  # (copies, 3, 4)
+		m = matrices[order[starts[i]:starts[i] + copies[i]]]  # (copies, 3, 4)
 		placed = np.einsum("kij,tcj->ktci", m[:, :, :3], tri) + m[:, None, None, :, 3]
 		mirrored = np.linalg.det(m[:, :, :3]) < 0
 		if mirrored.any():  # (a mirrored copy's triangles go round the other way: put them back, so floors face up)
 			placed[mirrored] = placed[mirrored][:, :, [0, 2, 1]]
 		parts.append(placed.reshape(-1, 3, 3))
-	return np.concatenate(parts).astype(np.float32) if parts else np.zeros((0, 3, 3), np.float32)
+		if progress:
+			progress(READ_SHARE + (1 - READ_SHARE) * float(done[i]))
+	return np.concatenate(parts).astype(np.float32, copy=False) if parts else np.zeros((0, 3, 3), np.float32)

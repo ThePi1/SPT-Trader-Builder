@@ -161,6 +161,30 @@ def test_only_the_last_few_maps_walls_are_kept_in_memory(app, maps):
 	window.deleteLater()
 
 
+def test_reading_a_map_says_how_far_along_it_is_and_a_map_in_memory_says_nothing(app, maps):
+	_add_walls(maps)
+	_write_map(maps, "Woods")
+	_add_walls(maps, "Woods")
+	window = QMainWindow()
+	tab = ZonesTab(maps_folder=maps)
+	window.setCentralWidget(tab)
+	said = []
+	panel_say = tab.loadingPanel.say
+	tab.loadingPanel.say = lambda text, fraction: (said.append((text, fraction)), panel_say(text, fraction))
+	tab.load()  # (shows Customs first)
+	assert list(dict.fromkeys(text for text, _f in said)) == ["Reading the floor map", "Reading the walls", "Working out where players can stand"]
+	fractions = [f for _t, f in said]
+	assert fractions[0] == 0.0 and fractions[-1] == pytest.approx(1.0) and fractions == sorted(fractions)
+	assert tab.loadingPanel.isHidden() and tab.view.walls is not None
+	said.clear()
+	tab.set_map("Woods")
+	assert said and tab.loadingPanel.isHidden()
+	said.clear()
+	tab.set_map(MAP)  # (still in memory: nothing to read, no panel)
+	assert said == []
+	window.deleteLater()
+
+
 def test_placing_a_zone_puts_it_on_the_floor_clicked(tab):
 	record = tab.place_at((5.0, 0.0, 5.0))
 	assert record["ZoneLocation"] == MAP and record["ZoneType"] == "visit"
