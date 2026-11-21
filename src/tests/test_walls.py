@@ -1,5 +1,5 @@
 """The walls: reading mesh colliders and meshes with the 2022 layout (on a serialized file built here), placing them,
-the walls file, the floors on their tops, and the navmesh's height inside a polygon that isn't flat."""
+a terrain's ground from its heightmap, the walls file, the floors on their tops, and the navmesh's height inside a polygon that isn't flat."""
 
 import struct
 
@@ -132,6 +132,73 @@ def test_the_walls_of_a_scene_are_its_solid_colliders_on_the_wall_layers_placed(
 	assert tri.floors_at(0, 20) == [1.0]  # (the box's top; its bottom faces down)
 	box = corners[-12:].reshape(-1, 3)
 	assert box.min(axis=0).tolist() == [-2, 0, 19] and box.max(axis=0).tolist() == [2, 1, 21]
+
+
+TERRAIN, GRASS = 8, 9  # (layers: the game's terrains, and the AI scenes' copies of them)
+
+
+def _terrain_collider(game_object, terrain_data):
+	return _collider_start(game_object) + _pptr(terrain_data) + bytes([1, 0, 0, 0])  # (then m_EnableTreeColliders)
+
+
+def _terrain_data(name, heights, scale, holes=b""):
+	"""A TerrainData with the 2022 layout from its heightmap on; the splat and detail databases before it are stand-in
+	bytes (the reader finds the heightmap by its size)."""
+	n = heights.shape[0]
+	blob = _string(name) + struct.pack("<i", 7) + bytes(36)  # (not read)
+	blob += struct.pack("<i", n * n) + heights.astype("<i2").tobytes()
+	blob += bytes((-len(blob)) % 4)
+	blob += struct.pack("<i", len(holes)) + holes + bytes((-len(holes)) % 4)
+	blob += struct.pack("<i", 0) + bytes([1, 0, 0, 0])  # (no holes' levels of detail; holes texture compression on)
+	blob += struct.pack("<i", 3) + struct.pack("<3f", 0, 0, 0) + struct.pack("<i", 6) + bytes(24)  # (precomputed errors, min-max heights)
+	return blob + struct.pack("<ii", n, 3) + struct.pack("<3f", *scale) + bytes(16)  # (resolution, levels, scale, more fields)
+
+
+def test_a_terrains_ground_is_read_from_its_heightmap_and_placed(tmp_path):
+	heights = np.full((33, 33), 16383, dtype=np.int16)  # (half of HEIGHT_TOP: 10 m up, with 20 m of height)
+	heights[20, 5] = U.HEIGHT_TOP  # (one height 20 m up: a row per z, so at x 5, z 20)
+	holes = np.full((32, 32), 255, dtype=np.uint8)
+	holes[2, 30] = 0  # (a hole in the cell at x 30, z 2)
+	objects = [
+		(1, U.GAME_OBJECT, _game_object([2, 3], TERRAIN, "Slice_1_1")),
+		(2, U.TRANSFORM, _transform(1, (100, -5, 200))),
+		(3, U.TERRAIN_COLLIDER, _terrain_collider(1, 10)),
+		(4, U.GAME_OBJECT, _game_object([5, 6], GRASS, "AITerrain_1_1")),
+		(5, U.TRANSFORM, _transform(4, (100, -5, 200))),
+		(6, U.TERRAIN_COLLIDER, _terrain_collider(4, 10)),
+		(10, U.TERRAIN_DATA, _terrain_data("Slice_1_1", heights, (2.0, 20.0, 2.0), holes.tobytes())),
+	]
+	path = tmp_path / "level1"
+	path.write_bytes(_serialized(objects))
+	meshes = W.Meshes(tmp_path)
+	try:
+		with U.SerializedFile(path) as sf:
+			heightmap = U.read_heightmap(sf, 10)
+			assert heightmap.resolution == 33 and heightmap.scale == (2, 20, 2) and len(heightmap.holes) == 32 * 32
+			placed = W.scene_walls(sf, meshes, {TERRAIN})  # (not the copy on the Grass layer)
+		assert [key for key, _m in placed] == [(path.name, 10)]
+		corners, triangles = meshes.shapes[placed[0][0]]
+		matrix = placed[0][1]
+	finally:
+		meshes.close()
+	tri = Triangles((corners @ matrix[:, :3].T + matrix[:, 3])[triangles].astype(np.float32))
+	assert len(tri) < 200  # (2 048 at full detail: the flat ground is a few big squares)
+	assert tri.floors_at(150, 250) == pytest.approx([5.0], abs=0.01)
+	assert set(np.round(tri.floors_at(110, 240, level=0.0), 2)) == {15.0}  # (the top of the spike: too steep to stand on)
+	assert tri.floors_at(161, 205) == []  # (the hole is left open)
+
+
+def test_a_terrains_ground_keeps_within_the_tolerance_of_every_height():
+	z, x = np.mgrid[0:65, 0:65]
+	heights = 8000 + 3000 * np.sin(x / 7.0) * np.cos(z / 11.0) + np.where(x > 40, 9000, 0)  # (hills, and a 5 m cliff)
+	heightmap = U.Heightmap(65, heights.astype("<i2").tobytes(), None, (1.0, 18.0, 1.0))
+	corners, triangles = W.terrain_shape(heightmap, tolerance=0.1)
+	assert len(triangles) < 2 * 64 * 64
+	tri = Triangles(corners[triangles])
+	points = [(float(px), float(pz)) for pz in range(65) for px in range(65)]
+	found = tri.floors_at_points(points, level=-1.0)  # (every slope: the cliff's face too)
+	want = (heights * 18.0 / U.HEIGHT_TOP).reshape(-1)
+	assert all(any(abs(h - w) <= 0.1 + 1e-4 for h in hs) for hs, w in zip(found, want))
 
 
 def test_floors_on_the_walls_tops_leave_out_ceilings_and_steep_slopes():

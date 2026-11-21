@@ -206,7 +206,7 @@ class Triangles:
 		"""Which triangles face up and are level enough to stand on (kept for each level asked about)."""
 		if level not in self._level:
 			mask = np.zeros(len(self), dtype=bool)
-			for s in range(0, len(self), 1 << 20):  # (in parts: Lighthouse's walls are 6 million triangles)
+			for s in range(0, len(self), 1 << 20):  # (in parts: Lighthouse's walls are 8 million triangles)
 				tri = self.corners[s:s + (1 << 20)].astype(np.float64)
 				n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
 				length = np.linalg.norm(n, axis=1)

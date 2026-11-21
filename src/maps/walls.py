@@ -2,13 +2,15 @@
 
 The game stops a player with the colliders on a few layers: the "player collision test" mask of its
 LayersMaskController is LowPolyCollider, DoorLowPolyCollider, Terrain and Player. The import reads every enabled,
-solid mesh collider and box collider of a map's scenes on the first three (a mesh collider's shape is a Mesh in the
-level's shared assets, its corners in the .resS file beside it; see maps.unity.read_mesh). Ground made with Unity's
-terrain isn't read: the floor map (the navmesh) covers the ground players walk on.
+solid mesh, box and terrain collider of a map's scenes on the first three (a mesh collider's shape is a Mesh in the
+level's shared assets, its corners in the .resS file beside it; see maps.unity.read_mesh). A terrain's ground is its
+heightmap (maps.unity.read_heightmap), drawn with as few triangles as keep within 10 cm of it (terrain_shape): it is
+the ground outside where bots walk too, such as all round Interchange's mall. The AI scenes' copies of the terrains
+are on another layer (Grass), so they are left out.
 
 A map's walls are kept as each distinct mesh once plus where each copy of it goes (a 3 x 4 matrix), in
-``<location>.walls.npz`` beside the map's other files: Customs is about 1 900 meshes placed 47 000 times (box colliders included), 2.3 million
-triangles once placed. ``load`` places them. Uses numpy. No Qt.
+``<location>.walls.npz`` beside the map's other files: Customs is about 1 900 meshes placed 47 000 times (box colliders included), and two
+terrains: 2.8 million triangles once placed. ``load`` places them. Uses numpy. No Qt.
 """
 
 import mmap
@@ -71,8 +73,9 @@ class Meshes:
 		file_index, path_id = pointer
 		return (sf.path.name if file_index == 0 else sf.external_name(file_index), path_id)
 
-	def get(self, sf, pointer):
-		"""The key of the mesh, read if it wasn't yet; None if it can't be read."""
+	def get(self, sf, pointer, class_id=U.MESH):
+		"""The key of the mesh (or with class_id TERRAIN_DATA, of a terrain's ground: terrain_shape), read if it wasn't
+		yet; None if it can't be read."""
 		key = self.key(sf, pointer)
 		if key in self.shapes:
 			return key
@@ -80,9 +83,12 @@ class Meshes:
 			return None
 		target = sf if pointer[0] == 0 else self._file(key[0])
 		try:
-			if target is None or key[1] not in target.objects or target.class_id(key[1]) != U.MESH:
-				raise U.FormatError("not a mesh")
-			self.shapes[key] = U.mesh_shape(U.read_mesh(target, key[1]), self._resource)
+			if target is None or key[1] not in target.objects or target.class_id(key[1]) != class_id:
+				raise U.FormatError(f"not a {'mesh' if class_id == U.MESH else 'terrain'}")
+			if class_id == U.MESH:
+				self.shapes[key] = U.mesh_shape(U.read_mesh(target, key[1]), self._resource)
+			else:
+				self.shapes[key] = terrain_shape(U.read_heightmap(target, key[1]))
 		except (U.FormatError, ValueError, IndexError, KeyError) as e:
 			self.problems[key] = str(e)
 			return None
@@ -110,14 +116,15 @@ def _matrix(rotation, position, scale, size=(1.0, 1.0, 1.0), center=(0.0, 0.0, 0
 
 
 def scene_walls(sf, meshes, layers):
-	"""The walls of one scene file: [(mesh key, 3 x 4 matrix)], for its enabled solid mesh and box colliders whose
-	object is active and on one of `layers`."""
+	"""The walls of one scene file: [(mesh key, 3 x 4 matrix)], for its enabled solid mesh, box and terrain colliders
+	whose object is active and on one of `layers`."""
 	transforms = U.TransformCache(sf)
+	readers = {U.MESH_COLLIDER: U.read_mesh_collider, U.BOX_COLLIDER: U.read_box_collider, U.TERRAIN_COLLIDER: U.read_terrain_collider}
 	found = []
-	for class_id in (U.MESH_COLLIDER, U.BOX_COLLIDER):
+	for class_id, read in readers.items():
 		for path_id in sf.of_class(class_id):
 			try:
-				collider = U.read_mesh_collider(sf, path_id) if class_id == U.MESH_COLLIDER else U.read_box_collider(sf, path_id)
+				collider = read(sf, path_id)
 				if collider.is_trigger or not collider.enabled or collider.game_object[0] != 0:
 					continue
 				game_object = U.read_game_object(sf, collider.game_object[1])
@@ -131,11 +138,73 @@ def scene_walls(sf, meshes, layers):
 					key = meshes.get(sf, collider.mesh)
 					if key is not None:
 						found.append((key, _matrix(rotation, position, scale)))
+				elif class_id == U.TERRAIN_COLLIDER:  # (a terrain is never turned or scaled: only its position counts)
+					key = meshes.get(sf, collider.terrain_data, U.TERRAIN_DATA)
+					if key is not None:
+						found.append((key, _matrix(G.IDENTITY, position, (1.0, 1.0, 1.0))))
 				else:
 					found.append((BOX, _matrix(rotation, position, scale, collider.size, collider.center)))
 			except (U.FormatError, KeyError, IndexError, StopIteration, ValueError):
 				continue
 	return found
+
+
+TERRAIN_TOLERANCE = 0.1  # metres: how far the ground drawn may be from the terrain's own heights
+_LARGEST_BLOCK = 64  # heights: the largest square of the terrain drawn as two triangles
+
+
+def terrain_shape(heightmap, tolerance=TERRAIN_TOLERANCE):
+	"""A terrain's ground as (corners, triangles), in metres from the terrain's position. A full-detail grid is 2 million
+	triangles a terrain (Interchange has four), so it is cut into squares of up to 64 x 64 heights, each split in four
+	until its two triangles are within `tolerance` of every height inside it (flat ground stays in big squares, slopes
+	and edges get every height); holes are left open. A square's edges may not meet its smaller neighbour's corners
+	exactly, but are within the tolerance of them."""
+	n = heightmap.resolution - 1
+	heights = np.frombuffer(heightmap.heights, dtype="<i2").reshape(n + 1, n + 1).astype(np.float32)
+	y = heights * np.float32(heightmap.scale[1] / U.HEIGHT_TOP)
+	hole = None if heightmap.holes is None else np.frombuffer(heightmap.holes, dtype=np.uint8).reshape(n, n) == 0
+	size = min(_LARGEST_BLOCK, n)
+	if n & (n - 1) or n % size:
+		raise U.FormatError(f"a terrain {n + 1} heights wide")
+	quads = []  # [(z, x, size)] in heights
+	split = None
+	while size >= 1:
+		blocks = n // size
+		exists = np.ones((blocks, blocks), bool) if split is None else np.kron(split, np.ones((2, 2), bool))
+		error = _block_errors(y, size)
+		if hole is not None:
+			error[hole.reshape(blocks, size, blocks, size).any(axis=(1, 3))] = np.inf
+		leaf = exists & (error <= tolerance) if size > 1 else exists & (error < np.inf)
+		z, x = np.nonzero(leaf)
+		quads.append(np.stack([z * size, x * size, np.full_like(z, size)], axis=1))
+		split = exists & ~leaf
+		size //= 2
+	quads = np.concatenate(quads)
+	z0, x0, s = quads[:, 0], quads[:, 1], quads[:, 2]
+	ids = np.stack([z0 * (n + 1) + x0, (z0 + s) * (n + 1) + x0, (z0 + s) * (n + 1) + x0 + s, z0 * (n + 1) + x0 + s], axis=1)
+	used, index = np.unique(ids, return_inverse=True)
+	index = index.reshape(-1, 4)
+	zs, xs = np.divmod(used, n + 1)
+	corners = np.stack([xs * heightmap.scale[0], y.reshape(-1)[used], zs * heightmap.scale[2]], axis=1).astype(np.float32)
+	a, b, c, d = index.T  # (each square's corners going round from its own corner: +z, then +x and +z, then +x)
+	triangles = np.concatenate([np.stack([a, b, c], axis=1), np.stack([a, c, d], axis=1)]).astype(np.int32)
+	return corners, triangles
+
+
+def _block_errors(y, size):
+	"""For each size x size square of heights y: the furthest any height inside it is from its two triangles (split
+	from its corner to the opposite one, as terrain_shape draws it)."""
+	from numpy.lib.stride_tricks import as_strided
+
+	blocks = (y.shape[0] - 1) // size
+	step = np.arange(size + 1, dtype=np.float32) / size
+	v, u = step[:, None], step[None, :]  # (along z, along x)
+	corners = [y[dz::size, dx::size][:blocks, :blocks, None, None] for dz, dx in ((0, 0), (size, 0), (size, size), (0, size))]
+	c00, c10, c11, c01 = corners
+	toward_z = c00 + v * (c10 - c00) + u * (c11 - c10)  # (the triangle on the +z side of the diagonal)
+	toward_x = c00 + u * (c01 - c00) + v * (c11 - c01)
+	inside = as_strided(y, shape=(blocks, blocks, size + 1, size + 1), strides=(y.strides[0] * size, y.strides[1] * size, *y.strides), writeable=False)
+	return np.abs(np.where(v >= u, toward_z, toward_x) - inside).max(axis=(2, 3))
 
 
 def write(path, placed, meshes):

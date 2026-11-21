@@ -2,9 +2,9 @@
 assets (``sharedassetsN.assets``).
 
 EFT's client is built with Unity 2022.3 without type trees, so each kind of object is read with its layout written
-out here. Only what the map import needs is read: game objects, transforms, box and mesh colliders, meshes (their
-corners and triangles), the start of a MonoBehaviour and its script's name, the build's scene list, the layer names
-and the navigation mesh. Nothing is ever written. No Qt.
+out here. Only what the map import needs is read: game objects, transforms, box, mesh and terrain colliders, meshes
+(their corners and triangles), a terrain's heightmap, the start of a MonoBehaviour and its script's name, the build's
+scene list, the layer names and the navigation mesh. Nothing is ever written. No Qt.
 """
 
 import mmap
@@ -16,7 +16,7 @@ from maps import geometry as G
 
 # Unity class ids
 GAME_OBJECT, TRANSFORM, BOX_COLLIDER, MONO_BEHAVIOUR, MONO_SCRIPT, BUILD_SETTINGS, NAV_MESH_DATA, RECT_TRANSFORM = 1, 4, 65, 114, 115, 141, 238, 224
-MESH, MESH_COLLIDER, TAG_MANAGER = 43, 64, 78
+MESH, MESH_COLLIDER, TAG_MANAGER, TERRAIN_COLLIDER, TERRAIN_DATA = 43, 64, 78, 154, 156
 
 
 class FormatError(Exception):
@@ -250,6 +250,57 @@ def read_mesh_collider(sf, path_id):
 	r.align()
 	r.i32()  # m_CookingOptions
 	return MeshCollider(game_object, is_trigger, enabled, convex, r.pptr())
+
+
+TerrainCollider = namedtuple("TerrainCollider", "game_object is_trigger enabled terrain_data")
+
+
+def read_terrain_collider(sf, path_id):
+	r = sf.reader(path_id)
+	game_object, is_trigger, enabled = _collider_start(r)
+	return TerrainCollider(game_object, is_trigger, enabled, r.pptr())
+
+
+# A terrain's heights: heights is resolution x resolution little-endian int16 (bytes), a row per step along z, each
+# along x; HEIGHT_TOP is scale[1] metres above the terrain's position. holes is (resolution - 1)^2 bytes, a cell each
+# (0 where the ground has a hole), or None. scale is the metres from one height to the next along x and along z, and
+# the height of HEIGHT_TOP.
+Heightmap = namedtuple("Heightmap", "resolution heights holes scale")
+HEIGHT_TOP = 32766
+
+
+def read_heightmap(sf, path_id):
+	"""The heightmap of a TerrainData. It comes after the splat and detail databases (detail patches, tree instances:
+	not read), so it is found by its size, (2^k + 1)^2 heights, and checked by what follows it: the holes and their
+	levels of detail, a bool, the precomputed errors and min-max patch heights (floats), then the resolution again,
+	the number of levels and the scale."""
+	r = sf.reader(path_id)
+	start = r.pos
+	end = start + sf.objects[path_id][1]
+	for k in range(5, 13):
+		resolution = 2 ** k + 1
+		at = sf.data.find(struct.pack("<i", resolution * resolution), start, end)
+		while at >= 0:
+			try:
+				r.pos = at + 4 + 2 * resolution * resolution
+				r.align()
+				holes = r.raw(r.i32())
+				r.align()
+				_skip_vector(r, 1)  # m_HolesLOD
+				r.align()
+				r.u8()  # m_EnableHolesTextureCompression
+				r.align()
+				_skip_vector(r, 4)  # m_PrecomputedError
+				_skip_vector(r, 4)  # m_MinMaxPatchHeights
+				if r.i32() == resolution and 0 < r.i32() < 16 and r.pos + 12 <= end:
+					scale = r.vec3()
+					heights = sf.data[at + 4:at + 4 + 2 * resolution * resolution]
+					cells = (resolution - 1) ** 2
+					return Heightmap(resolution, heights, holes if len(holes) == cells else None, scale)
+			except (struct.error, IndexError, FormatError):
+				pass
+			at = sf.data.find(struct.pack("<i", resolution * resolution), at + 1, end)
+	raise FormatError(f"no heightmap in TerrainData {path_id}")
 
 
 # A mesh, as far as its shape goes: its parts (submeshes: (first byte, index count, topology, base vertex)), the index
