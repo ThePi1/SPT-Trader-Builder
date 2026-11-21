@@ -17,8 +17,8 @@
        <property name="toolTip">
         <string>The map to show (the maps imported from the game)</string>
        </property>
-       <property name="minimumContentsLength">
-        <number>14</number>
+       <property name="sizeAdjustPolicy">
+        <enum>QComboBox::AdjustToContents</enum>
        </property>
       </widget>
      </item>

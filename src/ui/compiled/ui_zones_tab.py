@@ -37,7 +37,7 @@ class Ui_ZonesForm(object):
 
         self.mapBox = QComboBox(ZonesForm)
         self.mapBox.setObjectName(u"mapBox")
-        self.mapBox.setMinimumContentsLength(14)
+        self.mapBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.topRow.addWidget(self.mapBox)
 

@@ -195,6 +195,16 @@ def test_factory_by_day_is_shown_first(app, maps):
 	window.deleteLater()
 
 
+def test_the_map_box_is_as_wide_as_its_longest_name(app, maps):
+	_write_map(maps, "Sandbox")
+	window = QMainWindow()
+	tab = ZonesTab(map_names={MAP: "Customs", "Sandbox": "Ground Zero (Sandbox)"}, maps_folder=maps)
+	window.setCentralWidget(tab)
+	tab.load()
+	assert tab.mapBox.sizeHint().width() > tab.mapBox.fontMetrics().horizontalAdvance("Ground Zero (Sandbox)")  # (and its list, as wide)
+	window.deleteLater()
+
+
 def test_the_maps_are_read_once_the_tab_is_drawn_so_the_loading_panel_shows(app, maps):
 	window = QMainWindow()
 	tab = ZonesTab(maps_folder=maps)
