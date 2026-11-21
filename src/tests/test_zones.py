@@ -5,10 +5,12 @@ installed where the 4.1.6 test copy lives."""
 import gzip
 import json
 import os
+import struct
 from pathlib import Path
 
 import pytest
 
+from core import jsonio
 from maps import geometry as G
 from maps import mapdata as M
 from maps import zones as Z
@@ -189,6 +191,18 @@ def test_zone_file_checks(tmp_path):
 	assert found["lost"][0] and "Atlantis" in found["lost"][0][0]
 
 
+def test_the_checks_look_at_fewer_spots_under_a_big_zone():
+	"""Every 0.5 m under a small zone; under a 100 m one, about MOST_SAMPLES spots (every 2 m), all inside it."""
+	small = Z.footprint_points(G.Box((0, 0, 0), (4, 2, 3)))
+	assert len(small) == 8 * 6
+	big = G.Box((115, 1, 187), (100, 50, 100), G.yaw_rotation(30))
+	spots = Z.footprint_points(big)
+	assert len(spots) == Z.MOST_SAMPLES
+	assert all(big.contains((x, 1, z)) for x, z in spots)
+	long = Z.footprint_points(G.Box((0, 0, 0), (400, 2, 1)))  # (a long thin one: still every 0.5 m along it)
+	assert len(long) == 800 * 2
+
+
 def test_a_box_beside_the_mapped_floor_is_only_a_warning(tmp_path):
 	index = Z.ZoneIndex(_map(tmp_path))
 	errors, warnings = Z.floor_report(G.Box((22, 1, 5), (2, 2, 2)), index.map("bigmap").navmesh)
@@ -219,6 +233,49 @@ def test_a_new_zone_off_the_floor_map_uses_the_floor_nearby_or_the_height_given(
 		Z.make_zone(index, "x", "Woods", Z.VISIT, 1, 1)  # (not imported)
 
 
+# --- the game's version and the import's files ---------------------------------------------------------------
+
+def _version_block(version, name):
+	"""A program's version block (VS_VERSION_INFO) saying version (four numbers), of the program named name."""
+	a, b, c, d = (int(v) for v in version.split("."))
+	fixed = M._VERSION_INFO + struct.pack("<II", a << 16 | b, c << 16 | d) + bytes(36)  # (VS_FIXEDFILEINFO: 52 bytes)
+	body = M._VERSION_BLOCK + bytes(4) + fixed + f"ProductName\0{name}\0".encode("utf-16-le")
+	return struct.pack("<HHH", 6 + len(body), len(fixed), 0) + body
+
+
+def fake_game(folder, version):
+	"""A game folder whose EscapeFromTarkov.exe is nothing but its version blocks: Unity's and the game's (version)."""
+	folder.mkdir(parents=True, exist_ok=True)
+	blocks = _version_block("2022.3.43.18813", "Unity Player") + bytes(8) + _version_block(version, "Escape From Tarkov")
+	(folder / M.GAME_EXE).write_bytes(b"MZ" + bytes(500) + blocks + bytes(100))
+	return folder
+
+
+def test_the_games_version_is_read_from_its_program_and_maps_from_another_are_told(tmp_path):
+	game = fake_game(tmp_path / "game", "0.16.9.40743")
+	assert M.game_version(game) == "0.16.9.40743" and M.game_version(tmp_path) is None
+	database = game / "SPT_Runtime" / "SPT_Data" / "database"
+	database.mkdir(parents=True)
+	assert M.game_holding(database) == game and M.game_holding(tmp_path) is None and M.game_holding("") is None
+	records = {"Woods": {"game_version": "0.16.9.40087"}, "bigmap": {"game_version": "0.16.9.40743"}, "Shoreline": {}}
+	assert M.older_maps(records, game) == ("0.16.9.40743", {"Woods": "0.16.9.40087"})  # (Shoreline's wasn't kept: can't tell)
+	assert M.older_maps(records, tmp_path) == (None, {})  # (no game there)
+
+
+def test_a_file_written_is_swapped_in_whole(tmp_path):
+	path = tmp_path / "Woods.walls.npz"
+	path.write_bytes(b"old")
+	with jsonio.replacing(path) as f:
+		f.write(b"new")
+		assert path.read_bytes() == b"old"  # (what whoever reads it meanwhile gets: the Zones tab, while the maps are imported)
+	assert path.read_bytes() == b"new"
+	with pytest.raises(ZeroDivisionError):
+		with jsonio.replacing(path) as f:
+			f.write(b"half")
+			1 / 0
+	assert path.read_bytes() == b"new" and list(tmp_path.iterdir()) == [path]
+
+
 # --- the real game ------------------------------------------------------------------------------------------
 
 @pytest.mark.skipif(not (GAME / "EscapeFromTarkov_Data" / "globalgamemanagers").is_file(), reason="no SPT 4.1 game folder (set SPT_GAME)")
@@ -239,3 +296,5 @@ def test_importing_a_real_map_finds_its_zones_and_floor(tmp_path):
 	assert not any(name.endswith(("_LOD0", "_LOD1")) for name in objects.names)
 	zone_object = next(z for z in data.zones if z["object"])
 	assert objects.search(zone_object["object"])
+	version = data.record["game_version"].split(".")
+	assert data.record["game_version"] == M.game_version(GAME) and len(version) == 4 and int(version[0]) < 1000  # (not Unity's: 2022.3...)

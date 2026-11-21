@@ -2,9 +2,9 @@
 assets (``sharedassetsN.assets``).
 
 EFT's client is built with Unity 2022.3 without type trees, so each kind of object is read with its layout written
-out here. Only what the map import needs is read: game objects, transforms, box colliders, the start of a
-MonoBehaviour and its script's name, the build's scene list and the navigation mesh. Nothing is ever written.
-No Qt.
+out here. Only what the map import needs is read: game objects, transforms, box, mesh and terrain colliders, meshes
+(their corners and triangles), a terrain's heightmap, the start of a MonoBehaviour and its script's name, the build's
+scene list, the layer names and the navigation mesh. Nothing is ever written. No Qt.
 """
 
 import mmap
@@ -16,6 +16,7 @@ from maps import geometry as G
 
 # Unity class ids
 GAME_OBJECT, TRANSFORM, BOX_COLLIDER, MONO_BEHAVIOUR, MONO_SCRIPT, BUILD_SETTINGS, NAV_MESH_DATA, RECT_TRANSFORM = 1, 4, 65, 114, 115, 141, 238, 224
+MESH, MESH_COLLIDER, TAG_MANAGER, TERRAIN_COLLIDER, TERRAIN_DATA = 43, 64, 78, 154, 156
 
 
 class FormatError(Exception):
@@ -217,8 +218,8 @@ def read_transform(sf, path_id):
 	return Transform(game_object, rotation, position, size, children, father)
 
 
-def read_box_collider(sf, path_id):
-	r = sf.reader(path_id)
+def _collider_start(r):
+	"""The fields every Collider starts with: (game object, is trigger, enabled)."""
 	game_object = r.pptr()
 	r.pptr()  # m_Material
 	r.u32()  # m_IncludeLayers
@@ -229,8 +230,197 @@ def read_box_collider(sf, path_id):
 	r.align()
 	enabled = bool(r.u8())
 	r.align()
+	return game_object, is_trigger, enabled
+
+
+def read_box_collider(sf, path_id):
+	r = sf.reader(path_id)
+	game_object, is_trigger, enabled = _collider_start(r)
 	size, center = r.vec3(), r.vec3()
 	return BoxCollider(game_object, is_trigger, enabled, size, center)
+
+
+MeshCollider = namedtuple("MeshCollider", "game_object is_trigger enabled convex mesh")
+
+
+def read_mesh_collider(sf, path_id):
+	r = sf.reader(path_id)
+	game_object, is_trigger, enabled = _collider_start(r)
+	convex = bool(r.u8())
+	r.align()
+	r.i32()  # m_CookingOptions
+	return MeshCollider(game_object, is_trigger, enabled, convex, r.pptr())
+
+
+TerrainCollider = namedtuple("TerrainCollider", "game_object is_trigger enabled terrain_data")
+
+
+def read_terrain_collider(sf, path_id):
+	r = sf.reader(path_id)
+	game_object, is_trigger, enabled = _collider_start(r)
+	return TerrainCollider(game_object, is_trigger, enabled, r.pptr())
+
+
+# A terrain's heights: heights is resolution x resolution little-endian int16 (bytes), a row per step along z, each
+# along x; HEIGHT_TOP is scale[1] metres above the terrain's position. holes is (resolution - 1)^2 bytes, a cell each
+# (0 where the ground has a hole), or None. scale is the metres from one height to the next along x and along z, and
+# the height of HEIGHT_TOP.
+Heightmap = namedtuple("Heightmap", "resolution heights holes scale")
+HEIGHT_TOP = 32766
+
+
+def read_heightmap(sf, path_id):
+	"""The heightmap of a TerrainData. It comes after the splat and detail databases (detail patches, tree instances:
+	not read), so it is found by its size, (2^k + 1)^2 heights, and checked by what follows it: the holes and their
+	levels of detail, a bool, the precomputed errors and min-max patch heights (floats), then the resolution again,
+	the number of levels and the scale."""
+	r = sf.reader(path_id)
+	start = r.pos
+	end = start + sf.objects[path_id][1]
+	for k in range(5, 13):
+		resolution = 2 ** k + 1
+		at = sf.data.find(struct.pack("<i", resolution * resolution), start, end)
+		while at >= 0:
+			try:
+				r.pos = at + 4 + 2 * resolution * resolution
+				r.align()
+				holes = r.raw(r.i32())
+				r.align()
+				_skip_vector(r, 1)  # m_HolesLOD
+				r.align()
+				r.u8()  # m_EnableHolesTextureCompression
+				r.align()
+				_skip_vector(r, 4)  # m_PrecomputedError
+				_skip_vector(r, 4)  # m_MinMaxPatchHeights
+				if r.i32() == resolution and 0 < r.i32() < 16 and r.pos + 12 <= end:
+					scale = r.vec3()
+					heights = sf.data[at + 4:at + 4 + 2 * resolution * resolution]
+					cells = (resolution - 1) ** 2
+					return Heightmap(resolution, heights, holes if len(holes) == cells else None, scale)
+			except (struct.error, IndexError, FormatError):
+				pass
+			at = sf.data.find(struct.pack("<i", resolution * resolution), at + 1, end)
+	raise FormatError(f"no heightmap in TerrainData {path_id}")
+
+
+# A mesh, as far as its shape goes: its parts (submeshes: (first byte, index count, topology, base vertex)), the index
+# buffer (2 or 4 bytes an index), the vertex channels ((stream, offset, format, dimension), position first) and the
+# vertex bytes, or where they are kept when they are in the .resS file beside (offset, size, file name)
+Mesh = namedtuple("Mesh", "name submeshes index_size index_bytes vertex_count channels vertex_bytes stream")
+
+_FORMAT_SIZE = {0: 4, 1: 2, 2: 1, 3: 1, 4: 2, 5: 2, 6: 1, 7: 1, 8: 2, 9: 2, 10: 4, 11: 4}  # Unity's VertexFormat: bytes a value
+
+
+def _skip_vector(r, item_size):
+	count = r.i32()  # (read first: `r.pos += r.i32() * size` would take r.pos from before the count)
+	r.pos += count * item_size
+	r.align()
+
+
+def _skip_packed(r, floats):
+	"""A PackedBitVector (part of a compressed mesh)."""
+	r.u32()  # m_NumItems
+	if floats:
+		r.f32()  # m_Range
+		r.f32()  # m_Start
+	_skip_vector(r, 1)
+	r.u8()  # m_BitSize
+	r.align()
+
+
+def read_mesh(sf, path_id):
+	"""A Mesh's shape (see Mesh). Raises FormatError for a compressed mesh (the game's collision meshes aren't)."""
+	r = sf.reader(path_id)
+	name = r.string()
+	submeshes = []
+	for _ in range(r.i32()):
+		first_byte, index_count, topology, base_vertex = r.u32(), r.u32(), r.i32(), r.u32()
+		r.u32()  # firstVertex
+		r.u32()  # vertexCount
+		r.pos += 24  # localAABB
+		submeshes.append((first_byte, index_count, topology, base_vertex))
+	_skip_vector(r, 40)  # m_Shapes: vertices
+	_skip_vector(r, 12)  # shapes
+	for _ in range(r.i32()):  # channels
+		r.string()
+		r.u32()
+		r.i32()
+		r.i32()
+	_skip_vector(r, 4)  # fullWeights
+	_skip_vector(r, 64)  # m_BindPose
+	_skip_vector(r, 4)  # m_BoneNameHashes
+	r.u32()  # m_RootBoneNameHash
+	_skip_vector(r, 24)  # m_BonesAABB
+	_skip_vector(r, 4)  # m_VariableBoneCountWeights
+	compression = r.u8()
+	r.u8()  # m_IsReadable
+	r.u8()  # m_KeepVertices
+	r.u8()  # m_KeepIndices
+	r.align()
+	index_size = 2 if r.i32() == 0 else 4
+	index_bytes = r.raw(r.i32())
+	r.align()
+	vertex_count = r.u32()
+	channels = [(r.u8(), r.u8(), r.u8(), r.u8()) for _ in range(r.i32())]
+	vertex_bytes = r.raw(r.i32())
+	r.align()
+	if compression:
+		raise FormatError(f"mesh {name!r} is compressed")
+	for floats in (True, True, True, True, False, False, False, True, False, False):  # m_CompressedMesh (empty)
+		_skip_packed(r, floats)
+	r.u32()  # m_UVInfo
+	r.pos += 24  # m_LocalAABB
+	r.i32()  # m_MeshUsageFlags
+	r.i32()  # m_CookingOptions
+	_skip_vector(r, 1)  # m_BakedConvexCollisionMesh
+	_skip_vector(r, 1)  # m_BakedTriangleCollisionMesh
+	r.pos += 8  # m_MeshMetrics
+	offset = struct.unpack_from("<Q" if sf.little else ">Q", r.raw(8))[0]
+	size = r.u32()
+	path = r.string()
+	return Mesh(name, submeshes, index_size, index_bytes, vertex_count, channels, vertex_bytes, (offset, size, path.rsplit("/", 1)[-1]))
+
+
+def mesh_shape(mesh, read_resource):
+	"""(corners as float32 (n, 3), triangles as int32 (m, 3)) of a mesh. read_resource(file name, offset, size) gives
+	the bytes kept in a .resS file. Only the triangle parts are taken (no lines or points)."""
+	import numpy as np
+
+	n = mesh.vertex_count
+	data = mesh.vertex_bytes or read_resource(mesh.stream[2], mesh.stream[0], mesh.stream[1])
+	stream, offset, fmt, dimension = mesh.channels[0]
+	if fmt not in (0, 1) or (dimension & 15) < 3:
+		raise FormatError(f"mesh {mesh.name!r}: corners stored as format {fmt}, dimension {dimension}")
+	start = 0
+	for s in range(stream + 1):  # (each stream follows the one before it, on 16 bytes)
+		stride = sum((d & 15) * _FORMAT_SIZE.get(f, 4) for st, _o, f, d in mesh.channels if st == s and d & 15)
+		if s < stream:
+			start = (start + n * stride + 15) & ~15
+	if len(data) < start + n * stride:
+		raise FormatError(f"mesh {mesh.name!r}: its vertex data is short")
+	block = np.frombuffer(data, dtype=np.uint8, count=n * stride, offset=start).reshape(n, stride)
+	width = 4 if fmt == 0 else 2
+	corners = block[:, offset:offset + 3 * width].copy().view(np.float32 if fmt == 0 else np.float16).reshape(n, 3).astype(np.float32)
+	indexes = np.frombuffer(mesh.index_bytes, dtype=np.uint16 if mesh.index_size == 2 else np.uint32)
+	parts = [
+		indexes[first // mesh.index_size:first // mesh.index_size + count].astype(np.int64) + base
+		for first, count, topology, base in mesh.submeshes if topology == 0 and count >= 3
+	]
+	triangles = np.concatenate(parts).reshape(-1, 3) if parts else np.zeros((0, 3), dtype=np.int64)
+	if len(triangles) and (triangles.max() >= n or triangles.min() < 0):
+		raise FormatError(f"mesh {mesh.name!r}: a triangle points past its corners")
+	return corners, triangles.astype(np.int32)
+
+
+def read_layer_names(globalgamemanagers):
+	"""The 32 layer names (TagManager), '' for the unnamed ones."""
+	managers = globalgamemanagers.of_class(TAG_MANAGER)
+	if not managers:
+		raise FormatError("no TagManager in globalgamemanagers")
+	r = globalgamemanagers.reader(managers[0])
+	for _ in range(r.i32()):
+		r.string()  # tags
+	return [r.string() for _ in range(r.i32())]
 
 
 def read_behaviour(sf, path_id):

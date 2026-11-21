@@ -15,7 +15,8 @@ its id (paste it into the trader box).
 ## Tabs
 
 Quests (outline tree and forms, text boxes, problems list), Locale (the whole locale file), Trader (assort and quest assort),
-Composite items (your saved items, plus the base game's), Find IDs, Schema Explorer. Each file (quests, locale, assort,
+Composite items (your saved items, plus the base game's), Quest Graph, Zones (quest zones on a 3D view of the imported maps),
+Find IDs, Schema Explorer. Each file (quests, locale, assort,
 quest assort) is opened and saved on its own from the File menu; any of them can be started from nothing.
 
 ## Opening, importing and saving
@@ -76,6 +77,7 @@ trader's quest assort in `tests/fixtures`), so they run anywhere.
 - `schema/`: what a quest, task, reward, text, assort and composite item are. The forms, the checks and the
   Schema Explorer are all made from this. No Qt.
 - `ui/`: the window, the outline editor, the generated forms, dialogs.
+  - `ui/view3d/`: the Zones tab's 3D view of a map (OpenGL), its camera and the handles of the zone being edited.
   - `ui/designer/`: Qt Designer files (`.ui`) for the fixed layouts: the main window (menus and tab bar), the Settings,
     About and Check for updates windows, the Quests, Locale, Trader and Composite items tabs, Find IDs and its picker
     window, and the Schema Explorer (both pages).
@@ -84,8 +86,9 @@ trader's quest assort in `tests/fixtures`), so they run anywhere.
   short JSON specs, import the game's maps, find places and buildings on them, make quest zones and package it all for
   WTT-CommonLib. Using it: `cli/README.md`; how it works: `cli/DEVELOPING.md`. `cli/server_check/` is a .NET program
   that loads a quests file with the SPT server's own code.
-- `maps/`: the game's maps and quest zones (no Qt): the map import from the game's files, quest zones and their
-  checks (also used by the app's Problems list), places found by name (`maps/places.json`) and buildings.
+- `maps/`: the game's maps and quest zones (no Qt): the map import from the game's files (zones, the navmesh, the
+  walls players bump into), quest zones and their checks (also used by the app's Problems list), places found by
+  name (`maps/places.json`) and buildings.
 - `tools/`: scripts that rebuild `schema/server_models.json` (from the server's C# source or a decompile of its DLL) and `schema/vanilla_profile.json`
   (from the base game's quests), and compile the Designer files.
 

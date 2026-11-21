@@ -598,16 +598,32 @@ def _zone_uses(quest):
 
 
 def cmd_maps_list(args):
+	"""What is imported, from which game version; "game_now" when the game (the project's, else the one the map came
+	from) has another version now."""
 	folder = _maps_dir(args)
-	rows = []
 	from core.gamedata import location_ids
 
 	ids = location_ids()
+	maps = {location: M.MapData.load(location, folder) for location in M.imported(folder)}
+	try:
+		game = _workspace(args).path("game")
+	except CommandError:
+		game = None
+	newer = {}  # {location: what the game is now, for the maps not from it}
+	for game_dir in {game} if game else {m.record.get("source") for m in maps.values()} - {None}:
+		now, older = M.older_maps({k: m.record for k, m in maps.items() if game or m.record.get("source") == game_dir}, game_dir)
+		newer.update({k: f"{now} (in {game_dir}): import the maps again" for k in older})
+	rows = []
 	for location in M.LOCATIONS:
 		row = {"map": location, "id": ids.get(location, ""), "imported": False}
-		if location in M.imported(folder):
-			m = M.MapData.load(location, folder)
-			row.update(imported=True, zones=len(m.zones), areas=len(m.areas), when=m.record.get("imported"), source=m.record.get("source"))
+		if location in maps:
+			m = maps[location]
+			row.update(
+				imported=True, zones=len(m.zones), areas=len(m.areas), when=m.record.get("imported"), source=m.record.get("source"),
+				game_version=m.record.get("game_version"),
+			)
+			if location in newer:
+				row["game_now"] = newer[location]
 		rows.append(row)
 	out(rows)
 
@@ -659,10 +675,10 @@ def cmd_zones_at(args):
 	result = {"map": key, "x": x, "z": z}
 	if key in index.game_maps:
 		m = index.map(key)
-		floors = m.navmesh.floors_at(x, z)
+		floors = m.floors.floors_at(x, z)
 		result["floors"] = floors
 		if not floors:
-			result["floors_nearby"] = sorted(set(round(h, 2) for h in Z.floors_around(m.navmesh, x, z)))
+			result["floors_nearby"] = sorted(set(round(h, 2) for h in Z.floors_around(m.floors, x, z)))
 		result["areas"] = [a["name"] for a in m.areas if a["min"][0] <= x <= a["max"][0] and a["min"][2] <= z <= a["max"][2]]
 	else:
 		result["note"] = f"{key} hasn't been imported: run `maps import` for floors and the game's zones."
@@ -845,6 +861,32 @@ def _covers(index, zone):
 		covers["storeys_named"] = sorted({r["floor"] for r in rooms if r["floor"] is not None})
 		covers["rooms"] = [r["name"] for r in rooms][:60]
 	return covers
+
+
+def cmd_zones_edit(args):
+	"""Open the Zones window: the project's zone file (or --file) on a 3D view of the maps."""
+	ws = _workspace(args)
+	from ui.view3d import choose_opengl
+
+	choose_opengl(bool(getattr(ws.settings, "software_3d", False)))
+	from PySide6.QtWidgets import QApplication
+
+	from core.documents import Document
+	from ui.zones_tab import ZonesTab, ZonesWindow
+
+	app = QApplication.instance() or QApplication([])
+	path = Path(args.file) if args.file else ws.path("zones")
+	others = [p for p in ws.zone_file_paths() if path is None or p != path.resolve()]
+	tab = ZonesTab(ws.settings, ws.references, dict(choices.get("map_keys", ws.gamedata)), ws.maps_dir, others, ws.path("game"))
+	if path is not None and path.is_file():
+		tab.open_file(path)
+	elif path is not None:
+		tab.set_document(Document([], path))  # (made when first saved)
+	tab.start_map = _map_of(args, ws) if args.map else None
+	window = ZonesWindow(tab)
+	window.show()
+	app.exec()
+	out({"file": str(tab.doc.path) if tab.doc.path else None, "zones": len(tab.doc.data), "unsaved": tab.doc.dirty})
 
 
 def cmd_zones_render(args):
@@ -1043,6 +1085,10 @@ def parser():
 	c.add_argument("--all", action="store_true", help="list zones without problems too")
 	c.add_argument("--rooms", action="store_true", help="also list the rooms (named objects) and floors inside each zone")
 	c.set_defaults(run=cmd_zones_check)
+	c = z.add_parser("edit", help="open a window with the maps in 3D to place and change zones with the mouse")
+	c.add_argument("--file", help="the zone file to edit (default: \"zones\" in the project file; made when first saved)")
+	c.add_argument("--map", help="the map to show first")
+	c.set_defaults(run=cmd_zones_edit)
 	c = z.add_parser("render", help="draw part of a map to a PNG")
 	c.add_argument("--map", required=True)
 	c.add_argument("--out", required=True)

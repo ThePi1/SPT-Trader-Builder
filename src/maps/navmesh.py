@@ -56,9 +56,15 @@ class NavMesh:
 		return best
 
 	def _height(self, index, x, z, plane):
+		"""The polygon's height at (x, z), from the triangle of its fan that holds the point (a polygon isn't flat: a
+		plane through three of its corners can be metres off at the others)."""
+		points = [self.vertices[v] for v in self.polygons[index][0]]
+		for i in range(1, len(points) - 1):
+			h = _height_in_triangle(points[0], points[i], points[i + 1], x, z)
+			if h is not None:
+				return h
 		if plane is None:  # (an upright polygon: take its average height)
-			verts = self.polygons[index][0]
-			return sum(self.vertices[v][1] for v in verts) / len(verts)
+			return sum(p[1] for p in points) / len(points)
 		a, b, c, d = plane
 		return -(a * x + c * z + d) / b
 
@@ -93,6 +99,20 @@ class NavMesh:
 					hits += 1
 					heights.extend(inside)
 		return hits, total, heights
+
+
+def _height_in_triangle(a, b, c, x, z, slack=1e-6):
+	"""The height at (x, z) of the triangle abc if (x, z) is inside it seen from above, else None."""
+	v0x, v0z, v1x, v1z = c[0] - a[0], c[2] - a[2], b[0] - a[0], b[2] - a[2]
+	v2x, v2z = x - a[0], z - a[2]
+	det = v0x * v1z - v1x * v0z
+	if abs(det) < 1e-12:
+		return None
+	u = (v2x * v1z - v1x * v2z) / det
+	v = (v0x * v2z - v2x * v0z) / det
+	if u < -slack or v < -slack or u + v > 1 + slack:
+		return None
+	return a[1] + u * (c[1] - a[1]) + v * (b[1] - a[1])
 
 
 def _plane(points):

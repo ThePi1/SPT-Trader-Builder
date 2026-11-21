@@ -2,3 +2,4 @@ requests
 pyinstaller
 pyside6
 pytest
+numpy

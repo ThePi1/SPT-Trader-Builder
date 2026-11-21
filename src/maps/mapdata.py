@@ -1,16 +1,20 @@
 """The maps' quest zones and floors, imported from the game's own files.
 
-``import_maps`` reads the game client's scenes (see maps.unity) and writes three files per map into the maps folder:
+``import_maps`` reads the game client's scenes (see maps.unity) and writes four files per map into the maps folder:
 ``<location>.json`` with the quest zones the game has (their id, kind and box) and the map's areas (where its places,
 such as the dorms, are), ``<location>.navmesh.json.gz`` with the walkable floor (the navigation mesh), and
-``<location>.objects.json.gz`` with every named object and where it is (for finding places by name). That data comes
-from the game, so it stays on the user's computer (the folder is not part of the repository).
+``<location>.objects.json.gz`` with every named object and where it is (for finding places by name) and
+``<location>.walls.npz`` with the walls and floors players bump into (maps.walls, for the 3D view). That data comes
+from the game, so it stays on the user's computer (the folder is not part of the repository). Each file is swapped in
+when written, so the maps can be read while they are imported again. The game's version is kept in the json
+(``game_version``), and ``older_maps`` tells which maps aren't from the game as it is now.
 ``MapData.load`` reads a map back. No Qt.
 """
 
 import gzip
 import json
 import re
+import struct
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +32,53 @@ MAPS_DIR = DATA_DIR / "maps"  # (read when used, so tests can point it elsewhere
 def maps_dir(folder=None):
 	"""The folder of imported maps: folder if given, else MAPS_DIR."""
 	return Path(folder) if folder else MAPS_DIR
+
+
+GAME_EXE = "EscapeFromTarkov.exe"
+_VERSION_BLOCK = "VS_VERSION_INFO".encode("utf-16-le")  # the name of a Windows program's version block
+_VERSION_INFO = b"\xbd\x04\xef\xfe\x00\x00\x01\x00"  # the block's VS_FIXEDFILEINFO: its signature and layout
+_GAME_NAME = "Tarkov".encode("utf-16-le")
+
+
+def game_version(game_dir):
+	"""The game's version as its EscapeFromTarkov.exe gives it (the file version, e.g. "0.16.9.40743": the last part is
+	the build), or None if it can't be read. Read from the program's bytes, so it works without Windows too. The program
+	has two version blocks, the game's and Unity's (2022.3...): the game's is the one naming Tarkov (else the first)."""
+	try:
+		data = (Path(game_dir) / GAME_EXE).read_bytes()
+	except OSError:
+		return None
+	found = []  # [(names Tarkov, version)]
+	at = data.find(_VERSION_BLOCK)
+	while at >= 6:
+		start = at - 6  # (the block's length, its value's length and its type come before its name)
+		block = data[start:start + struct.unpack_from("<H", data, start)[0]]
+		info = block.find(_VERSION_INFO)
+		if 0 <= info and info + 16 <= len(block):
+			high, low = struct.unpack_from("<II", block, info + 8)
+			found.append((_GAME_NAME in block, f"{high >> 16}.{high & 0xFFFF}.{low >> 16}.{low & 0xFFFF}"))
+		at = data.find(_VERSION_BLOCK, at + 1)
+	return next((v for named, v in found if named), found[0][1] if found else None)
+
+
+def game_holding(folder):
+	"""The game folder that folder is in or is (e.g. the game of an SPT install's SPT_Data/database), or None."""
+	if not folder:
+		return None
+	for path in (Path(folder), *Path(folder).parents):
+		if (path / GAME_EXE).is_file():
+			return path
+	return None
+
+
+def older_maps(records, game_dir):
+	"""The imported maps that aren't from the game in game_dir as it is now: (its version, {location: the version the
+	map is from}). records: {location: the map's record}. A map imported before the version was kept can't be told, so
+	it is left out; so is every map when game_dir's version can't be read (None, {})."""
+	now = game_version(game_dir) if game_dir else None
+	if now is None:
+		return None, {}
+	return now, {loc: r["game_version"] for loc, r in records.items() if r.get("game_version") not in (None, now)}
 
 # Zone kinds, as the quest zone files of WTT-CommonLib name them
 VISIT, PLACEITEM, TRIGGER, FLAREZONE, SALVAGE = "visit", "placeitem", "trigger", "flarezone", "salvage"
@@ -292,13 +343,21 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 	data_dir = Path(game_dir) / "EscapeFromTarkov_Data"
 	if not (data_dir / "globalgamemanagers").is_file():
 		raise FileNotFoundError(f"No EscapeFromTarkov_Data\\globalgamemanagers in {game_dir}: is this the game's folder?")
+	from maps import walls as W  # (numpy)
+
+	version = game_version(game_dir)
 	with U.SerializedFile(data_dir / "globalgamemanagers") as ggm:
 		scenes = U.read_scene_list(ggm)
 		unity_version = ggm.unity_version
+		try:
+			layers = W.wall_layers(ggm)
+		except U.FormatError:
+			layers = set()
 	wanted = [loc for loc in (locations or LOCATIONS) if loc in LOCATIONS]
 	out_dir = maps_dir(out_dir)
 	out_dir.mkdir(parents=True, exist_ok=True)
 	scripts = _Scripts(data_dir)
+	meshes = W.Meshes(data_dir)
 	scene_cache, nav_cache, summary = {}, {}, {}
 	last_use = {}  # {scene index: the last map that uses it}, to let go of a scene's objects once no map needs them
 	for location in wanted:
@@ -309,16 +368,17 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 		for location in wanted:
 			spec = LOCATIONS[location]
 			mine = [(i, s) for i, s in enumerate(scenes) if spec.has(s)]
-			zones, areas, tiles, objects = [], [], [], {}
+			zones, areas, tiles, objects, placed = [], [], [], {}, []
 			for index, scene in mine:
 				if index not in scene_cache:
 					say(f"{location}: {scene.rsplit('/', 1)[-1]}")
 					scene_cache[index] = _read_scene(
 						data_dir / f"level{index}",
-						lambda sf: (scene_zones(sf, scripts, scene), scene_area(sf, scene), scene_objects(sf)),
-						([], None, []),
+						lambda sf: (scene_zones(sf, scripts, scene), scene_area(sf, scene), scene_objects(sf), W.scene_walls(sf, meshes, layers)),
+						([], None, [], []),
 					)
-				found_zones, area, found_objects = scene_cache[index]
+				found_zones, area, found_objects, found_walls = scene_cache[index]
+				placed += found_walls
 				zones += found_zones
 				if area:
 					areas.append(area)
@@ -337,6 +397,7 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 				"format": FORMAT,
 				"location": location,
 				"unity": unity_version,
+				"game_version": version,
 				"source": str(Path(game_dir)),
 				"imported": time.strftime("%Y-%m-%d %H:%M:%S"),
 				"scenes": [s for _i, s in mine],
@@ -345,16 +406,21 @@ def import_maps(game_dir, out_dir=None, locations=None, progress=None):
 			}
 			path = out_dir / f"{location}.json"
 			jsonio.write_json(path, record, indent=None)
-			with gzip.open(out_dir / f"{location}{NAVMESH_SUFFIX}", "wt", encoding="utf-8") as f:
+			with jsonio.replacing(out_dir / f"{location}{NAVMESH_SUFFIX}") as raw, gzip.open(raw, "wt", encoding="utf-8") as f:
 				json.dump({
 					"format": FORMAT,
 					"vertices": [round(c, 3) for v in navmesh.vertices for c in v],
 					"polygons": [list(verts) for verts, _area in navmesh.polygons],
 				}, f, separators=(",", ":"))
 			_write_objects(out_dir / f"{location}{OBJECTS_SUFFIX}", objects)
-			summary[location] = {"zones": len(zones), "areas": len(areas), "polygons": len(navmesh), "objects": len(objects), "file": str(path)}
+			wall_triangles = W.write(out_dir / f"{location}{W.WALLS_SUFFIX}", placed, meshes)
+			summary[location] = {
+				"zones": len(zones), "areas": len(areas), "polygons": len(navmesh), "objects": len(objects), "wall_triangles": wall_triangles,
+				"file": str(path),
+			}
 	finally:
 		scripts.close()
+		meshes.close()
 	return summary
 
 
@@ -368,7 +434,7 @@ def _write_objects(path, objects):
 	names, scenes, flat = {}, {}, []
 	for (name, *_rounded), (stem, position) in objects.items():
 		flat += [names.setdefault(name, len(names)), scenes.setdefault(stem, len(scenes)), *(round(c * 100) for c in position)]
-	with gzip.open(path, "wt", encoding="utf-8") as f:
+	with jsonio.replacing(path) as raw, gzip.open(raw, "wt", encoding="utf-8") as f:
 		json.dump({"format": FORMAT, "scenes": list(scenes), "names": list(names), "objects": flat}, f, separators=(",", ":"))
 
 
@@ -440,6 +506,8 @@ class MapData:
 		self.areas = record.get("areas", [])
 		self._navmesh = None
 		self._objects = None
+		self._walls = None
+		self._floors = None
 
 	@classmethod
 	def load(cls, location, folder=None):
@@ -465,6 +533,12 @@ class MapData:
 			self._navmesh = NavMesh(vertices, [(tuple(p), 0) for p in nav.get("polygons", [])])
 		return self._navmesh
 
+	def forget_walls(self):
+		"""Let go of the walls (and the floors made with them, and what was worked out from them): they take hundreds of
+		megabytes once placed, and are read from their file again when next needed."""
+		self._walls = None
+		self._floors = None
+
 	@property
 	def objects(self):
 		"""The map's named objects (ObjectIndex), or None when it was imported before objects were indexed."""
@@ -475,6 +549,103 @@ class MapData:
 			with gzip.open(path, "rt", encoding="utf-8") as f:
 				self._objects = ObjectIndex(json.load(f))
 		return self._objects
+
+
+	@property
+	def walls(self):
+		"""The walls, floors and stairs players bump into (maps.triangles.Triangles), or None when the map was imported
+		without them."""
+		return self.read_walls()
+
+	def read_walls(self, progress=None):
+		"""walls, read now if they haven't been; progress(fraction) is told how far along the reading is."""
+		if self._walls is None:
+			from maps import walls as W
+			from maps.triangles import Triangles
+
+			corners = W.load(self, progress)
+			self._walls = Triangles(corners) if corners is not None else False
+		return self._walls or None
+
+	@property
+	def floors(self):
+		"""Where a player can stand (Floors): the floor map and, when they were imported, the tops of the walls."""
+		if self._floors is None:
+			self._floors = Floors(self.navmesh, self.walls)
+		return self._floors
+
+	def prepare(self, progress=None):
+		"""Read the floor map and the walls and work out the floors' lookup now (each is otherwise done when first
+		needed): seconds for a big map, so the Zones tab does it while it says it is loading the map. progress(text,
+		fraction) is told what is being done and how far along the whole is; it isn't called when nothing is left to do."""
+		steps = []  # [(what is done, its share of the time (as measured on Lighthouse and Interchange), doing it)]
+		if self._navmesh is None:
+			steps.append(("Reading the floor map", 0.2, lambda part: self.navmesh))
+		if self._walls is None:
+			steps.append(("Reading the walls", 0.3, self.read_walls))
+		if self._walls is None or (self._walls and not self._walls.is_prepared()):
+			steps.append(("Working out where players can stand", 0.5, lambda part: self.walls and self.walls.prepare(progress=part)))
+		say = progress or (lambda text, fraction: None)
+		total, done = sum(share for _t, share, _do in steps), 0.0
+		for text, share, do in steps:
+			start, size = done / total, share / total
+			say(text, start)
+			do(lambda fraction, text=text, start=start, size=size: say(text, start + size * fraction))
+			done += share
+
+
+class Floors:
+	"""The floor map (the navmesh) and the level tops of the walls together: floors_at gives both, a wall's top within
+	SAME metres of a floor of the floor map counting as that floor. The walls know the floors bots never walk (upstairs
+	rooms, roofs, catwalks) and the steps of stairs. Wall tops more than DEEP metres below the floor map's lowest point
+	are left out: some maps have a plane far under everything (Customs and Reserve at -99.5 m) to catch what falls."""
+
+	SAME = 0.4
+	DEEP = 15.0
+
+	def __init__(self, navmesh, walls=None):
+		self.navmesh, self.walls = navmesh, walls
+		self._lowest = navmesh.bounds()[0][1] - self.DEEP if len(navmesh) else -1e9
+
+	def floors_at(self, x, z):
+		return self.floors_at_points([(x, z)])[0]
+
+	def floors_at_points(self, points):
+		"""floors_at for many (x, z) points at once (the walls' tops are looked up together: see Triangles)."""
+		points = [(float(x), float(z)) for x, z in points]
+		mapped = [list(self.navmesh.floors_at(x, z)) for x, z in points]
+		if self.walls is None:
+			return [sorted(heights) for heights in mapped]
+		tops = self.walls.floors_at_points(points)
+		return [
+			sorted(here + [h for h in top if h >= self._lowest and all(abs(h - g) > self.SAME for g in here)])
+			for here, top in zip(mapped, tops)
+		]
+
+	def storeys_at(self, x, z, radius=4.0, step=1.0, share=0.25, apart=1.8, near=0.3):
+		"""The storeys at (x, z), lowest first: heights with a floor (within `near` metres) under at least `share` of the
+		spots within `radius` metres around it, `step` metres apart. Stairs, tables and crates are under too few spots to
+		count, and of two storeys less than `apart` metres apart only the one under more spots is kept."""
+		n = max(0, round(radius / step))
+		points = [(x + i * step, z + k * step) for i in range(-n, n + 1) for k in range(-n, n + 1)]
+		found = [(h, spot) for spot, here in enumerate(self.floors_at_points(points)) for h in here]
+		scored = []
+		for c in sorted({round(h, 1) for h, _spot in found}):
+			close = [(h, spot) for h, spot in found if abs(h - c) <= near]
+			spots = len({spot for _h, spot in close})
+			if spots >= share * len(points):
+				heights = sorted(h for h, _spot in close)
+				scored.append((spots, heights[len(heights) // 2]))
+		storeys = []
+		for _spots, height in sorted(scored, key=lambda s: -s[0]):
+			if all(abs(height - kept) >= apart for kept in storeys):
+				storeys.append(height)
+		return sorted(storeys)
+
+	def floor_near(self, x, y, z, below=3.0, above=1.0):
+		"""The floor at (x, z) closest to height y, looking down to `below` metres and up to `above` metres; None if there is none."""
+		found = [h for h in self.floors_at(x, z) if y - below <= h <= y + above]
+		return min(found, key=lambda h: abs(h - y)) if found else None
 
 
 def imported(folder=None):

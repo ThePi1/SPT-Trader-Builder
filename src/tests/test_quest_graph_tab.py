@@ -323,7 +323,7 @@ def test_the_quest_graph_tab_is_in_the_window_and_knows_every_source(window, tmp
 	from core.documents import Document
 
 	titles = [window.tabs.tabText(i) for i in range(window.tabs.count())]
-	assert titles[titles.index("Quest Graph") - 1] == "Composite items" and titles[titles.index("Quest Graph") + 1] == "Find IDs"
+	assert titles[titles.index("Quest Graph") - 1] == "Composite items" and titles[titles.index("Quest Graph") + 1] == "Zones"
 	reference = tmp_path / "mod.json"
 	reference.write_text(json.dumps({"r1": quest("Ref quest")}), encoding="utf-8")
 	window.add_references([str(reference)])

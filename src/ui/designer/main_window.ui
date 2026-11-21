@@ -60,6 +60,14 @@
         <string>Quest Graph</string>
        </attribute>
       </widget>
+      <widget class="QWidget" name="page_zones">
+       <attribute name="title">
+        <string>Zones</string>
+       </attribute>
+       <attribute name="toolTip">
+        <string>Quest zones on a 3D view of the game's maps: look at the game's zones, and make and change your own</string>
+       </attribute>
+      </widget>
       <widget class="QWidget" name="page_find_ids">
        <attribute name="title">
         <string>Find IDs</string>
