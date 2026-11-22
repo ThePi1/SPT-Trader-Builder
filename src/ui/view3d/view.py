@@ -2,7 +2,7 @@
 walls when they have been imported, the quest zones as see-through boxes, and the handles of the zone being edited.
 
 Mouse: left-drag turns the view (pans it in the top-down view), right- or middle-drag (or Shift+left) pans, the wheel
-zooms toward the mouse, a click selects a zone (or, while placing, puts the new zone where it lands), a double-click
+zooms toward the mouse, a click selects a zone, on its box or its name (or, while placing, puts the new zone where it lands), a double-click
 looks at that spot. Dragging the selected zone moves it; its handles size, lift and turn it (Shift snaps). F frames
 the selected zone, T switches to the top-down view and back, Delete asks to delete the selected zone.
 
@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QMatrix4x4, QPainter, QPen, QSurfaceFormat, QVector2D, QVector3D, QVector4D
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QMatrix4x4, QPainter, QPen, QSurfaceFormat, QVector2D, QVector3D, QVector4D
 from PySide6.QtOpenGL import QOpenGLBuffer, QOpenGLShader, QOpenGLShaderProgram
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
@@ -95,6 +95,23 @@ class ViewZone:
 	label: str
 	kind: str
 	box: G.Box
+
+
+@dataclass
+class Label:
+	"""A name drawn over the picture: its box on screen (pixels), text and colour, and the key of the zone it names
+	(None for an area or a building)."""
+
+	rect: QRectF
+	text: str
+	colour: QColor
+	key: object = None
+
+
+def _label_rect(metrics, spot, text):
+	"""The box of a label whose bottom middle is just above the pixel spot."""
+	width = metrics.horizontalAdvance(text) + 8
+	return QRectF(spot[0] - width / 2, spot[1] - metrics.height() - 4, width, metrics.height() + 2)
 
 
 GAME, REFERENCE, MINE = "game", "reference", "mine"
@@ -453,31 +470,14 @@ class MapView(QOpenGLWidget):
 		painter = QPainter(self)
 		painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 		w, h = self.width(), self.height()
-		self._taken = []  # (the label boxes drawn so far: a label that would cover one is left out)
-		font = QFont(self.font())
-		font.setPointSizeF(max(font.pointSizeF(), 8.5))
-		painter.setFont(font)
+		painter.setFont(self._label_font())
 		if self.gl_problem or self.message:
 			painter.setPen(QColor(220, 220, 220))
 			painter.drawText(QRectF(20, 20, w - 40, h - 40), Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, self.gl_problem or self.message)
 			painter.end()
 			return
-		if self.show_areas:
-			for name, box in self.areas:
-				self._box_label(painter, box, name, AREA_COLOUR)
-		for name, box in self.outlines:
-			self._box_label(painter, box, name, QColor(255, 255, 255))
-		if self.show_zones and self.show_labels:
-			target = np.asarray(self.camera.target)
-			shown = [
-				(float(np.linalg.norm(np.subtract(z.box.center, target))), z) for z, _s in self.zones
-				if z.key != self.selected_key and z.box.center[1] - z.box.size[1] / 2 <= self.cut
-			]
-			for _d, zone in sorted(shown, key=lambda pair: pair[0])[:MOST_LABELS]:
-				top = (zone.box.center[0], zone.box.center[1] + zone.box.size[1] / 2, zone.box.center[2])
-				spot = self.camera.project(top, w, h)
-				if spot and 0 <= spot[0] <= w and 0 <= spot[1] <= h:
-					self._label(painter, spot, zone.label, QColor(*KIND_COLOURS.get(zone.kind, (255, 255, 255))))
+		for label in self.labels():
+			self._draw_label(painter, label.rect, label.text, label.colour)
 		if self.samples:
 			pixels, front = self.camera.project_many([point for point, _ok in self.samples], w, h)
 			shown = front & (pixels[:, 0] >= 0) & (pixels[:, 0] <= w) & (pixels[:, 1] >= 0) & (pixels[:, 1] <= h)
@@ -493,26 +493,51 @@ class MapView(QOpenGLWidget):
 				painter.setPen(QPen(QColor(255, 255, 255), 1.5))
 				painter.setBrush(QColor(255, 220, 60))
 				painter.drawEllipse(QPointF(*spot), 4, 4)
-				self._label(painter, (spot[0], spot[1] - 6), label, QColor(255, 220, 60), always=True)
+				self._draw_label(painter, _label_rect(painter.fontMetrics(), (spot[0], spot[1] - 6), label), label, QColor(255, 220, 60))  # (always shown)
 		if self.selected_box is not None and self.selected_editable:
 			self._draw_handles(painter)
 		self._compass(painter, w)
 		self._status(painter, w, h)
 		painter.end()
 
-	def _box_label(self, painter, box, text, colour):
-		spot = self.camera.project((box.center[0], box.center[1] + box.size[1] / 2, box.center[2]), self.width(), self.height())
-		if spot and 0 <= spot[0] <= self.width() and 0 <= spot[1] <= self.height():
-			self._label(painter, spot, text, colour)
+	def _label_font(self):
+		font = QFont(self.font())
+		font.setPointSizeF(max(font.pointSizeF(), 8.5))
+		return font
 
-	def _label(self, painter, spot, text, colour, always=False):
-		metrics = painter.fontMetrics()
-		width = metrics.horizontalAdvance(text) + 8
-		rect = QRectF(spot[0] - width / 2, spot[1] - metrics.height() - 4, width, metrics.height() + 2)
-		taken = getattr(self, "_taken", [])
-		if not always and any(rect.intersects(other) for other in taken):
-			return
-		taken.append(rect)
+	def labels(self):
+		"""The names drawn over the picture, as they are laid out now: [Label] of the areas (when shown), the buildings
+		outlined, then the zones nearest what the view looks at (up to MOST_LABELS; not the selected one, whose handles
+		are drawn). A label that would cover one before it is left out. Drawing and clicking both use this, so a click
+		on a zone's name selects that zone (see zone_at)."""
+		w, h = self.width(), self.height()
+		metrics = QFontMetrics(self._label_font(), self)
+		found = []
+
+		def add(box, text, colour, key=None):
+			spot = self.camera.project((box.center[0], box.center[1] + box.size[1] / 2, box.center[2]), w, h)
+			if not spot or not (0 <= spot[0] <= w and 0 <= spot[1] <= h):
+				return
+			rect = _label_rect(metrics, spot, text)
+			if not any(rect.intersects(other.rect) for other in found):
+				found.append(Label(rect, text, colour, key))
+
+		if self.show_areas:
+			for name, box in self.areas:
+				add(box, name, AREA_COLOUR)
+		for name, box in self.outlines:
+			add(box, name, QColor(255, 255, 255))
+		if self.show_zones and self.show_labels:
+			target = np.asarray(self.camera.target)
+			shown = [
+				(float(np.linalg.norm(np.subtract(z.box.center, target))), z) for z, _s in self.zones
+				if z.key != self.selected_key and z.box.center[1] - z.box.size[1] / 2 <= self.cut
+			]
+			for _d, zone in sorted(shown, key=lambda pair: pair[0])[:MOST_LABELS]:
+				add(zone.box, zone.label, QColor(*KIND_COLOURS.get(zone.kind, (255, 255, 255))), zone.key)
+		return found
+
+	def _draw_label(self, painter, rect, text, colour):
 		painter.setPen(Qt.PenStyle.NoPen)
 		painter.setBrush(QColor(0, 0, 0, 150))
 		painter.drawRoundedRect(rect, 3, 3)
@@ -597,8 +622,12 @@ class MapView(QOpenGLWidget):
 		return min(hits, key=lambda hit: hit.distance) if hits else None
 
 	def zone_at(self, x, y):
-		"""The key of the zone under the pixel (the smallest, where several are; one behind a floor or wall doesn't
-		count), or None."""
+		"""The key of the zone under the pixel, or None: the zone whose name is drawn there (the names are drawn over
+		everything, and sit above their boxes), else the zone box there (the smallest, where several are; one behind a
+		floor or wall doesn't count)."""
+		named = self.label_at(x, y)
+		if named is not None:
+			return named
 		origin, direction = self.ray_at(x, y)
 		ground = self.ground_at(x, y)
 		reach = ground.distance + 0.5 if ground is not None else math.inf
@@ -613,6 +642,13 @@ class MapView(QOpenGLWidget):
 			if t is not None and t <= reach:
 				found.append((box.size[0] * box.size[1] * box.size[2], t, key))
 		return min(found, key=lambda f: (f[0], f[1]))[2] if found else None
+
+	def label_at(self, x, y):
+		"""The key of the zone whose name is drawn over the pixel, or None."""
+		if not (self.show_zones and self.show_labels):
+			return None
+		point = QPointF(x, y)
+		return next((label.key for label in self.labels() if label.key is not None and label.rect.contains(point)), None)
 
 	def handle_at(self, x, y):
 		"""The selected zone's handle within a few pixels of (x, y), or None."""

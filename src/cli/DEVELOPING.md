@@ -212,7 +212,9 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - **Clicks and drags** are worked out on the CPU, not read back from the picture: `Triangles.pick` (a box test on every
   triangle, then Möller-Trumbore on the few left, in numpy: about 10 ms for Customs' 107 000 triangles), `ray_box` for
   zones (the smallest zone under the mouse wins), and `handles.Drag` (a face moves along its normal, the opposite one
-  stays; Shift snaps).
+  stays; Shift snaps). A zone's name comes first (`MapView.label_at`): it is drawn over everything and above its box,
+  so from low down a click on it was over the floor or a zone behind, and far away the name is wider than the box.
+  `MapView.labels()` lays the names out for both the drawing and the clicks, so they agree.
 - **Undo**: a form field or a drag changes one entry of the file with `Document.watch` / `touch`; typing in one field
   is one step (`coalesce`). The main window counts the tab's document among its own (undo, the title's `*`, asking to
   save on close) and adds its zones to the quests' zone checks.
