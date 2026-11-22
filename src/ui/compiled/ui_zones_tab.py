@@ -18,9 +18,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
     QFormLayout, QGroupBox, QHBoxLayout, QHeaderView,
     QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QPushButton, QSizePolicy, QSpacerItem, QSplitter,
-    QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-    QWidget)
+    QPushButton, QSizePolicy, QSpacerItem, QSpinBox,
+    QSplitter, QTabWidget, QToolButton, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout, QWidget)
 
 class Ui_ZonesForm(object):
     def setupUi(self, ZonesForm):
@@ -104,6 +104,12 @@ class Ui_ZonesForm(object):
 
         self.layersRow.addWidget(self.referenceZonesBox)
 
+        self.spawnsBox = QCheckBox(ZonesForm)
+        self.spawnsBox.setObjectName(u"spawnsBox")
+        self.spawnsBox.setChecked(True)
+
+        self.layersRow.addWidget(self.spawnsBox)
+
         self.areasBox = QCheckBox(ZonesForm)
         self.areasBox.setObjectName(u"areasBox")
 
@@ -169,44 +175,56 @@ class Ui_ZonesForm(object):
         self.rightLayout = QVBoxLayout(self.rightPanel)
         self.rightLayout.setObjectName(u"rightLayout")
         self.rightLayout.setContentsMargins(0, 0, 0, 0)
-        self.fileLabel = QLabel(self.rightPanel)
+        self.editTabs = QTabWidget(self.rightPanel)
+        self.editTabs.setObjectName(u"editTabs")
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.editTabs.sizePolicy().hasHeightForWidth())
+        self.editTabs.setSizePolicy(sizePolicy)
+        self.zonesPage = QWidget()
+        self.zonesPage.setObjectName(u"zonesPage")
+        self.zonesPageLayout = QVBoxLayout(self.zonesPage)
+        self.zonesPageLayout.setObjectName(u"zonesPageLayout")
+        self.zonesPageLayout.setContentsMargins(4, 4, 4, 4)
+        self.fileLabel = QLabel(self.zonesPage)
         self.fileLabel.setObjectName(u"fileLabel")
         self.fileLabel.setWordWrap(True)
 
-        self.rightLayout.addWidget(self.fileLabel)
+        self.zonesPageLayout.addWidget(self.fileLabel)
 
         self.fileRow = QHBoxLayout()
         self.fileRow.setObjectName(u"fileRow")
-        self.newFileButton = QPushButton(self.rightPanel)
+        self.newFileButton = QPushButton(self.zonesPage)
         self.newFileButton.setObjectName(u"newFileButton")
 
         self.fileRow.addWidget(self.newFileButton)
 
-        self.openFileButton = QPushButton(self.rightPanel)
+        self.openFileButton = QPushButton(self.zonesPage)
         self.openFileButton.setObjectName(u"openFileButton")
 
         self.fileRow.addWidget(self.openFileButton)
 
-        self.saveFileButton = QPushButton(self.rightPanel)
+        self.saveFileButton = QPushButton(self.zonesPage)
         self.saveFileButton.setObjectName(u"saveFileButton")
 
         self.fileRow.addWidget(self.saveFileButton)
 
-        self.saveAsFileButton = QPushButton(self.rightPanel)
+        self.saveAsFileButton = QPushButton(self.zonesPage)
         self.saveAsFileButton.setObjectName(u"saveAsFileButton")
 
         self.fileRow.addWidget(self.saveAsFileButton)
 
 
-        self.rightLayout.addLayout(self.fileRow)
+        self.zonesPageLayout.addLayout(self.fileRow)
 
-        self.placeButton = QPushButton(self.rightPanel)
+        self.placeButton = QPushButton(self.zonesPage)
         self.placeButton.setObjectName(u"placeButton")
         self.placeButton.setCheckable(True)
 
-        self.rightLayout.addWidget(self.placeButton)
+        self.zonesPageLayout.addWidget(self.placeButton)
 
-        self.zoneGroup = QGroupBox(self.rightPanel)
+        self.zoneGroup = QGroupBox(self.zonesPage)
         self.zoneGroup.setObjectName(u"zoneGroup")
         self.zoneForm = QFormLayout(self.zoneGroup)
         self.zoneForm.setObjectName(u"zoneForm")
@@ -364,7 +382,233 @@ class Ui_ZonesForm(object):
         self.zoneForm.setLayout(7, QFormLayout.SpanningRole, self.zoneButtonsRow2)
 
 
-        self.rightLayout.addWidget(self.zoneGroup)
+        self.zonesPageLayout.addWidget(self.zoneGroup)
+
+        self.zonesPageSpacer = QSpacerItem(10, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.zonesPageLayout.addItem(self.zonesPageSpacer)
+
+        self.editTabs.addTab(self.zonesPage, "")
+        self.spawnsPage = QWidget()
+        self.spawnsPage.setObjectName(u"spawnsPage")
+        self.spawnsPageLayout = QVBoxLayout(self.spawnsPage)
+        self.spawnsPageLayout.setObjectName(u"spawnsPageLayout")
+        self.spawnsPageLayout.setContentsMargins(4, 4, 4, 4)
+        self.spawnFileLabel = QLabel(self.spawnsPage)
+        self.spawnFileLabel.setObjectName(u"spawnFileLabel")
+        self.spawnFileLabel.setWordWrap(True)
+
+        self.spawnsPageLayout.addWidget(self.spawnFileLabel)
+
+        self.spawnFileRow = QHBoxLayout()
+        self.spawnFileRow.setObjectName(u"spawnFileRow")
+        self.newSpawnFileButton = QPushButton(self.spawnsPage)
+        self.newSpawnFileButton.setObjectName(u"newSpawnFileButton")
+
+        self.spawnFileRow.addWidget(self.newSpawnFileButton)
+
+        self.openSpawnFileButton = QPushButton(self.spawnsPage)
+        self.openSpawnFileButton.setObjectName(u"openSpawnFileButton")
+
+        self.spawnFileRow.addWidget(self.openSpawnFileButton)
+
+        self.saveSpawnFileButton = QPushButton(self.spawnsPage)
+        self.saveSpawnFileButton.setObjectName(u"saveSpawnFileButton")
+
+        self.spawnFileRow.addWidget(self.saveSpawnFileButton)
+
+        self.saveAsSpawnFileButton = QPushButton(self.spawnsPage)
+        self.saveAsSpawnFileButton.setObjectName(u"saveAsSpawnFileButton")
+
+        self.spawnFileRow.addWidget(self.saveAsSpawnFileButton)
+
+
+        self.spawnsPageLayout.addLayout(self.spawnFileRow)
+
+        self.placeSpawnButton = QPushButton(self.spawnsPage)
+        self.placeSpawnButton.setObjectName(u"placeSpawnButton")
+        self.placeSpawnButton.setCheckable(True)
+
+        self.spawnsPageLayout.addWidget(self.placeSpawnButton)
+
+        self.spawnGroup = QGroupBox(self.spawnsPage)
+        self.spawnGroup.setObjectName(u"spawnGroup")
+        self.spawnForm = QFormLayout(self.spawnGroup)
+        self.spawnForm.setObjectName(u"spawnForm")
+        self.spawnItemLabel = QLabel(self.spawnGroup)
+        self.spawnItemLabel.setObjectName(u"spawnItemLabel")
+
+        self.spawnForm.setWidget(0, QFormLayout.LabelRole, self.spawnItemLabel)
+
+        self.spawnItemRow = QHBoxLayout()
+        self.spawnItemRow.setObjectName(u"spawnItemRow")
+        self.spawnItemEdit = QLineEdit(self.spawnGroup)
+        self.spawnItemEdit.setObjectName(u"spawnItemEdit")
+        self.spawnItemEdit.setReadOnly(True)
+
+        self.spawnItemRow.addWidget(self.spawnItemEdit)
+
+        self.chooseItemButton = QPushButton(self.spawnGroup)
+        self.chooseItemButton.setObjectName(u"chooseItemButton")
+
+        self.spawnItemRow.addWidget(self.chooseItemButton)
+
+
+        self.spawnForm.setLayout(0, QFormLayout.FieldRole, self.spawnItemRow)
+
+        self.spawnCountLabel = QLabel(self.spawnGroup)
+        self.spawnCountLabel.setObjectName(u"spawnCountLabel")
+
+        self.spawnForm.setWidget(1, QFormLayout.LabelRole, self.spawnCountLabel)
+
+        self.spawnCountSpin = QSpinBox(self.spawnGroup)
+        self.spawnCountSpin.setObjectName(u"spawnCountSpin")
+        self.spawnCountSpin.setMinimum(1)
+        self.spawnCountSpin.setMaximum(1000000)
+
+        self.spawnForm.setWidget(1, QFormLayout.FieldRole, self.spawnCountSpin)
+
+        self.spawnIdLabel = QLabel(self.spawnGroup)
+        self.spawnIdLabel.setObjectName(u"spawnIdLabel")
+
+        self.spawnForm.setWidget(2, QFormLayout.LabelRole, self.spawnIdLabel)
+
+        self.spawnIdEdit = QLineEdit(self.spawnGroup)
+        self.spawnIdEdit.setObjectName(u"spawnIdEdit")
+
+        self.spawnForm.setWidget(2, QFormLayout.FieldRole, self.spawnIdEdit)
+
+        self.spawnPositionLabel = QLabel(self.spawnGroup)
+        self.spawnPositionLabel.setObjectName(u"spawnPositionLabel")
+
+        self.spawnForm.setWidget(3, QFormLayout.LabelRole, self.spawnPositionLabel)
+
+        self.spawnPositionRow = QHBoxLayout()
+        self.spawnPositionRow.setObjectName(u"spawnPositionRow")
+        self.spawnXSpin = QDoubleSpinBox(self.spawnGroup)
+        self.spawnXSpin.setObjectName(u"spawnXSpin")
+        self.spawnXSpin.setDecimals(3)
+        self.spawnXSpin.setMinimum(-5000.000000000000000)
+        self.spawnXSpin.setMaximum(5000.000000000000000)
+        self.spawnXSpin.setSingleStep(0.050000000000000)
+
+        self.spawnPositionRow.addWidget(self.spawnXSpin)
+
+        self.spawnYSpin = QDoubleSpinBox(self.spawnGroup)
+        self.spawnYSpin.setObjectName(u"spawnYSpin")
+        self.spawnYSpin.setDecimals(3)
+        self.spawnYSpin.setMinimum(-5000.000000000000000)
+        self.spawnYSpin.setMaximum(5000.000000000000000)
+        self.spawnYSpin.setSingleStep(0.050000000000000)
+
+        self.spawnPositionRow.addWidget(self.spawnYSpin)
+
+        self.spawnZSpin = QDoubleSpinBox(self.spawnGroup)
+        self.spawnZSpin.setObjectName(u"spawnZSpin")
+        self.spawnZSpin.setDecimals(3)
+        self.spawnZSpin.setMinimum(-5000.000000000000000)
+        self.spawnZSpin.setMaximum(5000.000000000000000)
+        self.spawnZSpin.setSingleStep(0.050000000000000)
+
+        self.spawnPositionRow.addWidget(self.spawnZSpin)
+
+
+        self.spawnForm.setLayout(3, QFormLayout.FieldRole, self.spawnPositionRow)
+
+        self.spawnYawLabel = QLabel(self.spawnGroup)
+        self.spawnYawLabel.setObjectName(u"spawnYawLabel")
+
+        self.spawnForm.setWidget(4, QFormLayout.LabelRole, self.spawnYawLabel)
+
+        self.spawnYawSpin = QDoubleSpinBox(self.spawnGroup)
+        self.spawnYawSpin.setObjectName(u"spawnYawSpin")
+        self.spawnYawSpin.setDecimals(1)
+        self.spawnYawSpin.setMinimum(0.000000000000000)
+        self.spawnYawSpin.setMaximum(360.000000000000000)
+        self.spawnYawSpin.setSingleStep(5.000000000000000)
+        self.spawnYawSpin.setWrapping(True)
+
+        self.spawnForm.setWidget(4, QFormLayout.FieldRole, self.spawnYawSpin)
+
+        self.spawnChanceLabel = QLabel(self.spawnGroup)
+        self.spawnChanceLabel.setObjectName(u"spawnChanceLabel")
+
+        self.spawnForm.setWidget(5, QFormLayout.LabelRole, self.spawnChanceLabel)
+
+        self.spawnChanceRow = QHBoxLayout()
+        self.spawnChanceRow.setObjectName(u"spawnChanceRow")
+        self.spawnAlwaysBox = QCheckBox(self.spawnGroup)
+        self.spawnAlwaysBox.setObjectName(u"spawnAlwaysBox")
+
+        self.spawnChanceRow.addWidget(self.spawnAlwaysBox)
+
+        self.spawnChanceSpin = QDoubleSpinBox(self.spawnGroup)
+        self.spawnChanceSpin.setObjectName(u"spawnChanceSpin")
+        self.spawnChanceSpin.setDecimals(3)
+        self.spawnChanceSpin.setMinimum(0.000000000000000)
+        self.spawnChanceSpin.setMaximum(1.000000000000000)
+        self.spawnChanceSpin.setSingleStep(0.050000000000000)
+
+        self.spawnChanceRow.addWidget(self.spawnChanceSpin)
+
+
+        self.spawnForm.setLayout(5, QFormLayout.FieldRole, self.spawnChanceRow)
+
+        self.spawnOptionsRow = QHBoxLayout()
+        self.spawnOptionsRow.setObjectName(u"spawnOptionsRow")
+        self.spawnGravityBox = QCheckBox(self.spawnGroup)
+        self.spawnGravityBox.setObjectName(u"spawnGravityBox")
+
+        self.spawnOptionsRow.addWidget(self.spawnGravityBox)
+
+        self.spawnRandomBox = QCheckBox(self.spawnGroup)
+        self.spawnRandomBox.setObjectName(u"spawnRandomBox")
+
+        self.spawnOptionsRow.addWidget(self.spawnRandomBox)
+
+
+        self.spawnForm.setLayout(6, QFormLayout.SpanningRole, self.spawnOptionsRow)
+
+        self.spawnButtonsRow = QHBoxLayout()
+        self.spawnButtonsRow.setObjectName(u"spawnButtonsRow")
+        self.spawnFloorButton = QPushButton(self.spawnGroup)
+        self.spawnFloorButton.setObjectName(u"spawnFloorButton")
+
+        self.spawnButtonsRow.addWidget(self.spawnFloorButton)
+
+        self.spawnLookButton = QPushButton(self.spawnGroup)
+        self.spawnLookButton.setObjectName(u"spawnLookButton")
+
+        self.spawnButtonsRow.addWidget(self.spawnLookButton)
+
+
+        self.spawnForm.setLayout(7, QFormLayout.SpanningRole, self.spawnButtonsRow)
+
+        self.spawnButtonsRow2 = QHBoxLayout()
+        self.spawnButtonsRow2.setObjectName(u"spawnButtonsRow2")
+        self.copySpawnButton = QPushButton(self.spawnGroup)
+        self.copySpawnButton.setObjectName(u"copySpawnButton")
+
+        self.spawnButtonsRow2.addWidget(self.copySpawnButton)
+
+        self.deleteSpawnButton = QPushButton(self.spawnGroup)
+        self.deleteSpawnButton.setObjectName(u"deleteSpawnButton")
+
+        self.spawnButtonsRow2.addWidget(self.deleteSpawnButton)
+
+
+        self.spawnForm.setLayout(8, QFormLayout.SpanningRole, self.spawnButtonsRow2)
+
+
+        self.spawnsPageLayout.addWidget(self.spawnGroup)
+
+        self.spawnsPageSpacer = QSpacerItem(10, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.spawnsPageLayout.addItem(self.spawnsPageSpacer)
+
+        self.editTabs.addTab(self.spawnsPage, "")
+
+        self.rightLayout.addWidget(self.editTabs)
 
         self.checksLabel = QLabel(self.rightPanel)
         self.checksLabel.setObjectName(u"checksLabel")
@@ -407,6 +651,15 @@ class Ui_ZonesForm(object):
         QWidget.setTabOrder(self.widthSpin, self.heightSpin)
         QWidget.setTabOrder(self.heightSpin, self.depthSpin)
         QWidget.setTabOrder(self.depthSpin, self.yawSpin)
+        QWidget.setTabOrder(self.yawSpin, self.chooseItemButton)
+        QWidget.setTabOrder(self.chooseItemButton, self.spawnCountSpin)
+        QWidget.setTabOrder(self.spawnCountSpin, self.spawnIdEdit)
+        QWidget.setTabOrder(self.spawnIdEdit, self.spawnXSpin)
+        QWidget.setTabOrder(self.spawnXSpin, self.spawnYSpin)
+        QWidget.setTabOrder(self.spawnYSpin, self.spawnZSpin)
+        QWidget.setTabOrder(self.spawnZSpin, self.spawnYawSpin)
+        QWidget.setTabOrder(self.spawnYawSpin, self.spawnAlwaysBox)
+        QWidget.setTabOrder(self.spawnAlwaysBox, self.spawnChanceSpin)
 
         self.retranslateUi(ZonesForm)
 
@@ -450,6 +703,10 @@ class Ui_ZonesForm(object):
 #endif // QT_CONFIG(tooltip)
         self.referenceZonesBox.setText(QCoreApplication.translate("ZonesForm", u"Reference zones", None))
 #if QT_CONFIG(tooltip)
+        self.spawnsBox.setToolTip(QCoreApplication.translate("ZonesForm", u"Item spawns: yours, and those in the item spawn files among your reference files", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnsBox.setText(QCoreApplication.translate("ZonesForm", u"Item spawns", None))
+#if QT_CONFIG(tooltip)
         self.areasBox.setToolTip(QCoreApplication.translate("ZonesForm", u"The parts the map is made of (each a scene of the game), outlined", None))
 #endif // QT_CONFIG(tooltip)
         self.areasBox.setText(QCoreApplication.translate("ZonesForm", u"Areas", None))
@@ -464,11 +721,11 @@ class Ui_ZonesForm(object):
 #if QT_CONFIG(tooltip)
         self.storeyBox.setToolTip(QCoreApplication.translate("ZonesForm", u"Show one storey of the building found (and hide the ones above it)", None))
 #endif // QT_CONFIG(tooltip)
-        self.zoneFilter.setPlaceholderText(QCoreApplication.translate("ZonesForm", u"Filter the zones", None))
+        self.zoneFilter.setPlaceholderText(QCoreApplication.translate("ZonesForm", u"Filter the zones and spawns", None))
         ___qtreewidgetitem = self.zoneList.headerItem()
         ___qtreewidgetitem.setText(2, QCoreApplication.translate("ZonesForm", u"From", None));
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("ZonesForm", u"Kind", None));
-        ___qtreewidgetitem.setText(0, QCoreApplication.translate("ZonesForm", u"Zone", None));
+        ___qtreewidgetitem.setText(0, QCoreApplication.translate("ZonesForm", u"Zone or item", None));
 #if QT_CONFIG(tooltip)
         self.fileLabel.setToolTip(QCoreApplication.translate("ZonesForm", u"The quest zone file (WTT-CommonLib's CustomQuestZones) your zones are in", None))
 #endif // QT_CONFIG(tooltip)
@@ -545,6 +802,91 @@ class Ui_ZonesForm(object):
         self.deleteButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Take this zone out of your zone file (Delete)", None))
 #endif // QT_CONFIG(tooltip)
         self.deleteButton.setText(QCoreApplication.translate("ZonesForm", u"Delete", None))
+        self.editTabs.setTabText(self.editTabs.indexOf(self.zonesPage), QCoreApplication.translate("ZonesForm", u"Zones", None))
+#if QT_CONFIG(tooltip)
+        self.spawnFileLabel.setToolTip(QCoreApplication.translate("ZonesForm", u"The item spawn file (WTT-CommonLib's CustomLootspawns) your spawns are in. Its folder says what they are: CustomSpawnpointsForced spawns every raid (as quest items do), CustomSpawnpoints is loose loot", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnFileLabel.setText(QCoreApplication.translate("ZonesForm", u"Spawn file: none", None))
+#if QT_CONFIG(tooltip)
+        self.newSpawnFileButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Start an empty item spawn file", None))
+#endif // QT_CONFIG(tooltip)
+        self.newSpawnFileButton.setText(QCoreApplication.translate("ZonesForm", u"New", None))
+#if QT_CONFIG(tooltip)
+        self.openSpawnFileButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Open an item spawn file to change its spawns", None))
+#endif // QT_CONFIG(tooltip)
+        self.openSpawnFileButton.setText(QCoreApplication.translate("ZonesForm", u"Open...", None))
+        self.saveSpawnFileButton.setText(QCoreApplication.translate("ZonesForm", u"Save", None))
+        self.saveAsSpawnFileButton.setText(QCoreApplication.translate("ZonesForm", u"Save as...", None))
+#if QT_CONFIG(tooltip)
+        self.placeSpawnButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Then click where the item goes (Esc to stop). It is the item last placed; the first time, you choose it", None))
+#endif // QT_CONFIG(tooltip)
+        self.placeSpawnButton.setText(QCoreApplication.translate("ZonesForm", u"Place a new item spawn", None))
+        self.spawnGroup.setTitle(QCoreApplication.translate("ZonesForm", u"Item spawn", None))
+        self.spawnItemLabel.setText(QCoreApplication.translate("ZonesForm", u"Item", None))
+#if QT_CONFIG(tooltip)
+        self.spawnItemEdit.setToolTip(QCoreApplication.translate("ZonesForm", u"The item that spawns", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.chooseItemButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Choose the item: the game's, or a custom item in your reference files", None))
+#endif // QT_CONFIG(tooltip)
+        self.chooseItemButton.setText(QCoreApplication.translate("ZonesForm", u"Choose...", None))
+        self.spawnCountLabel.setText(QCoreApplication.translate("ZonesForm", u"Count", None))
+#if QT_CONFIG(tooltip)
+        self.spawnCountSpin.setToolTip(QCoreApplication.translate("ZonesForm", u"How many in its stack (money and ammo get a random stack from the server instead)", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnIdLabel.setText(QCoreApplication.translate("ZonesForm", u"Id", None))
+#if QT_CONFIG(tooltip)
+        self.spawnIdEdit.setToolTip(QCoreApplication.translate("ZonesForm", u"The spawn's template Id. Spawns that come every raid and share an Id are alternatives: the server spawns one of them each raid", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnPositionLabel.setText(QCoreApplication.translate("ZonesForm", u"Position (x, y, z)", None))
+#if QT_CONFIG(tooltip)
+        self.spawnXSpin.setToolTip(QCoreApplication.translate("ZonesForm", u"East (metres)", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.spawnYSpin.setToolTip(QCoreApplication.translate("ZonesForm", u"Up (metres)", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.spawnZSpin.setToolTip(QCoreApplication.translate("ZonesForm", u"North (metres)", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnYawLabel.setText(QCoreApplication.translate("ZonesForm", u"Turned", None))
+#if QT_CONFIG(tooltip)
+        self.spawnYawSpin.setToolTip(QCoreApplication.translate("ZonesForm", u"Degrees clockwise, seen from above (its y rotation)", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnYawSpin.setSuffix(QCoreApplication.translate("ZonesForm", u"\u00b0", None))
+        self.spawnChanceLabel.setText(QCoreApplication.translate("ZonesForm", u"Spawns", None))
+#if QT_CONFIG(tooltip)
+        self.spawnAlwaysBox.setToolTip(QCoreApplication.translate("ZonesForm", u"IsAlwaysSpawn: it spawns every raid. A forced file's spawns always do", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnAlwaysBox.setText(QCoreApplication.translate("ZonesForm", u"Every raid", None))
+#if QT_CONFIG(tooltip)
+        self.spawnChanceSpin.setToolTip(QCoreApplication.translate("ZonesForm", u"Its probability. Loose loot: its weight against the map's own loose loot points (1: every raid). Spawns every raid that share an Id: how likely this one is the one that spawns", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnChanceSpin.setPrefix(QCoreApplication.translate("ZonesForm", u"chance ", None))
+#if QT_CONFIG(tooltip)
+        self.spawnGravityBox.setToolTip(QCoreApplication.translate("ZonesForm", u"useGravity: it falls onto what is under it when the raid starts. Off: it stays where it is put", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnGravityBox.setText(QCoreApplication.translate("ZonesForm", u"Falls into place", None))
+#if QT_CONFIG(tooltip)
+        self.spawnRandomBox.setToolTip(QCoreApplication.translate("ZonesForm", u"randomRotation: it is turned at random", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnRandomBox.setText(QCoreApplication.translate("ZonesForm", u"Random turn", None))
+#if QT_CONFIG(tooltip)
+        self.spawnFloorButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Put it on the floor, or the top of what is under it (a table, a shelf)", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnFloorButton.setText(QCoreApplication.translate("ZonesForm", u"Put on floor", None))
+#if QT_CONFIG(tooltip)
+        self.spawnLookButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Bring it into view (F)", None))
+#endif // QT_CONFIG(tooltip)
+        self.spawnLookButton.setText(QCoreApplication.translate("ZonesForm", u"Look at it", None))
+#if QT_CONFIG(tooltip)
+        self.copySpawnButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Add a copy of this spawn to your spawn file, to change", None))
+#endif // QT_CONFIG(tooltip)
+        self.copySpawnButton.setText(QCoreApplication.translate("ZonesForm", u"Copy as a new spawn", None))
+#if QT_CONFIG(tooltip)
+        self.deleteSpawnButton.setToolTip(QCoreApplication.translate("ZonesForm", u"Take this spawn out of your spawn file (Delete)", None))
+#endif // QT_CONFIG(tooltip)
+        self.deleteSpawnButton.setText(QCoreApplication.translate("ZonesForm", u"Delete", None))
+        self.editTabs.setTabText(self.editTabs.indexOf(self.spawnsPage), QCoreApplication.translate("ZonesForm", u"Item spawns", None))
         self.checksLabel.setText(QCoreApplication.translate("ZonesForm", u"Checks", None))
         self.hintLabel.setText(QCoreApplication.translate("ZonesForm", u"Drag the zone to move it. Its handles size it (squares), lift it (arrow) and turn it (circle); Shift snaps. Left-drag turns the view, right-drag moves it, the wheel zooms.", None))
         self.statusLabel.setText("")

@@ -353,3 +353,173 @@ def test_the_main_windows_quest_checks_know_the_zones_made_in_the_tab(app, tmp_p
 	assert window.zones_tab.doc in window._docs() and window.windowTitle().endswith("*")
 	window.undo()
 	assert window.zones_tab.doc.data == []
+
+
+# --- item spawns ----------------------------------------------------------------------------------
+
+ITEM = "5449016a4bdc2d6f028b456f"
+
+
+def _texts(widget):
+	return [widget.item(i).text() for i in range(widget.count())]
+
+
+def _listed(tab):
+	return sorted((tab.zoneList.topLevelItem(i).text(0), tab.zoneList.topLevelItem(i).text(1), tab.zoneList.topLevelItem(i).text(2)) for i in range(tab.zoneList.topLevelItemCount()))
+
+
+def _place_spawn(tab, point=(5.0, 0.0, 5.0), item=ITEM):
+	tab.pick_item = lambda: item
+	tab.placeSpawnButton.setChecked(True)
+	assert tab.view.placing and not tab.placeButton.isChecked()
+	tab.view.place_requested.emit(point)
+	assert not tab.view.placing and not tab.placeSpawnButton.isChecked()
+	return tab.selected
+
+
+def test_placing_an_item_spawn_puts_it_just_above_the_spot_clicked(tab):
+	from maps import spawns as S
+	from ui.zones_tab import MY_SPAWN, SPAWN_HANDLES
+
+	key = _place_spawn(tab)
+	assert key == (MY_SPAWN, MAP, 0) and list(tab.spawn_doc.data) == [MAP]
+	(record,) = tab.spawn_doc.data[MAP]
+	assert record["template"]["Position"] == {"x": 5, "y": 0.1, "z": 5} and record["template"]["Items"][0]["_tpl"] == ITEM
+	assert tab.editTabs.currentWidget() is tab.spawnsPage and tab.spawnGroup.isEnabled() and tab.spawnYSpin.value() == pytest.approx(0.1)
+	assert tab.spawnAlwaysBox.isChecked() and not tab.spawnAlwaysBox.isEnabled()  # (a new file's spawns are forced ones: every raid)
+	assert _texts(tab.checksList) == ["No problems found."]
+	assert tab.view.selected_handles == SPAWN_HANDLES and tab.view.selected_editable
+	(pin,) = [z for z, _s in tab.view.zones if z.pin]
+	assert pin.key == key and pin.kind == S.SPAWN and pin.label == ITEM  # (no game data here to name it)
+	assert (ITEM, "item spawn", "your spawn file") in _listed(tab)
+	assert "Spawn file: Untitled* (1 spawn; forced" in tab.spawnFileLabel.text()
+	_place_spawn(tab, (6.0, 4.0, 5.0))  # (the item placed last again, without asking)
+	assert len(tab.spawn_doc.data[MAP]) == 2 and tab.spawn_doc.data[MAP][1]["template"]["Position"]["y"] == pytest.approx(4.1)
+
+
+def test_the_spawn_form_changes_it_and_typing_in_one_field_is_one_undo_step(tab):
+	_place_spawn(tab)
+	for value in (6.0, 7.0, 8.0):
+		tab.spawnXSpin.setValue(value)
+	record = tab.spawn_doc.data[MAP][0]
+	assert record["template"]["Position"]["x"] == 8 and record["locationId"] == "(8, 0.1, 5)"
+	tab.spawnCountSpin.setValue(3)
+	tab.spawnYawSpin.setValue(45.0)
+	tab.spawnGravityBox.setChecked(False)
+	record = tab.spawn_doc.data[MAP][0]
+	assert record["template"]["Items"][0]["upd"]["StackObjectsCount"] == 3 and record["template"]["Rotation"]["y"] == 45
+	assert record["template"]["useGravity"] is False
+	tab.spawnIdEdit.setText("my spawn")
+	tab.spawnIdEdit.textEdited.emit("my spawn")
+	assert tab.spawn_doc.data[MAP][0]["template"]["Id"] == "my spawn"
+	for _ in range(5):  # (the id, gravity, the turn, the count, and all three x values)
+		tab.spawn_doc.undo()
+	assert tab.spawn_doc.data[MAP][0]["template"]["Position"]["x"] == 5 and tab.spawnXSpin.value() == pytest.approx(5)
+	tab.pick_item = lambda: "another"
+	tab.choose_item()
+	assert tab.spawn_doc.data[MAP][0]["template"]["Items"][0]["_tpl"] == "another" and tab.spawnItemEdit.text() == "another"
+
+
+def test_a_loose_loot_files_spawns_can_come_by_chance(tab, tmp_path):
+	folder = tmp_path / "db" / "CustomLootspawns" / "CustomSpawnpoints"
+	folder.mkdir(parents=True)
+	tab.set_spawn_document(Document({}, folder / "loot.json"))
+	_place_spawn(tab)
+	assert "loose loot" in tab.spawnFileLabel.text() and tab.spawnAlwaysBox.isEnabled()
+	tab.spawnAlwaysBox.setChecked(False)
+	tab.spawnChanceSpin.setValue(0.25)
+	record = tab.spawn_doc.data[MAP][0]
+	assert record["template"]["IsAlwaysSpawn"] is False and record["probability"] == 0.25
+	assert (ITEM, "item spawn (chance)", "your spawn file") in _listed(tab)
+	tab.spawnChanceSpin.setValue(0.0)
+	assert "Error: Its probability is 0: it never spawns." in _texts(tab.checksList)
+
+
+def test_dragging_a_spawn_moves_or_turns_it_when_the_drag_ends(tab):
+	_place_spawn(tab)
+	moved = G.Box((9, 0.1, 9), (0.3, 0.3, 0.3), G.yaw_rotation(0))
+	tab.view.box_changing.emit(moved)
+	assert tab.spawnXSpin.value() == pytest.approx(9) and tab.spawn_doc.data[MAP][0]["template"]["Position"]["x"] == 5
+	tab.view.box_edited.emit(moved)
+	assert tab.spawn_doc.data[MAP][0]["template"]["Position"] == {"x": 9, "y": 0.1, "z": 9} and tab.spawn_doc.undo_label == "Move item spawn"
+	tab.view.box_edited.emit(G.Box((9, 0.1, 9), (0.3, 0.3, 0.3), G.yaw_rotation(30)))
+	assert tab.spawn_doc.data[MAP][0]["template"]["Rotation"]["y"] == pytest.approx(30) and tab.spawn_doc.undo_label == "Turn item spawn"
+	tab.view.box_changing.emit(G.Box((9, 6.0, 9), (0.3, 0.3, 0.3)))  # (lifted far up: the checks say so while it is dragged)
+	assert "Warning: It falls 6.0 m to the floor under it." in _texts(tab.checksList)
+
+
+def test_put_on_floor_deleting_and_undoing_a_spawn(tab):
+	_place_spawn(tab, (5.0, 4.0, 5.0))
+	tab.spawnYSpin.setValue(5.5)
+	tab.put_spawn_on_floor()  # (the floor nearest to it: the upper one, at 4 m)
+	assert tab.spawn_doc.data[MAP][0]["template"]["Position"]["y"] == pytest.approx(4.1)
+	tab.delete_selected()
+	assert tab.spawn_doc.data == {MAP: []} and tab.selected is None and not tab.my_spawns
+	tab.spawn_doc.undo()
+	assert len(tab.spawn_doc.data[MAP]) == 1
+
+
+def test_the_spawn_file_is_saved_and_opened_again(tab, tmp_path):
+	from maps import spawns as S
+
+	_place_spawn(tab)
+	path = tmp_path / "CustomSpawnpointsForced" / "spawns.json"
+	path.parent.mkdir()
+	tab.spawn_doc.save(path)
+	saved = json.loads(path.read_text(encoding="utf-8"))
+	assert S.is_spawn_file(saved) and saved[MAP][0]["template"]["Items"][0]["_tpl"] == ITEM
+	tab.set_spawn_document(Document({}))
+	assert not tab.my_spawns
+	tab.open_spawn_file(path)
+	assert len(tab.my_spawns) == 1 and not tab.spawn_doc.dirty and "(1 spawn; forced: they spawn every raid)" in tab.spawnFileLabel.text()
+	assert tab.editTabs.currentWidget() is tab.spawnsPage
+
+
+def test_a_reference_spawn_is_read_only_can_be_copied_and_isnt_listed_twice_when_opened(app, maps, tmp_path):
+	from core.references import References
+	from maps import spawns as S
+	from ui.zones_tab import MY_SPAWN, OTHER_SPAWN
+
+	path = tmp_path / "CustomSpawnpointsForced" / "theirs.json"
+	path.parent.mkdir()
+	path.write_text(json.dumps({"Bigmap": [S.spawn_record(ITEM, (5, 0.1, 5))]}), encoding="utf-8")
+	refs = References.of([path])
+	window = QMainWindow()
+	tab = ZonesTab(references=refs, maps_folder=maps)
+	window.setCentralWidget(tab)
+	tab.load()
+	spawns = lambda: [row for row in _listed(tab) if row[1].startswith("item spawn")]
+	assert spawns() == [(ITEM, "item spawn", "theirs.json")]
+	tab.select((OTHER_SPAWN, 0))
+	assert not tab.spawnXSpin.isEnabled() and tab.copySpawnButton.isEnabled() and not tab.deleteSpawnButton.isEnabled()
+	assert tab.spawnGroup.title() == "Item spawn of theirs.json (read only)"
+	record = tab.copy_selected()
+	assert tab.selected == (MY_SPAWN, "bigmap", 0) and tab.spawnXSpin.isEnabled()  # (your file has no name for the map yet: its id)
+	assert record["template"]["Id"] != refs.spawn_files()[0][0]["Bigmap"][0]["template"]["Id"]
+	assert any("WTT keeps only the one it reads first" in text for text in _texts(tab.checksList))  # (both at one spot: move it)
+	tab.open_spawn_file(path)
+	assert spawns() == [(ITEM, "item spawn", "your spawn file")] and not refs.spawn_files()
+	tab.set_spawn_document(Document({}))  # (another file in its place: the one on disk is a reference again)
+	assert spawns() == [(ITEM, "item spawn", "theirs.json")]
+	tab.spawnsBox.setChecked(False)
+	assert spawns() == [] and not [z for z, _s in tab.view.zones if z.pin]
+	window.deleteLater()
+
+
+def test_the_main_window_names_the_spawns_item_and_counts_the_spawn_file(app, tmp_path, monkeypatch):
+	from core.gamedata import GameData
+	from core.paths import BUNDLED_DATABASE_DIR
+	from core.settings import Settings
+	from maps import spawns as S
+	from ui import updates
+	from ui.main_window import MainWindow
+
+	monkeypatch.setattr(updates, "fetch_remote_version", lambda config: None)
+	window = MainWindow(Settings.load(tmp_path / "none.ini"), GameData(None, "en", BUNDLED_DATABASE_DIR))
+	tab = window.zones_tab
+	tab.spawn_doc.change("Add item spawn", lambda data: S.add_spawn(data, MAP, S.spawn_record(ITEM, (1, 0.1, 1))))
+	assert tab.item_name(ITEM) == "Roubles" and tab.spawn_doc in window._docs() and window.windowTitle().endswith("*")
+	(spawn,) = tab.my_spawns.values()
+	assert tab._check_spawn(spawn) == ([], [], [])
+	window.undo()
+	assert tab.spawn_doc.data == {}

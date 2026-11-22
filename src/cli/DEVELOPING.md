@@ -11,7 +11,7 @@ Two folders hold this part of the program, apart from the app's window:
 ```
 src/
   cli/          the command line, its docs, and server_check (.NET)
-  maps/         the game's maps and quest zones: map import, zones and their checks, places, buildings
+  maps/         the game's maps and quest zones: map import, zones and their checks, item spawns, places, buildings
   core/, schema/   shared with the app: quest schema and checks, game data, references, documents, settings
   ui/, main.py     the app's window, including the Zones tab's 3D editor (ui/view3d, ui/zones_tab.py)
   data/maps/    the imported maps (made by `maps import`, git-ignored)
@@ -38,6 +38,7 @@ so both report the same problems: those modules are shared, not part of either s
 | `maps/navmesh.py` | `NavMesh`: floor heights at a point, polygons near an area, sampling a box. |
 | `maps/geometry.py` | Vectors, quaternions, `Box` (an oriented box: contains, overlaps, footprint). |
 | `maps/zones.py` | `Zone`, `ZoneIndex`, the WTT zone file format, which zone kinds each condition takes (`ZONE_FIELDS`), the quest and zone checks, `make_zone`. |
+| `maps/spawns.py` | `Spawn`, WTT-CommonLib's item spawn files (CustomLootspawns: reading, `spawn_record`, `changed_record`, `add_spawn`), the map names WTT finds (`SERVER_MAP_NAMES`), the spawn checks (`check_spawn`, with `ItemFacts`). |
 | `maps/places.py` | `zones find`: places by the names players use, from `maps/places.json`, the areas and the object index. |
 | `maps/buildings.py` | `zones building`, `make --building`, `check --rooms`: a building's outline, storeys and rooms. |
 | `maps/places.json` | Hand-written: other words for search words (`synonyms`) and named places with their anchors (`places`). |
@@ -48,10 +49,10 @@ so both report the same problems: those modules are shared, not part of either s
 | `ui/view3d/view.py` | `MapView`: the OpenGL view (floor, walls, zones, outlines) with a QPainter overlay (labels, handles, floor samples) and the mouse. |
 | `ui/view3d/loading_panel.py` | `LoadingPanel`: "Loading <map>", a bar and the step, over the view while a map is read (`MapData.prepare`). |
 | `ui/view3d/cut_slider.py` | `CutSlider`: the height slider beside the view (hide everything above a height), stopping above the storeys at the middle of the view (`Floors.storeys_at`). |
-| `ui/zones_tab.py` | `ZonesTab` (the app's Zones tab: your zone file as a `Document`, the game's and the references' zones, checks as you go) and `ZonesWindow` (`zones edit`). |
+| `ui/zones_tab.py` | `ZonesTab` (the app's Zones tab: your zone file and your item spawn file, each a `Document`; the game's and the references' zones and the references' spawns; checks as you go) and `ZonesWindow` (`zones edit`). |
 | `cli/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
 
-References are `core/references.References`: the app's list (`data/references.json`), or `References.of(paths)` for a project's list (kept in no file, never saved). Besides quests, locale, assorts, item templates, trader files and zone files, it reads WTT-CommonLib `CustomItems` files (`CUSTOM_ITEMS`: entries with `itemTplToClone`, named from their `locales`). A reference file that is also open for editing is left out of every lookup while it is open (`set_open(owner, paths)`: the main window's four files, the Zones tab's zone file, a project's own files in `Workspace`), so a stale copy on disk neither keeps a deleted id known nor lists a zone twice.
+References are `core/references.References`: the app's list (`data/references.json`), or `References.of(paths)` for a project's list (kept in no file, never saved). Besides quests, locale, assorts, item templates, trader files and zone files, it reads WTT-CommonLib `CustomItems` files (`CUSTOM_ITEMS`: entries with `itemTplToClone`, named from their `locales`; `custom_items()` for the spawn checks) and item spawn files (`SPAWNS`, `spawn_files()`). A reference file that is also open for editing is left out of every lookup while it is open (`set_open(owner, paths)`: the main window's four files, the Zones tab's zone and item spawn files, a project's own files in `Workspace`), so a stale copy on disk neither keeps a deleted id known nor lists a zone twice.
 
 The app uses the same pieces: `schema/validate.validate_quests(..., zones=)` adds the zone checks, `MainWindow.zone_index()` builds the index (imported maps plus zone files among the references, rebuilt when the references change), and quest zone files are a reference kind (`core/references.ZONES`).
 
@@ -141,6 +142,18 @@ From WTT-CommonLib (`WTTClientCommonLib.Services.QuestZones`): a zone is a new o
 
 **Slopes.** A new zone's bottom sits `SINK` below the floor at its middle, which on stairs is halfway down the flight. `walkable_span` follows the floor from there across the zone's footprint, sample to sample (0.5 m), up or down less than `STEP_DOWN` (1.6 m): the floor map draws stairs in coarse steps (the old gas station's on Customs has a 1.47 m step), but storeys are further apart. `make_zone(slope=True)` (`zones make --slope`) puts the bottom at the lowest floor of that walk; without it a note says when the walk goes below the zone. It is opt-in: a room zone beside a stairwell would otherwise reach down to the storey below.
 
+## Item spawns and where their rules come from
+
+A mod adds items to a map with WTT-CommonLib's loot spawn files: every `.json` in its `db/CustomLootspawns/CustomSpawnpointsForced` and `CustomSpawnpoints` folders, each `{map name: [spawn point]}`, the points shaped like the base game's `locations/<map>/looseLoot.json` ones. `maps/spawns.py` reads and writes them; the Zones tab's Item spawns page edits one such file. From WTT-ServerCommonLib 2.0.15 (`WTTCustomLootspawnService`) and SPT 4.1.6 (`LocationLootGenerator`, `LocationTable`; 4.0.13 is the same where it matters):
+
+- **Which folder.** A forced file's points are added to the map's `spawnpointsForced` (where the game's quest items are), unless one with the same `locationId` is there already (the game's, or a file read before). A loose loot file's are added to `spawnpoints`, or merged into the point with the same `locationId` (its items added, its probability taken). The folder decides, so `file_forced` reads it from the path (a file outside both folders isn't read by WTT; the tab says so).
+- **Which spawn.** Every raid: the forced points, plus the loose ones with `IsAlwaysSpawn`. Those that share a template `Id` are alternatives: `ChooseForcedPositions` draws one of them by `probability`. The other loose points are drawn from with the map's own (probability 1 always, else weighted by it). So a new spawn gets an `Id` of its own (`<item name> [uuid]`, as the game's are `<object> [guid]`) and a `locationId` of its own (its position, `(x, y, z)`); `changed_record` keeps the `locationId` following the position only while it was the position (rtt2's are written `(x y z)` and are left alone).
+- **Which item.** A spawn every raid spawns the first entry of `Items` with its children (new ids; `Root` is set by the server, so a stale one is harmless). Loose loot draws an entry whose `composedKey` is in `itemDistribution`, so `spawn_record` writes both, keyed by the item's id. Money and ammo get a random stack (`StackMinRandom`..`StackMaxRandom`); ammo boxes and magazines are filled by the server.
+- **The map's name** goes through `LocationTable.GetMappedKey`, whose list (`SERVER_MAP_NAMES`) has each map's id in small letters and the server's own name (`bigmap`, `Bigmap`); anything else is kept as given and then never matches a map, so its spawns are dropped without a word. The tool's own key for Ground Zero (high) is `Sandbox_high`, which isn't in that list: new spawns go under `file_name_of` (the id in small letters), and `check_spawn` flags any other name.
+- **Position and Rotation** are `x, y, z` in small letters (4.1's `Vector3`, 4.0's `XYZ`; the server's JSON options are case sensitive), Rotation as Unity's Euler angles in degrees. rtt2's files write Position as `X, Y, Z`: the server keeps those as unknown keys and passes them on, so whether the item lands there is up to the client's JSON reading. `check_spawn` warns, and any change made in the tab writes them in small letters.
+
+The spawn checks are errors only where the server or WTT would surely drop the spawn (an unknown map name, no item, no item for loose loot to draw, a probability of 0, a forced `locationId` taken), else warnings. The floor check uses `MapData.floors`, so with the walls read it knows tables and shelves: an item falls onto what is under it when `useGravity` is on (the tab's default: new spawns go `LIFT` above the spot clicked), and stays put when it is off.
+
 ## After a game update
 
 1. `python -m cli maps import "<game folder>"` (or **Import the maps again** in the Zones tab, which offers it when the game's version changed). A `FormatError` means the Unity version or a layout changed: dump the failing object's bytes (`SerializedFile.reader`) and re-check the layout, as was done for BoxCollider and Mesh. Each map's `wall_triangles` should be in the hundreds of thousands to millions; a map with far fewer has meshes the reader couldn't read (`Meshes.problems` says why).
@@ -215,9 +228,14 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
   stays; Shift snaps). A zone's name comes first (`MapView.label_at`): it is drawn over everything and above its box,
   so from low down a click on it was over the floor or a zone behind, and far away the name is wider than the box.
   `MapView.labels()` lays the names out for both the drawing and the clicks, so they agree.
+- **Item spawns** are `ViewZone`s with `pin`: a 0.3 m box, and a dot drawn over the picture that clicks and drags
+  take within `HANDLE_PIXELS` (`MapView.pin_at`, first in `zone_at`), so a spawn can be picked from any distance. A
+  selected spawn gets only lift and turn handles (`set_selected(handles=)`); where a handle and the dot overlap, the
+  nearer to the mouse wins, and a handle that can't be dragged from this angle (lift, seen from straight above, where
+  it isn't drawn either) gives way to moving the box.
 - **Undo**: a form field or a drag changes one entry of the file with `Document.watch` / `touch`; typing in one field
-  is one step (`coalesce`). The main window counts the tab's document among its own (undo, the title's `*`, asking to
-  save on close) and adds its zones to the quests' zone checks.
+  is one step (`coalesce`). The main window counts the tab's documents (zone file and item spawn file) among its own
+  (undo, the title's `*`, asking to save on close) and adds its zones to the quests' zone checks.
 
 ## Tests
 
@@ -228,9 +246,10 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - `tests/test_places_and_buildings.py`: the object index, `zones find`, and the building at a spot on a made-up map (a building turned 20 degrees with a storey, a roof, a tunnel under it and named rooms), through the commands too.
 - `tests/test_walls.py`: mesh colliders, meshes (in the scene and in a .resS file), terrain colliders and their heightmaps, and the layer names on a serialized file built in the test; placing them (turned, mirrored, a box, a terrain with a hole), the terrain's ground within its tolerance, the walls file (and its progress), `Triangles.prepare`, floors on the tops, `Floors`, and the navmesh's height in a polygon that isn't flat.
 - `tests/test_view3d_math.py`: triangles and picking, the camera (east right, north up from above; the ray under a pixel), the handles.
-- `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed), and real drawings in a separate process with Qt's software OpenGL (skipped where there is none): the floor and zones, and walls cut through drawn solid.
+- `tests/test_view3d_view.py`: clicks and drags in the view (no OpenGL needed; a spawn's dot from far away), and real drawings in a separate process with Qt's software OpenGL (skipped where there is none): the floor and zones, and walls cut through drawn solid.
 - `tests/test_cut_slider.py`: the height slider's stops above each storey, dragging (snapping, Shift), the keys and wheel, the heights its track spans.
-- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, the notice when the maps are from another game version, the loading panel's steps (and none for a map in memory, and shown on the first load once the tab is drawn), Factory (day) first, and the main window's checks seeing the tab's zones.
+- `tests/test_spawns.py`: item spawn files: reading (rtt2's shape too), new and changed entries, the map names WTT finds, the checks (clashes, alternatives, quest items, money, the floor).
+- `tests/test_zones_tab.py`: the tab on a made-up map: placing, the form, dragging, undo, copying a game zone, saving, item spawns (placing, the form, dragging, a loose loot file, saving, a reference's spawns), the notice when the maps are from another game version, the loading panel's steps (and none for a map in memory, and shown on the first load once the tab is drawn), Factory (day) first, and the main window's checks seeing the tab's zones.
 - Isolation: `conftest.py` points the reference list and `data/maps` at empty temp folders for every test; `test_cli.py`'s `plain_program` gives the app's default settings and no saved composite items.
 
 ## Known limits
@@ -240,3 +259,4 @@ What the server does with a loaded quest (4.1 source): `QuestHelper.GetClientQue
 - Areas are a heuristic named after scenes, often in transliterated Russian. Room names are a heuristic too: each map names its rooms its own way.
 - `maps/places.json` names only places that were checked (some of Reserve's so far).
 - The game client reading a quest isn't checked beyond matching the base game's shapes, and WTT-CommonLib's quest loader isn't checked.
+- Item spawns: the base game's own loose loot isn't shown (so a clash with one of its `locationId`s isn't seen), the command line has no spawn commands (`zones edit` opens the project's `spawns` file), and `package` doesn't write spawn files.

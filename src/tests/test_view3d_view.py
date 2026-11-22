@@ -247,3 +247,27 @@ def test_a_cut_draws_the_walls_it_slices_through_as_solid(tmp_path):
 
 	assert not is_cap(top) and is_cap(inside)  # (uncut, the box's top; cut, its inside)
 	assert not is_cap(open_inside) and any(is_cap(p) for p in edge)
+
+
+def test_a_spawns_dot_selects_it_from_far_away_and_dragging_the_dot_moves_it(view):
+	"""A spawn's box is 0.3 m: a few pixels from far away, and the ray under the mouse can miss it. Its dot (a pin)
+	counts for clicks and drags within a few pixels; its handles are only the ones it was given."""
+	tiny = G.Box((20, 0.15, 20), (0.3, 0.3, 0.3))
+	view.set_zones([(ViewZone("spawn", "Roubles", "spawn", tiny, pin=True), GAME)])
+	view.camera.distance = 200.0
+	x, y = view.camera.project(tiny.center, 800, 600)
+	clicked = _signal(view.zone_clicked)
+	QTest.mouseClick(view, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, QPoint(round(x) + 5, round(y) - 4))
+	assert clicked == ["spawn"]
+	view.set_selected("spawn", tiny, "spawn", editable=True, handles=(H.LIFT, H.TURN))
+	assert {h.kind for h in view._handles()} == {H.TURN}  # (from straight above, lifting can't be dragged: not offered)
+	view.camera.top_down = False
+	assert {h.kind for h in view._handles()} == {H.LIFT, H.TURN}
+	view.camera.top_down = True
+	edited = _signal(view.box_edited)
+	east = view.camera.project((30, 0.15, 20), 800, 600)
+	QTest.mousePress(view, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, QPoint(round(x) + 4, round(y)))
+	_move(view, ((x + east[0]) / 2, y), Qt.MouseButton.LeftButton)
+	_move(view, (east[0] + 4, east[1]), Qt.MouseButton.LeftButton)
+	QTest.mouseRelease(view, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, QPoint(round(east[0]) + 4, round(east[1])))
+	assert edited and edited[-1].center == pytest.approx((30, 0.15, 20), abs=0.6) and edited[-1].size == tiny.size

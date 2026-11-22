@@ -10,6 +10,8 @@ A project file is JSON. Paths are relative to the project file's folder:
         "trader": "Prapor or a trader id",       the trader the assort is for (optional)
         "zones": "db/CustomQuestZones/new.json", the custom zone file new zones go into (optional)
         "zone_files": ["db/CustomQuestZones"],   more custom zone files or folders, for checking (optional)
+        "spawns": "db/CustomLootspawns/CustomSpawnpointsForced/spawns.json",
+                                                 the item spawn file `zones edit` changes (optional)
         "game": "I:/Games/SPT",                  the game's folder, for importing maps (optional)
         "spt": "I:/Games/SPT/SPT_Runtime",       the SPT server's folder, for `check --server` (optional; default:
                                                  the game folder's SPT_Runtime)
@@ -37,7 +39,7 @@ from core.settings import Settings
 from maps.zones import ZoneIndex
 from schema import assort as assort_schema
 
-KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_files", "game", "spt", "database", "language", "references")
+KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_files", "spawns", "game", "spt", "database", "language", "references")
 # Where an SPT install keeps its database, under the game folder (SPT 4.1, then 4.0)
 DATABASE_IN_GAME = ("SPT_Runtime/SPT_Data/database", "SPT_Data/database", "SPT/SPT_Data/database")
 BUNDLED = "the copy bundled with the program (SPT 4.1.6)"

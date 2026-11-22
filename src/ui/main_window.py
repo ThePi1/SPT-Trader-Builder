@@ -102,8 +102,10 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		)
 		self.graph_tab = QuestGraphTab(self._graph_sources)
 		self.graph_tab.open_requested.connect(self.show_quest)
-		self.zones_tab = ZonesTab(settings, self.references, _map_names(gamedata))
+		self.zones_tab = ZonesTab(settings, self.references, _map_names(gamedata), gamedata=gamedata)
+		self.zones_tab.pick_item = lambda: next(iter(self.pick("item", False, self.zones_tab)), None)  # (the rows Find IDs has made already)
 		self.zones_tab.zones_changed.connect(self._zones_changed)
+		self.zones_tab.spawns_changed.connect(self._spawns_changed)
 		self.explorer_tab = ExplorerTab(lambda: self.quests.data, lambda: self.locale.data, gamedata, settings)
 		fill_tabs(self.tabs, self, {
 			"page_quests": self.quest_outline, "page_locale": self.locale_tab, "page_trader": self.assort_tab,
@@ -581,7 +583,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		return self._save(getattr(self, name), self._OTHER[name][0], as_new)
 
 	def _docs(self):
-		return (self.quests, self.locale, self.assort, self.locks, self.zones_tab.doc)
+		return (self.quests, self.locale, self.assort, self.locks, self.zones_tab.doc, self.zones_tab.spawn_doc)
 
 	def _zones_changed(self):
 		"""The Zones tab's zone file changed: the quests' zone checks look again."""
@@ -589,6 +591,11 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.quest_outline.check_soon()
 		self._update_title()
 		self._refresh_strip()  # (the reference files' tooltip says which are open)
+
+	def _spawns_changed(self):
+		"""The Zones tab's item spawn file changed."""
+		self._update_title()
+		self._refresh_strip()
 
 	def _latest(self):
 		"""The document whose last edit was most recent (what Undo undoes)."""
@@ -601,7 +608,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		max(self._docs(), key=lambda d: d.redo_stamp).redo()
 
 	def closeEvent(self, event):
-		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest assort", "quest zone"))):
+		if all(self._confirm_discard(d, l) for d, l in zip(self._docs(), ("quest", "locale", "trader assort", "quest assort", "quest zone", "item spawn"))):
 			self._remember_files()
 			event.accept()
 		else:
