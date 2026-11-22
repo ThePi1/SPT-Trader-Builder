@@ -69,6 +69,29 @@ def test_a_click_selects_the_smallest_zone_there(view):
 	assert clicked == ["small", "big", None]
 
 
+def test_a_click_on_a_zones_name_selects_that_zone(view):
+	"""A name is drawn over everything, above its box: from low down the click there is over another zone behind it
+	(or the floor), and from far away the name is wider than its box. The name wins."""
+	view.set_top_down(False)
+	view.set_zones([
+		(ViewZone("near", "near", "visit", G.Box((20, 1, 20), (2, 2, 2))), GAME),
+		(ViewZone("behind", "behind", "visit", G.Box((20, 4, 25), (2, 8, 2))), GAME),  # (taller, 5 m further along the view)
+	])
+	clicked = _signal(view.zone_clicked)
+	click = lambda x, y: QTest.mouseClick(view, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, QPoint(round(x), round(y)))
+	for pitch, distance in ((10.0, 25.0), (60.0, 120.0)):
+		view.camera.target, view.camera.pitch, view.camera.distance, view.camera.yaw = (20.0, 1.0, 20.0), pitch, distance, 0.0
+		(name,) = [label for label in view.labels() if label.key == "near"]
+		click(name.rect.center().x(), name.rect.center().y())
+		click(name.rect.left() + 2, name.rect.bottom() - 2)
+	assert clicked == ["near"] * 4
+	view.camera.pitch, view.camera.distance = 10.0, 25.0
+	(name,) = [label for label in view.labels() if label.key == "near"]
+	view.show_labels = False  # (names hidden: a click there goes by the boxes, and hits the one behind)
+	click(name.rect.center().x(), name.rect.center().y())
+	assert clicked[-1] == "behind" and all(label.key is None for label in view.labels())
+
+
 def test_dragging_a_face_handle_resizes_the_zone(view):
 	box = G.Box((20, 1, 20), (4, 2, 4))
 	view.set_selected("mine", box, "visit", editable=True)
