@@ -57,6 +57,13 @@ class Reference:
 		return self.path.name
 
 	@property
+	def where(self):
+		"""The full path, worked out once (to compare with the files open for editing)."""
+		if getattr(self, "_where", None) is None:
+			self._where = self.path.resolve()
+		return self._where
+
+	@property
 	def count(self):
 		"""How many ids it knows about."""
 		data = self.data
@@ -87,19 +94,23 @@ def _read(ref):
 class References:
 	"""The reference files. path is the file the list of them is kept in; language picks which locale file names are read from.
 	References.of(paths) is a list given directly (files, and the .json files in folders), kept in no file (the
-	command line's project files name theirs)."""
+	command line's project files name theirs).
+
+	A reference file that is also open for editing is left out of every lookup while it is open (see set_open): the open
+	copy is the one being changed, and the reference copy is what was on disk when it was read."""
 
 	def __init__(self, path=None, language="en"):
 		self.path = Path(path) if path else REFERENCES_FILE
 		self.language = language or "en"
 		self.files = []
 		self._index = None
+		self._open = {}  # who has files open -> (the paths given, the same resolved)
 		self._load_list()
 
 	@classmethod
 	def of(cls, paths, language="en", limit=LIMIT):
 		refs = cls.__new__(cls)
-		refs.path, refs.language, refs.files, refs._index = None, language or "en", [], None
+		refs.path, refs.language, refs.files, refs._index, refs._open = None, language or "en", [], None, {}
 		found = []
 		for path in map(Path, paths):
 			found.extend(sorted(path.rglob("*.json"))[:limit] if path.is_dir() else [path])
@@ -168,6 +179,41 @@ class References:
 		self.language = language or "en"
 		self._index = None
 
+	# --- the files open for editing ----------------------------------------------------------
+	def set_open(self, owner, paths):
+		"""The files owner (any name: the main window's files, the Zones tab's) has open now; paths that are None (a file
+		not saved yet) are skipped. Those files are left out of the lookups until owner names others. True if that changed
+		which reference files are used (names, checks and lists then have to look again); opening a file that isn't a
+		reference changes nothing."""
+		given = tuple(str(p) for p in paths if p)
+		if self._open.get(owner, ((),))[0] == given:
+			return False
+		before = self._skipped()
+		self._open[owner] = (given, frozenset(Path(p).resolve() for p in given))
+		if self._skipped() == before:
+			return False
+		self._index = None
+		return True
+
+	def _left_out(self):
+		return frozenset().union(*(resolved for _given, resolved in self._open.values()))
+
+	def _skipped(self):
+		"""The reference files open for editing (by their full paths)."""
+		left_out = self._left_out()
+		return frozenset(ref.where for ref in self.files if ref.where in left_out) if left_out else frozenset()
+
+	def is_open(self, ref):
+		"""True if this reference file is open for editing (and so left out)."""
+		return ref.where in self._left_out()
+
+	def _active(self):
+		"""The reference files the lookups use: all but the ones open for editing."""
+		left_out = self._left_out()
+		if not left_out:
+			return self.files
+		return [ref for ref in self.files if ref.where not in left_out]
+
 	# --- what the files know ---------------------------------------------------------------
 	@property
 	def index(self):
@@ -178,7 +224,7 @@ class References:
 
 	def _build(self):
 		ranked = sorted(
-			(ref for ref in self.files if ref.kind == LOCALE),
+			(ref for ref in self._active() if ref.kind == LOCALE),
 			key=lambda ref: 0 if ref.path.stem == self.language else 1 if ref.path.stem == "en" else 2,
 		)
 		locale = {}
@@ -187,7 +233,7 @@ class References:
 				if isinstance(text, str) and key not in locale:
 					locale[key] = text
 		quests, templates, assort_tpls, offers, traders = {}, {}, {}, [], {}
-		for ref in self.files:
+		for ref in self._active():
 			if ref.kind == QUESTS:
 				for quest_id, quest in ref.data.items():
 					if isinstance(quest, dict) and quest_id not in quests:
@@ -229,7 +275,7 @@ class References:
 		self.read_all()
 		found = {}
 		for ref in sorted(
-			(ref for ref in self.files if ref.kind == LOCALE),
+			(ref for ref in self._active() if ref.kind == LOCALE),
 			key=lambda ref: 0 if ref.path.stem == self.language else 1 if ref.path.stem == "en" else 2,
 		):
 			for key, text in ref.data.items():
@@ -240,13 +286,13 @@ class References:
 	def zone_files(self):
 		"""[(entries, file name)] of the quest zone files in the list."""
 		self.read_all()
-		return [(ref.data, ref.name) for ref in self.files if ref.kind == ZONES]
+		return [(ref.data, ref.name) for ref in self._active() if ref.kind == ZONES]
 
 	def quest_data(self):
 		"""{quest id: (the quest, the file it is in)} of every quest in the reference files (the first file wins)."""
 		self.read_all()
 		found = {}
-		for ref in self.files:
+		for ref in self._active():
 			if ref.kind == QUESTS:
 				for quest_id, quest in ref.data.items():
 					if isinstance(quest, dict) and quest_id not in found:

@@ -41,6 +41,7 @@ KEYS = ("quests", "locale", "assort", "questassort", "trader", "zones", "zone_fi
 # Where an SPT install keeps its database, under the game folder (SPT 4.1, then 4.0)
 DATABASE_IN_GAME = ("SPT_Runtime/SPT_Data/database", "SPT_Data/database", "SPT/SPT_Data/database")
 BUNDLED = "the copy bundled with the program (SPT 4.1.6)"
+OPEN_OWNER = "project"  # the name the project's own files are left out of the references under (core.references.References.set_open)
 
 
 class ProjectError(Exception):
@@ -79,6 +80,7 @@ class Workspace:
 		self.locale = self._open("locale", {})
 		self.assort = self._open("assort", assort_schema.empty_assort()) if self.config.get("assort") else None
 		self.questassort = self._open("questassort", assort_schema.empty_questassort()) if self.config.get("questassort") else None
+		self.references.set_open(OPEN_OWNER, [doc.path for _key, doc in self.documents()])  # (the project's own files count as they are being changed, not as references)
 		self._zones = None
 
 	# --- the files -------------------------------------------------------------------------------------

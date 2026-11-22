@@ -315,6 +315,29 @@ def test_entries_that_cant_be_read_are_listed_not_dropped(tab):
 	assert "(entry 1)" in [tab.zoneList.topLevelItem(i).text(0) for i in range(tab.zoneList.topLevelItemCount())]
 
 
+def test_a_reference_zone_file_opened_here_is_listed_once_and_its_ids_arent_used_twice(app, maps, tmp_path):
+	from core.references import References
+
+	path = tmp_path / "my_zones.json"
+	path.write_text(json.dumps([Z.zone_record("my_spot", MAP, Z.VISIT, G.Box((5, 1, 5), (2, 2, 2)))]), encoding="utf-8")
+	refs = References.of([path])
+	window = QMainWindow()
+	tab = ZonesTab(references=refs, maps_folder=maps)
+	window.setCentralWidget(tab)
+	tab.load()
+	listed = lambda: sorted((tab.zoneList.topLevelItem(i).text(0), tab.zoneList.topLevelItem(i).text(2)) for i in range(tab.zoneList.topLevelItemCount()))
+	assert listed() == [("game_spot", "the game"), ("my_spot", "my_zones.json")]  # (a reference: read only)
+	tab.open_file(path)
+	assert listed() == [("game_spot", "the game"), ("my_spot", "your file")] and not refs.zone_files()
+	tab.doc.change("Move", lambda data: data[0]["Position"].update(X="7"))
+	assert tab.mine[0].box.center[0] == 7
+	tab.select((OWN, 0))
+	assert [tab.checksList.item(i).text() for i in range(tab.checksList.count())] == ["No problems found."]
+	tab.set_document(Document([]))  # (another file in its place: the one on disk is a reference again)
+	assert listed() == [("game_spot", "the game"), ("my_spot", "my_zones.json")]
+	window.deleteLater()
+
+
 def test_the_main_windows_quest_checks_know_the_zones_made_in_the_tab(app, tmp_path, monkeypatch):
 	from core.gamedata import GameData
 	from core.paths import BUNDLED_DATABASE_DIR

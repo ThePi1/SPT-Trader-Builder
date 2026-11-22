@@ -90,6 +90,23 @@ def test_names_and_what_is_known_come_from_the_files(tmp_path):
 	assert refs.item_name(ITEM_ID) == "Модная винтовка"  # (the file for the chosen language first)
 
 
+def test_a_file_open_for_editing_is_left_out_until_it_is_closed(tmp_path):
+	files = mod_files(tmp_path / "mod")
+	refs = R.References.of([files["quests"], files["en"], files["items"]])
+	assert refs.knows_quest(QUEST_ID) and refs.quest_name(QUEST_ID) == "Mod quest (en)"
+	assert not refs.set_open("window", [tmp_path / "mine.json", None])  # (not a reference: nothing changes)
+	assert refs.set_open("window", [files["quests"], files["en"]])
+	assert not refs.knows_quest(QUEST_ID) and not refs.quest_data() and not refs.locale_entries()  # (the open copies count, not these)
+	assert refs.item_name(ITEM_ID) == "mod_rifle" and [ref.name for ref in refs.files if refs.is_open(ref)] == ["quests.json", "en.json"]
+	assert not refs.set_open("window", [files["quests"], files["en"]])  # (the same files: nothing to look up again)
+	assert not refs.set_open("zones", [files["quests"]])  # (another owner with the same file open)
+	assert refs.set_open("window", [str(files["en"].parent / ".." / "quests.json")])  # (the same file by another path; en.json is closed)
+	assert not refs.knows_quest(QUEST_ID) and refs.locale_entries()
+	refs.set_open("zones", [])
+	assert refs.set_open("window", [])
+	assert refs.knows_quest(QUEST_ID) and refs.quest_name(QUEST_ID) == "Mod quest (en)"
+
+
 def reference_data(tmp_path):
 	files = mod_files(tmp_path / "mod")
 	data = GameData(None, "en", BUNDLED_DATABASE_DIR)
@@ -166,8 +183,9 @@ def test_the_window_has_a_references_part_and_menu(window, tmp_path):
 	segment = window.files_strip.segment("references")
 	assert "References" in segment.titleLabel.text() and segment.fileLabel.isHidden() and not segment.fileLabel.text()  # (just the title and the count)
 	assert segment.toolTip() == "No reference files yet"
-	assert [a.text().replace("&", "") for a in window.menuReferences.actions()] == ["Add reference files...", "Manage reference files...", "Reload reference files"]
-	assert [a.text().replace("&", "") for a in segment.menu.actions()] == ["Add reference files...", "Manage reference files...", "Reload reference files"]
+	actions = ["Add reference files...", "Add a reference folder...", "Manage reference files...", "Reload reference files"]
+	assert [a.text().replace("&", "") for a in window.menuReferences.actions()] == actions
+	assert [a.text().replace("&", "") for a in segment.menu.actions()] == actions
 	added = window.add_references([str(files["quests"]), str(files["items"]), str(files["trader"])])
 	assert len(added) == 3 and segment.titleLabel.text().endswith("3") and "quests.json" in segment.toolTip()
 	assert json.loads((tmp_path / "references.json").read_text(encoding="utf-8"))["files"][0].endswith("quests.json")
@@ -176,6 +194,43 @@ def test_the_window_has_a_references_part_and_menu(window, tmp_path):
 	assert ITEM_ID in {r.id for r in window.rows(("item", "ref_item")) if r.kind == "ref_item"}
 	assert window.gamedata.item_name(ITEM_ID) == "mod_rifle"
 	window.references.remove(window.references.files[:])  # (nothing left over for the real data folder)
+
+
+def test_a_folder_adds_every_reference_file_in_it_and_the_folders_inside(window, tmp_path, monkeypatch):
+	from PySide6.QtWidgets import QFileDialog
+
+	mod_files(tmp_path / "mod")  # (the locale files are in mod/locale)
+	monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *a, **k: str(tmp_path / "mod"))
+	window.actionAddReferenceFolder.trigger()
+	assert sorted(ref.name for ref in window.references.files) == ["assort.json", "base.json", "en.json", "items.json", "quests.json", "ru.json"]
+	message = window.statusBar().currentMessage()
+	assert message.startswith("Added 6 reference files.") and "notes.json" in message and "questassort.json" in message
+	monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *a, **k: "")
+	assert window.add_reference_folder() is None and len(window.references.files) == 6  # (no folder chosen: nothing changes)
+	window.references.remove(window.references.files[:])
+
+
+def test_a_reference_file_opened_for_editing_counts_as_the_open_copy_until_another_is_opened(window, tmp_path, monkeypatch):
+	from PySide6.QtWidgets import QMessageBox
+
+	from ui.references_dialog import ReferencesDialog
+
+	monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Discard)  # (also when the window closes)
+	files = mod_files(tmp_path / "mod")
+	window.add_references([str(files["quests"]), str(files["items"])])
+	window.open_quests(str(files["quests"]))
+	segment = window.files_strip.segment("references")
+	assert "quests.json (open for editing: left out)" in segment.toolTip() and "items.json\n" not in segment.toolTip()
+	dialog = ReferencesDialog(window.references)
+	assert [dialog.table.item(r, 1).text() for r in range(2)] == ["Quests (open)", "Item templates"]
+	assert "open for editing" in dialog.table.item(0, 0).toolTip()
+	window.quests.change("Delete quest", lambda data: data.pop(QUEST_ID))
+	assert not window.gamedata.knows_quest(QUEST_ID)  # (deleted from the open file: the copy on disk doesn't keep it known)
+	assert QUEST_ID not in {r.id for r in window.rows(("quest", "ref_quest"))}
+	window.new_quests()  # (the file isn't open any more: it is a reference again)
+	assert window.gamedata.knows_quest(QUEST_ID) and "(open for editing" not in segment.toolTip()
+	assert QUEST_ID in {r.id for r in window.rows(("quest", "ref_quest")) if r.kind == "ref_quest"}
+	window.references.remove(window.references.files[:])
 
 
 def test_the_find_windows_search_the_references_too(window, tmp_path, monkeypatch):

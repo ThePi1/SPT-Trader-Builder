@@ -47,6 +47,7 @@ KINDS = (
 )
 KEY_OF_KIND = {kind: key for key, _title, _label, kind in KINDS}
 LAST_KEYS = ("quests", "locale", "assort", "locks")  # (the sections whose file is remembered)
+OPEN_OWNER = "main window"  # the name its open files are left out of the references under (core.references.References.set_open)
 
 
 def _map_names(gamedata):
@@ -204,8 +205,8 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			menu.addAction(save_as)
 		reference_menu = self.files_strip.segment("references").menu
 		for action, slot in (
-			(self.actionAddReferences, self.add_references), (self.actionManageReferences, self.manage_references),
-			(self.actionReloadReferences, self.reload_references),
+			(self.actionAddReferences, self.add_references), (self.actionAddReferenceFolder, self.add_reference_folder),
+			(self.actionManageReferences, self.manage_references), (self.actionReloadReferences, self.reload_references),
 		):
 			action.triggered.connect(lambda _checked=False, slot=slot: slot())
 			reference_menu.addAction(action)
@@ -286,6 +287,9 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self.setWindowTitle(dialogs.APP_NAME + ("*" if any(d.dirty for d in self._docs()) else ""))
 
 	def _doc_changed(self, _doc=None):
+		if self.references.set_open(OPEN_OWNER, [getattr(self, key).path for key, _title, _label, _kind in KINDS]):
+			self._references_changed()  # (the file now open, or the one it replaced, is a reference: it is left out, or used again; see core.references.References.set_open)
+			return
 		self.graph_tab.invalidate()
 		self._update_title()
 		self._refresh_strip()
@@ -318,6 +322,15 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			text += f" Left out: {', '.join(f'{name} ({why})' for name, why in skipped[:3])}" + (" ..." if len(skipped) > 3 else "")
 		self.statusBar().showMessage(text, 15000)
 		return added
+
+	def add_reference_folder(self, folder=None):
+		"""Add every reference file in a folder (chosen if not given) and the folders inside it: core.references.References.add
+		keeps the files with ids to look up, up to its LIMIT, and the status bar says what was left out."""
+		if folder is None:
+			folder = QFileDialog.getExistingDirectory(self, "Add the reference files in a folder")
+		if not folder:
+			return None
+		return self.add_references([folder])
 
 	def manage_references(self):
 		dialog = ReferencesDialog(self.references, self)
@@ -368,7 +381,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 			state, tone = ("unsaved", "warn") if doc.dirty else (("saved", "ok") if doc.path else ("", "muted"))
 			self.files_strip.segment(key).set_info(count, state, tone, file_text, str(doc.path) if doc.path else "")
 		files = self.references.files
-		names = "\n".join(ref.name for ref in files)
+		names = "\n".join(ref.name + (" (open for editing: left out)" if self.references.is_open(ref) else "") for ref in files)
 		self.files_strip.segment("references").set_info(len(files), "", "muted", "", names or "No reference files yet")  # (the count in the title says it; the file names are the tooltip)
 
 	# --- files ------------------------------------------------------------------------------
@@ -575,6 +588,7 @@ class MainWindow(QMainWindow, Ui_MainWindowForm):
 		self._zone_index = None
 		self.quest_outline.check_soon()
 		self._update_title()
+		self._refresh_strip()  # (the reference files' tooltip says which are open)
 
 	def _latest(self):
 		"""The document whose last edit was most recent (what Undo undoes)."""

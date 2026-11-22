@@ -37,6 +37,7 @@ log = logging.getLogger(__name__)
 BASE, OWN = "base", "mine"  # the first part of a zone's key: (BASE, index in self.base) or (OWN, index in the file)
 NEW_SIZE = (4.0, 3.0, 4.0)  # metres: a new zone's width, height and depth
 FIRST_MAP = "factory4_day"  # shown first when nothing says which: Factory (day), small and quick to read
+OPEN_OWNER = "zones tab"  # the name the zone file open here is left out of the references under (core.references.References.set_open)
 KEEP_WALLS = 3  # maps whose walls are kept in memory (the last ones shown); the others' are read again if gone back to
 JSON_FILTER = "Quest zone files (*.json);;All files (*)"
 KINDS = list(Z.CUSTOM_TYPE)  # visit, placeitem, trigger, flarezone, salvage, as the kind box lists them
@@ -350,7 +351,11 @@ class ZonesTab(QWidget, Ui_ZonesForm):
 		return answer == QMessageBox.StandardButton.Discard
 
 	def _doc_changed(self, _doc=None):
-		self._mine_changed()
+		# (a zone file that is also a reference is left out of the references while it is open here: its zones are the ones being edited)
+		if self.references is not None and self.references.set_open(OPEN_OWNER, [self.doc.path]) and self._loaded:
+			self._read_zones()
+		else:
+			self._mine_changed()
 		dirty = "*" if self.doc.dirty else ""
 		count = len(self.doc.data) if isinstance(self.doc.data, list) else 0
 		self.fileLabel.setText(f"Zone file: {self.doc.name}{dirty} ({count} zone{'' if count == 1 else 's'})")

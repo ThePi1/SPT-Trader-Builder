@@ -138,6 +138,7 @@
       <string>&amp;References</string>
      </property>
      <addaction name="actionAddReferences"/>
+     <addaction name="actionAddReferenceFolder"/>
      <addaction name="actionManageReferences"/>
      <addaction name="actionReloadReferences"/>
     </widget>
@@ -305,6 +306,14 @@
    </property>
    <property name="toolTip">
     <string>Files that are only looked at (other mods' quests, items, traders), never edited or saved</string>
+   </property>
+  </action>
+  <action name="actionAddReferenceFolder">
+   <property name="text">
+    <string>Add a reference &amp;folder...</string>
+   </property>
+   <property name="toolTip">
+    <string>Every reference file in a folder and the folders inside it (another mod's db folder, say); the other files are left out</string>
    </property>
   </action>
   <action name="actionManageReferences">

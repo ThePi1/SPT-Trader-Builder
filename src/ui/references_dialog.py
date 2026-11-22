@@ -8,6 +8,7 @@ from ui.compiled.ui_references_dialog import Ui_ReferencesForm
 
 JSON_FILTER = "JSON files (*.json);;All files (*)"
 IMPORTABLE = (R.QUESTS, R.LOCALE, R.ASSORT)  # (the kinds the Import window can merge)
+OPEN_TIP = "This file is open for editing, so its reference copy isn't used while it is open: the open copy is the one that counts."
 
 
 class ReferencesDialog(QDialog, Ui_ReferencesForm):
@@ -38,9 +39,12 @@ class ReferencesDialog(QDialog, Ui_ReferencesForm):
 		self.table.setRowCount(len(files))
 		for row, ref in enumerate(files):
 			kind = R.KIND_LABEL.get(ref.kind) or "Can't use"
+			is_open = ref.kind is not None and self.references.is_open(ref)
+			if is_open:
+				kind += " (open)"
 			for column, text in enumerate((ref.name, kind, f"{ref.count:,}" if ref.kind else "", str(ref.path.parent))):
 				cell = QTableWidgetItem(text)
-				cell.setToolTip(ref.error or str(ref.path))
+				cell.setToolTip(ref.error or (OPEN_TIP if is_open else str(ref.path)))
 				self.table.setItem(row, column, cell)
 		self._update_buttons()
 

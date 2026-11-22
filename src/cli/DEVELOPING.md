@@ -51,7 +51,7 @@ so both report the same problems: those modules are shared, not part of either s
 | `ui/zones_tab.py` | `ZonesTab` (the app's Zones tab: your zone file as a `Document`, the game's and the references' zones, checks as you go) and `ZonesWindow` (`zones edit`). |
 | `cli/server_check/` | A .NET program that loads quest files with the SPT server's own code (see below). |
 
-References are `core/references.References`: the app's list (`data/references.json`), or `References.of(paths)` for a project's list (kept in no file, never saved). Besides quests, locale, assorts, item templates, trader files and zone files, it reads WTT-CommonLib `CustomItems` files (`CUSTOM_ITEMS`: entries with `itemTplToClone`, named from their `locales`).
+References are `core/references.References`: the app's list (`data/references.json`), or `References.of(paths)` for a project's list (kept in no file, never saved). Besides quests, locale, assorts, item templates, trader files and zone files, it reads WTT-CommonLib `CustomItems` files (`CUSTOM_ITEMS`: entries with `itemTplToClone`, named from their `locales`). A reference file that is also open for editing is left out of every lookup while it is open (`set_open(owner, paths)`: the main window's four files, the Zones tab's zone file, a project's own files in `Workspace`), so a stale copy on disk neither keeps a deleted id known nor lists a zone twice.
 
 The app uses the same pieces: `schema/validate.validate_quests(..., zones=)` adds the zone checks, `MainWindow.zone_index()` builds the index (imported maps plus zone files among the references, rebuilt when the references change), and quest zone files are a reference kind (`core/references.ZONES`).
 

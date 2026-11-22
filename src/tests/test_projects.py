@@ -101,3 +101,13 @@ def test_a_project_uses_its_own_game_data_language_and_references(mod, capsys, t
 	monkeypatch.setattr("core.references.REFERENCES_FILE", app_list)
 	project.write_text(json.dumps({k: v for k, v in config.items() if k != "references"}), encoding="utf-8")
 	assert Workspace(project).sources()["references_from"].startswith("the app's reference list")
+
+
+def test_the_projects_own_files_among_its_references_count_as_the_projects_not_as_references(mod, tmp_path):
+	quests = mod / "db" / "CustomQuests" / TRADER / "Quests" / "quest_definitions.json"
+	project = _write(tmp_path / "project.json", {"quests": str(quests), "references": [str(mod / "db")]})  # (its quest file is in that folder)
+	ws = Workspace(project)
+	assert [ref.name for ref in ws.references.files if ws.references.is_open(ref)] == ["quest_definitions.json"]
+	assert not ws.references.knows_quest("d" * 24) and ws.references.knows_quest("e" * 24)  # (the other trader's quests are references)
+	ws.quests.change("Delete quest", lambda data: data.clear())
+	assert not ws.gamedata.knows_quest("d" * 24)  # (deleted from the project: the copy on disk doesn't keep it known)
