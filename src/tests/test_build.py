@@ -53,3 +53,11 @@ def test_every_path_the_license_names_exists():
 	assert len(paths) == 4
 	for path in paths:
 		assert (ROOT / path).exists(), path
+
+
+def test_the_maps_imported_from_your_game_and_your_own_files_stay_out_of_the_program():
+	data = build.ROOT / "data"
+	assert set(build._left_out(str(data), ["maps", "database", "settings.ini", "my_items.json", "references.json"])) == {
+		"maps", "my_items.json", "references.json",
+	}
+	assert build._left_out(str(data / "database"), ["maps", "locales"]) == []  # (only data/'s own)
