@@ -25,6 +25,7 @@ relative to it:
 	"trader": "Prapor",
 	"zones": "db/CustomQuestZones/new_zones.json",
 	"zone_files": ["db/CustomQuestZones"],
+	"spawns": "db/CustomLootspawns/CustomSpawnpointsForced/spawns.json",
 	"references": ["db/CustomItems", "db/CustomQuests/y/Quests/quests.json"],
 	"language": "en",
 	"game": "I:/Games/SPT"
@@ -33,6 +34,8 @@ relative to it:
 
 Only `quests` and `locale` are needed; a missing file is made when written. `assort` and `questassort` are needed for
 assort unlocks. `zones` is the file `zones make --write` adds to; `zone_files` (files or folders) are read for checks.
+`spawns` is the item spawn file (WTT-CommonLib's CustomLootspawns) `zones edit` changes; there are no commands for
+spawns yet, so they are placed with the mouse.
 `references` are files and folders whose ids are looked up too, so their names work in specs and `find`: other
 traders' quests and text, item templates, WTT `CustomItems` files, trader `base.json` files, assorts, zone files.
 `game` is the game's folder: `maps import` reads it, names are looked up in its SPT database
@@ -180,7 +183,8 @@ What the client does with each zone kind (from its code), which `check` enforces
 
 Placing a zone with the mouse: `zones edit` opens a window (the app's Zones tab) with the maps in 3D. It changes the
 project's zone file (`"zones"`, or `--file`): "Place a new zone", click the floor, then drag the box and its handles; the
-checks below run as it changes. That is for people; an agent uses the commands below.
+checks below run as it changes. Its Item spawns page changes the project's item spawn file (`"spawns"`, or `--spawns`)
+the same way. That is for people; an agent uses the commands below.
 
 Placing a zone:
 

@@ -1,10 +1,12 @@
 """The 3D view of a map, drawn with OpenGL: the floor (the navmesh, coloured by height and darker where it slopes), the
-walls when they have been imported, the quest zones as see-through boxes, and the handles of the zone being edited.
+walls when they have been imported, the quest zones as see-through boxes, item spawns as small boxes with a dot that
+shows however far away they are (pins), and the handles of the zone or spawn being edited.
 
 Mouse: left-drag turns the view (pans it in the top-down view), right- or middle-drag (or Shift+left) pans, the wheel
-zooms toward the mouse, a click selects a zone, on its box or its name (or, while placing, puts the new zone where it lands), a double-click
-looks at that spot. Dragging the selected zone moves it; its handles size, lift and turn it (Shift snaps). F frames
-the selected zone, T switches to the top-down view and back, Delete asks to delete the selected zone.
+zooms toward the mouse, a click selects a zone, on its box or its name, or a spawn, on its dot (or, while placing, puts
+the new one where it lands), a double-click looks at that spot. Dragging the selected zone moves it; its handles size,
+lift and turn it (Shift snaps; a spawn has no size). F frames the selected zone, T switches to the top-down view and
+back, Delete asks to delete the selected zone.
 
 The cut (set_cut, from the height slider beside the view: ui.view3d.cut_slider) hides everything above a height. Where
 it slices through the walls, they are drawn as solid, like a floor plan: their outline at the cut is drawn in
@@ -26,6 +28,7 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from maps import geometry as G
 from maps.triangles import box_edges, box_faces, ray_box
+from maps.spawns import SPAWN, SPAWN_COLOUR
 from maps.zones import KIND_COLOURS, NEW_COLOUR
 from ui.view3d import handles as H
 from ui.view3d.camera import Camera
@@ -45,6 +48,7 @@ AREA_COLOUR = QColor(200, 200, 200)
 HANDLE_PIXELS = 9  # how near (in pixels) the mouse must be to a handle to take it
 BIG_ZONE = 15.0  # metres: a zone longer than this is drawn fainter, the longer the fainter
 MOST_LABELS = 60  # the zones named on screen at once (the nearest to what the view looks at)
+PIN_PIXELS = 4.5  # the radius of a pin's dot
 ON_MAP = 100.0  # metres past the floor's edges the view can look at (see keep_on_map)
 
 # GLSL 1.20, so it runs on any OpenGL from 2.1 (and on the software renderer)
@@ -89,12 +93,14 @@ void main() {
 
 @dataclass
 class ViewZone:
-	"""A zone as the view draws it. key: what the tab knows it by. style: GAME, REFERENCE or MINE (stronger)."""
+	"""A zone (or an item spawn) as the view draws it. key: what the tab knows it by. pin: also drawn as a dot over the
+	picture, which a click within HANDLE_PIXELS selects (a spawn: its box is small)."""
 
 	key: object
 	label: str
 	kind: str
 	box: G.Box
+	pin: bool = False
 
 
 @dataclass
@@ -122,8 +128,11 @@ def _matrix(m):
 	return QMatrix4x4(*[float(v) for v in np.asarray(m).flatten()])
 
 
+COLOURS = {**KIND_COLOURS, SPAWN: SPAWN_COLOUR}
+
+
 def _rgb(kind):
-	return tuple(c / 255 for c in KIND_COLOURS.get(kind, (255, 255, 255)))
+	return tuple(c / 255 for c in COLOURS.get(kind, (255, 255, 255)))
 
 
 class _Buffer:
@@ -190,7 +199,9 @@ class MapView(QOpenGLWidget):
 		self.selected_box = None
 		self.selected_kind = ""
 		self.selected_editable = False
+		self.selected_handles = None  # the kinds of handle the selected one has (None: all of them)
 		self.placing = False
+		self.placing_text = "Click the floor where the new zone goes (Esc to stop)"
 		self.message = ""  # said in the middle when there is nothing to draw
 		self.gl_problem = ""  # why the view can't draw, if it can't
 		self.renderer = ""  # the OpenGL version and renderer in use
@@ -263,9 +274,11 @@ class MapView(QOpenGLWidget):
 			self.top_down_changed.emit(top_down)
 			self.update()
 
-	def set_selected(self, key, box=None, kind="", editable=False):
-		"""The zone being looked at (key), with its box drawn on its own; editable ones get handles."""
+	def set_selected(self, key, box=None, kind="", editable=False, handles=None):
+		"""The zone being looked at (key), with its box drawn on its own; editable ones get handles (handles: the kinds,
+		of ui.view3d.handles, it gets; None: all)."""
 		self.selected_key, self.selected_box, self.selected_kind, self.selected_editable = key, box, kind, editable
+		self.selected_handles = None if handles is None else tuple(handles)
 		self._drag = None
 		self._selected_changed()
 
@@ -476,6 +489,7 @@ class MapView(QOpenGLWidget):
 			painter.drawText(QRectF(20, 20, w - 40, h - 40), Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, self.gl_problem or self.message)
 			painter.end()
 			return
+		self._draw_pins(painter)
 		for label in self.labels():
 			self._draw_label(painter, label.rect, label.text, label.colour)
 		if self.samples:
@@ -499,6 +513,40 @@ class MapView(QOpenGLWidget):
 		self._compass(painter, w)
 		self._status(painter, w, h)
 		painter.end()
+
+	def pins(self):
+		"""[(key, (x, y) on screen, colour)] of the pins shown (below the cut, on screen; the selected one where it is
+		being dragged)."""
+		if not self.show_zones:
+			return []
+		w, h = self.width(), self.height()
+		found = []
+		for zone, _style in self.zones:
+			box = self.selected_box if zone.key == self.selected_key and self.selected_box is not None else zone.box
+			if not zone.pin or box.center[1] > self.cut:
+				continue
+			spot = self.camera.project(box.center, w, h)
+			if spot and 0 <= spot[0] <= w and 0 <= spot[1] <= h:
+				found.append((zone.key, spot, QColor(*COLOURS.get(zone.kind, (255, 255, 255)))))
+		return found
+
+	def _draw_pins(self, painter):
+		for key, spot, colour in self.pins():
+			selected = key == self.selected_key
+			r = PIN_PIXELS + (1.5 if selected else 0.0)
+			painter.setPen(QPen(QColor(255, 255, 255) if selected else QColor(20, 20, 20), 1.5))
+			painter.setBrush(QColor(*NEW_COLOUR) if selected and self.selected_editable else colour)
+			x, y = spot
+			painter.drawPolygon([QPointF(x, y - r), QPointF(x + r, y), QPointF(x, y + r), QPointF(x - r, y)])
+
+	def pin_at(self, x, y):
+		"""The key of the pin within HANDLE_PIXELS of the pixel (the nearest), or None."""
+		best = None
+		for key, spot, _colour in self.pins():
+			d = math.hypot(spot[0] - x, spot[1] - y)
+			if d <= HANDLE_PIXELS and (best is None or d < best[0]):
+				best = (d, key)
+		return best[1] if best else None
 
 	def _label_font(self):
 		font = QFont(self.font())
@@ -534,7 +582,7 @@ class MapView(QOpenGLWidget):
 				if z.key != self.selected_key and z.box.center[1] - z.box.size[1] / 2 <= self.cut
 			]
 			for _d, zone in sorted(shown, key=lambda pair: pair[0])[:MOST_LABELS]:
-				add(zone.box, zone.label, QColor(*KIND_COLOURS.get(zone.kind, (255, 255, 255))), zone.key)
+				add(zone.box, zone.label, QColor(*COLOURS.get(zone.kind, (255, 255, 255))), zone.key)
 		return found
 
 	def _draw_label(self, painter, rect, text, colour):
@@ -544,12 +592,18 @@ class MapView(QOpenGLWidget):
 		painter.setPen(colour)
 		painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
 
+	def _handles(self):
+		"""The selected zone's handles (those of the kinds it has). Not the lift handle in the top-down view: seen from
+		straight above it sits on the middle of the box (a spawn's dot), and lifting can't be dragged that way."""
+		found = [h for h in H.handles(self.selected_box) if not (h.kind == H.LIFT and self.camera.top_down)]
+		return found if self.selected_handles is None else [h for h in found if h.kind in self.selected_handles]
+
 	def _draw_handles(self, painter):
 		w, h = self.width(), self.height()
 		box = self.selected_box
 		top = G.add(box.center, G.rotate(box.rotation, (0.0, box.size[1] / 2, 0.0)))
 		front = G.add(box.center, G.rotate(box.rotation, (0.0, -box.size[1] / 2, box.size[2] / 2)))
-		for handle in H.handles(box):
+		for handle in self._handles():
 			spot = self.camera.project(handle.position, w, h)
 			if spot is None:
 				continue
@@ -595,7 +649,7 @@ class MapView(QOpenGLWidget):
 			x, y, z = self.hover_point
 			parts.append(f"x {x:.2f}   y {y:.2f}   z {z:.2f}")
 		if self.placing:
-			parts.append("Click the floor where the new zone goes (Esc to stop)")
+			parts.append(self.placing_text)
 		if parts:
 			text = "      ".join(parts)
 			metrics = painter.fontMetrics()
@@ -622,9 +676,12 @@ class MapView(QOpenGLWidget):
 		return min(hits, key=lambda hit: hit.distance) if hits else None
 
 	def zone_at(self, x, y):
-		"""The key of the zone under the pixel, or None: the zone whose name is drawn there (the names are drawn over
-		everything, and sit above their boxes), else the zone box there (the smallest, where several are; one behind a
-		floor or wall doesn't count)."""
+		"""The key of the zone under the pixel, or None: the pin there (a spawn's dot), else the zone whose name is drawn
+		there (the names are drawn over everything, and sit above their boxes), else the zone box there (the smallest,
+		where several are; one behind a floor or wall doesn't count)."""
+		pinned = self.pin_at(x, y)
+		if pinned is not None:
+			return pinned
 		named = self.label_at(x, y)
 		if named is not None:
 			return named
@@ -650,12 +707,17 @@ class MapView(QOpenGLWidget):
 		point = QPointF(x, y)
 		return next((label.key for label in self.labels() if label.key is not None and label.rect.contains(point)), None)
 
+	def _pixels(self, point, pos):
+		"""How many pixels the point (x, y, z) is drawn from the mouse at pos (inf when it isn't drawn)."""
+		spot = self.camera.project(point, self.width(), self.height())
+		return math.hypot(spot[0] - pos.x(), spot[1] - pos.y()) if spot else math.inf
+
 	def handle_at(self, x, y):
 		"""The selected zone's handle within a few pixels of (x, y), or None."""
 		if self.selected_box is None or not self.selected_editable:
 			return None
 		best = None
-		for handle in H.handles(self.selected_box):
+		for handle in self._handles():
 			spot = self.camera.project(handle.position, self.width(), self.height())
 			if spot is None:
 				continue
@@ -674,11 +736,14 @@ class MapView(QOpenGLWidget):
 		if event.button() == Qt.MouseButton.LeftButton and not self.placing and not shift and self.selected_editable and self.selected_box is not None:
 			origin, direction = self.ray_at(pos.x(), pos.y())
 			handle = self.handle_at(pos.x(), pos.y())
-			if handle is not None:
+			pin = self._pixels(self.selected_box.center, pos) if any(z.pin and z.key == self.selected_key for z, _s in self.zones) else None
+			if handle is not None and (pin is None or self._pixels(handle.position, pos) < pin):  # (a small spawn's handles crowd its dot: the nearer wins)
 				self._drag = H.Drag(self.selected_box, handle.kind, origin, direction, handle=handle)
-			elif self.zone_at(pos.x(), pos.y()) == self.selected_key:
+				if not self._drag.ok:  # (a handle that can't be dragged this way, such as lift seen from above: the box is moved instead)
+					self._drag = None
+			if self._drag is None and self.zone_at(pos.x(), pos.y()) == self.selected_key:
 				t = ray_box(origin, direction, self.selected_box)
-				grab = tuple(o + t * d for o, d in zip(origin, direction))
+				grab = tuple(o + t * d for o, d in zip(origin, direction)) if t is not None else self.selected_box.center  # (its pin: the box may be missed)
 				self._drag = H.Drag(self.selected_box, H.MOVE, origin, direction, grab=grab)
 			if self._drag is not None and not self._drag.ok:
 				self._drag = None

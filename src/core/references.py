@@ -9,15 +9,17 @@ from pathlib import Path
 
 from core import jsonio
 from core.paths import REFERENCES_FILE
+from maps.spawns import file_forced, is_spawn_file
 from maps.zones import is_zone_file
 from schema import assort as assort_schema
 from schema import explorer
 
 QUESTS, LOCALE, ASSORT, ITEMS, TRADER, ZONES = "quests", "locale", "assort", "items", "trader", "zones"
 CUSTOM_ITEMS = "custom_items"  # (WTT-CommonLib's CustomItems files: {id: {itemTplToClone, parentId, locales: {en: {name, ...}}, ...}})
+SPAWNS = "spawns"  # (WTT-CommonLib's CustomLootspawns files: {map name: [spawn points]}, see maps.spawns)
 KIND_LABEL = {
 	QUESTS: "Quests", LOCALE: "Locale", ASSORT: "Trader assort", ITEMS: "Item templates", TRADER: "Trader", ZONES: "Quest zones",
-	CUSTOM_ITEMS: "Custom items (WTT)",
+	CUSTOM_ITEMS: "Custom items (WTT)", SPAWNS: "Item spawns (WTT)",
 }
 NO_IDS = "questassort"  # (a quest assort file has no ids of its own, so there is nothing to look up in it)
 LIMIT = 200  # the most files read from the folders that are added at once
@@ -25,12 +27,14 @@ LIMIT = 200  # the most files read from the folders that are added at once
 
 def detect_kind(data):
 	"""What a loaded file is, for a reference: quests, locale, assort, items (item templates), custom_items (a
-	WTT-CommonLib CustomItems file), trader (a trader's base.json), zones (a WTT-CommonLib quest zone file),
-	"questassort" (nothing to look up) or None."""
+	WTT-CommonLib CustomItems file), trader (a trader's base.json), zones (a WTT-CommonLib quest zone file), spawns (a
+	WTT-CommonLib loot spawn file), "questassort" (nothing to look up) or None."""
 	if is_zone_file(data):
 		return ZONES
 	if not isinstance(data, dict):
 		return None
+	if is_spawn_file(data):
+		return SPAWNS
 	if isinstance(data.get("_id"), str) and ("nickname" in data or "name" in data) and ("loyaltyLevels" in data or "currency" in data):
 		return TRADER
 	values = list(data.values())[:20]
@@ -71,6 +75,8 @@ class Reference:
 			return len(assort_schema.offer_ids(data))
 		if self.kind == TRADER:
 			return 1
+		if self.kind == SPAWNS:
+			return sum(len(v) for v in data.values() if isinstance(v, list))
 		return len(data) if isinstance(data, (dict, list)) else 0
 
 
@@ -83,7 +89,7 @@ def _read(ref):
 		return ref
 	kind = detect_kind(data)
 	if kind is None:
-		ref.error = "Not a quest, locale, trader assort, item template, custom item, trader or quest zone file."
+		ref.error = "Not a quest, locale, trader assort, item template, custom item, trader, quest zone or item spawn file."
 	elif kind == NO_IDS:
 		ref.error = "A quest assort file has no ids of its own, so there is nothing to look up in it."
 	else:
@@ -287,6 +293,23 @@ class References:
 		"""[(entries, file name)] of the quest zone files in the list."""
 		self.read_all()
 		return [(ref.data, ref.name) for ref in self._active() if ref.kind == ZONES]
+
+	def spawn_files(self):
+		"""[(data, file name, forced)] of the item spawn files in the list (forced: see maps.spawns.file_forced; a file
+		whose folder doesn't say counts as forced, as quest items are)."""
+		self.read_all()
+		return [(ref.data, ref.name, file_forced(ref.path) is not False) for ref in self._active() if ref.kind == SPAWNS]
+
+	def custom_items(self):
+		"""{id: entry} of every WTT custom item in the reference files (the first file wins)."""
+		self.read_all()
+		found = {}
+		for ref in self._active():
+			if ref.kind == CUSTOM_ITEMS:
+				for tpl, item in ref.data.items():
+					if isinstance(item, dict) and tpl not in found:
+						found[tpl] = item
+		return found
 
 	def quest_data(self):
 		"""{quest id: (the quest, the file it is in)} of every quest in the reference files (the first file wins)."""
